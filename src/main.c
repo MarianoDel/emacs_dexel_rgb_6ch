@@ -41,7 +41,7 @@ volatile unsigned short timer_buzzer = 0;
 
 // ------- Externals del USART -------
 volatile unsigned char usart1_have_data;
-
+volatile unsigned char usart2_have_data;
 
 //--- VARIABLES GLOBALES ---//
 
@@ -81,10 +81,10 @@ int main(void)
     {
         while (1)	/* Capture error */
         {
-            if (LED)
-                LED_OFF;
-            else
-                LED_ON;
+            // if (LED)
+            //     LED_OFF;
+            // else
+            //     LED_ON;
 
             for (i = 0; i < 255; i++)
             {
@@ -93,6 +93,16 @@ int main(void)
                         "nop \n\t" );
             }
         }
+    }
+
+
+    //pruebas hard//
+    USART2Config();
+
+    while (1)
+    {
+        Wait_ms(1000);
+        Usart2Send("Hola\n");
     }
 
 

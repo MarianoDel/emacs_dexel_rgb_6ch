@@ -138,43 +138,43 @@ void TIM_3_Init (void)
 
 }
 
-void TIM14_IRQHandler (void)	//20us
-{
-    if (TIM14->SR & 0x01)
-        TIM14->SR = 0x00;    //bajar flag
+// void TIM14_IRQHandler (void)	//20us
+// {
+//     if (TIM14->SR & 0x01)
+//         TIM14->SR = 0x00;    //bajar flag
 
-    if (tim14_counter < 255)
-    {
-        tim14_counter++;
+//     if (tim14_counter < 255)
+//     {
+//         tim14_counter++;
 
-        if (tim14_counter > set_laser_ch1)
-            LASER_CH1_OFF;
+//         if (tim14_counter > set_laser_ch1)
+//             LASER_CH1_OFF;
 
-        if (tim14_counter > set_laser_ch2)
-            LASER_CH2_OFF;
+//         if (tim14_counter > set_laser_ch2)
+//             LASER_CH2_OFF;
 
-        if (tim14_counter > set_laser_ch3)
-            LASER_CH3_OFF;
+//         if (tim14_counter > set_laser_ch3)
+//             LASER_CH3_OFF;
 
-        if (tim14_counter > set_laser_ch4)
-            LASER_CH4_OFF;
-    }
-    else
-    {
-        tim14_counter = 0;    //Overflow
-        if (set_laser_ch1)
-            LASER_CH1_ON;
+//         if (tim14_counter > set_laser_ch4)
+//             LASER_CH4_OFF;
+//     }
+//     else
+//     {
+//         tim14_counter = 0;    //Overflow
+//         if (set_laser_ch1)
+//             LASER_CH1_ON;
 
-        if (set_laser_ch2)
-            LASER_CH2_ON;
+//         if (set_laser_ch2)
+//             LASER_CH2_ON;
 
-        if (set_laser_ch3)
-            LASER_CH3_ON;
+//         if (set_laser_ch3)
+//             LASER_CH3_ON;
 
-        if (set_laser_ch4)
-            LASER_CH4_ON;
-    }
-}
+//         if (set_laser_ch4)
+//             LASER_CH4_ON;
+//     }
+// }
 
 
 void TIM_14_Init (void)

@@ -1,15 +1,15 @@
-//---------------------------------------------
+//--------------------------------
 // ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### UART.H ###############################
-//---------------------------------------------
+// #### UART.C ###################
+//--------------------------------
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __UART_H__
-#define __UART_H__
+#ifndef __UART_H_
+#define __UART_H_
 
 //--- Exported types ---//
 //--- Exported constants ---//
@@ -29,20 +29,25 @@
 #define USARTx_RX_DISA	USARTx->CR1 &= 0xfffffffb
 #define USARTx_RX_ENA	USARTx->CR1 |= 0x04
 
-#define SIZEOF_RXDATA 128
-#define SIZEOF_TXDATA 128
 
-
+#define SIZEOF_DATA 128
+// #define SIZEOF_TXDATA 128
 
 //--- Exported functions ---//
 unsigned char ReadUsart1Buffer (unsigned char *, unsigned short);
+unsigned char ReadUsart2Buffer (unsigned char *, unsigned short);
 
 void USART1Config(void);
 void USART1_IRQHandler(void);
 void Usart1Send (char *);
 void Usart1SendUnsigned(unsigned char *, unsigned char);
-void Usart1SendSingle(unsigned char );
+
+void USART2Config(void);
+void USART2_IRQHandler(void);
+void Usart2Send (char *);
+void Usart2SendUnsigned(unsigned char *, unsigned char);
+
+#endif //--- End ---//
 
 
-#endif
 //--- END OF FILE ---//
