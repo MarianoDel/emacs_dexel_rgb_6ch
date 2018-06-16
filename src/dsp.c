@@ -31,6 +31,7 @@ short d_last = 0;
 #define KDV	0			// 0
 
 //todos se dividen por 128
+// #define KPI	32			// 1
 #define KPI	128			// 1
 #define KII	16			// .125
 #define KDI	0			// 0
@@ -79,7 +80,7 @@ unsigned short MAFilterFast (unsigned short new_sample, unsigned short * vsample
 	*(vsample + 1) = *(vsample);
 	*(vsample) = new_sample;
 
-	return total_ma >> 2;
+	return (unsigned short) (total_ma >> 2);
 }
 
 //unsigned short MAFilter8 (unsigned short new_sample, unsigned short * vsample)

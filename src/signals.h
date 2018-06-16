@@ -1,3 +1,12 @@
+//---------------------------------------------
+// ##
+// ## @Author: Med
+// ## @Editor: Emacs - ggtags
+// ## @TAGS:   Global
+// ##
+// #### SIGNALS.H #############################
+//---------------------------------------------
+
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __SIGNALS_H
 #define __SIGNALS_H

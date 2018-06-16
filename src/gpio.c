@@ -62,24 +62,26 @@ void GPIO_Config (void)
         GPIOA_CLK_ON;
 
     temp = GPIOA->MODER;	//2 bits por pin
-    temp &= 0x3CC30000;		//PA0 - PA3 (analog input); PA4 PA5 output; PA6 PA7(alternative)
-    temp |= 0x4128A5FF;		//PA9 - PA10 (alternative); PA12 & PA15 output
+    temp &= 0xFC300000;		//PA0 - PA1 (analog input); PA2 - PA3 alternative; PA4 - PA7 analog
+    temp |= 0x000AFFAF;		//PA8 - PA9 (alternative); PA11 & PA12 input
     GPIOA->MODER = temp;
 
     temp = GPIOA->OTYPER;	//1 bit por pin
-    temp &= 0xFFFFFF3F;    //PA7 PA6 open drain
-    temp |= 0x000000C0;
+    temp &= 0xFFFFFCFF;         //PA8 PA9 open drain
+    temp |= 0x00000300;
     GPIOA->OTYPER = temp;
 
     temp = GPIOA->OSPEEDR;	//2 bits por pin
-    temp &= 0x3CC300FF;
-    temp |= 0x00000000;		//low speed
+    temp &= 0xFFF0FF0F;         //PA2-PA3 low speed; PA8-PA9 low speed
+    temp |= 0x00000000;		
     GPIOA->OSPEEDR = temp;
 
     temp = GPIOA->PUPDR;	//2 bits por pin
-    temp &= 0xFFFFFFFF;
-    temp |= 0x00010050;
+    temp &= 0xFC3FFFFF;         //PA11 PA12 pull up
+    temp |= 0x01400000;
     GPIOA->PUPDR = temp;
+    
+#endif
 
 #ifdef GPIOB_ENABLE
 
@@ -112,6 +114,34 @@ void GPIO_Config (void)
 
 #endif
 
+#ifdef GPIOC_ENABLE
+
+    //--- GPIO F ---//
+    if (!GPIOC_CLK)
+        GPIOC_CLK_ON;
+
+    temp = GPIOC->MODER;
+    temp &= 0xFFFFFFFF;
+    temp |= 0x00000000;
+    GPIOC->MODER = temp;
+
+    temp = GPIOC->OTYPER;
+    temp &= 0xFFFFFFFF;
+    temp |= 0x00000000;
+    GPIOC->OTYPER = temp;
+
+    temp = GPIOC->OSPEEDR;
+    temp &= 0xFFFFFFFF;
+    temp |= 0x00000000;
+    GPIOC->OSPEEDR = temp;
+
+    temp = GPIOC->PUPDR;
+    temp &= 0xFFFFFFFF;
+    temp |= 0x00000000;
+    GPIOC->PUPDR = temp;
+
+#endif
+
 #ifdef GPIOF_ENABLE
 
     //--- GPIO F ---//
@@ -140,7 +170,6 @@ void GPIO_Config (void)
 
 #endif
 
-#endif    //V1.0
     
 #ifdef WITH_EXTI
     //Interrupt en PA8

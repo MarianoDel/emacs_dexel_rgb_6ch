@@ -1,5 +1,5 @@
 //---------------------------------------------
-// #### PROYECTO LIPO LASER - Custom Board ####
+// #### PROYECTO DEXEL 6CH BIDIRECCIONAL - Custom Board ####
 // ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags

@@ -1,9 +1,12 @@
-/*
- * adc.c
- *
- *  Created on: 04/05/2015
- *      Author: Mariano
- */
+//---------------------------------------------
+// ##
+// ## @Author: Med
+// ## @Editor: Emacs - ggtags
+// ## @TAGS:   Global
+// ##
+// #### ADC.C #################################
+//---------------------------------------------
+
 #include "adc.h"
 #include "stm32f0xx.h"
 #include "hard.h"
