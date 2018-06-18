@@ -14,192 +14,70 @@
 
 
 /* Externals variables ---------------------------------------------------------*/
-extern volatile unsigned short timer_led;
-extern volatile unsigned short timer_buzzer;
-#define buzzer_timeout timer_buzzer
+extern volatile unsigned char switches_timer;
+
 
 /* Global variables ------------------------------------------------------------*/
-//para el led
-led_state_t led_state = START_BLINKING;
-unsigned char blink = 0;
-unsigned char how_many_blinks = 0;
+//para los switches
+unsigned short s1 = 0;
+unsigned short s2 = 0;
 
-//para el buzzer
-buzzer_state_t buzzer_state = BUZZER_INIT;
-unsigned char buzzer_multiple;
 
 /* Module Functions ------------------------------------------------------------*/
 
-// //cambia configuracion de bips del LED
-// void ChangeLed (unsigned char how_many)
-// {
-//     how_many_blinks = how_many;
-//     led_state = START_BLINKING;
-// }
+unsigned char CheckS1 (void)	//cada check tiene 10ms
+{
+    if (s1 > SWITCHES_THRESHOLD_FULL)
+        return S_FULL;
 
-// //mueve el LED segun el estado del Pote
-// void UpdateLed (void)
-// {
-//     switch (led_state)
-//     {
-//         case START_BLINKING:
-//             blink = how_many_blinks;
-            
-//             if (blink)
-//             {
-//                 LED_ON;
-//                 timer_led = 200;
-//                 led_state++;
-//                 blink--;
-//             }
-//             break;
+    if (s1 > SWITCHES_THRESHOLD_HALF)
+        return S_HALF;
 
-//         case WAIT_TO_OFF:
-//             if (!timer_led)
-//             {
-//                 LED_OFF;
-//                 timer_led = 200;
-//                 led_state++;
-//             }
-//             break;
+    if (s1 > SWITCHES_THRESHOLD_MIN)
+        return S_MIN;
 
-//         case WAIT_TO_ON:
-//             if (!timer_led)
-//             {
-//                 if (blink)
-//                 {
-//                     blink--;
-//                     timer_led = 200;
-//                     led_state = WAIT_TO_OFF;
-//                     LED_ON;
-//                 }
-//                 else
-//                 {
-//                     led_state = WAIT_NEW_CYCLE;
-//                     timer_led = 2000;
-//                 }
-//             }
-//             break;
+    return S_NO;
+}
 
-//         case WAIT_NEW_CYCLE:
-//             if (!timer_led)
-//                 led_state = START_BLINKING;
+unsigned char CheckS2 (void)
+{
+    if (s2 > SWITCHES_THRESHOLD_FULL)
+        return S_FULL;
 
-//             break;
+    if (s2 > SWITCHES_THRESHOLD_HALF)
+        return S_HALF;
 
-//         default:
-//             led_state = START_BLINKING;
-//             break;
-//     }
-// }
+    if (s2 > SWITCHES_THRESHOLD_MIN)
+        return S_MIN;
 
-// void BuzzerCommands(unsigned char command, unsigned char multiple)
-// {
-//     buzzer_state = command;
-//     buzzer_multiple = multiple;
-// }
+    return S_NO;
+}
 
-// void UpdateBuzzer (void)
-// {
-//     switch (buzzer_state)
-//     {
-//         case BUZZER_INIT:
-//             break;
+void UpdateSwitches (void)
+{
+    //revisa los switches cada 10ms
+    if (!switches_timer)
+    {
+        if (S1_PIN)
+            s1++;
+        else if (s1 > 50)
+            s1 -= 50;
+        else if (s1 > 10)
+            s1 -= 5;
+        else if (s1)
+            s1--;
 
-//         case BUZZER_MULTIPLE_SHORT:
-//             if (buzzer_multiple > 0)
-//             {
-//                 BUZZER_ON;
-//                 buzzer_state++;
-//                 buzzer_timeout = TIM_BIP_SHORT;
-//             }
-//             else
-//                 buzzer_state = BUZZER_TO_STOP;
-//             break;
+        if (S2_PIN)
+            s2++;
+        else if (s2 > 50)
+            s2 -= 50;
+        else if (s2 > 10)
+            s2 -= 5;
+        else if (s2)
+            s2--;
 
-//         case BUZZER_MULTIPLE_SHORTA:
-//             if (!buzzer_timeout)
-//             {
-//                 buzzer_state++;
-//                 BUZZER_OFF;
-//                 buzzer_timeout = TIM_BIP_SHORT_WAIT;
-//             }
-//             break;
+        switches_timer = SWITCHES_TIMER_RELOAD;
+    }
+}
 
-//         case BUZZER_MULTIPLE_SHORTB:
-//             if (!buzzer_timeout)
-//             {
-//                 if (buzzer_multiple)
-//                     buzzer_multiple--;
-
-//                 buzzer_state = BUZZER_MULTIPLE_SHORT;
-//             }
-//             break;
-
-//         case BUZZER_MULTIPLE_HALF:
-//             if (buzzer_multiple > 0)
-//             {
-//                 BUZZER_ON;
-//                 buzzer_state++;
-//                 buzzer_timeout = TIM_BIP_HALF;
-//             }
-//             else
-//                 buzzer_state = BUZZER_TO_STOP;
-//             break;
-
-//         case BUZZER_MULTIPLE_HALFA:
-//             if (!buzzer_timeout)
-//             {
-//                 buzzer_state++;
-//                 BUZZER_OFF;
-//                 buzzer_timeout = TIM_BIP_HALF_WAIT;
-//             }
-//             break;
-
-//         case BUZZER_MULTIPLE_HALFB:
-//             if (!buzzer_timeout)
-//             {
-//                 if (buzzer_multiple)
-//                     buzzer_multiple--;
-
-//                 buzzer_state = BUZZER_MULTIPLE_HALF;
-//             }
-//             break;
-
-//         case BUZZER_MULTIPLE_LONG:
-//             if (buzzer_multiple > 0)
-//             {
-//                 BUZZER_ON;
-//                 buzzer_state++;
-//                 buzzer_timeout = TIM_BIP_LONG;
-//             }
-//             else
-//                 buzzer_state = BUZZER_TO_STOP;
-//             break;
-
-//         case BUZZER_MULTIPLE_LONGA:
-//             if (!buzzer_timeout)
-//             {
-//                 buzzer_state++;
-//                 BUZZER_OFF;
-//                 buzzer_timeout = TIM_BIP_LONG_WAIT;
-//             }
-//             break;
-
-//         case BUZZER_MULTIPLE_LONGB:
-//             if (!buzzer_timeout)
-//             {
-//                 if (buzzer_multiple)
-//                     buzzer_multiple--;
-
-//                 buzzer_state = BUZZER_MULTIPLE_LONG;
-//             }
-//             break;
-
-//         case BUZZER_TO_STOP:
-//         default:
-//             BUZZER_OFF;
-//             buzzer_state = BUZZER_INIT;
-//             break;
-//     }
-// }
+//--- end of file ---//

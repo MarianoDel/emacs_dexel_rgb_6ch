@@ -21,7 +21,7 @@
 #include "comm.h"
 #include "signals.h"
 
-//#include <stdio.h>
+#include <stdio.h>
 //#include <string.h>
 
 
@@ -29,7 +29,7 @@
 
 //--- VARIABLES EXTERNAS ---//
 // ------- Externals del ADC -------
-volatile unsigned short adc_ch [4];
+volatile unsigned short adc_ch [ADC_CHANNEL_QUANTITY];
 volatile unsigned char seq_ready;
 
 // ------- Externals de los timers -------
@@ -38,6 +38,7 @@ volatile unsigned short timer_signals = 0;
 volatile unsigned short timer_signals_gen = 0;
 volatile unsigned short timer_led = 0;
 volatile unsigned short timer_buzzer = 0;
+volatile unsigned char switches_timer = 0;
 
 // ------- Externals del USART -------
 volatile unsigned char usart1_have_data;
@@ -52,10 +53,15 @@ volatile unsigned short wait_ms_var = 0;
 
 //--- FUNCIONES DEL MODULO ---//
 void TimingDelay_Decrement(void);
-
+void DMAConfig(void);
 
 // ------- del DMX -------
 // extern void EXTI4_15_IRQHandler(void);
+
+// ------- para el DMA -------
+#define RCC_DMA_CLK (RCC->AHBENR & RCC_AHBENR_DMAEN)
+#define RCC_DMA_CLK_ON 		RCC->AHBENR |= RCC_AHBENR_DMAEN
+#define RCC_DMA_CLK_OFF 	RCC->AHBENR &= ~RCC_AHBENR_DMAEN
 
 
 //-------------------------------------------//
@@ -67,7 +73,11 @@ int main(void)
 {
     unsigned short i = 0;
     char s_to_send [100];
-    unsigned char size;
+    unsigned char size = 0;
+    unsigned char onsync = 0;
+
+    unsigned char check_s1 = 0, check_s2 = 0;
+    
     // unsigned char bytes_readed = 0;
 
     //GPIO Configuration.
@@ -101,6 +111,19 @@ int main(void)
     USART2Config();
 
     // while (1)
+    // {
+    //     if (usart2_have_data)
+    //     {
+    //         usart2_have_data = 0;
+    //         size = ReadUsart2Buffer(s_to_send, sizeof(s_to_send));
+    //         s_to_send[size - 1] = '\n';
+    //         s_to_send[size] = '\0';
+    //         Usart2Send(s_to_send);
+    //     }
+    // }
+
+
+    // while (1)
     // {                
     //     Wait_ms(1000);
     //     Usart2Send("Hola\n");
@@ -125,17 +148,114 @@ int main(void)
     Update_TIM3_CH3(100);
     Update_TIM3_CH4(100);
 
+    //-- Prueba con ADC INT ----------
+    //-- ADC configuration.
+    // AdcConfig();
+    // ADC1->CR |= ADC_CR_ADSTART;
+
+    // while (1)
+    // {
+    //     if (!timer_standby)
+    //     {
+    //         timer_standby = 1000;
+    //         sprintf(s_to_send, "i1: %d, i2: %d, i3: %d, i4: %d, i5: %d, i6: %d, t: %d\n",
+    //                 I_Channel_1,
+    //                 I_Channel_2,
+    //                 I_Channel_3,
+    //                 I_Channel_4,
+    //                 I_Channel_5,
+    //                 I_Channel_6,
+    //                 Temp_Channel);
+
+    //         Usart2Send(s_to_send);
+    //     }
+    // }
+    //-- Fin Prueba con ADC INT ----------    
+
+    //-- Prueba con ADC & DMA ----------
+    //-- ADC configuration.
+    // AdcConfig();
+    // ADC1->CR |= ADC_CR_ADSTART;
+
+    // //-- DMA configuration.
+    // DMAConfig();
+
+    // // Prueba ADC & DMA
+    // while(1)
+    // {
+    //     //busco sync con DMA
+    //     if ((!onsync) && (ADC1->ISR & ADC_IT_EOC))
+    //     {
+    //         ADC1->ISR |= ADC_IT_EOC;
+    //         onsync = 1;
+    //         DMA1_Channel1->CCR |= DMA_CCR_EN;
+    //     }
+
+    //     if (DMA1->ISR & DMA_ISR_TCIF1)    //esto es sequence ready
+    //     {
+    //         // Clear DMA TC flag
+    //         DMA1->IFCR = DMA_ISR_TCIF1;
+
+    //     }
+
+    //     //me fijo si hubo overrun
+    //     if (ADC1->ISR & ADC_IT_OVR)
+    //     {
+    //         ADC1->ISR |= ADC_IT_EOC | ADC_IT_EOSEQ | ADC_IT_OVR;
+    //     }
+
+    //     if (!timer_standby)
+    //     {
+    //         timer_standby = 1000;
+    //         sprintf(s_to_send, "i1: %d, i2: %d, i3: %d, i4: %d, i5: %d, i6: %d, t: %d\n",
+    //                 I_Channel_1,
+    //                 I_Channel_2,
+    //                 I_Channel_3,
+    //                 I_Channel_4,
+    //                 I_Channel_5,
+    //                 I_Channel_6,
+    //                 Temp_Channel);
+
+    //         Usart2Send(s_to_send);
+    //     }
+            
+    // }
+    //-- Prueba con ADC & DMA ----------
+
+    //-- Prueba de Switches S1 y S2 ----------
+
+
+    //-- Pin rueba de Switches S1 y S2 ----------
     while (1)
     {
-        if (usart2_have_data)
+        if ((CheckS1()) && (check_s1 == 0))
         {
-            usart2_have_data = 0;
-            size = ReadUsart2Buffer(s_to_send, sizeof(s_to_send));
-            s_to_send[size - 1] = '\n';
-            s_to_send[size] = '\0';
-            Usart2Send(s_to_send);
+            check_s1 = 1;
+            Usart2Send("S1\n");
         }
+        else if ((!CheckS1()) && (check_s1))
+        {
+            check_s1 = 0;
+            Usart2Send("not S1\n");
+        }
+                            
+        if ((CheckS2()) && (check_s2 == 0))
+        {
+            check_s2 = 1;
+            Usart2Send("S2\n");
+        }
+        else if ((!CheckS2()) && (check_s2))
+        {
+            check_s2 = 0;
+            Usart2Send("not S2\n");
+        }
+
+        UpdateSwitches();
     }
+
+        
+    
+
 
 
     //prueba modulo signals.c comm.c tim.c adc.c
@@ -148,13 +268,13 @@ int main(void)
     AdcConfig();
     ADC1->CR |= ADC_CR_ADSTART;
     
-    TIM_14_Init();
-    UpdateLaserCh1(0);
-    UpdateLaserCh2(0);
-    UpdateLaserCh3(0);
-    UpdateLaserCh4(0);
+    // TIM_14_Init();
+    // UpdateLaserCh1(0);
+    // UpdateLaserCh2(0);
+    // UpdateLaserCh3(0);
+    // UpdateLaserCh4(0);
 
-    USART1Config();
+    // USART1Config();
 
     //--- Mensaje Bienvenida ---//
     //---- Defines from hard.h -----//
@@ -352,6 +472,35 @@ int main(void)
 }
 //--- End of Main ---//
 
+void DMAConfig(void)
+{
+    /* DMA1 clock enable */
+    if (!RCC_DMA_CLK)
+        RCC_DMA_CLK_ON;
+
+    //Configuro el control del DMA CH1
+    DMA1_Channel1->CCR = 0;
+    //priority very high
+    //memory halfword
+    //peripheral halfword
+    //increment memory
+    DMA1_Channel1->CCR |= DMA_CCR_PL | DMA_CCR_MSIZE_0 | DMA_CCR_PSIZE_0 | DMA_CCR_MINC;
+    //DMA1_Channel1->CCR |= DMA_Mode_Circular | DMA_CCR_TCIE;
+    //cicular mode
+    DMA1_Channel1->CCR |= DMA_CCR_CIRC;
+
+    //Tamaño del buffer a transmitir
+    DMA1_Channel1->CNDTR = 2;
+
+    //Address del periferico
+    DMA1_Channel1->CPAR = (uint32_t) &ADC1->DR;
+
+    //Address en memoria
+    DMA1_Channel1->CMAR = (uint32_t) &adc_ch[0];
+
+    //Enable
+    //DMA1_Channel1->CCR |= DMA_CCR_EN;
+}
 void TimingDelay_Decrement(void)
 {
     if (wait_ms_var)
@@ -371,6 +520,9 @@ void TimingDelay_Decrement(void)
 
     if (timer_buzzer)
         timer_buzzer--;
+
+    if (switches_timer)
+        switches_timer--;
 
 }
 

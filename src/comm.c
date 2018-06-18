@@ -93,231 +93,231 @@ unsigned char SerialProcess (void)
 
 resp_t InterpretarMsg (void)
 {
-    resp_t resp = resp_not_own;
-    unsigned char ch = 0;
-    char * pStr = buffMessages;
-    unsigned short new_power = 0;
-    unsigned char decimales = 0;
-    char b [30];
+//     resp_t resp = resp_not_own;
+//     unsigned char ch = 0;
+//     char * pStr = buffMessages;
+//     unsigned short new_power = 0;
+//     unsigned char decimales = 0;
+//     char b [30];
 
-    //reviso canal propio o canal broadcast
-    //TODO: despues revisar esto y cargar directamente canal (si falta memoria)
-    if ((strncmp(pStr, s_ch1, sizeof(s_chf) - 1) == 0) ||
-        (strncmp(pStr, s_ch2, sizeof(s_chf) - 1) == 0) ||
-        (strncmp(pStr, s_ch3, sizeof(s_chf) - 1) == 0) ||
-        (strncmp(pStr, s_ch4, sizeof(s_chf) - 1) == 0) ||
-        (strncmp(pStr, s_chf, sizeof(s_chf) - 1) == 0))
-    {
-        resp = resp_ok;
+//     //reviso canal propio o canal broadcast
+//     //TODO: despues revisar esto y cargar directamente canal (si falta memoria)
+//     if ((strncmp(pStr, s_ch1, sizeof(s_chf) - 1) == 0) ||
+//         (strncmp(pStr, s_ch2, sizeof(s_chf) - 1) == 0) ||
+//         (strncmp(pStr, s_ch3, sizeof(s_chf) - 1) == 0) ||
+//         (strncmp(pStr, s_ch4, sizeof(s_chf) - 1) == 0) ||
+//         (strncmp(pStr, s_chf, sizeof(s_chf) - 1) == 0))
+//     {
+//         resp = resp_ok;
 
-        //es broadcast, o que canal
-        if (*(pStr + 2) == 'f')
-            ch = 0x0F;
-        else
-            ch = *(pStr + 2) - 48;
+//         //es broadcast, o que canal
+//         if (*(pStr + 2) == 'f')
+//             ch = 0x0F;
+//         else
+//             ch = *(pStr + 2) - 48;
 
-        pStr += sizeof(s_chf);	//normalizo al mensaje, hay un espacio
+//         pStr += sizeof(s_chf);	//normalizo al mensaje, hay un espacio
 
-        //-- Signal Setting
-        if (strncmp(pStr, s_set_signal, sizeof(s_set_signal) - 1) == 0)
-        {
-            pStr += sizeof(s_set_signal);		//normalizo al payload, hay un espacio
+//         //-- Signal Setting
+//         if (strncmp(pStr, s_set_signal, sizeof(s_set_signal) - 1) == 0)
+//         {
+//             pStr += sizeof(s_set_signal);		//normalizo al payload, hay un espacio
 
-            if (strncmp(pStr, s_cwave, sizeof(s_cwave) - 1) == 0)
-                resp = SetSignalType (CWAVE_SIGNAL);
-            else if (strncmp(pStr, s_pulsed, sizeof(s_pulsed) - 1) == 0)
-                resp = SetSignalType (PULSED_SIGNAL);
-            else if (strncmp(pStr, s_modulated, sizeof(s_modulated) - 1) == 0)
-                resp = SetSignalType (MODULATED_SIGNAL);
-            else
-                resp = resp_error;
-        }
+//             if (strncmp(pStr, s_cwave, sizeof(s_cwave) - 1) == 0)
+//                 resp = SetSignalType (CWAVE_SIGNAL);
+//             else if (strncmp(pStr, s_pulsed, sizeof(s_pulsed) - 1) == 0)
+//                 resp = SetSignalType (PULSED_SIGNAL);
+//             else if (strncmp(pStr, s_modulated, sizeof(s_modulated) - 1) == 0)
+//                 resp = SetSignalType (MODULATED_SIGNAL);
+//             else
+//                 resp = resp_error;
+//         }
 
-        //-- Frequency Setting
-        else if (strncmp(pStr, s_frequency, sizeof(s_frequency) - 1) == 0)
-        {
-            pStr += sizeof(s_frequency);		//normalizo al payload, hay un espacio
+//         //-- Frequency Setting
+//         else if (strncmp(pStr, s_frequency, sizeof(s_frequency) - 1) == 0)
+//         {
+//             pStr += sizeof(s_frequency);		//normalizo al payload, hay un espacio
 
-            //lo que viene es un byte de 0 a 9 (0 es 10Hz)
-            decimales = StringIsANumber(pStr, &new_power);
-            if (decimales == 1)
-            {
-                resp = SetFrequency (new_power);
-                // sprintf(b, "dec: %d, freq: %d\n", decimales, new_power);
-                // Usart1Send(b);
-            }
-            else
-                resp = resp_error;
+//             //lo que viene es un byte de 0 a 9 (0 es 10Hz)
+//             decimales = StringIsANumber(pStr, &new_power);
+//             if (decimales == 1)
+//             {
+//                 resp = SetFrequency (new_power);
+//                 // sprintf(b, "dec: %d, freq: %d\n", decimales, new_power);
+//                 // Usart1Send(b);
+//             }
+//             else
+//                 resp = resp_error;
 
-        }
+//         }
 
-        //-- Power Setting for Leds
-        else if (strncmp(pStr, s_power_led, sizeof(s_power_led) - 1) == 0)
-        {
-            pStr += sizeof(s_power_led);		//normalizo al payload, hay un espacio
+//         //-- Power Setting for Leds
+//         else if (strncmp(pStr, s_power_led, sizeof(s_power_led) - 1) == 0)
+//         {
+//             pStr += sizeof(s_power_led);		//normalizo al payload, hay un espacio
 
-            //lo que viene son 1 2 o 3 bytes
-            decimales = StringIsANumber(pStr, &new_power);
-            if (decimales < 4)
-            {
-                resp = SetPowerLed (ch, new_power);
-                // sprintf(b, "dec: %d, power: %d\n", decimales, new_power);
-                // Usart1Send(b);
-            }
-            else
-                resp = resp_error;
-        }
+//             //lo que viene son 1 2 o 3 bytes
+//             decimales = StringIsANumber(pStr, &new_power);
+//             if (decimales < 4)
+//             {
+//                 resp = SetPowerLed (ch, new_power);
+//                 // sprintf(b, "dec: %d, power: %d\n", decimales, new_power);
+//                 // Usart1Send(b);
+//             }
+//             else
+//                 resp = resp_error;
+//         }
 
-        //-- Power Setting for Laser
-        else if (strncmp(pStr, s_power_laser, sizeof(s_power_laser) - 1) == 0)
-        {
-            pStr += sizeof(s_power_laser);		//normalizo al payload, hay un espacio
+//         //-- Power Setting for Laser
+//         else if (strncmp(pStr, s_power_laser, sizeof(s_power_laser) - 1) == 0)
+//         {
+//             pStr += sizeof(s_power_laser);		//normalizo al payload, hay un espacio
 
-            //lo que viene son 1 2 o 3 bytes
-            decimales = StringIsANumber(pStr, &new_power);
-            if (decimales < 4)
-            {
-                resp = SetPowerLaser (ch, new_power);
-                // sprintf(b, "dec: %d, power: %d\n", decimales, new_power);
-                // Usart1Send(b);
-            }
-            else
-                resp = resp_error;
-        }
+//             //lo que viene son 1 2 o 3 bytes
+//             decimales = StringIsANumber(pStr, &new_power);
+//             if (decimales < 4)
+//             {
+//                 resp = SetPowerLaser (ch, new_power);
+//                 // sprintf(b, "dec: %d, power: %d\n", decimales, new_power);
+//                 // Usart1Send(b);
+//             }
+//             else
+//                 resp = resp_error;
+//         }
         
-        //-- Start Treatment
-        else if (strncmp(pStr, s_start_treatment, sizeof(s_start_treatment) - 1) == 0)
-        {
-            //se puede empezar
-            if (GetTreatmentState() == TREATMENT_STANDBY)
-            {
-                resp = StartTreatment();
-            }
-            else
-                resp = resp_error;
-        }
+//         //-- Start Treatment
+//         else if (strncmp(pStr, s_start_treatment, sizeof(s_start_treatment) - 1) == 0)
+//         {
+//             //se puede empezar
+//             if (GetTreatmentState() == TREATMENT_STANDBY)
+//             {
+//                 resp = StartTreatment();
+//             }
+//             else
+//                 resp = resp_error;
+//         }
 
-        //-- Stop Treatment
-        else if (strncmp(pStr, s_stop_treatment, sizeof(s_stop_treatment) - 1) == 0)
-        {
-            StopTreatment();
-        }
+//         //-- Stop Treatment
+//         else if (strncmp(pStr, s_stop_treatment, sizeof(s_stop_treatment) - 1) == 0)
+//         {
+//             StopTreatment();
+//         }
 
-        //-- Status
-        else if (strncmp(pStr, s_status, sizeof(s_status) - 1) == 0)
-        {
-            switch (GetErrorStatus())
-            {
-            case ERROR_OK:
-                sprintf(b, "Manager status: %d\n", GetTreatmentState());
-                Usart1Send(b);
-                break;
+//         //-- Status
+//         else if (strncmp(pStr, s_status, sizeof(s_status) - 1) == 0)
+//         {
+//             switch (GetErrorStatus())
+//             {
+//             case ERROR_OK:
+//                 sprintf(b, "Manager status: %d\n", GetTreatmentState());
+//                 Usart1Send(b);
+//                 break;
 
-            case ERROR_OVERCURRENT:
-                Usart1Send("Error: Overcurrent\n");
-                break;
+//             case ERROR_OVERCURRENT:
+//                 Usart1Send("Error: Overcurrent\n");
+//                 break;
 
-            case ERROR_NO_CURRENT:
-                Usart1Send("Error: No current\n");
-                break;
+//             case ERROR_NO_CURRENT:
+//                 Usart1Send("Error: No current\n");
+//                 break;
 
-            case ERROR_SOFT_OVERCURRENT:
-                Usart1Send("Error: Soft Overcurrent\n");
-                break;
+//             case ERROR_SOFT_OVERCURRENT:
+//                 Usart1Send("Error: Soft Overcurrent\n");
+//                 break;
 
-            case ERROR_OVERTEMP:
-                Usart1Send("Error: Overtemp\n");
-                break;
+//             case ERROR_OVERTEMP:
+//                 Usart1Send("Error: Overtemp\n");
+//                 break;
 
-            }
-        }
+//             }
+//         }
 
-        //-- Buzzer Actions
-        else if (strncmp(pStr, s_buzzer_short, sizeof(s_buzzer_short) - 1) == 0)
-        {
-            pStr += sizeof(s_buzzer_short);		//normalizo al payload, hay un espacio
+//         //-- Buzzer Actions
+//         else if (strncmp(pStr, s_buzzer_short, sizeof(s_buzzer_short) - 1) == 0)
+//         {
+//             pStr += sizeof(s_buzzer_short);		//normalizo al payload, hay un espacio
 
-            //lo que viene es un byte de 1 a 9
-            decimales = StringIsANumber(pStr, &new_power);
-            if (decimales == 1)
-                BuzzerCommands(BUZZER_SHORT_CMD, (unsigned char) new_power);
-            else
-                resp = resp_error;
-        }
+//             //lo que viene es un byte de 1 a 9
+//             decimales = StringIsANumber(pStr, &new_power);
+//             if (decimales == 1)
+//                 BuzzerCommands(BUZZER_SHORT_CMD, (unsigned char) new_power);
+//             else
+//                 resp = resp_error;
+//         }
 
-        else if (strncmp(pStr, s_buzzer_half, sizeof(s_buzzer_half) - 1) == 0)
-        {
-            pStr += sizeof(s_buzzer_half);		//normalizo al payload, hay un espacio
+//         else if (strncmp(pStr, s_buzzer_half, sizeof(s_buzzer_half) - 1) == 0)
+//         {
+//             pStr += sizeof(s_buzzer_half);		//normalizo al payload, hay un espacio
 
-            //lo que viene es un byte de 1 a 9
-            decimales = StringIsANumber(pStr, &new_power);
-            if (decimales == 1)
-                BuzzerCommands(BUZZER_HALF_CMD, (unsigned char) new_power);
-            else
-                resp = resp_error;
-        }
+//             //lo que viene es un byte de 1 a 9
+//             decimales = StringIsANumber(pStr, &new_power);
+//             if (decimales == 1)
+//                 BuzzerCommands(BUZZER_HALF_CMD, (unsigned char) new_power);
+//             else
+//                 resp = resp_error;
+//         }
 
-        else if (strncmp(pStr, s_buzzer_long, sizeof(s_buzzer_long) - 1) == 0)
-        {
-            pStr += sizeof(s_buzzer_long);		//normalizo al payload, hay un espacio
+//         else if (strncmp(pStr, s_buzzer_long, sizeof(s_buzzer_long) - 1) == 0)
+//         {
+//             pStr += sizeof(s_buzzer_long);		//normalizo al payload, hay un espacio
 
-            //lo que viene es un byte de 1 a 9
-            decimales = StringIsANumber(pStr, &new_power);
-            if (decimales == 1)
-                BuzzerCommands(BUZZER_LONG_CMD, (unsigned char) new_power);
-            else
-                resp = resp_error;
-        }
+//             //lo que viene es un byte de 1 a 9
+//             decimales = StringIsANumber(pStr, &new_power);
+//             if (decimales == 1)
+//                 BuzzerCommands(BUZZER_LONG_CMD, (unsigned char) new_power);
+//             else
+//                 resp = resp_error;
+//         }
         
 
-        //reviso errores y envio
-        // 	error_t e;
-        //
-        // 	e = GetErrorStatus();
-        // 	if (e == ERROR_OK)
-        // 	{
-        // 		sprintf(b, "Manager status: %d\n", GetTreatmentState());
-        // 		Usart1Send(b);
-        // 	}
-        // 	else
-        // 	{
-        // 		//tengo algun error, los mando en secuencias
-        // 		if (e & ERROR_OVERCURRENT)
-        // 			Usart1Send("Error: Overcurrent\n");
-        //
-        // 		if (e & ERROR_NO_CURRENT)
-        // 			Usart1Send("Error: No current\n");
-        //
-        // 		if (e & ERROR_SOFT_OVERCURRENT)
-        // 			Usart1Send("Error: Soft Overcurrent\n");
-        //
-        // 		if (e & ERROR_OVERTEMP)
-        // 			Usart1Send("Error: Overtemp\n");
-        // 	}
-        // }
+//         //reviso errores y envio
+//         // 	error_t e;
+//         //
+//         // 	e = GetErrorStatus();
+//         // 	if (e == ERROR_OK)
+//         // 	{
+//         // 		sprintf(b, "Manager status: %d\n", GetTreatmentState());
+//         // 		Usart1Send(b);
+//         // 	}
+//         // 	else
+//         // 	{
+//         // 		//tengo algun error, los mando en secuencias
+//         // 		if (e & ERROR_OVERCURRENT)
+//         // 			Usart1Send("Error: Overcurrent\n");
+//         //
+//         // 		if (e & ERROR_NO_CURRENT)
+//         // 			Usart1Send("Error: No current\n");
+//         //
+//         // 		if (e & ERROR_SOFT_OVERCURRENT)
+//         // 			Usart1Send("Error: Soft Overcurrent\n");
+//         //
+//         // 		if (e & ERROR_OVERTEMP)
+//         // 			Usart1Send("Error: Overtemp\n");
+//         // 	}
+//         // }
 
-        //-- Get All Configuration
-        else if (strncmp(pStr, s_getall, sizeof(s_getall) - 1) == 0)
-        {
-            SendAllConf();
-        }
+//         //-- Get All Configuration
+//         else if (strncmp(pStr, s_getall, sizeof(s_getall) - 1) == 0)
+//         {
+//             SendAllConf();
+//         }
 
-        //-- Ninguno de los anteriores
-        else
-            resp = resp_error;
+//         //-- Ninguno de los anteriores
+//         else
+//             resp = resp_error;
 
-    }	//fin if chx
+//     }	//fin if chx
 
-    if (ch != 0x0F)
-    {
-        if (resp == resp_ok)
-            Usart1Send("OK\n");
+//     if (ch != 0x0F)
+//     {
+//         if (resp == resp_ok)
+//             Usart1Send("OK\n");
 
-        if (resp == resp_error)
-            Usart1Send("NOK\n");
-    }
+//         if (resp == resp_error)
+//             Usart1Send("NOK\n");
+//     }
 
-    return resp;
+//     return resp;
 }
 
 //--- end of file ---//

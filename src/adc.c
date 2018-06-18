@@ -89,10 +89,11 @@ void AdcConfig (void)
     //las dos int (usar DMA?) y pierde el valor intermedio
     //ADC1->SMPR |= ADC_SampleTime_1_5Cycles;			//20.7 de salida son SP 420 (regula mal)
 
-#ifdef ADC_WITH_INT
     //set channel selection
-    ADC1->CHSELR |= ADC_Channel_0 | ADC_Channel_1 | ADC_Channel_2 | ADC_Channel_3;    
-
+    ADC1->CHSELR |= ADC_Channel_0 | ADC_Channel_1 | ADC_Channel_4 | ADC_Channel_5;
+    ADC1->CHSELR |= ADC_Channel_6 | ADC_Channel_7 | ADC_Channel_14;
+    
+#ifdef ADC_WITH_INT
     //set interrupts
     ADC1->IER |= ADC_IT_EOC;
 
@@ -121,7 +122,7 @@ void ADC1_COMP_IRQHandler (void)
     {
         if (ADC1->ISR & ADC_IT_EOSEQ)	//seguro que es channel4 en posicion 3
         {
-            p_channel = &adc_ch[3];
+            p_channel = &adc_ch[ADC_LAST_CHANNEL_QUANTITY];
             *p_channel = ADC1->DR;
             p_channel = &adc_ch[0];
             seq_ready = 1;
@@ -130,13 +131,11 @@ void ADC1_COMP_IRQHandler (void)
             //     LED_OFF;
             // else
             //     LED_ON;
-
-// #endif            
         }
         else
         {
             *p_channel = ADC1->DR;		//
-            if (p_channel < &adc_ch[3])
+            if (p_channel < &adc_ch[ADC_LAST_CHANNEL_QUANTITY])
                 p_channel++;
         }
 

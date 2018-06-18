@@ -131,10 +131,10 @@
 //GPIOA pin10    NC
 
 //GPIOA pin11
-#define S1 ((GPIOA->IDR & 0x0800) == 0)
+#define S1_PIN ((GPIOA->IDR & 0x0800) == 0)
 
 //GPIOA pin12
-#define S2 ((GPIOA->IDR & 0x1000) == 0)
+#define S2_PIN ((GPIOA->IDR & 0x1000) == 0)
 
 //GPIOA pin13    NC
 
@@ -171,66 +171,33 @@
 
 
 
-//ESTADOS DEL LED
+
+
+#define SWITCHES_TIMER_RELOAD	10
+
+#define SWITCHES_THRESHOLD_FULL	300		//3 segundos
+#define SWITCHES_THRESHOLD_HALF	100		//1 segundo
+#define SWITCHES_THRESHOLD_MIN	5		//50 ms
+
+#define TTIMER_FOR_CAT_DISPLAY			2000	//tiempo entre que dice canal y el numero
+#define TIMER_STANDBY_TIMEOUT_REDUCED	2000	//reduced 2 segs
+#define TIMER_STANDBY_TIMEOUT			6000	//6 segundos
+#define DMX_DISPLAY_SHOW_TIMEOUT		30000	//30 segundos
+
+//ESTADOS DE LOS SWITCHES
 typedef enum
 {    
-    START_BLINKING = 0,
-    WAIT_TO_OFF,
-    WAIT_TO_ON,
-    WAIT_NEW_CYCLE
-} led_state_t;
+    S_NO = 0,
+    S_MIN,
+    S_HALF,
+    S_FULL
+} sw_state_t;
 
-//ESTADOS DEL BUZZER
-typedef enum
-{    
-    BUZZER_INIT = 0,
-    BUZZER_TO_STOP,
-
-    BUZZER_MULTIPLE_LONG,
-    BUZZER_MULTIPLE_LONGA,
-    BUZZER_MULTIPLE_LONGB,
-
-    BUZZER_MULTIPLE_HALF,
-    BUZZER_MULTIPLE_HALFA,
-    BUZZER_MULTIPLE_HALFB,
-
-    BUZZER_MULTIPLE_SHORT,
-    BUZZER_MULTIPLE_SHORTA,
-    BUZZER_MULTIPLE_SHORTB
-    
-} buzzer_state_t;
-
-//COMANDOS DEL BUZZER	(tienen que ser los del estado de arriba)
-#define BUZZER_STOP_CMD		BUZZER_TO_STOP
-#define BUZZER_LONG_CMD		BUZZER_MULTIPLE_LONG
-#define BUZZER_HALF_CMD		BUZZER_MULTIPLE_HALF
-#define BUZZER_SHORT_CMD	BUZZER_MULTIPLE_SHORT
-
-#define TIM_BIP_SHORT		50
-#define TIM_BIP_SHORT_WAIT	100
-#define TIM_BIP_HALF		200
-#define TIM_BIP_HALF_WAIT	500
-#define TIM_BIP_LONG		1200
-#define TIM_BIP_LONG_WAIT	1500
-
-
-//Estados Externos de LED BLINKING
-#define LED_NO_BLINKING    0
-#define LED_TREATMENT_STANDBY    1
-#define LED_TREATMENT_GENERATING    2
-
-#define LED_TREATMENT_ERROR    6
-
-#define I_Sense_Ch1 adc_ch[0]
-#define I_Sense_Ch2 adc_ch[1]
-#define I_Sense_Ch3 adc_ch[2]
-#define I_Sense_Ch4 adc_ch[3]
 
 
 /* Module Functions ------------------------------------------------------------*/
-void ChangeLed (unsigned char);
-void UpdateLed (void);
-void UpdateBuzzer (void);
-void BuzzerCommands(unsigned char, unsigned char);
+sw_state_t CheckS1 (void);
+sw_state_t CheckS2 (void);
+void UpdateSwitches (void);
 
 #endif /* HARD_H_ */
