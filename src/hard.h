@@ -119,6 +119,15 @@
 //GPIOA pin8    
 //GPIOA pin9    TIM1 CH1 - CH2
 
+//para pruebas con TIM1 que no me anda!!!
+#define TIM_CH1 ((GPIOA->ODR & 0x0100) != 0)
+#define TIM_CH1_ON GPIOA->BSRR = 0x00000100
+#define TIM_CH1_OFF GPIOA->BSRR = 0x01000000
+
+#define TIM_CH2 ((GPIOA->ODR & 0x0200) != 0)
+#define TIM_CH2_ON GPIOA->BSRR = 0x00000200
+#define TIM_CH2_OFF GPIOA->BSRR = 0x02000000
+
 //GPIOA pin10    NC
 
 //GPIOA pin11

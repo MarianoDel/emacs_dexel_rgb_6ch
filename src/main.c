@@ -66,7 +66,8 @@ void TimingDelay_Decrement(void);
 int main(void)
 {
     unsigned short i = 0;
-    // char s_to_senda [100];    
+    char s_to_send [100];
+    unsigned char size;
     // unsigned char bytes_readed = 0;
 
     //GPIO Configuration.
@@ -99,15 +100,46 @@ int main(void)
     //pruebas hard//
     USART2Config();
 
+    // while (1)
+    // {                
+    //     Wait_ms(1000);
+    //     Usart2Send("Hola\n");
+    // }
+
+    // while (1)
+    // {
+    //     Wait_ms(1);
+    //     TIM_CH1_ON;
+    //     TIM_CH2_ON;
+    //     Wait_ms(1);
+    //     TIM_CH1_OFF;
+    //     TIM_CH2_OFF;        
+    // }
+    TIM_1_Init();
+    TIM_3_Init();
+
+    Update_TIM1_CH1(100);
+    Update_TIM1_CH2(100);    
+    Update_TIM3_CH1(100);
+    Update_TIM3_CH2(100);
+    Update_TIM3_CH3(100);
+    Update_TIM3_CH4(100);
+
     while (1)
     {
-        Wait_ms(1000);
-        Usart2Send("Hola\n");
+        if (usart2_have_data)
+        {
+            usart2_have_data = 0;
+            size = ReadUsart2Buffer(s_to_send, sizeof(s_to_send));
+            s_to_send[size - 1] = '\n';
+            s_to_send[size] = '\0';
+            Usart2Send(s_to_send);
+        }
     }
 
 
     //prueba modulo signals.c comm.c tim.c adc.c
-    TIM_3_Init();
+
     Update_TIM3_CH1(0);
     Update_TIM3_CH2(0);
     Update_TIM3_CH3(0);
