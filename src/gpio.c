@@ -119,8 +119,8 @@ void GPIO_Config (void)
         GPIOC_CLK_ON;
 
     temp = GPIOC->MODER;	//2 bits por pin
-    temp &= 0xFFFFFC00;		//PC0 - PC3 out; PC4 analog
-    temp |= 0x00000355;
+    temp &= 0x03FFFC00;		//PC0 - PC3 out; PC4 analog
+    temp |= 0x54000355;         //PC13 - PC15 out;
     GPIOC->MODER = temp;
 
     temp = GPIOC->OTYPER;	//1 bit por pin
@@ -129,7 +129,7 @@ void GPIO_Config (void)
     GPIOC->OTYPER = temp;
 
     temp = GPIOC->OSPEEDR;	//2 bits por pin
-    temp &= 0xFFFFFC00;
+    temp &= 0x03FFFC00;
     temp |= 0x00000000;
     GPIOC->OSPEEDR = temp;
 
@@ -170,16 +170,18 @@ void GPIO_Config (void)
 
     
 #ifdef WITH_EXTI
-    //Interrupt en PA8
+    //Interrupt en PB8
     if (!SYSCFG_CLK)
         SYSCFG_CLK_ON;
 
-    SYSCFG->EXTICR[0] = 0x00000000; //Select Port A
-    SYSCFG->EXTICR[1] = 0x00000000; //Select Port A
-    EXTI->IMR |= 0x0100; 			//Corresponding mask bit for interrupts PA8
+    //EXTICR tiene 16bits, 4bits para cada exti, exti3->exti0 por registro de 16 bits
+    // SYSCFG->EXTICR[0] = 0x0000; //Select Port A
+    SYSCFG->EXTICR[2] = 0x0001; //Select Port B on EXTI8
+    
+    EXTI->IMR |= 0x0100; 			//Corresponding mask bit for interrupts PB8
     EXTI->EMR |= 0x0000; 			//Corresponding mask bit for events
-    EXTI->RTSR |= 0x0100; 			//Pin Interrupt line on rising edge PA8
-    EXTI->FTSR |= 0x0100; 			//Pin Interrupt line on falling edge PA8
+    EXTI->RTSR |= 0x0100; 			//Pin Interrupt line on rising edge PB8
+    EXTI->FTSR |= 0x0100; 			//Pin Interrupt line on falling edge PB8
 
     NVIC_EnableIRQ(EXTI4_15_IRQn);
     NVIC_SetPriority(EXTI4_15_IRQn, 2);
@@ -188,12 +190,12 @@ void GPIO_Config (void)
 
 inline void EXTIOff (void)
 {
-	EXTI->IMR &= ~0x00000100;
+    EXTI->IMR &= ~0x00000100;
 }
 
 inline void EXTIOn (void)
 {
-	EXTI->IMR |= 0x00000100;
+    EXTI->IMR |= 0x00000100;
 }
 
 //--- end of file ---//

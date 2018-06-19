@@ -162,7 +162,8 @@
 //GPIOB pin7     Usart 1
 
 //GPIOB pin8
-#define EXTI_PIN ((GPIOB->IDR & 0x0100) == 0)
+#define EXTI_Input ((GPIOB->IDR & 0x0100) != 0)
+#define DMX_INPUT EXTI_Input
 
 //GPIOB pin9     
 #define CTRL_FAN ((GPIOB->ODR & 0x0200) != 0)

@@ -4,23 +4,24 @@
     CLOSED: [2018-06-18 Mon 18:24]
 *** DONE PWM 6CH TIM1 enganchado a TIM3
     CLOSED: [2018-06-18 Mon 18:20]
-*** TODO ADC 7 channels con INT
-    - Con INT
-    - verificar mediciones
-    - Con DMA
+*** TODO ADC 7 channels con INT [2/3]
+    - [X] Con INT
+    - [X] verificar mediciones
+    - [ ] Con DMA
 
 *** DONE Switches S1 S2 con Update
     CLOSED: [2018-06-18 Mon 18:21]
-*** TODO Arranque LCD
-    - ver renglones
-    - ver contraste
-    - ver backlight
+*** DONE Arranque LCD [3/3]
+    CLOSED: [2018-06-19 Tue 16:44]
+    - [X] ver renglones
+    - [X] ver contraste
+    - [X] ver backlight
 
-*** TODO Usart1 para DMX512
-    - EXTI para break
-    - recepcion con consola
-    - pines sw_tx_rx
-    - transmision modo master
+*** TODO Usart1 para DMX512 [1/4]
+    - [X] EXTI para break
+    - [ ] recepcion con consola
+    - [ ] pines sw_tx_rx
+    - [ ] transmision modo master
 
 *** TODO Hardware adicional FAN
 
@@ -28,10 +29,10 @@
 *** TODO SP arriba de XXX valor usa PID
 *** TODO Debajo de XXX valor calculo lazo forward
 
-** Menues de Display LCD
-   - Agregar State Machine para no interrumpir programa
-   - Seteo Slave
-   - Seteo Master
-   - Seteo 2 amper, maximo canal y minimo para el forward
-   - seteo de canal propio
-   - funciones de programas
+** Menues de Display LCD [0/6]
+   - [ ] Agregar State Machine para no interrumpir programa
+   - [ ] Seteo Slave
+   - [ ] Seteo Master
+   - [ ] Seteo 2 amper, maximo canal y minimo para el forward
+   - [ ] seteo de canal propio
+   - [ ] funciones de programas

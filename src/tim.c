@@ -209,7 +209,6 @@ void TIM_3_Init (void)
 //     }
 // }
 
-
 void TIM_14_Init (void)
 {
     if (!RCC_TIM14_CLK)
@@ -217,19 +216,31 @@ void TIM_14_Init (void)
 
     //Configuracion del timer.
     TIM14->CR1 = 0x00;		//clk int / 1; upcounting; uev
-    TIM14->PSC = 47;		//tick cada 1us
-    // TIM14->ARR = 20;	//int cada 20us
-    TIM14->ARR = 20;	//int cada 10us para pruebas
+    TIM14->PSC = 47;			//tick cada 1us
+    TIM14->ARR = 0xFFFF;			//para que arranque
     TIM14->EGR |= 0x0001;
-
-    // Enable timer interrupt ver UDIS
-    TIM14->DIER |= TIM_DIER_UIE;
-    TIM14->CR1 |= TIM_CR1_URS | TIM_CR1_CEN;	//solo int cuando hay overflow y one shot
-
-    NVIC_EnableIRQ(TIM14_IRQn);
-    NVIC_SetPriority(TIM14_IRQn, 8);
-    
 }
+
+// void TIM_14_Init (void)
+// {
+//     if (!RCC_TIM14_CLK)
+//         RCC_TIM14_CLK_ON;
+
+//     //Configuracion del timer.
+//     TIM14->CR1 = 0x00;		//clk int / 1; upcounting; uev
+//     TIM14->PSC = 47;		//tick cada 1us
+//     // TIM14->ARR = 20;	//int cada 20us
+//     TIM14->ARR = 20;	//int cada 10us para pruebas
+//     TIM14->EGR |= 0x0001;
+
+//     // Enable timer interrupt ver UDIS
+//     TIM14->DIER |= TIM_DIER_UIE;
+//     TIM14->CR1 |= TIM_CR1_URS | TIM_CR1_CEN;	//solo int cuando hay overflow y one shot
+
+//     NVIC_EnableIRQ(TIM14_IRQn);
+//     NVIC_SetPriority(TIM14_IRQn, 8);
+    
+// }
 
 // void TIM16_IRQHandler (void)	//100uS
 // {

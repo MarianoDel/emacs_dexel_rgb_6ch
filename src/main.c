@@ -21,6 +21,9 @@
 #include "comm.h"
 #include "signals.h"
 
+#include "lcd.h"
+#include "dmx_transceiver.h"
+
 #include <stdio.h>
 //#include <string.h>
 
@@ -44,6 +47,21 @@ volatile unsigned char switches_timer = 0;
 volatile unsigned char usart1_have_data;
 volatile unsigned char usart2_have_data;
 
+// ------- Externals del DMX -------
+volatile unsigned char Packet_Detected_Flag;
+volatile unsigned char DMX_packet_flag;
+volatile unsigned char RDM_packet_flag;
+volatile unsigned char dmx_receive_flag = 0;
+volatile unsigned short DMX_channel_received = 0;
+volatile unsigned short DMX_channel_selected = 1;
+volatile unsigned char DMX_channel_quantity = 4;
+volatile unsigned char dmx_timeout_timer = 0;
+
+volatile unsigned char data1[SIZEOF_DMX_DATA1];
+//static unsigned char data_back[10];
+volatile unsigned char data[SIZEOF_DMX_DATA];
+
+
 //--- VARIABLES GLOBALES ---//
 
 
@@ -52,6 +70,7 @@ volatile unsigned short timer_standby;
 volatile unsigned short wait_ms_var = 0;
 
 //--- FUNCIONES DEL MODULO ---//
+extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
 void DMAConfig(void);
 
@@ -63,7 +82,7 @@ void DMAConfig(void);
 #define RCC_DMA_CLK_ON 		RCC->AHBENR |= RCC_AHBENR_DMAEN
 #define RCC_DMA_CLK_OFF 	RCC->AHBENR &= ~RCC_AHBENR_DMAEN
 
-
+const char s_blank_line [] = {"                "};
 //-------------------------------------------//
 // @brief  Main program.
 // @param  None
@@ -141,6 +160,7 @@ int main(void)
     TIM_1_Init();
     TIM_3_Init();
 
+
     Update_TIM1_CH1(100);
     Update_TIM1_CH2(100);    
     Update_TIM3_CH1(100);
@@ -172,6 +192,76 @@ int main(void)
     // }
     //-- Fin Prueba con ADC INT ----------    
 
+    //-- Prueba con LCD ----------
+    LCDInit();
+
+
+    //--- Welcome code ---//
+    Lcd_Command(CLEAR);
+    Wait_ms(100);
+    Lcd_Command(CURSOR_OFF);
+    Wait_ms(100);
+    Lcd_Command(BLINK_OFF);
+    Wait_ms(100);
+    CTRL_BKL_ON;
+
+    LCDTransmitStr(s_blank_line);
+
+    LCD_1ER_RENGLON;
+    LCDTransmitStr("MAXI");
+    LCD_2DO_RENGLON;
+    LCDTransmitStr("Gagliardi");
+
+    // while (1);
+    //-- Fin Prueba con LCD ----------
+
+    //-- Prueba con DMX512 ----------
+    // while (1)
+    // {
+    //     if (DMX_INPUT)
+    //         CTRL_FAN_ON;
+    //     else
+    //         CTRL_FAN_OFF;
+    // }
+
+    TIM_14_Init();
+    USART1Config();
+
+    Packet_Detected_Flag = 0;
+    DMX_channel_selected = 1;
+    DMX_channel_quantity = 4;
+
+    SW_RX_TX_OFF;
+    DMX_Ena();
+
+    while (1)
+    {
+        if (!timer_standby)
+        {
+            timer_standby = 1000;
+            sprintf(s_to_send, "c0: %d, c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
+                    data[0],
+                    data[1],
+                    data[2],
+                    data[3],
+                    data[4],
+                    data[5],
+                    data[6]);
+
+            Usart2Send(s_to_send);
+        }
+
+        if (dmx_receive_flag)
+            CTRL_FAN_ON;
+        else
+            CTRL_FAN_OFF;
+
+
+
+    }
+    
+    //-- Fin Prueba con DMX512 ----------
+    
     //-- Prueba con ADC & DMA ----------
     //-- ADC configuration.
     // AdcConfig();
@@ -217,41 +307,41 @@ int main(void)
     //                 Temp_Channel);
 
     //         Usart2Send(s_to_send);
-    //     }
-            
+    //     }            
     // }
     //-- Prueba con ADC & DMA ----------
 
+
+
+
     //-- Prueba de Switches S1 y S2 ----------
-
-
-    //-- Pin rueba de Switches S1 y S2 ----------
-    while (1)
-    {
-        if ((CheckS1()) && (check_s1 == 0))
-        {
-            check_s1 = 1;
-            Usart2Send("S1\n");
-        }
-        else if ((!CheckS1()) && (check_s1))
-        {
-            check_s1 = 0;
-            Usart2Send("not S1\n");
-        }
+    // while (1)
+    // {
+    //     if ((CheckS1()) && (check_s1 == 0))
+    //     {
+    //         check_s1 = 1;
+    //         Usart2Send("S1\n");
+    //     }
+    //     else if ((!CheckS1()) && (check_s1))
+    //     {
+    //         check_s1 = 0;
+    //         Usart2Send("not S1\n");
+    //     }
                             
-        if ((CheckS2()) && (check_s2 == 0))
-        {
-            check_s2 = 1;
-            Usart2Send("S2\n");
-        }
-        else if ((!CheckS2()) && (check_s2))
-        {
-            check_s2 = 0;
-            Usart2Send("not S2\n");
-        }
+    //     if ((CheckS2()) && (check_s2 == 0))
+    //     {
+    //         check_s2 = 1;
+    //         Usart2Send("S2\n");
+    //     }
+    //     else if ((!CheckS2()) && (check_s2))
+    //     {
+    //         check_s2 = 0;
+    //         Usart2Send("not S2\n");
+    //     }
 
-        UpdateSwitches();
-    }
+    //     UpdateSwitches();
+    // }
+    //-- Fin Prueba de Switches S1 y S2 ----------
 
         
     
@@ -501,6 +591,7 @@ void DMAConfig(void)
     //Enable
     //DMA1_Channel1->CCR |= DMA_CCR_EN;
 }
+
 void TimingDelay_Decrement(void)
 {
     if (wait_ms_var)
@@ -524,6 +615,18 @@ void TimingDelay_Decrement(void)
     if (switches_timer)
         switches_timer--;
 
+    if (dmx_timeout_timer)
+        dmx_timeout_timer--;
+
+}
+
+void EXTI4_15_IRQHandler (void)    //nueva detecta el primer 0 en usart Consola PHILIPS
+{
+    if(EXTI->PR & 0x0100)	//Line8
+    {
+        DmxInt_Break_Handler();
+        EXTI->PR |= 0x0100;
+    }
 }
 
 //--- end of file ---//

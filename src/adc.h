@@ -12,7 +12,8 @@
 
 //----------- Defines For Configuration --------------//
 //----------- Some ADC Configurations ----------------//
-#define ADC_WITH_INT
+// #define ADC_WITH_INT
+#define ADC_WITH_DMA
 
 
 #ifdef WITH_TEMP_CONTROL
