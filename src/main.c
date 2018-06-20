@@ -57,9 +57,9 @@ volatile unsigned short DMX_channel_selected = 1;
 volatile unsigned char DMX_channel_quantity = 4;
 volatile unsigned char dmx_timeout_timer = 0;
 
-volatile unsigned char data1[SIZEOF_DMX_DATA1];
+volatile unsigned char data512[SIZEOF_DMX_DATA512];
 //static unsigned char data_back[10];
-volatile unsigned char data[SIZEOF_DMX_DATA];
+volatile unsigned char data7[SIZEOF_DMX_DATA7];
 
 
 //--- VARIABLES GLOBALES ---//
@@ -93,7 +93,9 @@ int main(void)
     unsigned short i = 0;
     char s_to_send [100];
     unsigned char size = 0;
+#ifdef ADC_WITH_DMA
     unsigned char onsync = 0;
+#endif
 
     unsigned char check_s1 = 0, check_s2 = 0;
     
@@ -216,99 +218,93 @@ int main(void)
     //-- Fin Prueba con LCD ----------
 
     //-- Prueba con DMX512 ----------
+    // TIM_14_Init();
+    // USART1Config();
+
+    // Packet_Detected_Flag = 0;
+    // DMX_channel_selected = 1;
+    // DMX_channel_quantity = 6;
+
+    // SW_RX_TX_OFF;
+    // DMX_Ena();
+
     // while (1)
     // {
-    //     if (DMX_INPUT)
+    //     if (!timer_standby)
+    //     {
+    //         timer_standby = 1000;
+    //         sprintf(s_to_send, "c0: %d, c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
+    //                 data7[0],
+    //                 data7[1],
+    //                 data7[2],
+    //                 data7[3],
+    //                 data7[4],
+    //                 data7[5],
+    //                 data7[6]);
+
+    //         Usart2Send(s_to_send);
+    //     }
+
+    //     if (dmx_receive_flag)
     //         CTRL_FAN_ON;
     //     else
     //         CTRL_FAN_OFF;
-    // }
-
-    TIM_14_Init();
-    USART1Config();
-
-    Packet_Detected_Flag = 0;
-    DMX_channel_selected = 1;
-    DMX_channel_quantity = 4;
-
-    SW_RX_TX_OFF;
-    DMX_Ena();
-
-    while (1)
-    {
-        if (!timer_standby)
-        {
-            timer_standby = 1000;
-            sprintf(s_to_send, "c0: %d, c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
-                    data[0],
-                    data[1],
-                    data[2],
-                    data[3],
-                    data[4],
-                    data[5],
-                    data[6]);
-
-            Usart2Send(s_to_send);
-        }
-
-        if (dmx_receive_flag)
-            CTRL_FAN_ON;
-        else
-            CTRL_FAN_OFF;
-
-
-
-    }
-    
+    // }    
     //-- Fin Prueba con DMX512 ----------
     
     //-- Prueba con ADC & DMA ----------
     //-- ADC configuration.
-    // AdcConfig();
-    // ADC1->CR |= ADC_CR_ADSTART;
+#ifdef ADC_WITH_DMA
+    AdcConfig();
+    ADC1->CR |= ADC_CR_ADSTART;
 
-    // //-- DMA configuration.
-    // DMAConfig();
+    //-- DMA configuration.
+    DMAConfig();
 
-    // // Prueba ADC & DMA
-    // while(1)
-    // {
-    //     //busco sync con DMA
-    //     if ((!onsync) && (ADC1->ISR & ADC_IT_EOC))
-    //     {
-    //         ADC1->ISR |= ADC_IT_EOC;
-    //         onsync = 1;
-    //         DMA1_Channel1->CCR |= DMA_CCR_EN;
-    //     }
+    // Prueba ADC & DMA
+    while(1)
+    {
+        //busco sync con DMA
+        while (!onsync)
+        {
+            if (ADC1->ISR & ADC_IT_EOC)
+            {
+                DMA1_Channel1->CCR |= DMA_CCR_EN;
+                ADC1->ISR |= ADC_IT_EOC;
+                onsync = 1;
+            }
+        }
 
-    //     if (DMA1->ISR & DMA_ISR_TCIF1)    //esto es sequence ready
-    //     {
-    //         // Clear DMA TC flag
-    //         DMA1->IFCR = DMA_ISR_TCIF1;
+        if (DMA1->ISR & DMA_ISR_TCIF1)    //esto es sequence ready
+        {
+            // Clear DMA TC flag
+            DMA1->IFCR = DMA_ISR_TCIF1;
 
-    //     }
+        }
 
-    //     //me fijo si hubo overrun
-    //     if (ADC1->ISR & ADC_IT_OVR)
-    //     {
-    //         ADC1->ISR |= ADC_IT_EOC | ADC_IT_EOSEQ | ADC_IT_OVR;
-    //     }
+        //me fijo si hubo overrun
+        if (ADC1->ISR & ADC_IT_OVR)
+        {
+            ADC1->ISR |= ADC_IT_EOC | ADC_IT_EOSEQ | ADC_IT_OVR;
+            Usart2Send("over\n");
+        }
 
-    //     if (!timer_standby)
-    //     {
-    //         timer_standby = 1000;
-    //         sprintf(s_to_send, "i1: %d, i2: %d, i3: %d, i4: %d, i5: %d, i6: %d, t: %d\n",
-    //                 I_Channel_1,
-    //                 I_Channel_2,
-    //                 I_Channel_3,
-    //                 I_Channel_4,
-    //                 I_Channel_5,
-    //                 I_Channel_6,
-    //                 Temp_Channel);
+        if (!timer_standby)
+        {
+            timer_standby = 1000;
+            sprintf(s_to_send, "i1: %d, i2: %d, i3: %d, i4: %d, i5: %d, i6: %d, t: %d\n",
+                    I_Channel_1,
+                    I_Channel_2,
+                    I_Channel_3,
+                    I_Channel_4,
+                    I_Channel_5,
+                    I_Channel_6,
+                    Temp_Channel);
 
-    //         Usart2Send(s_to_send);
-    //     }            
-    // }
+            Usart2Send(s_to_send);
+        }            
+    }
+#endif
     //-- Prueba con ADC & DMA ----------
 
 
@@ -580,7 +576,7 @@ void DMAConfig(void)
     DMA1_Channel1->CCR |= DMA_CCR_CIRC;
 
     //Tamaño del buffer a transmitir
-    DMA1_Channel1->CNDTR = 2;
+    DMA1_Channel1->CNDTR = ADC_CHANNEL_QUANTITY;
 
     //Address del periferico
     DMA1_Channel1->CPAR = (uint32_t) &ADC1->DR;
@@ -617,6 +613,8 @@ void TimingDelay_Decrement(void)
 
     if (dmx_timeout_timer)
         dmx_timeout_timer--;
+    else
+        EXTIOn();    //dejo 20ms del paquete sin INT
 
 }
 

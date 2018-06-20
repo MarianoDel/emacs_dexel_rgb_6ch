@@ -37,8 +37,8 @@
 
 #define PCKT_UPDATE			10
 
-#define SIZEOF_DMX_DATA        256
-#define SIZEOF_DMX_DATA1       512
+#define SIZEOF_DMX_DATA7       7
+#define SIZEOF_DMX_DATA512       512
 
 #define DMX_TIMEOUT	20
 

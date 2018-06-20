@@ -108,6 +108,10 @@ void AdcConfig (void)
     ADC->CCR |= ADC_CCR_TSEN;
 #endif
 
+#ifdef ADC_WITH_DMA
+    ADC1->CFGR1 |= ADC_CFGR1_DMAEN | ADC_CFGR1_DMACFG;
+#endif
+
     //calibrar ADC
     ADCGetCalibrationFactor();
 

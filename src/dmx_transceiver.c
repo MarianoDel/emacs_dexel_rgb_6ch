@@ -22,8 +22,8 @@
 
 //--- VARIABLES EXTERNAS ---//
 extern volatile unsigned char RDM_packet_flag;
-extern volatile unsigned char data1[];
-extern volatile unsigned char data[];
+extern volatile unsigned char data512[];
+extern volatile unsigned char data7[];
 
 extern volatile unsigned char Packet_Detected_Flag;
 extern volatile unsigned char DMX_packet_flag;
@@ -58,10 +58,10 @@ void UpdatePackets (void)
 {
     if (Packet_Detected_Flag)
     {
-        if (data[0] == 0x00)
+        if (data7[0] == 0x00)
             DMX_packet_flag = 1;
 
-        if (data[0] == 0xCC)
+        if (data7[0] == 0xCC)
             RDM_packet_flag = 1;
 
         Packet_Detected_Flag = 0;
@@ -74,10 +74,7 @@ void DmxInt_Serial_Handler (unsigned char dummy)
     
     if (dmx_receive_flag)
     {
-        // if (DMX_channel_received == 0)		//empieza paquete
-        // 	LED_ON;										//TODO: apaga para pruebas
-
-        data1[DMX_channel_received] = dummy;
+        data512[DMX_channel_received] = dummy;
         if (DMX_channel_received < 511)
             DMX_channel_received++;
         else
@@ -87,38 +84,41 @@ void DmxInt_Serial_Handler (unsigned char dummy)
         if (DMX_channel_received >= (DMX_channel_selected + DMX_channel_quantity + 1))
         {
             //los paquetes empiezan en 0 pero no lo verifico
+            //TODO: ojo agrandar data7 cuando uso grandmaster
+            data7[0] = data512[0];            
             for (i=0; i < (DMX_channel_quantity + 1); i++)
             {
-                data[i] = data1[(DMX_channel_selected) + i];
-                //data[4] = 0;
+                data7[i + 1] = data512[(DMX_channel_selected) + i];
             }
 
             //--- Reception end ---//
             DMX_channel_received = 0;
-            //USARTx_RX_DISA;
             dmx_receive_flag = 0;
             Packet_Detected_Flag = 1;
-//				LED_OFF;	//termina paquete			//TODO: apaga para pruebas
         }
 #else
         if (DMX_channel_received >= (DMX_channel_selected + DMX_channel_quantity))
         {
-            //los paquetes empiezan en 0 pero no lo verifico
+            //copio el inicio del buffer y luego los elegidos
+            data7[0] = data512[0];
             for (i=0; i<DMX_channel_quantity; i++)
             {
-                data[i] = data1[(DMX_channel_selected) + i];
+                data7[i + 1] = data512[(DMX_channel_selected) + i];
             }
 
             //--- Reception end ---//
             DMX_channel_received = 0;
-            //USARTx_RX_DISA;
             dmx_receive_flag = 0;
             Packet_Detected_Flag = 1;
-//				LED_OFF;	//termina paquete			//TODO: apaga para pruebas
         }
 #endif
     }
 }
+
+//el paquete empieza desde idle (valor alto) llendo a 0
+//el tiempo en 0 es la senial break (de 87us a 4800us) es valido
+//el tiempo en 1 es la senial mark (de 8us aprox.) no se controla el tiempo
+//despues ya llegan los bytes serie a 250Kbits y pueden tener tiempo idle entre ellos
 
 void DmxInt_Break_Handler (void)
 {
@@ -169,6 +169,7 @@ void DmxInt_Break_Handler (void)
             {
                 //ya tenia el serie habilitado
                 dmx_receive_flag = 1;
+                EXTIOff();    //dejo 20ms del paquete sin INT
             }
             else	//falso disparo
             {
@@ -193,11 +194,11 @@ void UpdateRDMResponder(void)
 {
     RDMKirnoHeader * p_header;
 
-    p_header = (RDMKirnoHeader *) data;
+    p_header = (RDMKirnoHeader *) data7;
     if (RDM_packet_flag)
     {
         //voy a revisar si el paquete tiene buen checksum
-        if (RDMUtil_VerifyChecksumK((unsigned char *)data, data[1]) == true)
+        if (RDMUtil_VerifyChecksumK((unsigned char *)data7, data7[1]) == true)
         {
             LED_ON;
             //reviso si es unicast
@@ -210,7 +211,7 @@ void UpdateRDMResponder(void)
     }
 }
 
-//funcion para enviar el buffer data1[512] al DMX
+//funcion para enviar el buffer data512[512] al DMX
 //recibe PCKT_INIT por el usuario
 //recibe PCKT_UPDATE desde su propia maquina de estados
 void SendDMXPacket (unsigned char new_func)

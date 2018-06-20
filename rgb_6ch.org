@@ -17,11 +17,12 @@
     - [X] ver contraste
     - [X] ver backlight
 
-*** TODO Usart1 para DMX512 [1/4]
+*** TODO Usart1 para DMX512 [4/5]
     - [X] EXTI para break
-    - [ ] recepcion con consola
-    - [ ] pines sw_tx_rx
+    - [X] recepcion con consola
+    - [X] pines sw_tx_rx
     - [ ] transmision modo master
+    - [X] desactivar int por 20ms (tamanio paquete)
 
 *** TODO Hardware adicional FAN
 
@@ -36,3 +37,8 @@
    - [ ] Seteo 2 amper, maximo canal y minimo para el forward
    - [ ] seteo de canal propio
    - [ ] funciones de programas
+** Funcionalidad de Modos
+*** Modo Slave
+*** Modo Master
+    - adentro tiene modo programas, pero los envia en dmx512
+*** Modo Programs
