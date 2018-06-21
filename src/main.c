@@ -64,6 +64,7 @@ volatile unsigned char data7[SIZEOF_DMX_DATA7];
 
 
 //--- VARIABLES GLOBALES ---//
+#define PID_UNDERSAMPLING    16
 short d_ch1;
 short d_ch2;
 short d_ch3;
@@ -114,6 +115,7 @@ int main(void)
     unsigned char size = 0;
 #ifdef ADC_WITH_DMA
     unsigned char undersampling = 0;
+    unsigned short dummysp;
 #endif
 
     unsigned char check_s1 = 0, check_s2 = 0;
@@ -291,7 +293,7 @@ int main(void)
             // Clear DMA TC flag
             DMA1->IFCR = DMA_ISR_TCIF1;
 
-            if (undersampling < 9)
+            if (undersampling < (PID_UNDERSAMPLING - 1))
             {
                 undersampling++;
             }
@@ -400,21 +402,26 @@ int main(void)
         if (Packet_Detected_Flag)
         {
             Packet_Detected_Flag = 0;
-            if (data7[1] > 205)
-                sp1 = 205;
+            dummysp = data7[1];
+            dummysp <<= 2;
+            if (dummysp > 820)
+                sp1 = 820;
             else
-                sp1 = data7[1];
+                sp1 = dummysp;
 
-            if (data7[2] > 205)
-                sp2 = 205;
+            dummysp = data7[2];
+            dummysp <<= 2;
+            if (dummysp > 820)
+                sp2 = 820;
             else
-                sp2 = data7[2];
+                sp2 = dummysp;
 
-            if (data7[3] > 205)
-                sp3 = 205;
+            dummysp = data7[3];
+            dummysp <<= 2;
+            if (dummysp > 820)
+                sp3 = 820;
             else
-                sp3 = data7[3];
-
+                sp3 = dummysp;            
         }
 
         // UpdateSwitches();

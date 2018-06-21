@@ -35,7 +35,8 @@ short d_last = 0;
 // #define KPI	128			// 1
 #define KPI	0			// 0
 // #define KII	16			// .125
-#define KII	128			// .125
+// #define KII	128			// 1
+#define KII	32			// 0.25
 #define KDI	0			// 0
 
 

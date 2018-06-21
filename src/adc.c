@@ -72,7 +72,8 @@ void AdcConfig (void)
 
     //recordar ADC1->CR |= ADC_CR_ADSTART
     // ADC1->CFGR1 |= ADC_Resolution_10b | ADC_ExternalTrigConvEdge_Rising | ADC_ExternalTrigConv_T3_TRGO;
-    ADC1->CFGR1 |= ADC_Resolution_10b | ADC_ExternalTrigConvEdge_Rising | ADC_ExternalTrigConv_T1_TRGO;
+    ADC1->CFGR1 |= ADC_Resolution_12b | ADC_ExternalTrigConvEdge_Rising | ADC_ExternalTrigConv_T1_TRGO;
+    // ADC1->CFGR1 |= ADC_Resolution_10b | ADC_ExternalTrigConvEdge_Rising | ADC_ExternalTrigConv_T1_TRGO;    
     //ADC1->CFGR1 |= ADC_Resolution_12b | ADC_CFGR1_DISCEN;
     // ADC1->CFGR1 |= ADC_Resolution_12b;
 
