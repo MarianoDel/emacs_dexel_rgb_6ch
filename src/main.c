@@ -20,6 +20,7 @@
 
 #include "comm.h"
 #include "signals.h"
+#include "dsp.h"
 
 #include "lcd.h"
 #include "dmx_transceiver.h"
@@ -63,6 +64,20 @@ volatile unsigned char data7[SIZEOF_DMX_DATA7];
 
 
 //--- VARIABLES GLOBALES ---//
+short d_ch1;
+short d_ch2;
+short d_ch3;
+short d_ch4;
+
+short e_z1_ch1;
+short e_z1_ch2;
+short e_z1_ch3;
+short e_z1_ch4;
+
+short e_z2_ch1;
+short e_z2_ch2;
+short e_z2_ch3;
+short e_z2_ch4;
 
 
 // ------- de los timers -------
@@ -94,7 +109,7 @@ int main(void)
     char s_to_send [100];
     unsigned char size = 0;
 #ifdef ADC_WITH_DMA
-    unsigned char onsync = 0;
+    unsigned char undersampling = 0;
 #endif
 
     unsigned char check_s1 = 0, check_s2 = 0;
@@ -164,11 +179,11 @@ int main(void)
 
 
     Update_TIM1_CH1(100);
-    Update_TIM1_CH2(100);    
-    Update_TIM3_CH1(100);
-    Update_TIM3_CH2(100);
-    Update_TIM3_CH3(100);
-    Update_TIM3_CH4(100);
+    Update_TIM1_CH2(0);    
+    Update_TIM3_CH1(0);
+    Update_TIM3_CH2(0);
+    Update_TIM3_CH3(0);
+    Update_TIM3_CH4(0);
 
     //-- Prueba con ADC INT ----------
     //-- ADC configuration.
@@ -256,30 +271,52 @@ int main(void)
     //-- ADC configuration.
 #ifdef ADC_WITH_DMA
     AdcConfig();
-    ADC1->CR |= ADC_CR_ADSTART;
+    // ADC1->CR |= ADC_CR_ADSTART;
 
     //-- DMA configuration.
     DMAConfig();
+    DMA1_Channel1->CCR |= DMA_CCR_EN;
 
+    ADC1->CR |= ADC_CR_ADSTART;
+    
     // Prueba ADC & DMA
     while(1)
     {
-        //busco sync con DMA
-        while (!onsync)
-        {
-            if (ADC1->ISR & ADC_IT_EOC)
-            {
-                DMA1_Channel1->CCR |= DMA_CCR_EN;
-                ADC1->ISR |= ADC_IT_EOC;
-                onsync = 1;
-            }
-        }
-
         if (DMA1->ISR & DMA_ISR_TCIF1)    //esto es sequence ready
         {
             // Clear DMA TC flag
             DMA1->IFCR = DMA_ISR_TCIF1;
 
+            if (undersampling < 9)
+            {
+                undersampling++;
+            }
+            else
+            {
+                undersampling = 0;
+                if (CTRL_FAN)
+                    CTRL_FAN_OFF;
+                else
+                    CTRL_FAN_ON;
+
+                if (check_s1)
+                {
+                    //PID CH3
+                    d_ch3 = PID_roof (205, I_Channel_3, d_ch3, &e_z1_ch3, &e_z2_ch3);
+
+                    if (d_ch3 < 0)
+                        d_ch3 = 0;
+                    else
+                    {
+                        if (d_ch3 > DUTY_90_PERCENT)
+                            d_ch3 = DUTY_90_PERCENT;
+                    
+                        Update_TIM3_CH1(d_ch3);
+                    }
+                }
+                else
+                    Update_TIM3_CH1(0);
+            }
         }
 
         //me fijo si hubo overrun
@@ -302,7 +339,22 @@ int main(void)
                     Temp_Channel);
 
             Usart2Send(s_to_send);
-        }            
+        }
+
+        UpdateSwitches();
+
+        if (CheckS1() && (!check_s1))
+        {
+            check_s1 = 1;
+            Usart2Send("S1\n");
+        }
+        
+        if ((CheckS2()) && (check_s1))
+        {
+            check_s1 = 0;
+            Usart2Send("not S1\n");
+        }
+        
     }
 #endif
     //-- Prueba con ADC & DMA ----------

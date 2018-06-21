@@ -31,9 +31,11 @@ short d_last = 0;
 #define KDV	0			// 0
 
 //todos se dividen por 128
-// #define KPI	32			// 1
-#define KPI	128			// 1
-#define KII	16			// .125
+// #define KPI	32			// 0.5
+// #define KPI	128			// 1
+#define KPI	0			// 0
+// #define KII	16			// .125
+#define KII	128			// .125
 #define KDI	0			// 0
 
 
@@ -248,3 +250,4 @@ short PID_roof (short setpoint, short sample, short local_last_d, short * e_z1, 
 
 	return d;
 }
+

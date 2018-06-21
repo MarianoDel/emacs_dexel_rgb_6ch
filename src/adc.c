@@ -71,13 +71,10 @@ void AdcConfig (void)
     //set resolution, trigger & Continuos or Discontinuous
 
     //recordar ADC1->CR |= ADC_CR_ADSTART
-    ADC1->CFGR1 |= ADC_Resolution_10b | ADC_ExternalTrigConvEdge_Rising | ADC_ExternalTrigConv_T3_TRGO;
-    // ADC1->CFGR1 |= ADC_Resolution_10b | ADC_ExternalTrigConvEdge_Rising | ADC_ExternalTrigConv_T1_TRGO;
+    // ADC1->CFGR1 |= ADC_Resolution_10b | ADC_ExternalTrigConvEdge_Rising | ADC_ExternalTrigConv_T3_TRGO;
+    ADC1->CFGR1 |= ADC_Resolution_10b | ADC_ExternalTrigConvEdge_Rising | ADC_ExternalTrigConv_T1_TRGO;
     //ADC1->CFGR1 |= ADC_Resolution_12b | ADC_CFGR1_DISCEN;
     // ADC1->CFGR1 |= ADC_Resolution_12b;
-
-    //DMA Config
-    //ADC1->CFGR1 |= ADC_CFGR1_DMAEN | ADC_CFGR1_DMACFG;
 
     //tengo que hacer 4 muestreos, voy a hacer que el tiempo de los 4 sean mayor a 1 ciclo de TIM3
     //y menor a 2 ciclos
@@ -108,12 +105,12 @@ void AdcConfig (void)
     ADC->CCR |= ADC_CCR_TSEN;
 #endif
 
+    //calibrar ADC
+    ADCGetCalibrationFactor();
+
 #ifdef ADC_WITH_DMA
     ADC1->CFGR1 |= ADC_CFGR1_DMAEN | ADC_CFGR1_DMACFG;
 #endif
-
-    //calibrar ADC
-    ADCGetCalibrationFactor();
 
     // Enable ADC1
     ADC1->CR |= ADC_CR_ADEN;

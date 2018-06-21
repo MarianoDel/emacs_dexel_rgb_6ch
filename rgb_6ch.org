@@ -4,10 +4,11 @@
     CLOSED: [2018-06-18 Mon 18:24]
 *** DONE PWM 6CH TIM1 enganchado a TIM3
     CLOSED: [2018-06-18 Mon 18:20]
-*** TODO ADC 7 channels con INT [2/3]
+*** DONE ADC 7 channels con INT [3/3]
+    CLOSED: [2018-06-20 Wed 12:36]
     - [X] Con INT
     - [X] verificar mediciones
-    - [ ] Con DMA
+    - [X] Con DMA
 
 *** DONE Switches S1 S2 con Update
     CLOSED: [2018-06-18 Mon 18:21]
@@ -42,3 +43,19 @@
 *** Modo Master
     - adentro tiene modo programas, pero los envia en dmx512
 *** Modo Programs
+
+* Caracteristicas de los LEDS
+** Rojos
+   - Cantidad: 16
+   - Tension para seteo 1 Amper: 18.4V
+   - Tension para seteo 2 Amper: 20.4V
+
+** Verdes
+   - Cantidad: 16
+   - Tension para seteo 1 Amper: 27.6V
+   - Tension para seteo 2 Amper: 30.8V
+
+** Azules
+   - Cantidad: 16
+   - Tension para seteo 1 Amper: 24.8V
+   - Tension para seteo 2 Amper: 28.4V
