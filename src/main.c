@@ -79,6 +79,10 @@ short e_z2_ch2;
 short e_z2_ch3;
 short e_z2_ch4;
 
+short sp1 = 0;
+short sp2 = 0;
+short sp3 = 0;
+
 
 // ------- de los timers -------
 volatile unsigned short timer_standby;
@@ -233,15 +237,15 @@ int main(void)
     //-- Fin Prueba con LCD ----------
 
     //-- Prueba con DMX512 ----------
-    // TIM_14_Init();
-    // USART1Config();
+    TIM_14_Init();
+    USART1Config();
 
-    // Packet_Detected_Flag = 0;
-    // DMX_channel_selected = 1;
-    // DMX_channel_quantity = 6;
+    Packet_Detected_Flag = 0;
+    DMX_channel_selected = 1;
+    DMX_channel_quantity = 6;
 
-    // SW_RX_TX_OFF;
-    // DMX_Ena();
+    SW_RX_TX_OFF;
+    DMX_Ena();
 
     // while (1)
     // {
@@ -299,10 +303,48 @@ int main(void)
                 else
                     CTRL_FAN_ON;
 
-                if (check_s1)
+                //PID CH1
+                if (!sp1)
+                    Update_PWM1(0);
+                else
                 {
-                    //PID CH3
-                    d_ch3 = PID_roof (205, I_Channel_3, d_ch3, &e_z1_ch3, &e_z2_ch3);
+                    d_ch1 = PID_roof (sp1, I_Channel_1, d_ch1, &e_z1_ch1, &e_z2_ch1);
+
+                    if (d_ch1 < 0)
+                        d_ch1 = 0;
+                    else
+                    {
+                        if (d_ch1 > DUTY_90_PERCENT)
+                            d_ch1 = DUTY_90_PERCENT;
+                    
+                        Update_PWM1(d_ch1);
+                    }
+                }
+
+                //PID CH2
+                if (!sp2)
+                    Update_PWM2(0);
+                else
+                {                
+                    d_ch2 = PID_roof (sp2, I_Channel_2, d_ch2, &e_z1_ch2, &e_z2_ch2);
+
+                    if (d_ch2 < 0)
+                        d_ch2 = 0;
+                    else
+                    {
+                        if (d_ch2 > DUTY_90_PERCENT)
+                            d_ch2 = DUTY_90_PERCENT;
+                    
+                        Update_PWM2(d_ch2);
+                    }
+                }
+
+                //PID CH3
+                if (!sp3)
+                    Update_PWM3(0);
+                else
+                {                                
+                    d_ch3 = PID_roof (sp3, I_Channel_3, d_ch3, &e_z1_ch3, &e_z2_ch3);
 
                     if (d_ch3 < 0)
                         d_ch3 = 0;
@@ -311,11 +353,10 @@ int main(void)
                         if (d_ch3 > DUTY_90_PERCENT)
                             d_ch3 = DUTY_90_PERCENT;
                     
-                        Update_TIM3_CH1(d_ch3);
+                        Update_PWM3(d_ch3);
                     }
                 }
-                else
-                    Update_TIM3_CH1(0);
+                
             }
         }
 
@@ -329,6 +370,7 @@ int main(void)
         if (!timer_standby)
         {
             timer_standby = 1000;
+            //envio corrientes
             sprintf(s_to_send, "i1: %d, i2: %d, i3: %d, i4: %d, i5: %d, i6: %d, t: %d\n",
                     I_Channel_1,
                     I_Channel_2,
@@ -339,21 +381,55 @@ int main(void)
                     Temp_Channel);
 
             Usart2Send(s_to_send);
+
+            //envio canales dmx
+            sprintf(s_to_send, "c0: %d, c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
+                    data7[0],
+                    data7[1],
+                    data7[2],
+                    data7[3],
+                    data7[4],
+                    data7[5],
+                    data7[6]);
+
+            Usart2Send(s_to_send);
+            
         }
 
-        UpdateSwitches();
-
-        if (CheckS1() && (!check_s1))
+        //update del dmx
+        if (Packet_Detected_Flag)
         {
-            check_s1 = 1;
-            Usart2Send("S1\n");
+            Packet_Detected_Flag = 0;
+            if (data7[1] > 205)
+                sp1 = 205;
+            else
+                sp1 = data7[1];
+
+            if (data7[2] > 205)
+                sp2 = 205;
+            else
+                sp2 = data7[2];
+
+            if (data7[3] > 205)
+                sp3 = 205;
+            else
+                sp3 = data7[3];
+
         }
+
+        // UpdateSwitches();
+
+        // if (CheckS1() && (!check_s1))
+        // {
+        //     check_s1 = 1;
+        //     Usart2Send("S1\n");
+        // }
         
-        if ((CheckS2()) && (check_s1))
-        {
-            check_s1 = 0;
-            Usart2Send("not S1\n");
-        }
+        // if ((CheckS2()) && (check_s1))
+        // {
+        //     check_s1 = 0;
+        //     Usart2Send("not S1\n");
+        // }
         
     }
 #endif
