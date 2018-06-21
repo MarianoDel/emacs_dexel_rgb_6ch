@@ -28,8 +28,8 @@
 *** TODO Hardware adicional FAN
 
 ** PID para 6CH 2 amper maximo
-*** TODO SP arriba de XXX valor usa PID
-*** TODO Debajo de XXX valor calculo lazo forward
+*** DONE Prueba de 6CH contra DMX
+    CLOSED: [2018-06-21 Thu 14:16]
 
 ** Menues de Display LCD [0/6]
    - [ ] Agregar State Machine para no interrumpir programa

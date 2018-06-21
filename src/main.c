@@ -64,25 +64,34 @@ volatile unsigned char data7[SIZEOF_DMX_DATA7];
 
 
 //--- VARIABLES GLOBALES ---//
-#define PID_UNDERSAMPLING    16
+#define PID_UNDERSAMPLING    20
 short d_ch1;
 short d_ch2;
 short d_ch3;
 short d_ch4;
+short d_ch5;
+short d_ch6;
 
 short e_z1_ch1;
 short e_z1_ch2;
 short e_z1_ch3;
 short e_z1_ch4;
+short e_z1_ch5;
+short e_z1_ch6;
 
 short e_z2_ch1;
 short e_z2_ch2;
 short e_z2_ch3;
 short e_z2_ch4;
+short e_z2_ch5;
+short e_z2_ch6;
 
 short sp1 = 0;
 short sp2 = 0;
 short sp3 = 0;
+short sp4 = 0;
+short sp5 = 0;
+short sp6 = 0;
 
 
 // ------- de los timers -------
@@ -358,7 +367,60 @@ int main(void)
                         Update_PWM3(d_ch3);
                     }
                 }
-                
+
+                //PID CH4
+                if (!sp4)
+                    Update_PWM4(0);
+                else
+                {
+                    d_ch4 = PID_roof (sp4, I_Channel_4, d_ch4, &e_z1_ch4, &e_z2_ch4);
+
+                    if (d_ch4 < 0)
+                        d_ch4 = 0;
+                    else
+                    {
+                        if (d_ch4 > DUTY_90_PERCENT)
+                            d_ch4 = DUTY_90_PERCENT;
+                    
+                        Update_PWM4(d_ch4);
+                    }
+                }
+
+                //PID CH5
+                if (!sp5)
+                    Update_PWM5(0);
+                else
+                {                
+                    d_ch5 = PID_roof (sp5, I_Channel_5, d_ch5, &e_z1_ch5, &e_z2_ch5);
+
+                    if (d_ch5 < 0)
+                        d_ch5 = 0;
+                    else
+                    {
+                        if (d_ch5 > DUTY_90_PERCENT)
+                            d_ch5 = DUTY_90_PERCENT;
+                    
+                        Update_PWM5(d_ch5);
+                    }
+                }
+
+                //PID CH6
+                if (!sp6)
+                    Update_PWM6(0);
+                else
+                {                                
+                    d_ch6 = PID_roof (sp6, I_Channel_6, d_ch6, &e_z1_ch6, &e_z2_ch6);
+
+                    if (d_ch6 < 0)
+                        d_ch6 = 0;
+                    else
+                    {
+                        if (d_ch6 > DUTY_90_PERCENT)
+                            d_ch6 = DUTY_90_PERCENT;
+                    
+                        Update_PWM6(d_ch6);
+                    }
+                }               
             }
         }
 
@@ -402,6 +464,8 @@ int main(void)
         if (Packet_Detected_Flag)
         {
             Packet_Detected_Flag = 0;
+
+            //CH1
             dummysp = data7[1];
             dummysp <<= 2;
             if (dummysp > 820)
@@ -409,6 +473,7 @@ int main(void)
             else
                 sp1 = dummysp;
 
+            //CH2
             dummysp = data7[2];
             dummysp <<= 2;
             if (dummysp > 820)
@@ -416,12 +481,38 @@ int main(void)
             else
                 sp2 = dummysp;
 
+            //CH3
             dummysp = data7[3];
             dummysp <<= 2;
             if (dummysp > 820)
                 sp3 = 820;
             else
-                sp3 = dummysp;            
+                sp3 = dummysp;
+
+            //CH4
+            dummysp = data7[4];
+            dummysp <<= 2;
+            if (dummysp > 820)
+                sp4 = 820;
+            else
+                sp4 = dummysp;
+
+            //CH5
+            dummysp = data7[5];
+            dummysp <<= 2;
+            if (dummysp > 820)
+                sp5 = 820;
+            else
+                sp5 = dummysp;
+
+            //CH6
+            dummysp = data7[6];
+            dummysp <<= 2;
+            if (dummysp > 820)
+                sp6 = 820;
+            else
+                sp6 = dummysp;            
+            
         }
 
         // UpdateSwitches();
