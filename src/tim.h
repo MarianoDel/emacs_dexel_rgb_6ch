@@ -21,6 +21,8 @@
 #define DUTY_100_PERCENT	1000
 #define DUTY_ALWAYS			(DUTY_100_PERCENT + 1)
 
+
+
 //--- Exported macro ---//
 #define RCC_TIM1_CLK 		(RCC->APB2ENR & 0x00000800)
 #define RCC_TIM1_CLK_ON 	RCC->APB2ENR |= 0x00000800

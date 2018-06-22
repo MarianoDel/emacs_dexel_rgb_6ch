@@ -4,32 +4,34 @@
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### COMM.H #################################
+// #### MODO_SLAVE.H #############################
 //---------------------------------------------
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef _COMM_H_
-#define _COMM_H_
+#ifndef _MODO_SLAVE_H_
+#define _MODO_SLAVE_H_
 
 
 //--- Exported types ---//
+typedef enum {
+	SLAVE_MODE_INIT = 0,
+        SLAVE_MODE_CONF,
+	SLAVE_MODE_RUNNING
+
+} slave_mode_t;
+
+
 
 //--- Exported constants ---//
-// typedef enum {
-// 	resp_ok = 0,
-// 	resp_not_own,
-// 	resp_error
 
-// } resp_t;
 
 //--- Exported macro ---//
 
-//--- Exported functions ---//
-void UpdateCommunications (void);
-unsigned char SerialProcess (void);
-unsigned char InterpretarMsg (void);
 
+//--- Exported functions ---//
+void FuncSlaveMode (void);
+void FuncSlaveModeReset (void);
 
 #endif
-//--- End ---//
+
 //--- END OF FILE ---//

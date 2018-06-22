@@ -29,12 +29,10 @@
 // #define SOFTWARE_VERSION_1_1
 
 //---- Features Configuration ----------------
-#define FIRST_POWER_BOARD
-// #define SECOND_POWER_BOARD
+
 
 //------ Configuration for Firmware-Channels -----
-// #define LED_AND_LASER_SAME_POWER    //se toma la potencia de laser como master
-#define LED_AND_LASER_DIFFERENT_POWER
+
 
 //---- End of Features Configuration ----------
 
@@ -201,6 +199,23 @@ typedef enum
     S_FULL
 } sw_state_t;
 
+//ESTADOS DEL MAIN
+typedef enum
+{    
+    MAIN_INIT = 0,
+    MAIN_HARDWARE_INIT,
+    MAIN_GET_CONF,
+    MAIN_SLAVE_MODE
+    
+} main_state_t;
+
+typedef enum {
+    resp_ok = 0,
+    resp_continue,
+    resp_error,
+    resp_finish
+
+} resp_t;
 
 
 /* Module Functions ------------------------------------------------------------*/

@@ -106,7 +106,6 @@ SRC += ./src/it.c
 SRC += ./src/gpio.c
 SRC += ./src/tim.c
 # SRC += ./src/comm.c
-# SRC += ./src/signals.c
 SRC += ./src/adc.c
 SRC += ./src/uart.c
 SRC += ./src/dsp.c
@@ -114,6 +113,8 @@ SRC += ./src/hard.c
 SRC += ./src/utils.c
 SRC += ./src/lcd.c
 SRC += ./src/dmx_transceiver.c
+SRC += ./src/modo_slave.c
+SRC += ./src/lcd_utils.c
 # SRC += ./src/programs_functions.c
 ## System Support
 #SRC += ./cmsis_boot/system_stm32f0xx.c
