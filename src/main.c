@@ -57,6 +57,7 @@ volatile unsigned short DMX_channel_received = 0;
 volatile unsigned short DMX_channel_selected = 1;
 volatile unsigned char DMX_channel_quantity = 4;
 volatile unsigned char dmx_timeout_timer = 0;
+volatile unsigned char dmx_filters_timer = 0;
 
 volatile unsigned char data512[SIZEOF_DMX_DATA512];
 //static unsigned char data_back[10];
@@ -86,12 +87,26 @@ short e_z2_ch4;
 short e_z2_ch5;
 short e_z2_ch6;
 
-short sp1 = 0;
-short sp2 = 0;
-short sp3 = 0;
-short sp4 = 0;
-short sp5 = 0;
-short sp6 = 0;
+unsigned short sp1 = 0;
+unsigned short sp2 = 0;
+unsigned short sp3 = 0;
+unsigned short sp4 = 0;
+unsigned short sp5 = 0;
+unsigned short sp6 = 0;
+
+unsigned short sp1_filtered = 0;
+unsigned short sp2_filtered = 0;
+unsigned short sp3_filtered = 0;
+unsigned short sp4_filtered = 0;
+unsigned short sp5_filtered = 0;
+unsigned short sp6_filtered = 0;
+
+unsigned short v_sp1 [8];
+unsigned short v_sp2 [8];
+unsigned short v_sp3 [8];
+unsigned short v_sp4 [8];
+unsigned short v_sp5 [8];
+unsigned short v_sp6 [8];
 
 
 // ------- de los timers -------
@@ -255,6 +270,16 @@ int main(void)
     DMX_channel_selected = 1;
     DMX_channel_quantity = 6;
 
+    for (i = 0; i < 8; i++)
+    {
+        v_sp1[i] = 0;
+        v_sp2[i] = 0;
+        v_sp3[i] = 0;
+        v_sp4[i] = 0;
+        v_sp5[i] = 0;
+        v_sp6[i] = 0;
+    }
+        
     SW_RX_TX_OFF;
     DMX_Ena();
 
@@ -315,11 +340,11 @@ int main(void)
                     CTRL_FAN_ON;
 
                 //PID CH1
-                if (!sp1)
+                if (!sp1_filtered)
                     Update_PWM1(0);
                 else
                 {
-                    d_ch1 = PID_roof (sp1, I_Channel_1, d_ch1, &e_z1_ch1, &e_z2_ch1);
+                    d_ch1 = PID_roof (sp1_filtered, I_Channel_1, d_ch1, &e_z1_ch1, &e_z2_ch1);
 
                     if (d_ch1 < 0)
                         d_ch1 = 0;
@@ -333,11 +358,11 @@ int main(void)
                 }
 
                 //PID CH2
-                if (!sp2)
+                if (!sp2_filtered)
                     Update_PWM2(0);
                 else
                 {                
-                    d_ch2 = PID_roof (sp2, I_Channel_2, d_ch2, &e_z1_ch2, &e_z2_ch2);
+                    d_ch2 = PID_roof (sp2_filtered, I_Channel_2, d_ch2, &e_z1_ch2, &e_z2_ch2);
 
                     if (d_ch2 < 0)
                         d_ch2 = 0;
@@ -351,11 +376,11 @@ int main(void)
                 }
 
                 //PID CH3
-                if (!sp3)
+                if (!sp3_filtered)
                     Update_PWM3(0);
                 else
                 {                                
-                    d_ch3 = PID_roof (sp3, I_Channel_3, d_ch3, &e_z1_ch3, &e_z2_ch3);
+                    d_ch3 = PID_roof (sp3_filtered, I_Channel_3, d_ch3, &e_z1_ch3, &e_z2_ch3);
 
                     if (d_ch3 < 0)
                         d_ch3 = 0;
@@ -369,11 +394,11 @@ int main(void)
                 }
 
                 //PID CH4
-                if (!sp4)
+                if (!sp4_filtered)
                     Update_PWM4(0);
                 else
                 {
-                    d_ch4 = PID_roof (sp4, I_Channel_4, d_ch4, &e_z1_ch4, &e_z2_ch4);
+                    d_ch4 = PID_roof (sp4_filtered, I_Channel_4, d_ch4, &e_z1_ch4, &e_z2_ch4);
 
                     if (d_ch4 < 0)
                         d_ch4 = 0;
@@ -387,11 +412,11 @@ int main(void)
                 }
 
                 //PID CH5
-                if (!sp5)
+                if (!sp5_filtered)
                     Update_PWM5(0);
                 else
                 {                
-                    d_ch5 = PID_roof (sp5, I_Channel_5, d_ch5, &e_z1_ch5, &e_z2_ch5);
+                    d_ch5 = PID_roof (sp5_filtered, I_Channel_5, d_ch5, &e_z1_ch5, &e_z2_ch5);
 
                     if (d_ch5 < 0)
                         d_ch5 = 0;
@@ -405,11 +430,11 @@ int main(void)
                 }
 
                 //PID CH6
-                if (!sp6)
+                if (!sp6_filtered)
                     Update_PWM6(0);
                 else
                 {                                
-                    d_ch6 = PID_roof (sp6, I_Channel_6, d_ch6, &e_z1_ch6, &e_z2_ch6);
+                    d_ch6 = PID_roof (sp6_filtered, I_Channel_6, d_ch6, &e_z1_ch6, &e_z2_ch6);
 
                     if (d_ch6 < 0)
                         d_ch6 = 0;
@@ -514,6 +539,23 @@ int main(void)
                 sp6 = dummysp;            
             
         }
+
+        //filters para el dmx
+        if (!dmx_filters_timer)
+        {
+            dmx_filters_timer = 5;
+
+            sp1_filtered = MAFilterFast (sp1, v_sp1);
+            sp2_filtered = MAFilterFast (sp2, v_sp2);
+            sp3_filtered = MAFilterFast (sp3, v_sp3);
+            sp4_filtered = MAFilterFast (sp4, v_sp4);
+            sp5_filtered = MAFilterFast (sp5, v_sp5);
+            sp6_filtered = MAFilterFast (sp6, v_sp6);
+        }
+
+
+                
+        
 
         // UpdateSwitches();
 
@@ -836,6 +878,9 @@ void TimingDelay_Decrement(void)
 
     if (switches_timer)
         switches_timer--;
+
+    if (dmx_filters_timer)
+        dmx_filters_timer--;
 
     if (dmx_timeout_timer)
         dmx_timeout_timer--;
