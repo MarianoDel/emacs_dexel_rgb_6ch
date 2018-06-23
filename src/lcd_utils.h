@@ -10,6 +10,11 @@
 #ifndef _LCD_UTILS_H_
 #define _LCD_UTILS_H_
 
+//-- README ------------------------------
+//necesita dos funciones de teclas para los menues
+//checkS1()
+//checkS2()
+
 //-- Config Defines for the LCD used ----------
 #define LINE_LENGTH    8
 #define USE_SCROLL_SECOND_LINE
@@ -34,13 +39,19 @@
 #define TT_SHOW_SELECT_IN_OFF   500
 
 //for func scroll in ms
-#define TT_SCROLL    500
+#define TT_SCROLL    100
 
 
-//las respuestas las paso hard.h
+//-- Internals Defines ----------
+
+//las respuestas las paso hard.h porque las reuso en otro lados
 // typedef enum {
 //     resp_ok = 0,
 //     resp_continue,
+//     resp_selected,
+//     resp_change,
+//     resp_change_all_up,
+//     resp_working,
 //     resp_error,
 //     resp_finish
 
@@ -119,7 +130,8 @@
 #define FuncChangePercent(X)	FuncChange(X, CHANGE_PERCENT, 0, 100)
 #define FuncChangeSecs(X)		FuncChange(X, CHANGE_SECS, 0, 10)
 #define FuncChangeSecsMove(X)		FuncChange(X, CHANGE_SECS, 30, 120)
-#define FuncChangeChannels(X)	FuncChange(X, CHANGE_CHANNELS, 1, 255)
+#define FuncChangeChannels(X)	FuncChange(X, CHANGE_CHANNELS, 1, 511)
+#define FuncChangeChannelsQuantity(X)	FuncChange(X, CHANGE_CHANNELS, 1, 6)
 #define FuncChangePercentReset()	FuncChangeReset()
 #define FuncChangeSecsReset()	FuncChangeReset()
 #define FuncChangeChannelsReset()	FuncChangeReset()
@@ -134,7 +146,8 @@ unsigned char FuncScroll1 (const char *);
 unsigned char FuncScroll2 (const char *);
 
 //unsigned char FuncChange (unsigned char *);
-unsigned char FuncChange (unsigned char *, unsigned char , unsigned char , unsigned char );
+unsigned char FuncChange (unsigned short *, unsigned char, unsigned short, unsigned short);
+unsigned char FuncChangeOnOff (unsigned char *);
 
 void FuncOptionsReset (void);
 void FuncShowSelectv2Reset (void);

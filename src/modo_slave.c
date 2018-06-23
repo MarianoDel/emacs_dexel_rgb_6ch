@@ -42,7 +42,8 @@ volatile unsigned short slave_mode_enable_menu_timer = 0;
 // extern volatile unsigned short scroll1_timer;
 
 
-
+unsigned short dmx_channel = 0;
+unsigned char grandmaster_value = 0;
 
 //--- Para el PID ----------
 unsigned char undersampling = 0;
@@ -118,6 +119,9 @@ typedef enum {
     SLAVE_MODE_MENU_CONF_1,
     SLAVE_MODE_MENU_CONF_2,
     SLAVE_MODE_MENU_CONF_3,
+    SLAVE_MODE_MENU_DMX_CHANNEL,
+    SLAVE_MODE_MENU_DMX_CHANNEL_QUANTITY,
+    SLAVE_MODE_MENU_GRANDMASTER
 
 } slave_mode_menu_t;
 
@@ -507,13 +511,13 @@ inline void UpdateSlaveModeMenuManager (void)
 inline resp_t MenuSlaveMode (void)
 {
     resp_t resp = resp_continue;
-    unsigned char dummy = 0;
+    unsigned short dummy = 0;
 
     switch (slave_mode_menu_state)
     {
     case SLAVE_MODE_MENU_INIT:
         //empiezo con las selecciones
-        resp = FuncShowBlink ((const char *) "Starting Slave_Mode", (const char *) "Selections", 1, BLINK_NO);
+        resp = FuncShowBlink ((const char *) "Slv Mode", (const char *) "Selects ", 1, BLINK_NO);
 
         if (resp == resp_finish)
         {
@@ -523,13 +527,13 @@ inline resp_t MenuSlaveMode (void)
         break;
 
     case SLAVE_MODE_MENU_CONF_1:
-        resp = FuncShowSelectv2 ((const char * ) "Move Sensor Conf");
+        resp = FuncShowSelectv2 ((const char * ) "DMX chnl");
 
         if (resp == resp_change)	//cambio de menu
             slave_mode_menu_state = SLAVE_MODE_MENU_CONF_2;
 
         if (resp == resp_selected)	//se eligio el menu
-            slave_mode_menu_state = SLAVE_MODE_MENU_CONF_3;
+            slave_mode_menu_state = SLAVE_MODE_MENU_DMX_CHANNEL;
 
         if (resp != resp_continue)
             resp = resp_working;
@@ -537,14 +541,14 @@ inline resp_t MenuSlaveMode (void)
         break;
 
     case SLAVE_MODE_MENU_CONF_2:
-        resp = FuncShowSelectv2 ((const char * ) "Energy Harv Conf");
+        resp = FuncShowSelectv2 ((const char * ) "Chn qnty");
 
         if (resp == resp_change)	//cambio de menu
             slave_mode_menu_state = SLAVE_MODE_MENU_CONF_3;
 
 
         if (resp == resp_selected)	//se eligio el menu
-            slave_mode_menu_state = SLAVE_MODE_MENU_CONF_2;
+            slave_mode_menu_state = SLAVE_MODE_MENU_DMX_CHANNEL_QUANTITY;
 
         if (resp != resp_continue)
             resp = resp_working;
@@ -552,60 +556,91 @@ inline resp_t MenuSlaveMode (void)
         break;
 
     case SLAVE_MODE_MENU_CONF_3:
-        resp = FuncShowSelectv2 ((const char * ) "Max Dimming Conf");
+        resp = FuncShowSelectv2 ((const char * ) "W Grandm");
 
         if (resp == resp_change)	//cambio de menu
-            slave_mode_menu_state = SLAVE_MODE_MENU_CONF_2;
+            slave_mode_menu_state = SLAVE_MODE_MENU_CONF_1;
 
         if (resp == resp_selected)	//se eligio el menu
-            slave_mode_menu_state = SLAVE_MODE_MENU_CONF_2;
+            slave_mode_menu_state = SLAVE_MODE_MENU_GRANDMASTER;
 
         if (resp != resp_continue)
             resp = resp_working;
 
         break;
 
-    // case SLAVE_MODE_MENU_MIN_DIMMING:
-    //     resp = FuncShowSelectv2 ((const char * ) "Min Dimming Conf");
+    // case SLAVE_MODE_MENU_CONF_4:
+    //     resp = FuncShowSelectv2 ((const char * ) "Done!   ");
 
     //     if (resp == resp_change)	//cambio de menu
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_RAMP_ON_START;
+    //         slave_mode_menu_state = SLAVE_MODE_MENU_CONF_1;
 
     //     if (resp == resp_selected)	//se eligio el menu
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_MIN_DIMMING_SELECTED;
+    //     {
+    //         slave_mode_menu_state = SLAVE_MODE_MENU_INIT;
+    //     }
 
     //     if (resp != resp_continue)
     //         resp = resp_working;
 
     //     break;
+        
+        // -------- DESDE ACA CONFIGURO ---------//
+        
+    case SLAVE_MODE_MENU_DMX_CHANNEL:
+        resp = FuncChangeChannels (&dmx_channel);
 
-    // case SLAVE_MODE_MENU_RAMP_ON_START:
-    //     resp = FuncShowSelectv2 ((const char * ) "Ramp ON/OFF Conf");
+        if (resp == resp_finish)
+        {
+            slave_mode_menu_state = SLAVE_MODE_MENU_CONF_1;
+            // unsigned short local;
+            // // local = Slave_ModeStruct_local.max_dimmer_value_percent * 255;
+            // // local = local / 100;
+            // // Slave_ModeStruct_local.max_dimmer_value_dmx = local;
 
-    //     if (resp == resp_change)	//cambio de menu
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_RAMP_ON_DIMMING;
+            // // slave_mode_menu_state = SLAVE_MODE_MENU_MAX_DIMMING_SELECTED_1;
+            // // LCD_1ER_RENGLON;
+            // // LCDTransmitStr((const char *) "wait to free    ");
+            resp = resp_working;
+        }
+        break;
 
-    //     if (resp == resp_selected)	//se eligio el menu
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_RAMP_ON_START_SELECTED;
+    case SLAVE_MODE_MENU_DMX_CHANNEL_QUANTITY:
+        resp = FuncChangeChannelsQuantity (&dmx_channel);
 
-    //     if (resp != resp_continue)
-    //         resp = resp_working;
+        if (resp == resp_finish)
+        {
+            slave_mode_menu_state = SLAVE_MODE_MENU_CONF_2;
+            // unsigned short local;
+            // // local = Slave_ModeStruct_local.max_dimmer_value_percent * 255;
+            // // local = local / 100;
+            // // Slave_ModeStruct_local.max_dimmer_value_dmx = local;
 
-    //     break;
+            // // slave_mode_menu_state = SLAVE_MODE_MENU_MAX_DIMMING_SELECTED_1;
+            // // LCD_1ER_RENGLON;
+            // // LCDTransmitStr((const char *) "wait to free    ");
+            resp = resp_working;
+        }
+        break;
 
-    // case SLAVE_MODE_MENU_RAMP_ON_DIMMING:
-    //     resp = FuncShowSelectv2 ((const char * ) "Ramp on Dim Conf");
+    case SLAVE_MODE_MENU_GRANDMASTER:        
+        resp = FuncChangeOnOff (&grandmaster_value);
 
-    //     if (resp == resp_change)	//cambio de menu
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_MOV_SENS;
+        if (resp == resp_finish)
+        {
+            slave_mode_menu_state = SLAVE_MODE_MENU_CONF_3;
+            // unsigned short local;
+            // // local = Slave_ModeStruct_local.max_dimmer_value_percent * 255;
+            // // local = local / 100;
+            // // Slave_ModeStruct_local.max_dimmer_value_dmx = local;
 
-    //     if (resp == resp_selected)	//se eligio el menu
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_RAMP_ON_DIMMING_SELECTED;
-
-    //     if (resp != resp_continue)
-    //         resp = resp_working;
-
-    //     break;
+            // // slave_mode_menu_state = SLAVE_MODE_MENU_MAX_DIMMING_SELECTED_1;
+            // // LCD_1ER_RENGLON;
+            // // LCDTransmitStr((const char *) "wait to free    ");
+            resp = resp_working;
+        }
+        break;
+        
 
     // case SLAVE_MODE_MENU_MOV_SENS_SELECTED:
     //     if (Slave_ModeStruct_local.move_sensor_enable)

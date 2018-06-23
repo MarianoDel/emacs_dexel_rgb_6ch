@@ -15,6 +15,7 @@
 #include "lcd.h"
 
 #include <string.h>
+#include <stdio.h>
 
 
 //--- VARIABLES EXTERNAS ---//
@@ -36,6 +37,23 @@ unsigned char blinking_how_many = 0;
 
 //funcion show select
 unsigned char show_select_state = 0;
+
+//funcion options
+unsigned char options_state = 0;
+unsigned char options_curr_sel = 0;
+
+//funcion options
+unsigned char change_state = 0;
+unsigned short change_current_val = 0;
+unsigned char change_last_option = 0;
+
+#ifdef LINE_LENGTH_16
+const unsigned char s_sel_up_down [] = { 0x02, 0x08, 0x0f };
+#endif
+
+#ifdef LINE_LENGTH_8
+const unsigned char s_sel_up_down [] = { 0x02, 0x05, 0x07 };
+#endif
 
 //funcion scroll renglon 1
 #ifdef USE_SCROLL_FIRST_LINE
@@ -131,9 +149,9 @@ resp_t FuncShowBlink (const char * p_text1, const char * p_text2, unsigned char 
         if (!show_select_timer)
         {
             LCD_1ER_RENGLON;
-            LCDTransmitStr((const char *)s_blank);
+            LCDTransmitStr((const char *) s_blank);
             LCD_2DO_RENGLON;
-            LCDTransmitStr((const char *)s_blank);
+            LCDTransmitStr((const char *) s_blank);
             show_select_timer = TT_BLINKING_IN_OFF;
             blinking_state = BLINKING_MARK_D;
         }
@@ -148,7 +166,7 @@ resp_t FuncShowBlink (const char * p_text1, const char * p_text2, unsigned char 
                 LCD_1ER_RENGLON;
                 LCDTransmitStr(p_text1);
                 LCD_2DO_RENGLON;
-                LCDTransmitStr((const char *)s_blank);
+                LCDTransmitStr((const char *) s_blank);
                 show_select_timer = TT_BLINKING_IN_ON;
                 blinking_state = BLINKING_SPACE_C;
             }
@@ -416,210 +434,301 @@ unsigned char FuncShowSelectv2 (const char * p_text)
     return resp;
 }
 
-// //recibe el primer renglon y el segundo
-// //recibe un puntero a las posiciones de memoria de los asteriscos
-// //recibe una variable de catidad de opciones y otra variable con la primera opcion a la que apunta
-// //devuelve resp_continue o (RESP_SELECTED | opcion_elegida << 4)
-// unsigned char FuncOptions (const char * p_text1, const char * p_text2, unsigned char * p_sel, unsigned char opts, unsigned char first_option)
-// {
-//     unsigned char resp = resp_continue;
+//recibe el primer renglon y el segundo
+//recibe un puntero a las posiciones de memoria de los asteriscos
+//recibe una variable de cantidad de opciones y otra variable con la primera opcion a la que apunta
+//devuelve resp_continue o (RESP_SELECTED | opcion_elegida << 4)
+unsigned char FuncOptions (const char * p_text1, const char * p_text2,
+                           unsigned char * p_sel, unsigned char opts, unsigned char first_option)
+{
+    unsigned char resp = resp_continue;
 
-//     if (first_option & 0x80)	//me piden que elija una opcion especial
-//     {
-//         if ((first_option & 0x7F) < opts)	//no esta fuera de escala
-//         {
-//             if (options_state == OPTIONS_INIT)
-//                 options_curr_sel = (first_option & 0x7F);
-//             else
-//             {
-//                 if (options_curr_sel != (first_option & 0x7F)) //fuerzo el cambio, ya estaba mostrando la pantalla
-//                     options_state = OPTIONS_CHANGE_SELECT;
-//             }
-//         }
-//         else
-//             options_curr_sel = 0;
-//     }
+    if (first_option & 0x80)	//me piden que elija una opcion especial
+    {
+        if ((first_option & 0x7F) < opts)	//no esta fuera de escala
+        {
+            if (options_state == OPTIONS_INIT)
+                options_curr_sel = (first_option & 0x7F);
+            else
+            {
+                if (options_curr_sel != (first_option & 0x7F)) //fuerzo el cambio, ya estaba mostrando la pantalla
+                    options_state = OPTIONS_CHANGE_SELECT;
+            }
+        }
+        else
+            options_curr_sel = 0;
+    }
 
-//     switch (options_state)
-//     {
-//     case OPTIONS_INIT:
-//         LCD_1ER_RENGLON;
-//         LCDTransmitStr(p_text1);
-//         LCD_2DO_RENGLON;
-//         LCDTransmitStr(p_text2);
-//         show_select_timer = 0;
-//         options_state++;
-//         break;
+    switch (options_state)
+    {
+    case OPTIONS_INIT:
+        LCD_1ER_RENGLON;
+        LCDTransmitStr(p_text1);
+        LCD_2DO_RENGLON;
+        LCDTransmitStr(p_text2);
+        show_select_timer = 0;
+        options_state++;
+        break;
 
-//     case OPTIONS_WAIT_SELECT:
-//         if (!show_select_timer)
-//         {
-//             Lcd_SetDDRAM(*(p_sel + options_curr_sel));
-//             LCDTransmitStr("*");
-//             show_select_timer = TT_SHOW_SELECT_IN_ON;
-//             options_state++;
-//         }
-//         break;
+    case OPTIONS_WAIT_SELECT:
+        if (!show_select_timer)
+        {
+            Lcd_SetDDRAM(*(p_sel + options_curr_sel));
+            LCDTransmitStr("*");
+            show_select_timer = TT_SHOW_SELECT_IN_ON;
+            options_state++;
+        }
+        break;
 
-//     case OPTIONS_WAIT_SELECT_1:
-//         if (CheckS1() > S_NO)
-//         {
-//             options_state = OPTIONS_CHANGE_SELECT;
-//         }
+    case OPTIONS_WAIT_SELECT_1:
+        if (CheckS1() > S_NO)
+        {
+            options_state = OPTIONS_CHANGE_SELECT;
+        }
 
-//         if (CheckS2() > S_NO)
-//         {
-//             resp = (RESP_SELECTED | (options_curr_sel << 4));
-//             options_state = OPTIONS_INIT;
-//         }
+        if (CheckS2() > S_NO)
+        {
+            resp = (resp_selected | (options_curr_sel << 4));
+            options_state = OPTIONS_INIT;
+        }
 
-//         if (!show_select_timer)
-//         {
-//             Lcd_SetDDRAM(*(p_sel + options_curr_sel));
-//             LCDTransmitStr(" ");
-//             show_select_timer = TT_SHOW_SELECT_IN_OFF;
-//             options_state = OPTIONS_WAIT_SELECT_3;
-//         }
-//         break;
+        if (!show_select_timer)
+        {
+            Lcd_SetDDRAM(*(p_sel + options_curr_sel));
+            LCDTransmitStr(" ");
+            show_select_timer = TT_SHOW_SELECT_IN_OFF;
+            options_state = OPTIONS_WAIT_SELECT_3;
+        }
+        break;
 
-//     case OPTIONS_WAIT_SELECT_2:
-//         if (CheckS1() == S_NO)
-//         {
-//             options_state = OPTIONS_WAIT_SELECT_1;
-//         }
-//         break;
+    case OPTIONS_WAIT_SELECT_2:
+        if (CheckS1() == S_NO)
+        {
+            options_state = OPTIONS_WAIT_SELECT_1;
+        }
+        break;
 
-//     case OPTIONS_WAIT_SELECT_3:
-//         if (CheckS1() > S_NO)
-//         {
-//             options_state = OPTIONS_CHANGE_SELECT;
-//         }
+    case OPTIONS_WAIT_SELECT_3:
+        if (CheckS1() > S_NO)
+        {
+            options_state = OPTIONS_CHANGE_SELECT;
+        }
 
-//         if (CheckS2() > S_NO)
-//         {
-//             resp = (RESP_SELECTED | (options_curr_sel << 4));
-//             options_state = OPTIONS_INIT;
-//         }
+        if (CheckS2() > S_NO)
+        {
+            resp = (resp_selected | (options_curr_sel << 4));
+            options_state = OPTIONS_INIT;
+        }
 
-//         if (!show_select_timer)
-//         {
-//             Lcd_SetDDRAM(*(p_sel + options_curr_sel));
-//             LCDTransmitStr("*");
-//             show_select_timer = TT_SHOW_SELECT_IN_ON;
-//             options_state = OPTIONS_WAIT_SELECT_1;
-//         }
-//         break;
+        if (!show_select_timer)
+        {
+            Lcd_SetDDRAM(*(p_sel + options_curr_sel));
+            LCDTransmitStr("*");
+            show_select_timer = TT_SHOW_SELECT_IN_ON;
+            options_state = OPTIONS_WAIT_SELECT_1;
+        }
+        break;
 
-//     case OPTIONS_CHANGE_SELECT:
-//         Lcd_SetDDRAM(*(p_sel + options_curr_sel));
-//         LCDTransmitStr(" ");
+    case OPTIONS_CHANGE_SELECT:
+        Lcd_SetDDRAM(*(p_sel + options_curr_sel));
+        LCDTransmitStr(" ");
 
-//         if (first_option & 0x80)	//me piden que elija una opcion especial
-//             options_curr_sel = (first_option & 0x7F);
-//         else
-//         {
-//             if (options_curr_sel < (opts - 1))
-//                 options_curr_sel++;
-//             else
-//                 options_curr_sel = 0;
-//         }
+        if (first_option & 0x80)	//me piden que elija una opcion especial
+            options_curr_sel = (first_option & 0x7F);
+        else
+        {
+            if (options_curr_sel < (opts - 1))
+                options_curr_sel++;
+            else
+                options_curr_sel = 0;
+        }
 
-//         Lcd_SetDDRAM(*(p_sel + options_curr_sel));
-//         LCDTransmitStr("*");
+        Lcd_SetDDRAM(*(p_sel + options_curr_sel));
+        LCDTransmitStr("*");
 
-//         options_state = OPTIONS_WAIT_SELECT_2;
-//         break;
+        options_state = OPTIONS_WAIT_SELECT_2;
+        break;
 
-//     default:
-//         options_state = OPTIONS_INIT;
-//         break;
-//     }
+    default:
+        options_state = OPTIONS_INIT;
+        break;
+    }
 
-//     return resp;
-// }
+    return resp;
+}
 
-// void FuncOptionsReset (void)
-// {
-//     options_state = OPTIONS_INIT;
-// }
+void FuncOptionsReset (void)
+{
+    options_state = OPTIONS_INIT;
+}
 
-// //recibe el valor original para arrancar seleccion
-// //recibe el modo CHANGE_PERCENT, CHANGE_SECS o CHANGE_CHANNELS Ademas puede tener |CHANGE_RESET
-// //recibe min val permitido, MAX val permitido
-// //devuelve resp_continue o resp_finish si termino la seleccion
-// unsigned char FuncChange (unsigned char * p_orig_value, unsigned char mode, unsigned char min_val, unsigned char max_val)
-// {
-//     unsigned char resp = resp_continue;
-//     unsigned char resp_down = resp_continue;
-//     char s_current [20];
+//recibe el valor original para arrancar seleccion
+//recibe el modo CHANGE_PERCENT, CHANGE_SECS o CHANGE_CHANNELS Ademas puede tener |CHANGE_RESET
+//recibe min val permitido, MAX val permitido
+//devuelve resp_continue o resp_finish si termino la seleccion
+unsigned char FuncChange (unsigned short * p_orig_value, unsigned char mode,
+                          unsigned short min_val, unsigned short max_val)
+{
+    unsigned char resp = resp_continue;
+    char s_current [20];
 
-//     switch (change_state)
-//     {
-//     case CHANGE_INIT:
-//         change_current_val = *p_orig_value;
-//         change_last_option = 0;
-//         FuncOptionsReset();
-//         change_state++;
-//         break;
+    switch (change_state)
+    {
+    case CHANGE_INIT:
+        change_current_val = *p_orig_value;
+        change_last_option = 0;
+        FuncOptionsReset();
+        change_state++;
+        break;
 
-//     case CHANGE_WAIT_SELECT:
-//         memset(s_current, ' ', sizeof(s_current));
-//         if (mode == CHANGE_PERCENT)
-//         {
-//             sprintf(s_current, "chg  %3d", change_current_val);
-//             strcat(s_current, (const char*)"%   sel");
-//         }
-//         else if (mode == CHANGE_SECS)
-//         {
-//             sprintf(s_current, "chg %2d", change_current_val);
-//             strcat(s_current, (const char*)" secs sel");
-//         }
-//         else	//debe ser CHANNELS
-//         {
-//             sprintf(s_current, "chg   %3d", change_current_val);
-//             strcat(s_current, (const char*)"ch  sel");
-//         }
+    case CHANGE_WAIT_SELECT:
+#ifdef LINE_LENGTH_8
+        if (mode == CHANGE_PERCENT)
+        {
+            sprintf(s_current, "%3d", change_current_val);
+            strcat(s_current, (const char*)"%   sel");
+        }
+        else if (mode == CHANGE_SECS)
+        {
+            sprintf(s_current, "%2d", change_current_val);
+            strcat(s_current, (const char*)" secs sel");
+        }
+        else	//debe ser CHANNELS
+        {
+            sprintf(s_current, "%3d ", change_current_val);
+            strcat(s_current, (const char*)"ch sel");
+        }
 
-//         resp_down = FuncOptions ((const char *) "up  down   done ", s_current,(unsigned char *) s_sel_up_down, 3, change_last_option);
-//         change_last_option = 0;
+        resp = FuncOptions ((const char *) "up dn e ",
+                            s_current,(unsigned char *) s_sel_up_down,
+                            3, change_last_option);
+#endif
+        
+#ifdef LINE_LENGTH_16
+        memset(s_current, ' ', sizeof(s_current));
+        if (mode == CHANGE_PERCENT)
+        {
+            sprintf(s_current, "chg  %3d", change_current_val);
+            strcat(s_current, (const char*)"%   sel");
+        }
+        else if (mode == CHANGE_SECS)
+        {
+            sprintf(s_current, "chg %2d", change_current_val);
+            strcat(s_current, (const char*)" secs sel");
+        }
+        else	//debe ser CHANNELS
+        {
+            sprintf(s_current, "chg   %3d", change_current_val);
+            strcat(s_current, (const char*)"ch  sel");
+        }
 
-//         if ((resp_down & 0x0f) == RESP_SELECTED)
-//         {
-//             resp_down = resp_down & 0xf0;
-//             resp_down >>= 4;
-//             if (resp_down == 0)
-//             {
-//                 if (change_current_val < max_val)
-//                     change_current_val++;
+        resp = FuncOptions ((const char *) "up  down   done ",
+                            s_current,(unsigned char *) s_sel_up_down,
+                            3, change_last_option);
+#endif
+        change_last_option = 0;
 
-//                 resp = RESP_WORKING;
-//             }
+        if ((resp & 0x0f) == resp_selected)
+        {
+            resp = resp & 0xf0;
+            resp >>= 4;
+            if (resp == 0)
+            {
+                if (change_current_val < max_val)
+                    change_current_val++;
 
-//             if (resp_down == 1)
-//             {
-//                 if (change_current_val > min_val)
-//                     change_current_val--;
+                resp = resp_working;
+            }
 
-//                 change_last_option = (1 | 0x80);	//fuerzo update de la opcion
-//                 resp = RESP_WORKING;
-//             }
+            if (resp == 1)
+            {
+                if (change_current_val > min_val)
+                    change_current_val--;
 
-//             if (resp_down == 2)
-//             {
-//                 change_state = CHANGE_INIT;
-//                 resp = resp_finish;
-//                 *p_orig_value = change_current_val;
-//             }
-//         }
-//         break;
+                change_last_option = (1 | 0x80);	//fuerzo update de la opcion
+                resp = resp_working;
+            }
 
-//     default:
-//         change_state = CHANGE_INIT;
-//         break;
-//     }
+            if (resp == 2)
+            {
+                change_state = CHANGE_INIT;
+                resp = resp_finish;
+                *p_orig_value = change_current_val;
+            }
+        }
+        break;
 
-//     return resp;
-// }
+    default:
+        change_state = CHANGE_INIT;
+        break;
+    }
+
+    return resp;
+}
+
+//recibe el valor original para arrancar seleccion
+//devuelve resp_continue o resp_finish si termino la seleccion
+unsigned char FuncChangeOnOff (unsigned char * p_orig_value)
+{
+    unsigned char resp = resp_continue;
+
+    switch (change_state)
+    {
+    case CHANGE_INIT:
+        change_current_val = *p_orig_value;
+        change_last_option = change_current_val | 0x80;
+        FuncOptionsReset();
+        change_state++;
+        break;
+
+    case CHANGE_WAIT_SELECT:
+#ifdef LINE_LENGTH_8
+        resp = FuncOptions ((const char *) "on of e ",
+                            (const char*)"chg  sel",(unsigned char *) s_sel_up_down,
+                            3, change_last_option);
+#endif
+        
+#ifdef LINE_LENGTH_16
+        resp = FuncOptions ((const char *) "on  off   done ",
+                            (const char *) "change    select",(unsigned char *) s_sel_up_down,
+                            3, change_last_option);
+#endif
+        change_last_option = 0;
+
+        if ((resp & 0x0f) == resp_selected)
+        {
+            resp = resp & 0xf0;
+            resp >>= 4;
+            if (resp == 0)
+            {
+                change_current_val = 1;
+                resp = resp_working;
+            }
+
+            if (resp == 1)
+            {
+                change_current_val = 0;
+
+                change_last_option = (1 | 0x80);	//fuerzo update de la opcion
+                resp = resp_working;
+            }
+
+            if (resp == 2)
+            {
+                change_state = CHANGE_INIT;
+                resp = resp_finish;
+                *p_orig_value = change_current_val;
+            }
+        }
+        break;
+
+    default:
+        change_state = CHANGE_INIT;
+        break;
+    }
+
+    return resp;
+}
 
 // void FuncChangeReset (void)
 // {
