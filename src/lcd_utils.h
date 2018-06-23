@@ -10,9 +10,32 @@
 #ifndef _LCD_UTILS_H_
 #define _LCD_UTILS_H_
 
-//-- Config Defines ----------
+//-- Config Defines for the LCD used ----------
+#define LINE_LENGTH    8
 #define USE_SCROLL_SECOND_LINE
 #define USE_SCROLL_FIRST_LINE
+
+#if (LINE_LENGTH == 8)
+#define LINE_LENGTH_8
+#endif
+
+#if (LINE_LENGTH == 16)
+#define LINE_LENGTH_16
+#endif
+
+
+//-- Config Defines for the functions used ----------
+//for blinking in ms
+#define TT_BLINKING_IN_ON    1000
+#define TT_BLINKING_IN_OFF   600
+
+//for show select in ms
+#define TT_SHOW_SELECT_IN_ON    1000
+#define TT_SHOW_SELECT_IN_OFF   500
+
+//for func scroll in ms
+#define TT_SCROLL    500
+
 
 //las respuestas las paso hard.h
 // typedef enum {

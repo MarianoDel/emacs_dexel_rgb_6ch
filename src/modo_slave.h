@@ -23,7 +23,7 @@ typedef enum {
 
 
 //--- Exported constants ---//
-
+#define TT_MENU_TIMEOUT		30000
 
 //--- Exported macro ---//
 
@@ -31,6 +31,7 @@ typedef enum {
 //--- Exported functions ---//
 void FuncSlaveMode (void);
 void FuncSlaveModeReset (void);
+void UpdateTimerSlaveMode (void);
 
 #endif
 

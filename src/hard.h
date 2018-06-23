@@ -212,6 +212,10 @@ typedef enum
 typedef enum {
     resp_ok = 0,
     resp_continue,
+    resp_selected,
+    resp_change,
+    resp_change_all_up,
+    resp_working,
     resp_error,
     resp_finish
 

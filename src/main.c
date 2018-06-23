@@ -622,7 +622,9 @@ int main(void)
 
             Usart2Send(s_to_send);
             
-        }        
+        }
+        
+        UpdateSwitches();
     }    //end of while 1
     
     return 0;
@@ -667,17 +669,17 @@ void TimingDelay_Decrement(void)
     if (timer_standby)
         timer_standby--;
 
-    if (timer_signals)
-        timer_signals--;
+    // if (timer_signals)
+    //     timer_signals--;
 
-    if (timer_signals_gen)
-        timer_signals_gen--;
+    // if (timer_signals_gen)
+    //     timer_signals_gen--;
 
-    if (timer_led)
-        timer_led--;
+    // if (timer_led)
+    //     timer_led--;
 
-    if (timer_buzzer)
-        timer_buzzer--;
+    // if (timer_buzzer)
+    //     timer_buzzer--;
 
     if (switches_timer)
         switches_timer--;
@@ -692,6 +694,9 @@ void TimingDelay_Decrement(void)
 
     //para lcd_utils
     UpdateTimerLCD ();
+
+    //para modo_slave
+    UpdateTimerSlaveMode();
 }
 
 void EXTI4_15_IRQHandler (void)    //nueva detecta el primer 0 en usart Consola PHILIPS
