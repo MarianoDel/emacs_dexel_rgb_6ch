@@ -115,7 +115,7 @@ SRC += ./src/lcd.c
 SRC += ./src/dmx_transceiver.c
 SRC += ./src/modo_slave.c
 SRC += ./src/lcd_utils.c
-# SRC += ./src/programs_functions.c
+SRC += ./src/flash_program.c
 ## System Support
 #SRC += ./cmsis_boot/system_stm32f0xx.c
 #SRC += $(DISCOVERY)/stm32f0_discovery.c

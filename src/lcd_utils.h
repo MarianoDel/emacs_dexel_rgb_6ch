@@ -153,4 +153,6 @@ void FuncOptionsReset (void);
 void FuncShowSelectv2Reset (void);
 void FuncChangeReset (void);
 
+void LCDClearScreen (void);
+
 #endif /* MAIN_MENU_H_ */

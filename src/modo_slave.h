@@ -24,6 +24,7 @@ typedef enum {
 
 //--- Exported constants ---//
 #define TT_MENU_TIMEOUT		30000
+#define TT_DMX_RECEIVING    1000
 
 //--- Exported macro ---//
 

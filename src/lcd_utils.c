@@ -100,6 +100,15 @@ void UpdateTimerLCD (void)
 #endif
 }
 
+void LCDClearScreen (void)
+{
+    LCD_1ER_RENGLON;
+    LCDTransmitStr((const char *)s_blank);
+    LCD_2DO_RENGLON;
+    LCDTransmitStr((const char *)s_blank);
+}
+    
+
 //funcion que muestra los string de renglon 1 y renglon 2
 //recibe puntero a primer renglon
 //puntero a segundo renglon

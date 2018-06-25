@@ -18,6 +18,7 @@
 
 #include "lcd.h"
 #include "lcd_utils.h"
+#include "flash_program.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -31,19 +32,39 @@ extern volatile unsigned char dmx_filters_timer;
 extern volatile unsigned char Packet_Detected_Flag;
 extern volatile unsigned short adc_ch [];
 
+extern parameters_typedef mem_conf;
+
 //--- VARIABLES GLOBALES ---//
 slave_mode_t slave_mode_state = SLAVE_MODE_INIT;
 
 //-- timers del modulo --------------------
 volatile unsigned short slave_mode_enable_menu_timer = 0;
+volatile unsigned short slave_mode_dmx_receiving_timer = 0;
+
 // extern volatile unsigned short standalone_timer;
 // extern volatile unsigned short standalone_enable_menu_timer;
 // extern volatile unsigned short minutes;
 // extern volatile unsigned short scroll1_timer;
 
 
-unsigned short dmx_channel = 0;
-unsigned char grandmaster_value = 0;
+//--- Para los menues LCD ----------
+#define K_100P    0.3925
+unsigned char last_ch1;
+unsigned char last_ch2;
+unsigned char last_ch3;
+unsigned char last_ch4;
+unsigned char last_ch5;
+unsigned char last_ch6;
+
+unsigned short dmx_local_channel = 0;
+unsigned short dmx_local_value = 0;
+
+unsigned char check_dmx_lcd_pckt = 0;
+
+// unsigned short dmx_channel = 0;
+// unsigned char grandmaster_value = 0;
+
+float fcalc = 1.0;
 
 //--- Para el PID ----------
 unsigned char undersampling = 0;
@@ -125,6 +146,14 @@ typedef enum {
 
 } slave_mode_menu_t;
 
+typedef enum {
+    SLAVE_MODE_MENU_RUNNING_INIT = 0,
+    SLAVE_MODE_MENU_RUNNING_CHECK,
+    SLAVE_MODE_MENU_RUNNING_CHANGE,
+    SLAVE_MODE_MENU_RUNNING_MANUAL_CHANGE
+
+} slave_mode_menu_running_t;
+
 static slave_mode_show_t slave_mode_show_conf = SLAVE_MODE_SHOW_CONF_0;
 static slave_mode_m_manager_t slave_mode_menu_manager = MENU_ON;
 static slave_mode_menu_t slave_mode_menu_state = SLAVE_MODE_MENU_INIT;
@@ -134,13 +163,17 @@ void ShowConfSlaveModeReset (void);
 resp_t ShowConfSlaveMode (void);
 void SlaveModeMenuManagerReset (void);
 void UpdateSlaveModeMenuManager (void);
-resp_t MenuSlaveMode (void);        
+resp_t MenuSlaveMode (void);
+resp_t MenuSlaveModeRunning (void);        
 
 //--- FUNCIONES DEL MODULO ---//
 void UpdateTimerSlaveMode (void)
 {
     if (slave_mode_enable_menu_timer)
         slave_mode_enable_menu_timer--;
+
+    if (slave_mode_dmx_receiving_timer)
+        slave_mode_dmx_receiving_timer--;
 }
 
 void FuncSlaveMode (void)
@@ -307,6 +340,9 @@ void FuncSlaveMode (void)
         {
             Packet_Detected_Flag = 0;
 
+            //le aviso al menu que se estan recibiendo paquetes dmx
+            slave_mode_dmx_receiving_timer = TT_DMX_RECEIVING;            
+
             //CH1
             dummysp = data7[1];
             dummysp <<= 2;
@@ -353,7 +389,9 @@ void FuncSlaveMode (void)
             if (dummysp > 820)
                 sp6 = 820;
             else
-                sp6 = dummysp;            
+                sp6 = dummysp;
+
+            check_dmx_lcd_pckt = 1;
             
         }
 
@@ -391,13 +429,13 @@ inline void UpdateSlaveModeMenuManager (void)
 {
     resp_t resp = resp_continue;
     
-    //veo el menu solo si alguien toca los botones o timeout
+    //veo el menu solo si alguien toca los botones / timeout o DMX enchufado
     switch (slave_mode_menu_manager)
     {
     case MENU_ON:
         //estado normal
 
-        resp = MenuSlaveMode();
+        resp = MenuSlaveModeRunning();
 
         if (resp == resp_working)	//alguien esta tratando de seleccionar algo, le doy tiempo
             slave_mode_enable_menu_timer = TT_MENU_TIMEOUT;
@@ -405,20 +443,13 @@ inline void UpdateSlaveModeMenuManager (void)
         if (resp == resp_selected)	//se selecciono algo
         {
             slave_mode_enable_menu_timer = TT_MENU_TIMEOUT;
-            //slave_mode_state = STAND_ALONE_INIT;
-            // if (RELAY)
-            //     slave_mode_state = STAND_ALONE_ON;
-            // else
-            //     slave_mode_state = STAND_ALONE_OFF;
             slave_mode_menu_manager++;
         }
 
-        if (!slave_mode_enable_menu_timer)	//ya mostre el menu mucho tiempo, lo apago
+        //ya mostre el menu mucho tiempo, lo apago, si no estoy con dmx
+        if ((!slave_mode_dmx_receiving_timer) && (!slave_mode_enable_menu_timer))
         {
-//				LCD_1ER_RENGLON;
-//				LCDTransmitStr((const char *)s_blank_line);
-//				LCD_2DO_RENGLON;
-//				LCDTransmitStr((const char *)s_blank_line);
+            // LCDClearScreen();
             CTRL_BKL_OFF;
             slave_mode_menu_manager = MENU_OFF;
         }
@@ -437,17 +468,11 @@ inline void UpdateSlaveModeMenuManager (void)
 
     case MENU_OFF:
         //estado menu apagado
-        if ((CheckS1() > S_NO) || (CheckS2() > S_NO))
+        if ((CheckS1() > S_NO) || (CheckS2() > S_NO) || (slave_mode_dmx_receiving_timer))
         {
-            slave_mode_enable_menu_timer = TT_MENU_TIMEOUT;			//vuelvo a mostrar
-            LCD_1ER_RENGLON;
-            LCDTransmitStr((const char *) "wait to free    ");
-
-            slave_mode_menu_manager++;
-
+            slave_mode_enable_menu_timer = TT_MENU_TIMEOUT;    //vuelvo a mostrar
+            slave_mode_menu_manager = MENU_ON;
             CTRL_BKL_ON;
-//				if (slave_mode_state == STAND_ALONE_SHOW_CONF)
-//					ShowConfSlave_ModeResetEnd();
         }
         break;
 
@@ -508,408 +533,547 @@ inline void UpdateSlaveModeMenuManager (void)
 }
 
 
-inline resp_t MenuSlaveMode (void)
+inline resp_t MenuSlaveModeRunning (void)
 {
     resp_t resp = resp_continue;
     unsigned short dummy = 0;
+    char s_lcd1 [10];
+    char s_lcd2 [10];
+    short one_int = 0, one_dec = 0;
+    
 
     switch (slave_mode_menu_state)
     {
-    case SLAVE_MODE_MENU_INIT:
+    case SLAVE_MODE_MENU_RUNNING_INIT:
         //empiezo con las selecciones
-        resp = FuncShowBlink ((const char *) "Slv Mode", (const char *) "Selects ", 1, BLINK_NO);
+
+        //fuerzo cambio en ch1
+        last_ch1 = ~data7[1];
+
+        last_ch2 = data7[2];
+        last_ch3 = data7[3];
+        last_ch4 = data7[4];
+        last_ch5 = data7[5];
+        last_ch6 = data7[6];
+
+        slave_mode_menu_state++;
+        
+        break;
+
+    case SLAVE_MODE_MENU_RUNNING_CHECK:
+
+        if (check_dmx_lcd_pckt)    //TODO: despues sacar esta traba
+        {
+            check_dmx_lcd_pckt = 0;
+            if (last_ch1 != data7[1])
+            {
+                last_ch1 = data7[1];
+                dmx_local_channel = mem_conf.dmx_channel;
+                dmx_local_value = data7[1];
+                slave_mode_menu_state++;
+                break;
+            }
+
+            if (last_ch2 != data7[2])
+            {
+                last_ch2 = data7[2];            
+                dmx_local_channel = mem_conf.dmx_channel + 1;
+                dmx_local_value = data7[2];
+                slave_mode_menu_state++;
+                break;
+            }
+
+            if (last_ch3 != data7[3])
+            {
+                last_ch3 = data7[3];
+                dmx_local_channel = mem_conf.dmx_channel + 2;
+                dmx_local_value = data7[3];
+                slave_mode_menu_state++;
+                break;
+            }
+
+            if (last_ch4 != data7[4])
+            {
+                last_ch4 = data7[4];
+                dmx_local_channel = mem_conf.dmx_channel + 3;
+                dmx_local_value = data7[4];
+                slave_mode_menu_state++;
+                break;
+            }
+
+            if (last_ch5 != data7[5])
+            {
+                last_ch5 = data7[5];
+                dmx_local_channel = mem_conf.dmx_channel + 4;
+                dmx_local_value = data7[5];
+                slave_mode_menu_state++;
+                break;
+            }
+
+            if (last_ch6 != data7[6])
+            {
+                last_ch6 = data7[6];
+                dmx_local_channel = mem_conf.dmx_channel + 5;
+                dmx_local_value = data7[6];
+                slave_mode_menu_state++;
+                break;
+            }
+        }
+
+        if ((CheckS1() > S_NO) || (CheckS2() > S_NO))
+            slave_mode_menu_state = SLAVE_MODE_MENU_RUNNING_MANUAL_CHANGE;
+
+        break;
+
+    case SLAVE_MODE_MENU_RUNNING_CHANGE:
+        
+        fcalc = dmx_local_value;
+        fcalc = fcalc * K_100P;
+        one_int = (short) fcalc;
+        fcalc = fcalc - one_int;
+        fcalc = fcalc * 10;
+        one_dec = (short) fcalc;
+
+        sprintf(s_lcd2, "%3d.%01d", one_int, one_dec);
+        strcat(s_lcd2, "%  ");
+
+        sprintf(s_lcd1, "ch:%3d D", dmx_local_channel);
+
+        resp = FuncShowBlink ((const char *) s_lcd1, (const char *) s_lcd2, 0, BLINK_NO);
 
         if (resp == resp_finish)
         {
-            slave_mode_menu_state++;
             resp = resp_continue;
+            slave_mode_menu_state = SLAVE_MODE_MENU_RUNNING_CHECK;
         }
         break;
 
-    case SLAVE_MODE_MENU_CONF_1:
-        resp = FuncShowSelectv2 ((const char * ) "DMX chnl");
-
-        if (resp == resp_change)	//cambio de menu
-            slave_mode_menu_state = SLAVE_MODE_MENU_CONF_2;
-
-        if (resp == resp_selected)	//se eligio el menu
-            slave_mode_menu_state = SLAVE_MODE_MENU_DMX_CHANNEL;
-
-        if (resp != resp_continue)
-            resp = resp_working;
-
-        break;
-
-    case SLAVE_MODE_MENU_CONF_2:
-        resp = FuncShowSelectv2 ((const char * ) "Chn qnty");
-
-        if (resp == resp_change)	//cambio de menu
-            slave_mode_menu_state = SLAVE_MODE_MENU_CONF_3;
-
-
-        if (resp == resp_selected)	//se eligio el menu
-            slave_mode_menu_state = SLAVE_MODE_MENU_DMX_CHANNEL_QUANTITY;
-
-        if (resp != resp_continue)
-            resp = resp_working;
-
-        break;
-
-    case SLAVE_MODE_MENU_CONF_3:
-        resp = FuncShowSelectv2 ((const char * ) "W Grandm");
-
-        if (resp == resp_change)	//cambio de menu
-            slave_mode_menu_state = SLAVE_MODE_MENU_CONF_1;
-
-        if (resp == resp_selected)	//se eligio el menu
-            slave_mode_menu_state = SLAVE_MODE_MENU_GRANDMASTER;
-
-        if (resp != resp_continue)
-            resp = resp_working;
-
-        break;
-
-    // case SLAVE_MODE_MENU_CONF_4:
-    //     resp = FuncShowSelectv2 ((const char * ) "Done!   ");
-
-    //     if (resp == resp_change)	//cambio de menu
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_CONF_1;
-
-    //     if (resp == resp_selected)	//se eligio el menu
-    //     {
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_INIT;
-    //     }
-
-    //     if (resp != resp_continue)
-    //         resp = resp_working;
-
-    //     break;
-        
-        // -------- DESDE ACA CONFIGURO ---------//
-        
-    case SLAVE_MODE_MENU_DMX_CHANNEL:
-        resp = FuncChangeChannels (&dmx_channel);
-
-        if (resp == resp_finish)
+    case SLAVE_MODE_MENU_RUNNING_MANUAL_CHANGE:
+        if (!CheckS1() && !CheckS2())
         {
-            slave_mode_menu_state = SLAVE_MODE_MENU_CONF_1;
-            // unsigned short local;
-            // // local = Slave_ModeStruct_local.max_dimmer_value_percent * 255;
-            // // local = local / 100;
-            // // Slave_ModeStruct_local.max_dimmer_value_dmx = local;
-
-            // // slave_mode_menu_state = SLAVE_MODE_MENU_MAX_DIMMING_SELECTED_1;
-            // // LCD_1ER_RENGLON;
-            // // LCDTransmitStr((const char *) "wait to free    ");
-            resp = resp_working;
-        }
-        break;
-
-    case SLAVE_MODE_MENU_DMX_CHANNEL_QUANTITY:
-        resp = FuncChangeChannelsQuantity (&dmx_channel);
-
-        if (resp == resp_finish)
-        {
-            slave_mode_menu_state = SLAVE_MODE_MENU_CONF_2;
-            // unsigned short local;
-            // // local = Slave_ModeStruct_local.max_dimmer_value_percent * 255;
-            // // local = local / 100;
-            // // Slave_ModeStruct_local.max_dimmer_value_dmx = local;
-
-            // // slave_mode_menu_state = SLAVE_MODE_MENU_MAX_DIMMING_SELECTED_1;
-            // // LCD_1ER_RENGLON;
-            // // LCDTransmitStr((const char *) "wait to free    ");
-            resp = resp_working;
-        }
-        break;
-
-    case SLAVE_MODE_MENU_GRANDMASTER:        
-        resp = FuncChangeOnOff (&grandmaster_value);
-
-        if (resp == resp_finish)
-        {
-            slave_mode_menu_state = SLAVE_MODE_MENU_CONF_3;
-            // unsigned short local;
-            // // local = Slave_ModeStruct_local.max_dimmer_value_percent * 255;
-            // // local = local / 100;
-            // // Slave_ModeStruct_local.max_dimmer_value_dmx = local;
-
-            // // slave_mode_menu_state = SLAVE_MODE_MENU_MAX_DIMMING_SELECTED_1;
-            // // LCD_1ER_RENGLON;
-            // // LCDTransmitStr((const char *) "wait to free    ");
-            resp = resp_working;
+            if (dmx_local_channel < (mem_conf.dmx_channel + mem_conf.dmx_channel_quantity - 1))
+            {
+                dmx_local_channel++;
+                dmx_local_value = data7[dmx_local_channel];
+            }
+            else
+            {
+                dmx_local_channel = 1;
+                dmx_local_value = data7[1];
+            }
+            slave_mode_menu_state = SLAVE_MODE_MENU_RUNNING_CHANGE;
         }
         break;
         
-
-    // case SLAVE_MODE_MENU_MOV_SENS_SELECTED:
-    //     if (Slave_ModeStruct_local.move_sensor_enable)
-    //         resp = 0x80;
-    //     else
-    //         resp = 0x81;
-
-    //     FuncOptions ((const char *) "on   off   back ",(const char *) s_blank_line, (unsigned char *)s_sel, 3, resp);
-    //     slave_mode_menu_state++;
-    //     break;
-
-    // case SLAVE_MODE_MENU_MOV_SENS_SELECTED_1:
-    //     resp = FuncOptions ((const char *) "on   off   back ",(const char *) s_blank_line, (unsigned char *)s_sel, 3, 0);
-
-    //     if ((resp & 0x0f) == resp_selected)
-    //     {
-    //         resp = resp & 0xf0;
-    //         resp >>= 4;
-    //         if (resp == 0)
-    //         {
-    //             Slave_ModeStruct_local.move_sensor_enable = 1;
-    //             slave_mode_menu_state++;
-    //             LCD_1ER_RENGLON;
-    //             LCDTransmitStr((const char *) "wait to free    ");
-    //             resp = resp_working;
-    //         }
-
-    //         if (resp == 1)
-    //         {
-    //             Slave_ModeStruct_local.move_sensor_enable = 0;
-    //             resp = resp_selected;
-    //             slave_mode_menu_state = SLAVE_MODE_MENU_MOV_SENS;
-    //         }
-
-    //         if (resp == 2)
-    //         {
-    //             resp = resp_working;
-    //             slave_mode_menu_state = SLAVE_MODE_MENU_MOV_SENS_SELECTED_4;
-    //             LCD_1ER_RENGLON;
-    //             LCDTransmitStr((const char *) "wait to free    ");
-    //         }
-    //     }
-    //     break;
-
-    // case SLAVE_MODE_MENU_MOV_SENS_SELECTED_2:
-    //     if (CheckS2() == S_NO)
-    //         slave_mode_menu_state++;
-
-    //     resp = resp_working;
-    //     break;
-
-    // case SLAVE_MODE_MENU_MOV_SENS_SELECTED_3:
-    //     resp = FuncChangeSecsMove (&Slave_ModeStruct_local.move_sensor_secs);
-
-    //     if (resp == resp_finish)
-    //     {
-    //         slave_mode_menu_state++;
-    //         LCD_1ER_RENGLON;
-    //         LCDTransmitStr((const char *) "wait to free    ");
-    //     }
-
-    //     resp = resp_working;
-    //     break;
-
-    // case SLAVE_MODE_MENU_MOV_SENS_SELECTED_4:
-    //     if (CheckS2() == S_NO)
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_MOV_SENS;
-
-    //     resp = resp_working;
-    //     break;
-
-    // case SLAVE_MODE_MENU_LDR_SELECTED:
-    //     if (Slave_ModeStruct_local.ldr_enable)
-    //         resp = 0x80;
-    //     else
-    //         resp = 0x81;
-
-    //     FuncOptions ((const char *) "on   off   back ",(const char *) s_blank_line, (unsigned char *)s_sel, 3, resp);
-    //     slave_mode_menu_state++;
-    //     break;
-
-    // case SLAVE_MODE_MENU_LDR_SELECTED_1:
-    //     resp = FuncOptions ((const char *) "on   off   back ",(const char *) s_blank_line,(unsigned char *) s_sel, 3, 0);
-
-    //     if ((resp & 0x0f) == resp_selected)
-    //     {
-    //         resp = resp & 0xf0;
-    //         resp >>= 4;
-    //         if (resp == 0)
-    //         {
-    //             Slave_ModeStruct_local.ldr_enable = 1;
-    //             slave_mode_menu_state++;
-    //             LCD_1ER_RENGLON;
-    //             LCDTransmitStr((const char *) "wait to free    ");
-    //         }
-
-    //         if (resp == 1)
-    //         {
-    //             Slave_ModeStruct_local.ldr_enable = 0;
-    //             resp = resp_selected;
-    //             slave_mode_menu_state = SLAVE_MODE_MENU_LDR;
-    //         }
-
-    //         if (resp == 2)
-    //         {
-    //             resp = resp_working;
-    //             slave_mode_menu_state = SLAVE_MODE_MENU_LDR_SELECTED_4;
-    //             LCD_1ER_RENGLON;
-    //             LCDTransmitStr((const char *) "wait to free    ");
-    //         }
-    //     }
-    //     break;
-
-    // case SLAVE_MODE_MENU_LDR_SELECTED_2:
-    //     if (CheckS2() == S_NO)
-    //         slave_mode_menu_state++;
-
-    //     resp = resp_working;
-    //     break;
-
-    // case SLAVE_MODE_MENU_LDR_SELECTED_3:
-    //     //resp = FuncChange (&Slave_ModeStruct_local.ldr_value);
-    //     resp = FuncChangePercent (&Slave_ModeStruct_local.ldr_value);
-
-    //     if (resp == resp_finish)
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_LDR_SELECTED_5;
-
-    //     resp = resp_working;
-    //     break;
-
-    // case SLAVE_MODE_MENU_LDR_SELECTED_4:
-    //     if (CheckS2() == S_NO)
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_LDR;
-
-    //     resp = resp_working;
-    //     break;
-
-    // case SLAVE_MODE_MENU_LDR_SELECTED_5:
-    //     resp = resp_working;
-    //     if (CheckS2() == S_NO)
-    //     {
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_LDR;
-    //         resp = resp_selected;
-    //     }
-    //     break;
-
-    // case SLAVE_MODE_MENU_MAX_DIMMING_SELECTED:
-    //     resp = FuncChangePercent (&Slave_ModeStruct_local.max_dimmer_value_percent);
-
-    //     if (resp == resp_finish)
-    //     {
-    //         unsigned short local;
-    //         local = Slave_ModeStruct_local.max_dimmer_value_percent * 255;
-    //         local = local / 100;
-    //         Slave_ModeStruct_local.max_dimmer_value_dmx = local;
-
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_MAX_DIMMING_SELECTED_1;
-    //         LCD_1ER_RENGLON;
-    //         LCDTransmitStr((const char *) "wait to free    ");
-    //     }
-
-    //     resp = resp_working;
-    //     break;
-
-    // case SLAVE_MODE_MENU_MAX_DIMMING_SELECTED_1:
-    //     resp = resp_working;
-    //     if (CheckS2() == S_NO)
-    //     {
-    //         //hago el update si corresponde
-    //         if (slave_mode_ii > Slave_ModeStruct_local.max_dimmer_value_dmx)
-    //         {
-    //             slave_mode_ii = Slave_ModeStruct_local.max_dimmer_value_dmx;
-    //             Update_TIM3_CH1 (slave_mode_ii);
-    //             slave_mode_dimming_last_slope = DIM_DOWN;
-    //         }
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_MAX_DIMMING;
-    //         resp = resp_selected;
-    //     }
-    //     break;
-
-    // case SLAVE_MODE_MENU_MIN_DIMMING_SELECTED:
-    //     resp = FuncChangePercent (&Slave_ModeStruct_local.min_dimmer_value_percent);
-
-    //     if (resp == resp_finish)
-    //     {
-    //         unsigned short local;
-    //         local = Slave_ModeStruct_local.min_dimmer_value_percent * 255;
-    //         local = local / 100;
-    //         Slave_ModeStruct_local.min_dimmer_value_dmx = local;
-
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_MIN_DIMMING_SELECTED_1;
-    //         LCD_1ER_RENGLON;
-    //         LCDTransmitStr((const char *) "wait to free    ");
-    //     }
-
-    //     resp = resp_working;
-    //     break;
-
-    // case SLAVE_MODE_MENU_MIN_DIMMING_SELECTED_1:
-    //     resp = resp_working;
-    //     if (CheckS2() == S_NO)
-    //     {
-    //         //hago el update si corresponde
-    //         if (slave_mode_ii < Slave_ModeStruct_local.min_dimmer_value_dmx)
-    //         {
-    //             slave_mode_ii = Slave_ModeStruct_local.min_dimmer_value_dmx;
-    //             Update_TIM3_CH1 (slave_mode_ii);
-    //             slave_mode_dimming_last_slope = DIM_UP;
-    //         }
-
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_MIN_DIMMING;
-    //         resp = resp_selected;
-    //     }
-    //     break;
-
-    // case SLAVE_MODE_MENU_RAMP_ON_START_SELECTED:
-    //     //ajusto el timer
-    //     dummy = Slave_ModeStruct_local.power_up_timer_value / 1000;
-    //     resp = FuncChangeSecs (&dummy);
-
-    //     if (resp == resp_finish)
-    //     {
-    //         Slave_ModeStruct_local.power_up_timer_value = dummy * 1000;
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_RAMP_ON_START_SELECTED_1;
-    //         LCD_1ER_RENGLON;
-    //         LCDTransmitStr((const char *) "wait to free    ");
-    //     }
-
-    //     resp = resp_working;
-    //     break;
-
-    // case SLAVE_MODE_MENU_RAMP_ON_START_SELECTED_1:
-    //     resp = resp_working;
-    //     if (CheckS2() == S_NO)
-    //     {
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_RAMP_ON_START;
-    //         resp = resp_selected;
-    //     }
-    //     break;
-
-    // case SLAVE_MODE_MENU_RAMP_ON_DIMMING_SELECTED:
-    //     //ajusto el timer
-    //     dummy = Slave_ModeStruct_local.dimming_up_timer_value / 1000;
-    //     resp = FuncChangeSecs (&dummy);
-
-    //     if (resp == resp_finish)
-    //     {
-    //         Slave_ModeStruct_local.dimming_up_timer_value = dummy * 1000;
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_RAMP_ON_DIMMING_SELECTED_1;
-    //         LCD_1ER_RENGLON;
-    //         LCDTransmitStr((const char *) "wait to free    ");
-    //     }
-
-    //     resp = resp_working;
-    //     break;
-
-    // case SLAVE_MODE_MENU_RAMP_ON_DIMMING_SELECTED_1:
-    //     resp = resp_working;
-    //     if (CheckS2() == S_NO)
-    //     {
-    //         slave_mode_menu_state = SLAVE_MODE_MENU_RAMP_ON_DIMMING;
-    //         resp = resp_selected;
-    //     }
-    //     break;
-
     default:
-        slave_mode_menu_state = SLAVE_MODE_MENU_INIT;
+        slave_mode_menu_state = SLAVE_MODE_MENU_RUNNING_INIT;
         break;
     }
+    return resp;
+}
+
+inline resp_t MenuSlaveMode (void)
+{
+    resp_t resp = resp_continue;
+//     unsigned short dummy = 0;
+
+//     switch (slave_mode_menu_state)
+//     {
+//     case SLAVE_MODE_MENU_INIT:
+//         //empiezo con las selecciones
+//         resp = FuncShowBlink ((const char *) "Slv Mode", (const char *) "Selects ", 1, BLINK_NO);
+
+//         if (resp == resp_finish)
+//         {
+//             slave_mode_menu_state++;
+//             resp = resp_continue;
+//         }
+//         break;
+
+//     case SLAVE_MODE_MENU_CONF_1:
+//         resp = FuncShowSelectv2 ((const char * ) "DMX chnl");
+
+//         if (resp == resp_change)	//cambio de menu
+//             slave_mode_menu_state = SLAVE_MODE_MENU_CONF_2;
+
+//         if (resp == resp_selected)	//se eligio el menu
+//             slave_mode_menu_state = SLAVE_MODE_MENU_DMX_CHANNEL;
+
+//         if (resp != resp_continue)
+//             resp = resp_working;
+
+//         break;
+
+//     case SLAVE_MODE_MENU_CONF_2:
+//         resp = FuncShowSelectv2 ((const char * ) "Chn qnty");
+
+//         if (resp == resp_change)	//cambio de menu
+//             slave_mode_menu_state = SLAVE_MODE_MENU_CONF_3;
+
+
+//         if (resp == resp_selected)	//se eligio el menu
+//             slave_mode_menu_state = SLAVE_MODE_MENU_DMX_CHANNEL_QUANTITY;
+
+//         if (resp != resp_continue)
+//             resp = resp_working;
+
+//         break;
+
+//     case SLAVE_MODE_MENU_CONF_3:
+//         resp = FuncShowSelectv2 ((const char * ) "W Grandm");
+
+//         if (resp == resp_change)	//cambio de menu
+//             slave_mode_menu_state = SLAVE_MODE_MENU_CONF_1;
+
+//         if (resp == resp_selected)	//se eligio el menu
+//             slave_mode_menu_state = SLAVE_MODE_MENU_GRANDMASTER;
+
+//         if (resp != resp_continue)
+//             resp = resp_working;
+
+//         break;
+
+//     // case SLAVE_MODE_MENU_CONF_4:
+//     //     resp = FuncShowSelectv2 ((const char * ) "Done!   ");
+
+//     //     if (resp == resp_change)	//cambio de menu
+//     //         slave_mode_menu_state = SLAVE_MODE_MENU_CONF_1;
+
+//     //     if (resp == resp_selected)	//se eligio el menu
+//     //     {
+//     //         slave_mode_menu_state = SLAVE_MODE_MENU_INIT;
+//     //     }
+
+//     //     if (resp != resp_continue)
+//     //         resp = resp_working;
+
+//     //     break;
+        
+//         // -------- DESDE ACA CONFIGURO ---------//
+        
+//     case SLAVE_MODE_MENU_DMX_CHANNEL:
+//         resp = FuncChangeChannels (&dmx_channel);
+
+//         if (resp == resp_finish)
+//         {
+//             slave_mode_menu_state = SLAVE_MODE_MENU_CONF_1;
+//             // unsigned short local;
+//             // // local = Slave_ModeStruct_local.max_dimmer_value_percent * 255;
+//             // // local = local / 100;
+//             // // Slave_ModeStruct_local.max_dimmer_value_dmx = local;
+
+//             // // slave_mode_menu_state = SLAVE_MODE_MENU_MAX_DIMMING_SELECTED_1;
+//             // // LCD_1ER_RENGLON;
+//             // // LCDTransmitStr((const char *) "wait to free    ");
+//             resp = resp_working;
+//         }
+//         break;
+
+//     case SLAVE_MODE_MENU_DMX_CHANNEL_QUANTITY:
+//         resp = FuncChangeChannelsQuantity (&dmx_channel);
+
+//         if (resp == resp_finish)
+//         {
+//             slave_mode_menu_state = SLAVE_MODE_MENU_CONF_2;
+//             // unsigned short local;
+//             // // local = Slave_ModeStruct_local.max_dimmer_value_percent * 255;
+//             // // local = local / 100;
+//             // // Slave_ModeStruct_local.max_dimmer_value_dmx = local;
+
+//             // // slave_mode_menu_state = SLAVE_MODE_MENU_MAX_DIMMING_SELECTED_1;
+//             // // LCD_1ER_RENGLON;
+//             // // LCDTransmitStr((const char *) "wait to free    ");
+//             resp = resp_working;
+//         }
+//         break;
+
+//     case SLAVE_MODE_MENU_GRANDMASTER:        
+//         resp = FuncChangeOnOff (&grandmaster_value);
+
+//         if (resp == resp_finish)
+//         {
+//             slave_mode_menu_state = SLAVE_MODE_MENU_CONF_3;
+//             // unsigned short local;
+//             // // local = Slave_ModeStruct_local.max_dimmer_value_percent * 255;
+//             // // local = local / 100;
+//             // // Slave_ModeStruct_local.max_dimmer_value_dmx = local;
+
+//             // // slave_mode_menu_state = SLAVE_MODE_MENU_MAX_DIMMING_SELECTED_1;
+//             // // LCD_1ER_RENGLON;
+//             // // LCDTransmitStr((const char *) "wait to free    ");
+//             resp = resp_working;
+//         }
+//         break;
+        
+
+//     // case SLAVE_MODE_MENU_MOV_SENS_SELECTED:
+//     //     if (Slave_ModeStruct_local.move_sensor_enable)
+//     //         resp = 0x80;
+//     //     else
+//     //         resp = 0x81;
+
+//     //     FuncOptions ((const char *) "on   off   back ",(const char *) s_blank_line, (unsigned char *)s_sel, 3, resp);
+//     //     slave_mode_menu_state++;
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_MOV_SENS_SELECTED_1:
+//     //     resp = FuncOptions ((const char *) "on   off   back ",(const char *) s_blank_line, (unsigned char *)s_sel, 3, 0);
+
+//     //     if ((resp & 0x0f) == resp_selected)
+//     //     {
+//     //         resp = resp & 0xf0;
+//     //         resp >>= 4;
+//     //         if (resp == 0)
+//     //         {
+//     //             Slave_ModeStruct_local.move_sensor_enable = 1;
+//     //             slave_mode_menu_state++;
+//     //             LCD_1ER_RENGLON;
+//     //             LCDTransmitStr((const char *) "wait to free    ");
+//     //             resp = resp_working;
+//     //         }
+
+//     //         if (resp == 1)
+//     //         {
+//     //             Slave_ModeStruct_local.move_sensor_enable = 0;
+//     //             resp = resp_selected;
+//     //             slave_mode_menu_state = SLAVE_MODE_MENU_MOV_SENS;
+//     //         }
+
+//     //         if (resp == 2)
+//     //         {
+//     //             resp = resp_working;
+//     //             slave_mode_menu_state = SLAVE_MODE_MENU_MOV_SENS_SELECTED_4;
+//     //             LCD_1ER_RENGLON;
+//     //             LCDTransmitStr((const char *) "wait to free    ");
+//     //         }
+//     //     }
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_MOV_SENS_SELECTED_2:
+//     //     if (CheckS2() == S_NO)
+//     //         slave_mode_menu_state++;
+
+//     //     resp = resp_working;
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_MOV_SENS_SELECTED_3:
+//     //     resp = FuncChangeSecsMove (&Slave_ModeStruct_local.move_sensor_secs);
+
+//     //     if (resp == resp_finish)
+//     //     {
+//     //         slave_mode_menu_state++;
+//     //         LCD_1ER_RENGLON;
+//     //         LCDTransmitStr((const char *) "wait to free    ");
+//     //     }
+
+//     //     resp = resp_working;
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_MOV_SENS_SELECTED_4:
+//     //     if (CheckS2() == S_NO)
+//     //         slave_mode_menu_state = SLAVE_MODE_MENU_MOV_SENS;
+
+//     //     resp = resp_working;
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_LDR_SELECTED:
+//     //     if (Slave_ModeStruct_local.ldr_enable)
+//     //         resp = 0x80;
+//     //     else
+//     //         resp = 0x81;
+
+//     //     FuncOptions ((const char *) "on   off   back ",(const char *) s_blank_line, (unsigned char *)s_sel, 3, resp);
+//     //     slave_mode_menu_state++;
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_LDR_SELECTED_1:
+//     //     resp = FuncOptions ((const char *) "on   off   back ",(const char *) s_blank_line,(unsigned char *) s_sel, 3, 0);
+
+//     //     if ((resp & 0x0f) == resp_selected)
+//     //     {
+//     //         resp = resp & 0xf0;
+//     //         resp >>= 4;
+//     //         if (resp == 0)
+//     //         {
+//     //             Slave_ModeStruct_local.ldr_enable = 1;
+//     //             slave_mode_menu_state++;
+//     //             LCD_1ER_RENGLON;
+//     //             LCDTransmitStr((const char *) "wait to free    ");
+//     //         }
+
+//     //         if (resp == 1)
+//     //         {
+//     //             Slave_ModeStruct_local.ldr_enable = 0;
+//     //             resp = resp_selected;
+//     //             slave_mode_menu_state = SLAVE_MODE_MENU_LDR;
+//     //         }
+
+//     //         if (resp == 2)
+//     //         {
+//     //             resp = resp_working;
+//     //             slave_mode_menu_state = SLAVE_MODE_MENU_LDR_SELECTED_4;
+//     //             LCD_1ER_RENGLON;
+//     //             LCDTransmitStr((const char *) "wait to free    ");
+//     //         }
+//     //     }
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_LDR_SELECTED_2:
+//     //     if (CheckS2() == S_NO)
+//     //         slave_mode_menu_state++;
+
+//     //     resp = resp_working;
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_LDR_SELECTED_3:
+//     //     //resp = FuncChange (&Slave_ModeStruct_local.ldr_value);
+//     //     resp = FuncChangePercent (&Slave_ModeStruct_local.ldr_value);
+
+//     //     if (resp == resp_finish)
+//     //         slave_mode_menu_state = SLAVE_MODE_MENU_LDR_SELECTED_5;
+
+//     //     resp = resp_working;
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_LDR_SELECTED_4:
+//     //     if (CheckS2() == S_NO)
+//     //         slave_mode_menu_state = SLAVE_MODE_MENU_LDR;
+
+//     //     resp = resp_working;
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_LDR_SELECTED_5:
+//     //     resp = resp_working;
+//     //     if (CheckS2() == S_NO)
+//     //     {
+//     //         slave_mode_menu_state = SLAVE_MODE_MENU_LDR;
+//     //         resp = resp_selected;
+//     //     }
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_MAX_DIMMING_SELECTED:
+//     //     resp = FuncChangePercent (&Slave_ModeStruct_local.max_dimmer_value_percent);
+
+//     //     if (resp == resp_finish)
+//     //     {
+//     //         unsigned short local;
+//     //         local = Slave_ModeStruct_local.max_dimmer_value_percent * 255;
+//     //         local = local / 100;
+//     //         Slave_ModeStruct_local.max_dimmer_value_dmx = local;
+
+//     //         slave_mode_menu_state = SLAVE_MODE_MENU_MAX_DIMMING_SELECTED_1;
+//     //         LCD_1ER_RENGLON;
+//     //         LCDTransmitStr((const char *) "wait to free    ");
+//     //     }
+
+//     //     resp = resp_working;
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_MAX_DIMMING_SELECTED_1:
+//     //     resp = resp_working;
+//     //     if (CheckS2() == S_NO)
+//     //     {
+//     //         //hago el update si corresponde
+//     //         if (slave_mode_ii > Slave_ModeStruct_local.max_dimmer_value_dmx)
+//     //         {
+//     //             slave_mode_ii = Slave_ModeStruct_local.max_dimmer_value_dmx;
+//     //             Update_TIM3_CH1 (slave_mode_ii);
+//     //             slave_mode_dimming_last_slope = DIM_DOWN;
+//     //         }
+//     //         slave_mode_menu_state = SLAVE_MODE_MENU_MAX_DIMMING;
+//     //         resp = resp_selected;
+//     //     }
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_MIN_DIMMING_SELECTED:
+//     //     resp = FuncChangePercent (&Slave_ModeStruct_local.min_dimmer_value_percent);
+
+//     //     if (resp == resp_finish)
+//     //     {
+//     //         unsigned short local;
+//     //         local = Slave_ModeStruct_local.min_dimmer_value_percent * 255;
+//     //         local = local / 100;
+//     //         Slave_ModeStruct_local.min_dimmer_value_dmx = local;
+
+//     //         slave_mode_menu_state = SLAVE_MODE_MENU_MIN_DIMMING_SELECTED_1;
+//     //         LCD_1ER_RENGLON;
+//     //         LCDTransmitStr((const char *) "wait to free    ");
+//     //     }
+
+//     //     resp = resp_working;
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_MIN_DIMMING_SELECTED_1:
+//     //     resp = resp_working;
+//     //     if (CheckS2() == S_NO)
+//     //     {
+//     //         //hago el update si corresponde
+//     //         if (slave_mode_ii < Slave_ModeStruct_local.min_dimmer_value_dmx)
+//     //         {
+//     //             slave_mode_ii = Slave_ModeStruct_local.min_dimmer_value_dmx;
+//     //             Update_TIM3_CH1 (slave_mode_ii);
+//     //             slave_mode_dimming_last_slope = DIM_UP;
+//     //         }
+
+//     //         slave_mode_menu_state = SLAVE_MODE_MENU_MIN_DIMMING;
+//     //         resp = resp_selected;
+//     //     }
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_RAMP_ON_START_SELECTED:
+//     //     //ajusto el timer
+//     //     dummy = Slave_ModeStruct_local.power_up_timer_value / 1000;
+//     //     resp = FuncChangeSecs (&dummy);
+
+//     //     if (resp == resp_finish)
+//     //     {
+//     //         Slave_ModeStruct_local.power_up_timer_value = dummy * 1000;
+//     //         slave_mode_menu_state = SLAVE_MODE_MENU_RAMP_ON_START_SELECTED_1;
+//     //         LCD_1ER_RENGLON;
+//     //         LCDTransmitStr((const char *) "wait to free    ");
+//     //     }
+
+//     //     resp = resp_working;
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_RAMP_ON_START_SELECTED_1:
+//     //     resp = resp_working;
+//     //     if (CheckS2() == S_NO)
+//     //     {
+//     //         slave_mode_menu_state = SLAVE_MODE_MENU_RAMP_ON_START;
+//     //         resp = resp_selected;
+//     //     }
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_RAMP_ON_DIMMING_SELECTED:
+//     //     //ajusto el timer
+//     //     dummy = Slave_ModeStruct_local.dimming_up_timer_value / 1000;
+//     //     resp = FuncChangeSecs (&dummy);
+
+//     //     if (resp == resp_finish)
+//     //     {
+//     //         Slave_ModeStruct_local.dimming_up_timer_value = dummy * 1000;
+//     //         slave_mode_menu_state = SLAVE_MODE_MENU_RAMP_ON_DIMMING_SELECTED_1;
+//     //         LCD_1ER_RENGLON;
+//     //         LCDTransmitStr((const char *) "wait to free    ");
+//     //     }
+
+//     //     resp = resp_working;
+//     //     break;
+
+//     // case SLAVE_MODE_MENU_RAMP_ON_DIMMING_SELECTED_1:
+//     //     resp = resp_working;
+//     //     if (CheckS2() == S_NO)
+//     //     {
+//     //         slave_mode_menu_state = SLAVE_MODE_MENU_RAMP_ON_DIMMING;
+//     //         resp = resp_selected;
+//     //     }
+//     //     break;
+
+//     default:
+//         slave_mode_menu_state = SLAVE_MODE_MENU_INIT;
+//         break;
+//     }
     return resp;
 }
 
@@ -926,8 +1090,8 @@ resp_t ShowConfSlaveMode (void)
     switch (slave_mode_show_conf)
     {
     case SLAVE_MODE_SHOW_CONF_0:
+         //TODO: cambiar a func blink
         LCD_1ER_RENGLON;
-        //TODO: cambiar a sin const para ver que pasa con la flash
         LCDTransmitStr((const char *) "Slv Mode");
         LCD_2DO_RENGLON;
         LCDTransmitStr((const char *) "Config  ");        

@@ -26,13 +26,19 @@
 #include "modo_slave.h"
 #include "lcd_utils.h"
 
+#include "flash_program.h"
+
 #include <stdio.h>
-//#include <string.h>
+#include <string.h>
 
 
 
 
 //--- VARIABLES EXTERNAS ---//
+// ------- Externals de la Memoria y los modos -------
+parameters_typedef * pmem = (unsigned int *) FLASH_PAGE_FOR_BKP;	//en flash
+parameters_typedef mem_conf;
+
 // ------- Externals del ADC -------
 volatile unsigned short adc_ch [ADC_CHANNEL_QUANTITY];
 volatile unsigned char seq_ready;
@@ -66,6 +72,33 @@ volatile unsigned char data7[SIZEOF_DMX_DATA7];
 
 
 //--- VARIABLES GLOBALES ---//
+//para pruebas mantener esto en memoria
+// parameters_typedef const parameters_typedef_constant =
+parameters_typedef __attribute__ ((section("memParams"))) const parameters_typedef_constant =
+    {
+        .program_type = 1,
+        .last_program_in_flash = 0,
+        .last_program_deep_in_flash = 100,
+
+        .dmx_channel = 1,
+        .dmx_channel_quantity = 6,
+        .dmx_grandmaster = 0,        
+        
+        .max_current_ch1 = 10,
+        .max_current_ch2 = 0,
+        .max_current_ch3 = 0,
+        .max_current_ch4 = 0,
+        .max_current_ch5 = 0,
+        .max_current_ch6 = 0,                
+
+        .max_pwm_ch1 = 10,
+        .max_pwm_ch2 = 0,
+        .max_pwm_ch3 = 0,
+        .max_pwm_ch4 = 0,
+        .max_pwm_ch5 = 0,
+        .max_pwm_ch6 = 0
+        
+    };
 
 
 
@@ -574,6 +607,19 @@ int main(void)
         switch (main_state)
         {
         case MAIN_INIT:
+            memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
+            sprintf(s_to_send, "prog type: %d\n", mem_conf.program_type);
+            Usart2Send(s_to_send);
+            Wait_ms(100);
+
+            sprintf(s_to_send, "dmx ch: %d\n", mem_conf.dmx_channel);
+            Usart2Send(s_to_send);
+            Wait_ms(100);
+
+            sprintf(s_to_send, "max curr ch1: %d\n", mem_conf.max_current_ch1);
+            Usart2Send(s_to_send);
+            Wait_ms(100);
+            
             main_state++;
             break;
 
