@@ -205,7 +205,11 @@ typedef enum
     MAIN_INIT = 0,
     MAIN_HARDWARE_INIT,
     MAIN_GET_CONF,
-    MAIN_SLAVE_MODE
+    MAIN_IN_MASTER_MODE,
+    MAIN_IN_SLAVE_MODE,
+    MAIN_IN_PROGRAMS_MODE,
+    MAIN_IN_OVERTEMP,
+    MAIN_ENTERING_MAIN_MENU
     
 } main_state_t;
 
@@ -226,5 +230,7 @@ typedef enum {
 sw_state_t CheckS1 (void);
 sw_state_t CheckS2 (void);
 void UpdateSwitches (void);
+void UpdateSamplesAndPID (void);
+void PIDforProgramsCHX (unsigned char, unsigned char);
 
 #endif /* HARD_H_ */

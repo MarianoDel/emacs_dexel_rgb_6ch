@@ -17,6 +17,11 @@
 //-- Configurations Defines --------------------
 #define FLASH_PAGE_FOR_BKP PAGE61
 
+//-- Configuration for Struct --------------------
+#define MASTER_MODE    1
+#define SLAVE_MODE     2
+#define PROGRAMS_MODE  3
+
 //-- Memory Struct to Save --------------------
 typedef struct parameters {
 

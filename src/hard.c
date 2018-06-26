@@ -11,17 +11,56 @@
 #include "hard.h"
 #include "stm32f0xx.h"
 
+#include "dsp.h"
+#include "adc.h"
+#include "tim.h"
+
 
 
 /* Externals variables ---------------------------------------------------------*/
 extern volatile unsigned char switches_timer;
 
+extern volatile unsigned short adc_ch [];
+extern unsigned short sp1_filtered;
+extern unsigned short sp2_filtered;
+extern unsigned short sp3_filtered;
+extern unsigned short sp4_filtered;
+extern unsigned short sp5_filtered;
+extern unsigned short sp6_filtered;
 
 /* Global variables ------------------------------------------------------------*/
 //para los switches
 unsigned short s1 = 0;
 unsigned short s2 = 0;
 
+//--- Para el PID ----------
+unsigned char undersampling = 0;
+// #define PID_UNDERSAMPLING    10
+#define PID_UNDERSAMPLING    20
+
+short d_ch1;
+short d_ch2;
+short d_ch3;
+short d_ch4;
+short d_ch5;
+short d_ch6;
+
+short e_z1_ch1;
+short e_z1_ch2;
+short e_z1_ch3;
+short e_z1_ch4;
+short e_z1_ch5;
+short e_z1_ch6;
+
+short e_z2_ch1;
+short e_z2_ch2;
+short e_z2_ch3;
+short e_z2_ch4;
+short e_z2_ch5;
+short e_z2_ch6;
+
+#define sequence_ready         (DMA1->ISR & DMA_ISR_TCIF1)
+#define sequence_ready_reset   (DMA1->IFCR = DMA_ISR_TCIF1)
 
 /* Module Functions ------------------------------------------------------------*/
 
@@ -78,6 +117,162 @@ void UpdateSwitches (void)
 
         switches_timer = SWITCHES_TIMER_RELOAD;
     }
+}
+
+void UpdateSamplesAndPID (void)
+{
+    //Update de muestras y lazos PID
+    //con sp_filter
+    if (sequence_ready)
+    {
+        // Clear DMA TC flag
+        sequence_ready_reset;
+
+        if (undersampling < (PID_UNDERSAMPLING - 1))
+        {
+            undersampling++;
+        }
+        else
+        {
+            undersampling = 0;
+
+            //PID CH1
+            if (!sp1_filtered)
+                Update_PWM1(0);
+            else
+            {
+                d_ch1 = PID_roof (sp1_filtered, I_Channel_1, d_ch1, &e_z1_ch1, &e_z2_ch1);
+
+                if (d_ch1 < 0)
+                    d_ch1 = 0;
+                else
+                {
+                    if (d_ch1 > DUTY_90_PERCENT)
+                        d_ch1 = DUTY_90_PERCENT;
+                    
+                    Update_PWM1(d_ch1);
+                }
+            }
+
+            //PID CH2
+            if (!sp2_filtered)
+                Update_PWM2(0);
+            else
+            {                
+                d_ch2 = PID_roof (sp2_filtered, I_Channel_2, d_ch2, &e_z1_ch2, &e_z2_ch2);
+
+                if (d_ch2 < 0)
+                    d_ch2 = 0;
+                else
+                {
+                    if (d_ch2 > DUTY_90_PERCENT)
+                        d_ch2 = DUTY_90_PERCENT;
+                    
+                    Update_PWM2(d_ch2);
+                }
+            }
+
+            //PID CH3
+            if (!sp3_filtered)
+                Update_PWM3(0);
+            else
+            {                                
+                d_ch3 = PID_roof (sp3_filtered, I_Channel_3, d_ch3, &e_z1_ch3, &e_z2_ch3);
+
+                if (d_ch3 < 0)
+                    d_ch3 = 0;
+                else
+                {
+                    if (d_ch3 > DUTY_90_PERCENT)
+                        d_ch3 = DUTY_90_PERCENT;
+                    
+                    Update_PWM3(d_ch3);
+                }
+            }
+
+            //PID CH4
+            if (!sp4_filtered)
+                Update_PWM4(0);
+            else
+            {
+                d_ch4 = PID_roof (sp4_filtered, I_Channel_4, d_ch4, &e_z1_ch4, &e_z2_ch4);
+
+                if (d_ch4 < 0)
+                    d_ch4 = 0;
+                else
+                {
+                    if (d_ch4 > DUTY_90_PERCENT)
+                        d_ch4 = DUTY_90_PERCENT;
+                    
+                    Update_PWM4(d_ch4);
+                }
+            }
+
+            //PID CH5
+            if (!sp5_filtered)
+                Update_PWM5(0);
+            else
+            {                
+                d_ch5 = PID_roof (sp5_filtered, I_Channel_5, d_ch5, &e_z1_ch5, &e_z2_ch5);
+
+                if (d_ch5 < 0)
+                    d_ch5 = 0;
+                else
+                {
+                    if (d_ch5 > DUTY_90_PERCENT)
+                        d_ch5 = DUTY_90_PERCENT;
+                    
+                    Update_PWM5(d_ch5);
+                }
+            }
+
+            //PID CH6
+            if (!sp6_filtered)
+                Update_PWM6(0);
+            else
+            {                                
+                d_ch6 = PID_roof (sp6_filtered, I_Channel_6, d_ch6, &e_z1_ch6, &e_z2_ch6);
+
+                if (d_ch6 < 0)
+                    d_ch6 = 0;
+                else
+                {
+                    if (d_ch6 > DUTY_90_PERCENT)
+                        d_ch6 = DUTY_90_PERCENT;
+                    
+                    Update_PWM6(d_ch6);
+                }
+            }               
+        }
+    }
+}
+
+//en los programas me dicen la intensidad del LED entre 0 y 255
+//existe una conversion entre cantidad de corriente y potencia
+//aca y en modo_slave en recepcion del dmx
+//TODO: luego juntarlas en una misma funcion
+void PIDforProgramsCHX (unsigned char ch, unsigned char power)
+{
+    unsigned short dummysp;
+
+    dummysp = power;
+    dummysp <<= 2;
+    if (dummysp > 820)
+        dummysp = 820;
+
+    if (ch == 1)
+        sp1_filtered = dummysp;
+    else if (ch == 2)
+        sp2_filtered = dummysp;
+    else if (ch == 3)
+        sp3_filtered = dummysp;
+    else if (ch == 4)
+        sp4_filtered = dummysp;
+    else if (ch == 5)
+        sp5_filtered = dummysp;
+    else    //debe ser el ch6
+        sp6_filtered = dummysp;
+    
 }
 
 //--- end of file ---//

@@ -25,6 +25,7 @@
 #include "dmx_transceiver.h"
 #include "modo_slave.h"
 #include "lcd_utils.h"
+#include "programs_functions.h"
 
 #include "flash_program.h"
 
@@ -36,7 +37,7 @@
 
 //--- VARIABLES EXTERNAS ---//
 // ------- Externals de la Memoria y los modos -------
-parameters_typedef * pmem = (unsigned int *) FLASH_PAGE_FOR_BKP;	//en flash
+parameters_typedef * pmem = (parameters_typedef *) (unsigned int *) FLASH_PAGE_FOR_BKP;	//en flash
 parameters_typedef mem_conf;
 
 // ------- Externals del ADC -------
@@ -70,6 +71,13 @@ volatile unsigned char data512[SIZEOF_DMX_DATA512];
 //static unsigned char data_back[10];
 volatile unsigned char data7[SIZEOF_DMX_DATA7];
 
+//para el PID en hard.c
+unsigned short sp1_filtered = 0;
+unsigned short sp2_filtered = 0;
+unsigned short sp3_filtered = 0;
+unsigned short sp4_filtered = 0;
+unsigned short sp5_filtered = 0;
+unsigned short sp6_filtered = 0;
 
 //--- VARIABLES GLOBALES ---//
 //para pruebas mantener esto en memoria
@@ -77,8 +85,8 @@ volatile unsigned char data7[SIZEOF_DMX_DATA7];
 parameters_typedef __attribute__ ((section("memParams"))) const parameters_typedef_constant =
     {
         .program_type = 1,
-        .last_program_in_flash = 0,
-        .last_program_deep_in_flash = 100,
+        .last_program_in_flash = 9,
+        .last_program_deep_in_flash = 0,
 
         .dmx_channel = 1,
         .dmx_channel_quantity = 6,
@@ -131,6 +139,7 @@ int main(void)
     char s_to_send [100];
     unsigned char size = 0;
     main_state_t main_state = MAIN_INIT;
+    resp_t resp = resp_continue;
 
 
     unsigned char check_s1 = 0, check_s2 = 0;
@@ -612,11 +621,11 @@ int main(void)
             Usart2Send(s_to_send);
             Wait_ms(100);
 
-            sprintf(s_to_send, "dmx ch: %d\n", mem_conf.dmx_channel);
+            sprintf(s_to_send, "last prg: %d\n", mem_conf.last_program_in_flash);
             Usart2Send(s_to_send);
             Wait_ms(100);
 
-            sprintf(s_to_send, "max curr ch1: %d\n", mem_conf.max_current_ch1);
+            sprintf(s_to_send, "last prog deep: %d\n", mem_conf.last_program_deep_in_flash);
             Usart2Send(s_to_send);
             Wait_ms(100);
             
@@ -624,51 +633,101 @@ int main(void)
             break;
 
         case MAIN_HARDWARE_INIT:
-            main_state++;
+            // Func_PX_Reset();    //programs no necesita reset
+            FuncSlaveModeReset();
+            //master mode reset()
+            main_state++;            
             break;
 
         case MAIN_GET_CONF:
-            main_state++;
+            if (mem_conf.program_type == MASTER_MODE)
+                main_state = MAIN_IN_MASTER_MODE;
+
+            if (mem_conf.program_type == SLAVE_MODE)
+                main_state = MAIN_IN_SLAVE_MODE;
+
+            if (mem_conf.program_type == PROGRAMS_MODE)
+                main_state = MAIN_IN_PROGRAMS_MODE;
+
+            //default state no debiera estar nunca aca!
+            if (main_state == MAIN_GET_CONF)
+            {
+                mem_conf.program_type = SLAVE_MODE;
+                main_state = MAIN_IN_SLAVE_MODE;
+            }                
             break;
 
-        case MAIN_SLAVE_MODE:
+        case MAIN_IN_MASTER_MODE:    //por ahora programs mode
+            Func_PX(mem_conf.last_program_in_flash, mem_conf.last_program_deep_in_flash);
+            UpdateSamplesAndPID();
+            if (CheckS2() > S_HALF)
+                main_state = MAIN_ENTERING_MAIN_MENU;
+            
+            break;
+            
+        case MAIN_IN_SLAVE_MODE:
             FuncSlaveMode();
+            if (!timer_standby)
+            {
+                timer_standby = 1000;
+                //envio corrientes
+                sprintf(s_to_send, "i1: %d, i2: %d, i3: %d, i4: %d, i5: %d, i6: %d, t: %d\n",
+                        I_Channel_1,
+                        I_Channel_2,
+                        I_Channel_3,
+                        I_Channel_4,
+                        I_Channel_5,
+                        I_Channel_6,
+                        Temp_Channel);
+
+                Usart2Send(s_to_send);
+
+                //envio canales dmx
+                sprintf(s_to_send, "c0: %d, c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
+                        data7[0],
+                        data7[1],
+                        data7[2],
+                        data7[3],
+                        data7[4],
+                        data7[5],
+                        data7[6]);
+                
+                Usart2Send(s_to_send);            
+            }
+
+            if (CheckS2() > S_HALF)
+                main_state = MAIN_ENTERING_MAIN_MENU;
+
             break;
 
+        case MAIN_IN_PROGRAMS_MODE:
+            Func_PX(mem_conf.last_program_in_flash, mem_conf.last_program_deep_in_flash);
+            UpdateSamplesAndPID();
+
+            if (CheckS2() > S_HALF)
+                main_state = MAIN_ENTERING_MAIN_MENU;
+
+            break;
+
+        case MAIN_IN_OVERTEMP:
+            break;
+
+        case MAIN_ENTERING_MAIN_MENU:
+            resp = MainMenu();
+
+            if (resp == resp_ok)    //ver resp_finish
+            {
+                
+
+            }
+            break;
+            
         default:
             main_state = MAIN_INIT;
             break;
         }
 
         //cuestiones generales
-        if (!timer_standby)
-        {
-            timer_standby = 1000;
-            //envio corrientes
-            sprintf(s_to_send, "i1: %d, i2: %d, i3: %d, i4: %d, i5: %d, i6: %d, t: %d\n",
-                    I_Channel_1,
-                    I_Channel_2,
-                    I_Channel_3,
-                    I_Channel_4,
-                    I_Channel_5,
-                    I_Channel_6,
-                    Temp_Channel);
-
-            Usart2Send(s_to_send);
-
-            //envio canales dmx
-            sprintf(s_to_send, "c0: %d, c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
-                    data7[0],
-                    data7[1],
-                    data7[2],
-                    data7[3],
-                    data7[4],
-                    data7[5],
-                    data7[6]);
-
-            Usart2Send(s_to_send);
-            
-        }
         
         UpdateSwitches();
     }    //end of while 1
@@ -743,6 +802,9 @@ void TimingDelay_Decrement(void)
 
     //para modo_slave
     UpdateTimerSlaveMode();
+
+    //para programas
+    UpdateProgTimers ();
 }
 
 void EXTI4_15_IRQHandler (void)    //nueva detecta el primer 0 en usart Consola PHILIPS

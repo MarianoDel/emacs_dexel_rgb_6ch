@@ -43,6 +43,23 @@
 *** Modo Master
     - adentro tiene modo programas, pero los envia en dmx512
 *** Modo Programs
+** Listado de Menues
+*** Master + Programas
+    - [ ] envia programas por dmx512
+
+*** Slave (DMX512)
+    - [ ] Canal DMX
+    - [ ] Cantidad de canales
+    - [ ] Si usa Grandmaster
+
+*** Programas
+    - [ ] Seteo del programa especifico
+    - [ ] Seteo de velocidad de avance
+
+*** Hardware
+    - [ ] Corriente maxima
+    - [ ] tension maxima
+    - [ ] tension de los Leds en el canal
 
 * Caracteristicas de los LEDS
 ** Rojos

@@ -1,90 +1,41 @@
 //---------------------------------------------
-// #### PROYECTO DEXEL 6CH BIDIRECCIONAL - Custom Board ####
 // ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### MODO_SLAVE.C #############################
+// #### MENUES.C ###############################
 //---------------------------------------------
 
 /* Includes ------------------------------------------------------------------*/
-#include "modo_slave.h"
+#include "menues.h"
 #include "hard.h"
 #include "stm32f0xx.h"
-#include "dsp.h"
 
 #include "lcd.h"
 #include "lcd_utils.h"
-#include "flash_program.h"
 
 #include <stdio.h>
 #include <string.h>
 
 
 //--- VARIABLES EXTERNAS ---//
-extern volatile unsigned char data7[];
-
-//del Main
-extern volatile unsigned char dmx_filters_timer;
-extern volatile unsigned char Packet_Detected_Flag;
-
-extern parameters_typedef mem_conf;
-
-extern unsigned short sp1_filtered;
-extern unsigned short sp2_filtered;
-extern unsigned short sp3_filtered;
-extern unsigned short sp4_filtered;
-extern unsigned short sp5_filtered;
-extern unsigned short sp6_filtered;
 
 
 //--- VARIABLES GLOBALES ---//
-slave_mode_t slave_mode_state = SLAVE_MODE_INIT;
+
 
 //-- timers del modulo --------------------
-volatile unsigned short slave_mode_enable_menu_timer = 0;
-volatile unsigned short slave_mode_dmx_receiving_timer = 0;
+volatile unsigned short main_menu_timer = 0;
+// volatile unsigned short slave_mode_dmx_receiving_timer = 0;
 
 // extern volatile unsigned short standalone_timer;
 // extern volatile unsigned short standalone_enable_menu_timer;
 // extern volatile unsigned short minutes;
 // extern volatile unsigned short scroll1_timer;
 
-
 //--- Para los menues LCD ----------
-#define K_100P    0.3925
-unsigned char last_ch1;
-unsigned char last_ch2;
-unsigned char last_ch3;
-unsigned char last_ch4;
-unsigned char last_ch5;
-unsigned char last_ch6;
 
-unsigned short dmx_local_channel = 0;
-unsigned short dmx_local_value = 0;
-
-unsigned char check_dmx_lcd_pckt = 0;
-
-// unsigned short dmx_channel = 0;
-// unsigned char grandmaster_value = 0;
-
-float fcalc = 1.0;
-
-//--- Para el PID ----------
-unsigned short sp1 = 0;
-unsigned short sp2 = 0;
-unsigned short sp3 = 0;
-unsigned short sp4 = 0;
-unsigned short sp5 = 0;
-unsigned short sp6 = 0;
-
-unsigned short v_sp1 [8];
-unsigned short v_sp2 [8];
-unsigned short v_sp3 [8];
-unsigned short v_sp4 [8];
-unsigned short v_sp5 [8];
-unsigned short v_sp6 [8];
 
 //-- Private Defines -----------------
 //-- para los menues -----------------
@@ -131,29 +82,22 @@ static slave_mode_m_manager_t slave_mode_menu_manager = MENU_ON;
 static slave_mode_menu_t slave_mode_menu_state = SLAVE_MODE_MENU_INIT;
 
 //-- Private Functions ----------
-void ShowConfSlaveModeReset (void);
-resp_t ShowConfSlaveMode (void);
-void SlaveModeMenuManagerReset (void);
-void UpdateSlaveModeMenuManager (void);
-resp_t MenuSlaveMode (void);
-resp_t MenuSlaveModeRunning (void);        
+
 
 //--- FUNCIONES DEL MODULO ---//
-void UpdateTimerSlaveMode (void)
+inline void UpdateTimerModeMenu (void)
 {
-    if (slave_mode_enable_menu_timer)
-        slave_mode_enable_menu_timer--;
+    if (main_menu_timer)
+        main_menu_timer--;
 
-    if (slave_mode_dmx_receiving_timer)
-        slave_mode_dmx_receiving_timer--;
 }
 
-void FuncSlaveModeReset (void)
+void MainMenuReset (void)
 {
     slave_mode_state = SLAVE_MODE_INIT;
 }
 
-void FuncSlaveMode (void)
+void MainMenu (void)
 {
     resp_t resp = resp_continue;
     unsigned char i;
@@ -162,16 +106,6 @@ void FuncSlaveMode (void)
     switch (slave_mode_state)
     {
     case SLAVE_MODE_INIT:
-        for (i = 0; i < 8; i++)
-        {
-            v_sp1[i] = 0;
-            v_sp2[i] = 0;
-            v_sp3[i] = 0;
-            v_sp4[i] = 0;
-            v_sp5[i] = 0;
-            v_sp6[i] = 0;
-        }
-
         slave_mode_state++;
         ShowConfSlaveModeReset();
         SlaveModeMenuManagerReset();
