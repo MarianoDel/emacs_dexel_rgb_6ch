@@ -28,16 +28,19 @@ typedef struct parameters {
     //-- Tipo de Programa ----
     unsigned char program_type;
 
+    //-- Para Modo Master ----
+    unsigned char master_enable;
+    
     //-- Para Programas y modo Master ----
     unsigned char last_program_in_flash;
     unsigned char last_program_deep_in_flash;
 
-    //-- Para Modo Slave ----                  //3
+    //-- Para Modo Slave ----                  //4
     unsigned short dmx_channel;
     unsigned char dmx_channel_quantity;	
     unsigned char dmx_grandmaster;	
 
-    //-- Para Configuracion de Hardware ----   //7
+    //-- Para Configuracion de Hardware ----   //8
     unsigned short max_current_ch1;
     unsigned short max_current_ch2;
     unsigned short max_current_ch3;
@@ -45,14 +48,14 @@ typedef struct parameters {
     unsigned short max_current_ch5;
     unsigned short max_current_ch6;
 
-    unsigned short max_pwm_ch1;        //19
+    unsigned short max_pwm_ch1;        //20
     unsigned short max_pwm_ch2;
     unsigned short max_pwm_ch3;
     unsigned short max_pwm_ch4;
     unsigned short max_pwm_ch5;
-    unsigned short max_pwm_ch6;        //31
+    unsigned short max_pwm_ch6;        //32
 
-    unsigned char dummy1;            //32
+    // unsigned char dummy1;            //32
 
 } parameters_typedef;
 

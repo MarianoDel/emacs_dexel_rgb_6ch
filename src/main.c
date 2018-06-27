@@ -23,6 +23,7 @@
 
 #include "lcd.h"
 #include "dmx_transceiver.h"
+#include "menues.h"
 #include "modo_slave.h"
 #include "lcd_utils.h"
 #include "programs_functions.h"
@@ -85,6 +86,9 @@ unsigned short sp6_filtered = 0;
 parameters_typedef __attribute__ ((section("memParams"))) const parameters_typedef_constant =
     {
         .program_type = 1,
+
+        .master_enable = 0,
+        
         .last_program_in_flash = 9,
         .last_program_deep_in_flash = 0,
 
@@ -805,6 +809,9 @@ void TimingDelay_Decrement(void)
 
     //para programas
     UpdateProgTimers ();
+
+    //para main menu
+    UpdateTimerModeMenu ();
 }
 
 void EXTI4_15_IRQHandler (void)    //nueva detecta el primer 0 en usart Consola PHILIPS

@@ -107,6 +107,7 @@
 #define OPTIONS_WAIT_SELECT_1			2
 #define OPTIONS_WAIT_SELECT_2			3
 #define OPTIONS_WAIT_SELECT_3			4
+#define OPTIONS_WAIT_SELECT_TIMEOUT        5
 
 #define OPTIONS_CHANGE_SELECT	10
 
@@ -124,6 +125,7 @@
 #define CHANGE_PERCENT    0
 #define CHANGE_SECS		  1
 #define CHANGE_CHANNELS	  2
+#define CHANGE_PROGRAMS    3
 #define CHANGE_RESET	  0x80
 
 //wrapers de la funcion FuncChange
@@ -135,6 +137,9 @@
 #define FuncChangePercentReset()	FuncChangeReset()
 #define FuncChangeSecsReset()	FuncChangeReset()
 #define FuncChangeChannelsReset()	FuncChangeReset()
+#define FuncChangePrograms(X)	FuncChange(X, CHANGE_PROGRAMS, 1, 9)
+#define FuncChangeProgramsSequence(X)	FuncChange(X, CHANGE_PROGRAMS, 1, 9)
+
 
 //-------- Functions -------------
 void UpdateTimerLCD (void);

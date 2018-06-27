@@ -11,6 +11,7 @@
 #ifndef _MENUES_H_
 #define _MENUES_H_
 
+#include "hard.h"
 
 //--- Exported types ---//
 // typedef enum {
@@ -29,10 +30,9 @@
 
 
 //--- Exported functions ---//
-void MainMenu (void);
-// void FuncSlaveMode (void);
-// void FuncSlaveModeReset (void);
-// void UpdateTimerSlaveMode (void);
+void MainMenuReset (void);
+resp_t MainMenu (void);
+void UpdateTimerModeMenu (void);
 
 #endif
 

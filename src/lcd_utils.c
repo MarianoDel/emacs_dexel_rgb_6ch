@@ -497,8 +497,8 @@ unsigned char FuncOptions (const char * p_text1, const char * p_text2,
 
         if (CheckS2() > S_NO)
         {
-            resp = (resp_selected | (options_curr_sel << 4));
-            options_state = OPTIONS_INIT;
+            options_state = OPTIONS_WAIT_SELECT_TIMEOUT;
+            show_select_timer = 200;
         }
 
         if (!show_select_timer)
@@ -525,8 +525,8 @@ unsigned char FuncOptions (const char * p_text1, const char * p_text2,
 
         if (CheckS2() > S_NO)
         {
-            resp = (resp_selected | (options_curr_sel << 4));
-            options_state = OPTIONS_INIT;
+            options_state = OPTIONS_WAIT_SELECT_TIMEOUT;
+            show_select_timer = 200;
         }
 
         if (!show_select_timer)
@@ -535,6 +535,14 @@ unsigned char FuncOptions (const char * p_text1, const char * p_text2,
             LCDTransmitStr("*");
             show_select_timer = TT_SHOW_SELECT_IN_ON;
             options_state = OPTIONS_WAIT_SELECT_1;
+        }
+        break;
+
+    case OPTIONS_WAIT_SELECT_TIMEOUT:
+        if (!show_select_timer)
+        {
+            resp = (resp_selected | (options_curr_sel << 4));
+            options_state = OPTIONS_INIT;
         }
         break;
 
@@ -602,11 +610,18 @@ unsigned char FuncChange (unsigned short * p_orig_value, unsigned char mode,
             sprintf(s_current, "%2d", change_current_val);
             strcat(s_current, (const char*)" secs sel");
         }
-        else	//debe ser CHANNELS
+        else if (mode == CHANGE_CHANNELS)
         {
             sprintf(s_current, "%3d ", change_current_val);
             strcat(s_current, (const char*)"ch sel");
         }
+        else if (mode == CHANGE_PROGRAMS)
+        {
+            sprintf(s_current, "%1d ", change_current_val);
+            strcat(s_current, (const char*)"ch sel");
+        }
+        else
+            return resp_finish;
 
         resp = FuncOptions ((const char *) "up dn e ",
                             s_current,(unsigned char *) s_sel_up_down,
@@ -675,6 +690,8 @@ unsigned char FuncChange (unsigned short * p_orig_value, unsigned char mode,
     return resp;
 }
 
+//TODO: ademas deja el asterisco donde se toca
+//modificacion 27-6-18 on=1 off=0
 //recibe el valor original para arrancar seleccion
 //devuelve resp_continue o resp_finish si termino la seleccion
 unsigned char FuncChangeOnOff (unsigned char * p_orig_value)
@@ -684,7 +701,11 @@ unsigned char FuncChangeOnOff (unsigned char * p_orig_value)
     switch (change_state)
     {
     case CHANGE_INIT:
-        change_current_val = *p_orig_value;
+        if (*p_orig_value == 0)
+            change_current_val = 1;
+        else
+            change_current_val = 0;
+
         change_last_option = change_current_val | 0x80;
         FuncOptionsReset();
         change_state++;
