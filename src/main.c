@@ -96,12 +96,8 @@ parameters_typedef __attribute__ ((section("memParams"))) const parameters_typed
         .dmx_channel_quantity = 6,
         .dmx_grandmaster = 0,        
         
-        .max_current_ch1 = 10,
-        .max_current_ch2 = 0,
-        .max_current_ch3 = 0,
-        .max_current_ch4 = 0,
-        .max_current_ch5 = 0,
-        .max_current_ch6 = 0,                
+        .max_current_int = 1,
+        .max_current_dec = 0,
 
         .max_pwm_ch1 = 10,
         .max_pwm_ch2 = 0,
@@ -621,25 +617,19 @@ int main(void)
         {
         case MAIN_INIT:
             memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
-            sprintf(s_to_send, "prog type: %d\n", mem_conf.program_type);
-            Usart2Send(s_to_send);
-            Wait_ms(100);
 
-            sprintf(s_to_send, "last prg: %d\n", mem_conf.last_program_in_flash);
-            Usart2Send(s_to_send);
-            Wait_ms(100);
-
-            sprintf(s_to_send, "last prog deep: %d\n", mem_conf.last_program_deep_in_flash);
-            Usart2Send(s_to_send);
-            Wait_ms(100);
-            
             main_state++;
             break;
 
         case MAIN_HARDWARE_INIT:
             // Func_PX_Reset();    //programs no necesita reset
+            MasterModeMenuReset();
             FuncSlaveModeReset();
-            //master mode reset()
+
+            sprintf(s_to_send, "prog type: %d\n", mem_conf.program_type);
+            Usart2Send(s_to_send);
+            Wait_ms(100);
+            
             main_state++;            
             break;
 
@@ -666,6 +656,8 @@ int main(void)
             UpdateSamplesAndPID();
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;
+
+            MasterModeMenu();
             
             break;
             
@@ -711,19 +703,26 @@ int main(void)
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;
 
+            // ProgramsModeMenu();
+            
             break;
 
         case MAIN_IN_OVERTEMP:
             break;
 
         case MAIN_ENTERING_MAIN_MENU:
+            //deshabilitar salidas hardware
+            MainMenuReset();
+            main_state++;
+
+            break;
+
+        case MAIN_IN_MAIN_MENU:
             resp = MainMenu();
 
-            if (resp == resp_ok)    //ver resp_finish
-            {
-                
+            if (resp == resp_finish)
+                main_state = MAIN_HARDWARE_INIT;
 
-            }
             break;
             
         default:

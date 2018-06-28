@@ -111,6 +111,16 @@
 
 #define OPTIONS_CHANGE_SELECT	10
 
+//estados de la funcion OPTIONS ON OFF
+#define OPTIONS_ONOFF_INIT          0
+#define OPTIONS_ONOFF_REDRAW        1
+#define OPTIONS_ONOFF_WAIT_IN_ON    2
+#define OPTIONS_ONOFF_WAIT_IN_OFF   3
+#define OPTIONS_ONOFF_SELECT_OPTION    4
+#define OPTIONS_ONOFF_WAIT_FREE_S1    5
+#define OPTIONS_ONOFF_CHANGE_OPTION    6
+
+
 //estados de la funcion SCROLL
 #define SCROLL_INIT			0
 #define SCROLL_SENDING			1
@@ -147,6 +157,7 @@ unsigned char FuncShowBlink (const char * , const char * , unsigned char, unsign
 unsigned char FuncShowSelect (const char *);
 unsigned char FuncShowSelectv2 (const char *);
 unsigned char FuncOptions (const char *, const char *, unsigned char *, unsigned char, unsigned char);
+unsigned char FuncOptionsOnOff (unsigned char *);
 unsigned char FuncScroll1 (const char *);
 unsigned char FuncScroll2 (const char *);
 
@@ -159,5 +170,10 @@ void FuncShowSelectv2Reset (void);
 void FuncChangeReset (void);
 
 void LCDClearScreen (void);
+
+unsigned char FuncChangeDecimals (unsigned char *, unsigned char *, 
+                                  unsigned char , unsigned char ,    
+                                  unsigned char , unsigned char);    
+
 
 #endif /* MAIN_MENU_H_ */

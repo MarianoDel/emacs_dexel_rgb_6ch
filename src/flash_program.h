@@ -41,21 +41,18 @@ typedef struct parameters {
     unsigned char dmx_grandmaster;	
 
     //-- Para Configuracion de Hardware ----   //8
-    unsigned short max_current_ch1;
-    unsigned short max_current_ch2;
-    unsigned short max_current_ch3;
-    unsigned short max_current_ch4;
-    unsigned short max_current_ch5;
-    unsigned short max_current_ch6;
+    unsigned char max_current_int;
+    unsigned char max_current_dec;
 
-    unsigned short max_pwm_ch1;        //20
+    unsigned short max_pwm_ch1;        //10
     unsigned short max_pwm_ch2;
     unsigned short max_pwm_ch3;
     unsigned short max_pwm_ch4;
     unsigned short max_pwm_ch5;
-    unsigned short max_pwm_ch6;        //32
+    unsigned short max_pwm_ch6;        //22
 
-    // unsigned char dummy1;            //32
+    unsigned char dummy1;            
+    unsigned char dummy2;            //24    
 
 } parameters_typedef;
 

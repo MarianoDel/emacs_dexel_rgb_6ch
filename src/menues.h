@@ -27,12 +27,17 @@
 
 
 //--- Exported macro ---//
-
+#define MasterModeMenu()    MPModeMenu(MASTER_MODE)
+#define ProgramsModeMenu()    MPModeMenu(PROGRAMS_MODE)
+#define MasterModeMenuReset()    MPModeMenuReset()
+#define ProgramsModeMenuReset()    MPModeMenuReset()
 
 //--- Exported functions ---//
 void MainMenuReset (void);
 resp_t MainMenu (void);
 void UpdateTimerModeMenu (void);
+void MPModeMenuReset (void);
+void MPModeMenu (unsigned char);
 
 #endif
 
