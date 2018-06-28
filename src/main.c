@@ -703,7 +703,7 @@ int main(void)
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;
 
-            // ProgramsModeMenu();
+            ProgramsModeMenu();
             
             break;
 

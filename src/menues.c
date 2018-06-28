@@ -80,13 +80,14 @@ static main_menu_t main_menu_state = MAIN_MENU_INIT;
 
 
 typedef enum {
-    MASTER_MODE_MENU_INIT = 0,
-    MASTER_MODE_MENU_SHOW_PROGRAMS,
-    MASTER_MODE_MENU_SHOW_END_CONFIG
+    MP_MODE_MENU_INIT = 0,
+    MP_MODE_MENU_SHOW_PROGRAMS,
+    MP_MODE_MENU_SHOW_MASTER,
+    MP_MODE_MENU_SHOW_RUNNING
     
-} master_mode_menu_t;
+} mp_mode_menu_t;
 
-static master_mode_menu_t master_mode_menu_state = MASTER_MODE_MENU_INIT;
+static mp_mode_menu_t mp_mode_menu_state = MP_MODE_MENU_INIT;
 
 //-- Private Functions ----------
 
@@ -434,18 +435,16 @@ resp_t MainMenu (void)
 
 void MPModeMenuReset (void)
 {
-    master_mode_menu_state = MASTER_MODE_MENU_INIT;
+    mp_mode_menu_state = MP_MODE_MENU_INIT;
 }
 
 void MPModeMenu (unsigned char mode)
 {
     resp_t resp = resp_continue;
-    // char s_lcd1 [10];
-    // char s_lcd2 [10];
     
-    switch (master_mode_menu_state)
+    switch (mp_mode_menu_state)
     {
-    case MASTER_MODE_MENU_INIT:
+    case MP_MODE_MENU_INIT:
         if (mode == MASTER_MODE)        
             resp = FuncShowBlink ((const char *) "Entering", (const char *) "Mstr Mod", 1, BLINK_NO);
         else if (mode == PROGRAMS_MODE)
@@ -454,24 +453,36 @@ void MPModeMenu (unsigned char mode)
         if (resp == resp_finish)
         {
             if (mode == MASTER_MODE)
-                sprintf(s_lcd1, "Pgm: %2dM", mem_conf.last_program_in_flash);
+                mp_mode_menu_state = MP_MODE_MENU_SHOW_MASTER;
             else if (mode == PROGRAMS_MODE)
-                sprintf(s_lcd1, "Pgm: %2d ", mem_conf.last_program_in_flash);
+                mp_mode_menu_state = MP_MODE_MENU_SHOW_PROGRAMS;
             
-            sprintf(s_lcd2, "Seq: %2d ", mem_conf.last_program_deep_in_flash);
-            
-            FuncShowBlink (s_lcd1, s_lcd2, 0, BLINK_NO);
-            // FuncShowBlink ("Dale", "puto", 0, BLINK_NO);
-            master_mode_menu_state++;
         }
         break;
 
-    case MASTER_MODE_MENU_SHOW_PROGRAMS:
+    case MP_MODE_MENU_SHOW_PROGRAMS:
+        sprintf(s_lcd1, "Pgm: %2d ", mem_conf.last_program_in_flash);
+        sprintf(s_lcd2, "Seq: %2d ", mem_conf.last_program_deep_in_flash);
+        resp = FuncShowBlink (s_lcd1, s_lcd2, 0, BLINK_NO);
 
+        if (resp == resp_finish)
+            mp_mode_menu_state = MP_MODE_MENU_SHOW_RUNNING;
         break;
 
+    case MP_MODE_MENU_SHOW_MASTER:
+        sprintf(s_lcd1, "Pgm: %2dM", mem_conf.last_program_in_flash);
+        sprintf(s_lcd2, "Seq: %2d ", mem_conf.last_program_deep_in_flash);
+        resp = FuncShowBlink (s_lcd1, s_lcd2, 0, BLINK_NO);
+
+        if (resp == resp_finish)
+            mp_mode_menu_state = MP_MODE_MENU_SHOW_RUNNING;
+        break;
+
+    case MP_MODE_MENU_SHOW_RUNNING:
+        break;
+        
     default:
-        master_mode_menu_state = MASTER_MODE_MENU_INIT;
+        mp_mode_menu_state = MP_MODE_MENU_INIT;
         break;
     }
     
