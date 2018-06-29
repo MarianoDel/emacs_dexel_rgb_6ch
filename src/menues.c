@@ -27,7 +27,7 @@ extern parameters_typedef mem_conf;
 char s_lcd1 [10];
 char s_lcd2 [10];
 
-
+unsigned char conf_changed = 0;
 //-- timers del modulo --------------------
 volatile unsigned short main_menu_timer = 0;
 // volatile unsigned short slave_mode_dmx_receiving_timer = 0;
@@ -191,7 +191,11 @@ resp_t MainMenu (void)
 
         if (resp == resp_selected)	//se eligio el menu
         {
-            resp = resp_finish;
+            if (conf_changed)
+                resp = resp_need_to_save;
+            else
+                resp = resp_finish;
+            
             main_menu_state = MAIN_MENU_INIT;
         }
         else if (resp != resp_continue)    //TODO: ver si sale por timeout
@@ -252,6 +256,7 @@ resp_t MainMenu (void)
         {
             mem_conf.program_type = PROGRAMS_MODE;
             main_menu_state = MAIN_MENU_SHOW_PROGRAMS;
+            conf_changed = 1;
             resp = resp_continue;
         }
         break;
@@ -330,6 +335,7 @@ resp_t MainMenu (void)
         {
             mem_conf.program_type = SLAVE_MODE;            
             main_menu_state = MAIN_MENU_SHOW_SLAVE;
+            conf_changed = 1;
             resp = resp_continue;
         }
         break;
@@ -384,6 +390,7 @@ resp_t MainMenu (void)
         {
             mem_conf.program_type = MASTER_MODE;
             main_menu_state = MAIN_MENU_SHOW_MASTER;
+            conf_changed = 1;
             resp = resp_continue;
         }
         break;
@@ -420,6 +427,7 @@ resp_t MainMenu (void)
         if (resp == resp_finish)
         {
             main_menu_state = MAIN_MENU_SHOW_HARDWARE;
+            conf_changed = 1;
             resp = resp_continue;
         }
         break;

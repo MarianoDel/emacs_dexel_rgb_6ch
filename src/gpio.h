@@ -54,6 +54,8 @@
 void GPIO_Config(void);
 void EXTIOff (void);
 void EXTIOn (void);
+void PB6_to_Alternative (void);
+void PB6_to_PushPull (void);
 
 #endif //--- End ---//
 

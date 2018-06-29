@@ -198,4 +198,24 @@ inline void EXTIOn (void)
     EXTI->IMR |= 0x00000100;
 }
 
+void PB6_to_Alternative (void)
+{
+    unsigned int temp;
+
+    temp = GPIOB->MODER;	//2 bits por pin
+    temp &= 0xFFFFCFFF;		//PB6 (alternative)
+    temp |= 0x00002000; 
+    GPIOB->MODER = temp;    
+}
+
+void PB6_to_PushPull (void)
+{
+    unsigned int temp;
+    
+    temp = GPIOB->MODER;	//2 bits por pin
+    temp &= 0xFFFFCFFF;		//PB6 out
+    temp |= 0x00001000;         
+    GPIOB->MODER = temp;
+}
+
 //--- end of file ---//

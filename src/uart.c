@@ -28,7 +28,8 @@
 
 extern volatile unsigned char usart1_have_data;
 extern volatile unsigned char usart2_have_data;
-
+extern volatile unsigned char * pdmx;
+extern volatile unsigned char data512[];
 
 //--- Private variables ---//
 volatile unsigned char * ptx1;
@@ -110,28 +111,40 @@ void USART1_IRQHandler(void)
     {
         dummy = USART1->RDR & 0x0FF;
 
-        DmxInt_Serial_Handler (dummy);        
+        DmxInt_Serial_Handler_Receiver (dummy);
     }
 
     /* USART in mode Transmitter -------------------------------------------------*/
-    //if (USART_GetITStatus(USARTx, USART_IT_TXE) == SET)
-
-
     if (USART1->CR1 & USART_CR1_TXEIE)
     {
         if (USART1->ISR & USART_ISR_TXE)
         {
-            if ((ptx1 < &tx1buff[SIZEOF_DATA]) && (ptx1 < ptx1_pckt_index))
+            if (pdmx < &data512[512])
             {
-                USART1->TDR = *ptx1;
-                ptx1++;
+                USART1->TDR = *pdmx;
+                pdmx++;
             }
             else
             {
-                ptx1 = tx1buff;
-                ptx1_pckt_index = tx1buff;
                 USART1->CR1 &= ~USART_CR1_TXEIE;
+                SendDMXPacket(PCKT_UPDATE);
             }
+
+            // dummy = DmxInt_Serial_Handler_Transmitter ();
+            // if (dummy)
+            //     USART1->CR1 &= ~USART_CR1_TXEIE;
+            
+            // if ((ptx1 < &tx1buff[SIZEOF_DATA]) && (ptx1 < ptx1_pckt_index))
+            // {
+            //     USART1->TDR = *ptx1;
+            //     ptx1++;
+            // }
+            // else
+            // {
+            //     ptx1 = tx1buff;
+            //     ptx1_pckt_index = tx1buff;
+            //     USART1->CR1 &= ~USART_CR1_TXEIE;
+            // }
         }
     }
 
@@ -275,8 +288,16 @@ void USART1Config(void)
     // ptx1_pckt_index = tx1buff;
     // prx1 = rx1buff;
 
+    pdmx = data512;
+
     NVIC_EnableIRQ(USART1_IRQn);
     NVIC_SetPriority(USART1_IRQn, 5);
+}
+
+void UsartSendDMX (void)
+{
+    pdmx = &data512[0];
+    USART1->CR1 |= USART_CR1_TXEIE;
 }
 
 //--- end of file ---//

@@ -69,6 +69,7 @@
 void UpdateProgTimers (void);
 void Func_PX_Ds(unsigned char, unsigned char, unsigned char);
 void ResetLastValues(void);
+void Func_PX(unsigned char, unsigned char);
 //void Func_For_Cat(unsigned char, unsigned char, unsigned char, unsigned char);
 
 #endif /* PROGRAMS_FUNCTIONS_H_ */

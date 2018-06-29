@@ -10,6 +10,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "tim.h"
 #include "hard.h"
+#include "dmx_transceiver.h"
 
 //--- VARIABLES EXTERNAS ---//
 extern volatile unsigned char timer_1seg;
@@ -219,6 +220,38 @@ void TIM_14_Init (void)
     TIM14->PSC = 47;			//tick cada 1us
     TIM14->ARR = 0xFFFF;			//para que arranque
     TIM14->EGR |= 0x0001;
+}
+
+void TIM_16_Init (void)
+{
+    if (!RCC_TIM16_CLK)
+        RCC_TIM16_CLK_ON;
+
+    //Configuracion del timer.
+    TIM16->ARR = 0;
+    TIM16->CNT = 0;
+    TIM16->PSC = 47;
+
+    // Enable timer interrupt ver UDIS
+    TIM16->DIER |= TIM_DIER_UIE;
+    TIM16->CR1 |= TIM_CR1_URS | TIM_CR1_OPM;	//solo int cuando hay overflow y one shot
+
+    NVIC_EnableIRQ(TIM16_IRQn);
+    NVIC_SetPriority(TIM16_IRQn, 7);
+}
+
+void TIM16_IRQHandler (void)	//es one shoot
+{
+    SendDMXPacket(PCKT_UPDATE);
+
+    if (TIM16->SR & 0x01)
+        TIM16->SR = 0x00;    //bajar flag
+}
+
+void OneShootTIM16 (unsigned short a)
+{
+    TIM16->ARR = a;
+    TIM16->CR1 |= TIM_CR1_CEN;
 }
 
 // void TIM_14_Init (void)

@@ -47,10 +47,6 @@ volatile unsigned char seq_ready;
 
 // ------- Externals de los timers -------
 volatile unsigned char timer_1seg = 0;
-volatile unsigned short timer_signals = 0;
-volatile unsigned short timer_signals_gen = 0;
-volatile unsigned short timer_led = 0;
-volatile unsigned short timer_buzzer = 0;
 volatile unsigned char switches_timer = 0;
 
 // ------- Externals del USART -------
@@ -71,6 +67,7 @@ volatile unsigned char dmx_filters_timer = 0;
 volatile unsigned char data512[SIZEOF_DMX_DATA512];
 //static unsigned char data_back[10];
 volatile unsigned char data7[SIZEOF_DMX_DATA7];
+volatile unsigned char * pdmx;
 
 //para el PID en hard.c
 unsigned short sp1_filtered = 0;
@@ -83,11 +80,11 @@ unsigned short sp6_filtered = 0;
 //--- VARIABLES GLOBALES ---//
 //para pruebas mantener esto en memoria
 // parameters_typedef const parameters_typedef_constant =
-parameters_typedef __attribute__ ((section("memParams"))) const parameters_typedef_constant =
+parameters_typedef __attribute__ ((section("memParams1"))) const parameters_typedef_constant =
     {
-        .program_type = 1,
+        .program_type = MASTER_MODE,
 
-        .master_enable = 0,
+        .master_enable = 1,
         
         .last_program_in_flash = 9,
         .last_program_deep_in_flash = 0,
@@ -96,15 +93,57 @@ parameters_typedef __attribute__ ((section("memParams"))) const parameters_typed
         .dmx_channel_quantity = 6,
         .dmx_grandmaster = 0,        
         
-        .max_current_int = 1,
+        .max_current_int = 2,
         .max_current_dec = 0,
 
-        .max_pwm_ch1 = 10,
-        .max_pwm_ch2 = 0,
-        .max_pwm_ch3 = 0,
-        .max_pwm_ch4 = 0,
-        .max_pwm_ch5 = 0,
-        .max_pwm_ch6 = 0
+        .volts_in_mains = 35,
+        .volts_ch1 = 35,
+        .volts_ch2 = 35,
+        .volts_ch3 = 35,
+        .volts_ch4 = 35,
+        .volts_ch5 = 35,
+        .volts_ch6 = 35,
+
+        .max_pwm_ch1 = DUTY_90_PERCENT,
+        .max_pwm_ch2 = DUTY_90_PERCENT,
+        .max_pwm_ch3 = DUTY_90_PERCENT,
+        .max_pwm_ch4 = DUTY_90_PERCENT,
+        .max_pwm_ch5 = DUTY_90_PERCENT,
+        .max_pwm_ch6 = DUTY_90_PERCENT
+        
+    };
+
+//OJO!!! este es el dummy en memoria
+parameters_typedef __attribute__ ((section("memParams2"))) const parameters_typedef_dummys =
+    {
+        .program_type = 2,    
+
+        .master_enable = 2,
+        
+        .last_program_in_flash = 2,
+        .last_program_deep_in_flash = 2,
+
+        .dmx_channel = 2,
+        .dmx_channel_quantity = 2,
+        .dmx_grandmaster = 0,        
+        
+        .max_current_int = 2,
+        .max_current_dec = 0,
+
+        .volts_in_mains = 2,
+        .volts_ch1 = 2,
+        .volts_ch2 = 2,
+        .volts_ch3 = 2,
+        .volts_ch4 = 2,
+        .volts_ch5 = 2,
+        .volts_ch6 = 2,
+
+        .max_pwm_ch1 = 2,
+        .max_pwm_ch2 = 2,
+        .max_pwm_ch3 = 2,
+        .max_pwm_ch4 = 2,
+        .max_pwm_ch5 = 2,
+        .max_pwm_ch6 = 2
         
     };
 
@@ -113,6 +152,11 @@ parameters_typedef __attribute__ ((section("memParams"))) const parameters_typed
 // ------- de los timers -------
 volatile unsigned short timer_standby;
 volatile unsigned short wait_ms_var = 0;
+volatile unsigned char temp_sample_timer = 0;
+volatile unsigned short need_to_save_timer = 0;
+
+// ------- para la memoria -------
+unsigned char need_to_save = 0;
 
 //--- FUNCIONES DEL MODULO ---//
 extern void EXTI4_15_IRQHandler(void);
@@ -276,6 +320,40 @@ int main(void)
     //     UpdateSwitches();
     // }
     //-- Fin Prueba de Switches S1 y S2 ----------
+
+
+    //-- Prueba de Switch RX-TX DMX512 ----------
+    // USART1Config();
+    
+    // while (1)
+    // {
+    //     SW_RX_TX_DE;
+    //     Wait_ms(4);
+    //     SW_RX_TX_RE_NEG;
+    //     Wait_ms(2);
+    // }
+    //-- Fin Prueba de Switch RX-TX DMX512 ----------
+
+    //-- Prueba de Switch USART1 DMX512 PIN TX ----------
+    TIM_16_Init();
+    USART1Config();
+    SW_RX_TX_DE;
+    
+    while (1)
+    {
+        if (!timer_standby)
+        {
+            timer_standby = 40;
+            data512[0] = 0;
+            data512[1] = 255;
+            data512[2] = 255;            
+            SendDMXPacket (PCKT_INIT);
+        }
+    }
+    //-- Fin Prueba de Switch USART1 DMX512 PIN TX ----------    
+
+    
+    
 
     //-- Prueba con DMX512 ----------
     // TIM_14_Init();
@@ -595,10 +673,10 @@ int main(void)
     USART1Config();
 
     Packet_Detected_Flag = 0;
-    DMX_channel_selected = 1;
-    DMX_channel_quantity = 6;
+    // DMX_channel_selected = 1;
+    // DMX_channel_quantity = 6;
 
-    SW_RX_TX_OFF;
+    SW_RX_TX_RE_NEG;
     DMX_Ena();
     
     //inicializo el hard que falta
@@ -708,8 +786,34 @@ int main(void)
             break;
 
         case MAIN_IN_OVERTEMP:
+            CTRL_FAN_ON;
+            Update_PWM1(0);
+            Update_PWM2(0);
+            Update_PWM3(0);
+            Update_PWM4(0);
+            Update_PWM5(0);
+            Update_PWM6(0);
+
+            LCD_1ER_RENGLON;
+            LCDTransmitStr("OVERTEMP");
+            LCD_2DO_RENGLON;
+            LCDTransmitStr(s_blank_line);
+
+            sprintf(s_to_send, "overtemp: %d\n", Temp_Channel);
+            Usart2Send(s_to_send);
+
+            main_state = MAIN_IN_OVERTEMP_B;
             break;
 
+        case MAIN_IN_OVERTEMP_B:
+            if (Temp_Channel < TEMP_IN_50)
+            {
+                //reconecto
+                main_state = MAIN_HARDWARE_INIT;
+            }
+            
+            break;
+            
         case MAIN_ENTERING_MAIN_MENU:
             //deshabilitar salidas hardware
             MainMenuReset();
@@ -720,6 +824,13 @@ int main(void)
         case MAIN_IN_MAIN_MENU:
             resp = MainMenu();
 
+            if (resp == resp_need_to_save)
+            {
+                need_to_save = 1;
+                need_to_save_timer = 10000;
+                main_state = MAIN_HARDWARE_INIT;
+            }
+            
             if (resp == resp_finish)
                 main_state = MAIN_HARDWARE_INIT;
 
@@ -733,6 +844,42 @@ int main(void)
         //cuestiones generales
         
         UpdateSwitches();
+
+        //sensado de temperatura
+        if (!temp_sample_timer)
+        {
+            temp_sample_timer = 10;	//tomo muestra cada 10ms
+
+            if ((main_state != MAIN_IN_OVERTEMP) && (main_state != MAIN_IN_OVERTEMP_B))
+            {
+                if (Temp_Channel > TEMP_IN_65)
+                {
+                    //corto los leds	ver si habia DMX cortar y poner nuevamente
+                    main_state = MAIN_IN_OVERTEMP;
+                }
+                else if (Temp_Channel > TEMP_IN_35)
+                    CTRL_FAN_ON;
+                else if (Temp_Channel < TEMP_IN_30)
+                    CTRL_FAN_OFF;
+            }
+        }
+
+        //grabado de memoria luego de configuracion
+        if ((need_to_save) && (!need_to_save_timer))
+        {
+            
+            need_to_save = WriteConfigurations();
+
+            if (need_to_save)
+                Usart2Send((const char *) "Memory Saved OK!\n");
+            else
+                Usart2Send((const char *) "Memory problems\n");
+
+            need_to_save = 0;
+            //update de memoria RAM
+            // memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
+        }
+        
     }    //end of while 1
     
     return 0;
@@ -783,11 +930,11 @@ void TimingDelay_Decrement(void)
     // if (timer_signals_gen)
     //     timer_signals_gen--;
 
-    // if (timer_led)
-    //     timer_led--;
+    if (need_to_save_timer)
+        need_to_save_timer--;
 
-    // if (timer_buzzer)
-    //     timer_buzzer--;
+    if (temp_sample_timer)
+        temp_sample_timer--;
 
     if (switches_timer)
         switches_timer--;

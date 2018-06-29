@@ -29,7 +29,8 @@
 // #define SOFTWARE_VERSION_1_1
 
 //---- Features Configuration ----------------
-
+// #define WITH_GRANDMASTER
+#define WITH_BIDIRECTIONAL
 
 //------ Configuration for Firmware-Channels -----
 
@@ -64,6 +65,18 @@
 
 
 //-------- Configuration for Outputs-Firmware ------
+//---- Temperaturas en el LM335
+//37	2,572
+//40	2,600
+//45	2,650
+//50	2,681
+//55	2,725
+//60	2,765
+#define TEMP_IN_30		3226
+#define TEMP_IN_35		3279
+#define TEMP_IN_50		3434
+#define TEMP_IN_65		3591
+#define TEMP_DISCONECT		4000
 
 
 //-- End Of Defines For Configuration ---------------
@@ -157,14 +170,17 @@
 
 //GPIOB pin3    
 #define SW_RX_TX ((GPIOB->ODR & 0x0008) != 0)
-#define SW_RX_TX_ON GPIOB->BSRR = 0x00000008
-#define SW_RX_TX_OFF GPIOB->BSRR = 0x00080000
+#define SW_RX_TX_DE GPIOB->BSRR = 0x00000008
+#define SW_RX_TX_RE_NEG GPIOB->BSRR = 0x00080000
 
 //GPIOB pin4     
 //GPIOB pin5     TIM3 CH1 - CH2
 
-//GPIOB pin6     
-//GPIOB pin7     Usart 1
+//GPIOB pin6     Tx
+#define DMX_TX_PIN ((GPIOB->ODR & 0x0040) != 0)
+#define DMX_TX_PIN_ON GPIOB->BSRR = 0x00000040
+#define DMX_TX_PIN_OFF GPIOB->BSRR = 0x00400000
+//GPIOB pin7     Rx Usart 1
 
 //GPIOB pin8
 #define EXTI_Input ((GPIOB->IDR & 0x0100) != 0)
@@ -209,6 +225,7 @@ typedef enum
     MAIN_IN_SLAVE_MODE,
     MAIN_IN_PROGRAMS_MODE,
     MAIN_IN_OVERTEMP,
+    MAIN_IN_OVERTEMP_B,
     MAIN_ENTERING_MAIN_MENU,
     MAIN_IN_MAIN_MENU
     
@@ -222,6 +239,7 @@ typedef enum {
     resp_change_all_up,
     resp_working,
     resp_error,
+    resp_need_to_save,
     resp_finish
 
 } resp_t;

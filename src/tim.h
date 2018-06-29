@@ -62,6 +62,7 @@ void TIM14_IRQHandler (void);
 void TIM_14_Init(void);
 void TIM16_IRQHandler (void);
 void TIM_16_Init(void);
+void OneShootTIM16 (unsigned short);
 void TIM17_IRQHandler (void);
 void TIM_17_Init(void);
 void Update_TIM1_CH1 (unsigned short);

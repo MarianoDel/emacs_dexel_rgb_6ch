@@ -31,13 +31,13 @@
 *** DONE Prueba de 6CH contra DMX
     CLOSED: [2018-06-21 Thu 14:16]
 
-** Menues de Display LCD [0/6]
+** Menues de Display LCD [5/6]
    - [ ] Agregar State Machine para no interrumpir programa
-   - [ ] Seteo Slave
-   - [ ] Seteo Master
-   - [ ] Seteo 2 amper, maximo canal y minimo para el forward
-   - [ ] seteo de canal propio
-   - [ ] funciones de programas
+   - [X] Seteo Slave
+   - [X] Seteo Master
+   - [X] Seteo 2 amper, maximo canal y minimo para el forward
+   - [X] seteo de canal propio
+   - [X] funciones de programas
 ** Funcionalidad de Modos
 *** Modo Slave
 *** Modo Master
@@ -47,20 +47,25 @@
 *** Master + Programas
     - [ ] envia programas por dmx512
 
-*** Slave (DMX512)
-    - [ ] Canal DMX
-    - [ ] Cantidad de canales
-    - [ ] Si usa Grandmaster
+*** Slave (DMX512) [3/3]
+    - [X] Canal DMX
+    - [X] Cantidad de canales
+    - [X] Si usa Grandmaster
 
-*** Programas
-    - [ ] Seteo del programa especifico
-    - [ ] Seteo de velocidad de avance
+*** Programas [2/2]
+    - [X] Seteo del programa especifico
+    - [X] Seteo de velocidad de avance
 
-*** Hardware
-    - [ ] Corriente maxima
+*** Hardware [1/3]
+    - [X] Corriente maxima
     - [ ] tension maxima
     - [ ] tension de los Leds en el canal
 
+** TODO Overtemp
+** TODO SaveConf
+   - terminar con endconfig
+   - usar rgb 4ch y sus mediciones
+** TODO Modo Master
 * Caracteristicas de los LEDS
 ** Rojos
    - Cantidad: 16

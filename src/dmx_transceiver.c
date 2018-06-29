@@ -16,7 +16,7 @@
 // #include "uart.h"
 // #include "stm32f0x_gpio.h"
 
-#ifdef DMX_BIDIRECTIONAL
+#ifdef WITH_RDM
 #include "rdm_util.h"
 #endif
 
@@ -34,6 +34,7 @@ extern volatile unsigned short DMX_channel_selected;
 extern volatile unsigned char DMX_channel_quantity;
 extern volatile unsigned char dmx_timeout_timer;
 
+extern volatile unsigned char * pdmx;
 //--- VARIABLES GLOBALES ---//
 volatile unsigned char dmx_state = 0;
 volatile pckt_rx_t dmx_signal_state = PCKT_RX_IDLE;
@@ -68,7 +69,7 @@ void UpdatePackets (void)
     }
 }
 
-void DmxInt_Serial_Handler (unsigned char dummy)
+void DmxInt_Serial_Handler_Receiver (unsigned char dummy)
 {
     unsigned short i;
     
@@ -80,7 +81,7 @@ void DmxInt_Serial_Handler (unsigned char dummy)
         else
             DMX_channel_received = 0;
 
-#ifdef WITH_GRANDMASTER
+#ifdef DMX_WITH_GRANDMASTER
         if (DMX_channel_received >= (DMX_channel_selected + DMX_channel_quantity + 1))
         {
             //los paquetes empiezan en 0 pero no lo verifico
@@ -186,8 +187,21 @@ void DmxInt_Break_Handler (void)
     }
 }
 
+//envio el paquete de DMX512 que se encuentra en el buffer data512[]
+//cuando termino aviso con dmx_transmitted
+//corto la int de TX y mando resp_ok
+unsigned char DmxInt_Serial_Handler_Transmitter (void)
+{
+    unsigned short i;
+    
+    if (dmx_receive_flag)
+    {
+        
+    }
+}
 
-#ifdef DMX_BIDIRECTIONAL
+
+#ifdef DMX_WITH_RDM
 //revisa si existe paquete RDM y que hacer con el mismo
 //
 void UpdateRDMResponder(void)
@@ -210,10 +224,13 @@ void UpdateRDMResponder(void)
         RDM_packet_flag = 0;
     }
 }
+#endif
 
+#ifdef DMX_BIDIRECTIONAL
 //funcion para enviar el buffer data512[512] al DMX
 //recibe PCKT_INIT por el usuario
 //recibe PCKT_UPDATE desde su propia maquina de estados
+//una vez que la llama el usuario, se llama sola con OneShoot y USARt1 hasta terminar
 void SendDMXPacket (unsigned char new_func)
 {
     if ((new_func == PCKT_INIT) &&
@@ -228,28 +245,28 @@ void SendDMXPacket (unsigned char new_func)
     switch (dmx_state)
     {
     case PCKT_INIT:
-        SW_TX;
-        LED_ON;
+        SW_RX_TX_DE;    //TODO: ver de cambiar sw nuevamente
+        DMX_TX_PIN_OFF;
+        PB6_to_PushPull();
         dmx_state++;
-        DMX_TX_PIN_ON;	//mando break
         OneShootTIM16(88);
         break;
 
     case PCKT_END_BREAK:
+        DMX_TX_PIN_ON;	//
         dmx_state++;
-        DMX_TX_PIN_OFF;	//espero mark after break
         OneShootTIM16(8);
         break;
 
     case PCKT_END_MARK:
-        dmx_state++;
+        PB6_to_Alternative();
         UsartSendDMX();
+        dmx_state++;        
         break;
 
     case PCKT_TRANSMITING:	//se deben haber transmitido el start code + los 512 canales
         dmx_state = PCKT_END_TX;	//se a llama al terminar de transmitir con la USART con UPDATE
         DMX_TX_PIN_OFF;
-        LED_OFF;
         break;
 
     case PCKT_END_TX:	//estado de espera luego de transmitir

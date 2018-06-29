@@ -15,7 +15,7 @@
 
 
 //-- Configurations Defines --------------------
-#define FLASH_PAGE_FOR_BKP PAGE61
+#define FLASH_PAGE_FOR_BKP PAGE60    //dejo la 61 libre para dummy
 
 //-- Configuration for Struct --------------------
 #define MASTER_MODE    1
@@ -44,15 +44,24 @@ typedef struct parameters {
     unsigned char max_current_int;
     unsigned char max_current_dec;
 
-    unsigned short max_pwm_ch1;        //10
+    unsigned char volts_in_mains;
+    unsigned char volts_ch1;
+    unsigned char volts_ch2;
+    unsigned char volts_ch3;
+    unsigned char volts_ch4;
+    unsigned char volts_ch5;
+    unsigned char volts_ch6;            //17
+    
+    unsigned short max_pwm_ch1;        
     unsigned short max_pwm_ch2;
     unsigned short max_pwm_ch3;
     unsigned short max_pwm_ch4;
     unsigned short max_pwm_ch5;
-    unsigned short max_pwm_ch6;        //22
+    unsigned short max_pwm_ch6;        //29
 
-    unsigned char dummy1;            
-    unsigned char dummy2;            //24    
+    unsigned char dummy1;
+    unsigned char dummy2;            
+    unsigned char dummy3;            //32
 
 } parameters_typedef;
 

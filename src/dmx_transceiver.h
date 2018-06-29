@@ -9,9 +9,21 @@
 
 #ifndef _DMX_TRANSCEIVER_H_
 #define _DMX_TRANSCEIVER_H_
+#include "hard.h"
 
 //-- Mode Configurations ----------
-// #define DMX_BIDIRECTIONAL
+
+#ifdef WITH_GRANDMASTER
+#define DMX_WITH_GRANDMASTER
+#endif
+
+#ifdef WITH_BIDIRECTIONAL
+#define DMX_BIDIRECTIONAL
+#endif
+
+#ifdef WITH_RDM
+#define DMX_WITH_RDM
+#endif
 
 //---------- Estructura de Paquetes RDM_KIRNO --------//
 //typedef struct RDMKirnoPckt
@@ -51,7 +63,8 @@ typedef enum {
 
 //--- FUNCIONES DEL MODULO ---//
 void DmxInt_Break_Handler (void);
-void DmxInt_Serial_Handler (unsigned char);
+void DmxInt_Serial_Handler_Receiver (unsigned char);
+unsigned char DmxInt_Serial_Handler_Transmitter (void);
 
 void DMX_Ena(void);
 void DMX_Disa(void);
