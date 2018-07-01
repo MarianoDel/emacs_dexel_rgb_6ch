@@ -410,7 +410,11 @@ resp_t MainMenu (void)
         dummy_8 = mem_conf.max_current_int;
         dummy_8_1 = mem_conf.max_current_dec;
         
-        resp = FuncChangeDecimals (&dummy_8, &dummy_8_1, 0, 7, 2, 0);
+        resp = FuncChangeDecimals (&dummy_8, &dummy_8_1,
+                                   MIN_CURRENT_INT,
+                                   MIN_CURRENT_DEC,
+                                   MAX_CURRENT_INT,
+                                   MAX_CURRENT_DEC);
 
         if (resp == resp_finish)
         {

@@ -103,7 +103,6 @@ unsigned char ReadUsart2Buffer (unsigned char * bout, unsigned short max_len)
 
 void USART1_IRQHandler(void)
 {
-    unsigned short i;
     unsigned char dummy;
 
     /* USART in mode Receiver --------------------------------------------------*/
@@ -119,18 +118,9 @@ void USART1_IRQHandler(void)
     {
         if (USART1->ISR & USART_ISR_TXE)
         {
-            if (pdmx < &data512[512])
-            {
-                USART1->TDR = *pdmx;
-                pdmx++;
-            }
-            else
-            {
-                USART1->CR1 &= ~USART_CR1_TXEIE;
-                SendDMXPacket(PCKT_UPDATE);
-            }
 
-            // dummy = DmxInt_Serial_Handler_Transmitter ();
+            DmxInt_Serial_Handler_Transmitter ();
+            
             // if (dummy)
             //     USART1->CR1 &= ~USART_CR1_TXEIE;
             
@@ -210,7 +200,7 @@ void Usart2Send (char * send)
     unsigned char i;
 
     i = strlen(send);
-    Usart2SendUnsigned(send, i);
+    Usart2SendUnsigned((unsigned char *)send, i);
 }
 
 void Usart2SendUnsigned(unsigned char * send, unsigned char size)
@@ -228,7 +218,7 @@ void Usart1Send (char * send)
     unsigned char i;
 
     i = strlen(send);
-    Usart1SendUnsigned(send, i);
+    Usart1SendUnsigned((unsigned char *)send, i);
 }
 
 void Usart1SendUnsigned(unsigned char * send, unsigned char size)
@@ -294,10 +284,5 @@ void USART1Config(void)
     NVIC_SetPriority(USART1_IRQn, 5);
 }
 
-void UsartSendDMX (void)
-{
-    pdmx = &data512[0];
-    USART1->CR1 |= USART_CR1_TXEIE;
-}
 
 //--- end of file ---//

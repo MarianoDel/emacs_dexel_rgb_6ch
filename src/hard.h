@@ -59,7 +59,16 @@
 #endif
 
 //-------- Configuration for Outputs-Channels -----
+#define MAX_CURRENT_IN_ADC    820
 
+#define MIN_CURRENT_INT    0
+#define MIN_CURRENT_DEC    7
+#define MAX_CURRENT_INT    2
+#define MAX_CURRENT_DEC    0
+
+//esto es dmx_data * MAX_CURRENT * MAX_CURRENT_IN_ADC_COMPENSATED / 512
+//255 * 2.0 * 823 / 512 = 820
+#define MAX_CURRENT_IN_ADC_COMPENSATED    (MAX_CURRENT_IN_ADC + 3)
 
 //---- Configuration for Firmware-Programs --------
 
@@ -251,5 +260,6 @@ sw_state_t CheckS2 (void);
 void UpdateSwitches (void);
 void UpdateSamplesAndPID (void);
 void PIDforProgramsCHX (unsigned char, unsigned char);
+unsigned short DMXtoCurrent (unsigned char);
 
 #endif /* HARD_H_ */

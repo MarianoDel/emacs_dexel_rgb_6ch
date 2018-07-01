@@ -181,12 +181,8 @@ int main(void)
 {
     unsigned short i = 0;
     char s_to_send [100];
-    unsigned char size = 0;
     main_state_t main_state = MAIN_INIT;
     resp_t resp = resp_continue;
-
-
-    unsigned char check_s1 = 0, check_s2 = 0;
     
     //GPIO Configuration.
     GPIO_Config();
@@ -293,6 +289,7 @@ int main(void)
     //---- End of Defines from hard.h -----//
 
     //-- Prueba de Switches S1 y S2 ----------
+    // unsigned char check_s1 = 0, check_s2 = 0;
     // while (1)
     // {
     //     if ((CheckS1()) && (check_s1 == 0))
@@ -337,19 +334,20 @@ int main(void)
     //-- Prueba de Switch USART1 DMX512 PIN TX ----------
     TIM_16_Init();
     USART1Config();
-    SW_RX_TX_DE;
+    // SW_RX_TX_DE;
     
-    while (1)
-    {
-        if (!timer_standby)
-        {
-            timer_standby = 40;
-            data512[0] = 0;
-            data512[1] = 255;
-            data512[2] = 255;            
-            SendDMXPacket (PCKT_INIT);
-        }
-    }
+    // while (1)
+    // {
+    //     if (!timer_standby)
+    //     {
+    //         timer_standby = 40;
+    //         data512[0] = 0;
+    //         data512[1] = 255;
+    //         data512[2] = 255;
+    //         data512[511] = 255;
+    //         SendDMXPacket (PCKT_INIT);
+    //     }
+    // }
     //-- Fin Prueba de Switch USART1 DMX512 PIN TX ----------    
 
     
@@ -672,12 +670,10 @@ int main(void)
     TIM_14_Init();
     USART1Config();
 
-    Packet_Detected_Flag = 0;
+    // Packet_Detected_Flag = 0;
     // DMX_channel_selected = 1;
     // DMX_channel_quantity = 6;
 
-    SW_RX_TX_RE_NEG;
-    DMX_Ena();
     
     //inicializo el hard que falta
     AdcConfig();
@@ -700,7 +696,21 @@ int main(void)
             break;
 
         case MAIN_HARDWARE_INIT:
-            // Func_PX_Reset();    //programs no necesita reset
+
+            //reseteo hardware
+            //DMX en RX
+            SW_RX_TX_RE_NEG;
+            DMX_Disa();
+
+            //reseteo canales
+            Update_TIM1_CH1(0);
+            Update_TIM1_CH2(0);    
+            Update_TIM3_CH1(0);
+            Update_TIM3_CH2(0);
+            Update_TIM3_CH3(0);
+            Update_TIM3_CH4(0);
+                        
+            //reseteo menues
             MasterModeMenuReset();
             FuncSlaveModeReset();
 
@@ -713,13 +723,31 @@ int main(void)
 
         case MAIN_GET_CONF:
             if (mem_conf.program_type == MASTER_MODE)
-                main_state = MAIN_IN_MASTER_MODE;
+            {
+                //habilito transmisiones
+                SW_RX_TX_DE;
+                main_state = MAIN_IN_MASTER_MODE;             
+            }                
 
             if (mem_conf.program_type == SLAVE_MODE)
+            {
+                //variables de recepcion
+                Packet_Detected_Flag = 0;
+                DMX_channel_selected = mem_conf.dmx_channel;
+                DMX_channel_quantity = mem_conf.dmx_channel_quantity;
+
+                //habilito recepcion
+                SW_RX_TX_RE_NEG;
+                DMX_Ena();    
                 main_state = MAIN_IN_SLAVE_MODE;
+            }
 
             if (mem_conf.program_type == PROGRAMS_MODE)
+            {
+                //me aseguro no cargar la linea
+                SW_RX_TX_RE_NEG;
                 main_state = MAIN_IN_PROGRAMS_MODE;
+            }
 
             //default state no debiera estar nunca aca!
             if (main_state == MAIN_GET_CONF)
@@ -871,9 +899,9 @@ int main(void)
             need_to_save = WriteConfigurations();
 
             if (need_to_save)
-                Usart2Send((const char *) "Memory Saved OK!\n");
+                Usart2Send((char *) "Memory Saved OK!\n");
             else
-                Usart2Send((const char *) "Memory problems\n");
+                Usart2Send((char *) "Memory problems\n");
 
             need_to_save = 0;
             //update de memoria RAM

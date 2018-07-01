@@ -15,6 +15,8 @@
 #include "adc.h"
 #include "tim.h"
 
+#include "flash_program.h"
+
 
 
 /* Externals variables ---------------------------------------------------------*/
@@ -27,6 +29,8 @@ extern unsigned short sp3_filtered;
 extern unsigned short sp4_filtered;
 extern unsigned short sp5_filtered;
 extern unsigned short sp6_filtered;
+extern parameters_typedef mem_conf;
+extern unsigned char data7[];
 
 /* Global variables ------------------------------------------------------------*/
 //para los switches
@@ -248,17 +252,15 @@ void UpdateSamplesAndPID (void)
 }
 
 //en los programas me dicen la intensidad del LED entre 0 y 255
-//existe una conversion entre cantidad de corriente y potencia
-//aca y en modo_slave en recepcion del dmx
-//TODO: luego juntarlas en una misma funcion
+//con DMXtoCurrent() convierto al sp
 void PIDforProgramsCHX (unsigned char ch, unsigned char power)
 {
     unsigned short dummysp;
 
-    dummysp = power;
-    dummysp <<= 2;
-    if (dummysp > 820)
-        dummysp = 820;
+    if (mem_conf.program_type == MASTER_MODE)
+        data7[ch] = power;
+    
+    dummysp = DMXtoCurrent (power);
 
     if (ch == 1)
         sp1_filtered = dummysp;
@@ -275,4 +277,26 @@ void PIDforProgramsCHX (unsigned char ch, unsigned char power)
     
 }
 
+//la maxima corriente permitida son 2A -> 820 puntos ADC
+//a la vez se puede elegir menor corriente por configuracion
+//mem_cfg.max_current_int
+//mem_cfg.max_current_dec
+//por ultimo el dmx_data puede ser 255
+unsigned short DMXtoCurrent (unsigned char dmx_data)
+{
+    unsigned short dummy_dec;
+    unsigned int dummy_int;
+
+    dummy_dec = dmx_data * mem_conf.max_current_dec;
+    dummy_dec = dummy_dec / 10;
+
+    dummy_int = dmx_data * mem_conf.max_current_int;
+
+    dummy_int += dummy_dec;
+
+    dummy_int = dummy_int * MAX_CURRENT_IN_ADC_COMPENSATED;    //823
+    dummy_int >>= 9;    //divido por 512
+    
+    return (unsigned short) dummy_int;
+}
 //--- end of file ---//

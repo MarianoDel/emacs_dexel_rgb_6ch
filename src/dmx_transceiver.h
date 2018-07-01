@@ -64,7 +64,7 @@ typedef enum {
 //--- FUNCIONES DEL MODULO ---//
 void DmxInt_Break_Handler (void);
 void DmxInt_Serial_Handler_Receiver (unsigned char);
-unsigned char DmxInt_Serial_Handler_Transmitter (void);
+void DmxInt_Serial_Handler_Transmitter (void);
 
 void DMX_Ena(void);
 void DMX_Disa(void);

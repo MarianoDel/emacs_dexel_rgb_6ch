@@ -11,6 +11,7 @@
 #include "hard.h"
 #include "stm32f0xx.h"
 #include "gpio.h"
+#include "tim.h"
 
 // #include "stm32f0x_tim.h"
 // #include "uart.h"
@@ -38,6 +39,11 @@ extern volatile unsigned char * pdmx;
 //--- VARIABLES GLOBALES ---//
 volatile unsigned char dmx_state = 0;
 volatile pckt_rx_t dmx_signal_state = PCKT_RX_IDLE;
+
+//-- Private Functions ----------
+// extern inline void UsartSendDMX (void);
+inline void UsartSendDMX (void);
+// void UsartSendDMX (void);
 
 
 //--- FUNCIONES DEL MODULO ---//
@@ -190,13 +196,17 @@ void DmxInt_Break_Handler (void)
 //envio el paquete de DMX512 que se encuentra en el buffer data512[]
 //cuando termino aviso con dmx_transmitted
 //corto la int de TX y mando resp_ok
-unsigned char DmxInt_Serial_Handler_Transmitter (void)
+void DmxInt_Serial_Handler_Transmitter (void)
 {
-    unsigned short i;
-    
-    if (dmx_receive_flag)
+    if (pdmx < &data512[512])
     {
-        
+        USART1->TDR = *pdmx;
+        pdmx++;
+    }
+    else
+    {
+        USART1->CR1 &= ~USART_CR1_TXEIE;
+        SendDMXPacket(PCKT_UPDATE);
     }
 }
 
@@ -277,6 +287,14 @@ void SendDMXPacket (unsigned char new_func)
         DMX_TX_PIN_OFF;
         break;
     }
+}
+// inline void foo (const char) __attribute__((always_inline));
+__attribute__((always_inline)) void UsartSendDMX (void)
+// inline void UsartSendDMX (void)
+// void UsartSendDMX (void)
+{
+    pdmx = &data512[0];
+    USART1->CR1 |= USART_CR1_TXEIE;
 }
 
 #endif //DMX_WITH_TX

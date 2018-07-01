@@ -188,12 +188,12 @@ void GPIO_Config (void)
 #endif
 }
 
-inline void EXTIOff (void)
+void EXTIOff (void)
 {
     EXTI->IMR &= ~0x00000100;
 }
 
-inline void EXTIOn (void)
+void  EXTIOn (void)
 {
     EXTI->IMR |= 0x00000100;
 }
