@@ -70,6 +70,9 @@
 //255 * 2.0 * 823 / 512 = 820
 #define MAX_CURRENT_IN_ADC_COMPENSATED    (MAX_CURRENT_IN_ADC + 3)
 
+#define MIN_MAINS_VOLTAGE    20
+#define MAX_MAINS_VOLTAGE    48
+
 //---- Configuration for Firmware-Programs --------
 
 

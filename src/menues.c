@@ -13,6 +13,7 @@
 #include "stm32f0xx.h"
 
 #include "flash_program.h"
+#include "tim.h"
 #include "lcd.h"
 #include "lcd_utils.h"
 
@@ -71,7 +72,15 @@ typedef enum {
     
     MAIN_MENU_CONF_HARDWARE,
     MAIN_MENU_CONF_HARDWARE_1,
-    MAIN_MENU_CONF_HARDWARE_2
+    MAIN_MENU_CONF_HARDWARE_2,
+    MAIN_MENU_CONF_HARDWARE_3,
+    MAIN_MENU_CONF_HARDWARE_4,
+    MAIN_MENU_CONF_HARDWARE_5,
+    MAIN_MENU_CONF_HARDWARE_6,
+    MAIN_MENU_CONF_HARDWARE_7,
+    MAIN_MENU_CONF_HARDWARE_8,
+    MAIN_MENU_CONF_HARDWARE_9,
+    MAIN_MENU_CONF_HARDWARE_10
     
 
 } main_menu_t;
@@ -426,6 +435,148 @@ resp_t MainMenu (void)
         break;
 
     case MAIN_MENU_CONF_HARDWARE_2:
+        dummy_16 = mem_conf.volts_in_mains;
+        
+        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_MAINS, MIN_MAINS_VOLTAGE, MAX_MAINS_VOLTAGE);
+
+        if (resp == resp_finish)
+        {
+            mem_conf.volts_in_mains = dummy_16;
+            main_menu_state = MAIN_MENU_CONF_HARDWARE_3;
+            resp = resp_continue;            
+        }
+        break;
+
+    case MAIN_MENU_CONF_HARDWARE_3:
+        dummy_16 = mem_conf.volts_ch1;
+        
+        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_1, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
+
+        if (resp == resp_finish)
+        {
+            mem_conf.volts_ch1 = dummy_16;
+            main_menu_state = MAIN_MENU_CONF_HARDWARE_4;
+            resp = resp_continue;            
+        }
+        break;
+
+    case MAIN_MENU_CONF_HARDWARE_4:
+        dummy_16 = mem_conf.volts_ch2;
+        
+        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_1, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
+
+        if (resp == resp_finish)
+        {
+            mem_conf.volts_ch2 = dummy_16;
+            main_menu_state = MAIN_MENU_CONF_HARDWARE_5;
+            resp = resp_continue;            
+        }
+        break;
+
+    case MAIN_MENU_CONF_HARDWARE_5:
+        dummy_16 = mem_conf.volts_ch3;
+        
+        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_1, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
+
+        if (resp == resp_finish)
+        {
+            mem_conf.volts_ch3 = dummy_16;
+            main_menu_state = MAIN_MENU_CONF_HARDWARE_6;
+            resp = resp_continue;            
+        }
+        break;
+
+    case MAIN_MENU_CONF_HARDWARE_6:
+        dummy_16 = mem_conf.volts_ch4;
+        
+        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_1, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
+
+        if (resp == resp_finish)
+        {
+            mem_conf.volts_ch4 = dummy_16;
+            main_menu_state = MAIN_MENU_CONF_HARDWARE_7;
+            resp = resp_continue;            
+        }
+        break;
+
+    case MAIN_MENU_CONF_HARDWARE_7:
+        dummy_16 = mem_conf.volts_ch5;
+        
+        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_1, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
+
+        if (resp == resp_finish)
+        {
+            mem_conf.volts_ch5 = dummy_16;
+            main_menu_state = MAIN_MENU_CONF_HARDWARE_8;
+            resp = resp_continue;            
+        }
+        break;
+
+    case MAIN_MENU_CONF_HARDWARE_8:
+        dummy_16 = mem_conf.volts_ch6;
+        
+        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_1, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
+
+        if (resp == resp_finish)
+        {
+            mem_conf.volts_ch6 = dummy_16;
+            main_menu_state = MAIN_MENU_CONF_HARDWARE_9;
+            resp = resp_continue;            
+        }
+        break;
+        
+    case MAIN_MENU_CONF_HARDWARE_9:
+        //ajusto los pwm maximos
+        dummy_16 = mem_conf.volts_ch1 * 1000;
+        dummy_16 = dummy_16 / mem_conf.volts_in_mains;
+        if (dummy_16 < DUTY_90_PERCENT)
+            mem_conf.max_pwm_ch1 = dummy_16;
+        else
+            mem_conf.max_pwm_ch1 = DUTY_90_PERCENT;
+
+        dummy_16 = mem_conf.volts_ch2 * 1000;
+        dummy_16 = dummy_16 / mem_conf.volts_in_mains;
+        if (dummy_16 < DUTY_90_PERCENT)
+            mem_conf.max_pwm_ch2 = dummy_16;
+        else
+            mem_conf.max_pwm_ch2 = DUTY_90_PERCENT;
+        
+        dummy_16 = mem_conf.volts_ch3 * 1000;
+        dummy_16 = dummy_16 / mem_conf.volts_in_mains;
+        if (dummy_16 < DUTY_90_PERCENT)
+            mem_conf.max_pwm_ch3 = dummy_16;
+        else
+            mem_conf.max_pwm_ch3 = DUTY_90_PERCENT;
+        
+
+        dummy_16 = mem_conf.volts_ch4 * 1000;
+        dummy_16 = dummy_16 / mem_conf.volts_in_mains;
+        if (dummy_16 < DUTY_90_PERCENT)
+            mem_conf.max_pwm_ch4 = dummy_16;
+        else
+            mem_conf.max_pwm_ch4 = DUTY_90_PERCENT;
+
+
+        dummy_16 = mem_conf.volts_ch5 * 1000;
+        dummy_16 = dummy_16 / mem_conf.volts_in_mains;
+        if (dummy_16 < DUTY_90_PERCENT)
+            mem_conf.max_pwm_ch5 = dummy_16;
+        else
+            mem_conf.max_pwm_ch5 = DUTY_90_PERCENT;
+
+
+        dummy_16 = mem_conf.volts_ch6 * 1000;
+        dummy_16 = dummy_16 / mem_conf.volts_in_mains;
+        if (dummy_16 < DUTY_90_PERCENT)
+            mem_conf.max_pwm_ch6 = dummy_16;
+        else
+            mem_conf.max_pwm_ch6 = DUTY_90_PERCENT;
+
+        
+        main_menu_state = MAIN_MENU_CONF_HARDWARE_10;
+        break;
+        
+    case MAIN_MENU_CONF_HARDWARE_10:
         resp = FuncShowBlink ((const char *) "Done!   ", (const char *) "        ", 1, BLINK_NO);
 
         if (resp == resp_finish)

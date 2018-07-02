@@ -123,10 +123,11 @@ void UpdateSwitches (void)
     }
 }
 
+//Update de muestras y lazos PID
+//utiliza variables sp_filter globales
+//TODO: reemplazar el topo hardcoded de PWM por los valores de mem_conf
 void UpdateSamplesAndPID (void)
 {
-    //Update de muestras y lazos PID
-    //con sp_filter
     if (sequence_ready)
     {
         // Clear DMA TC flag

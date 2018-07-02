@@ -18,14 +18,16 @@
     - [X] ver contraste
     - [X] ver backlight
 
-*** TODO Usart1 para DMX512 [4/5]
+*** DONE Usart1 para DMX512 [5/5]
+    CLOSED: [2018-07-02 Mon 07:28]
     - [X] EXTI para break
     - [X] recepcion con consola
     - [X] pines sw_tx_rx
-    - [ ] transmision modo master
+    - [X] transmision modo master
     - [X] desactivar int por 20ms (tamanio paquete)
 
-*** TODO Hardware adicional FAN
+*** DONE Hardware adicional FAN
+    CLOSED: [2018-07-02 Mon 07:29]
 
 ** PID para 6CH 2 amper maximo
 *** DONE Prueba de 6CH contra DMX
@@ -61,11 +63,19 @@
     - [ ] tension maxima
     - [ ] tension de los Leds en el canal
 
-** TODO Overtemp
-** TODO SaveConf
+** DONE Overtemp
+   CLOSED: [2018-07-02 Mon 07:26]
+** DONE SaveConf
+   CLOSED: [2018-07-02 Mon 07:26]
    - terminar con endconfig
    - usar rgb 4ch y sus mediciones
-** TODO Modo Master
+** DONE Modo Master
+   CLOSED: [2018-07-02 Mon 07:26]
+** GrandMaster en Slave Mode
+** Prueba canal 511 en Master Mode
+** Mensaje de Bienvenida
+
+
 * Caracteristicas de los LEDS
 ** Rojos
    - Cantidad: 16

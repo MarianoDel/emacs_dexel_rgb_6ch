@@ -778,6 +778,34 @@ unsigned char FuncChange (unsigned short * p_orig_value, unsigned char mode,
             sprintf(s_current, "%1d ", change_current_val);
             strcat(s_current, (const char*)"ch sel");
         }
+        else if (mode == CHANGE_VOLTAGE_MAINS)
+        {
+            sprintf(s_current, "%2dV main", change_current_val);
+        }
+        else if (mode == CHANGE_VOLTAGE_1)
+        {
+            sprintf(s_current, "%2dV ch:1", change_current_val);
+        }
+        else if (mode == CHANGE_VOLTAGE_2)
+        {
+            sprintf(s_current, "%2dV ch:2", change_current_val);
+        }                
+        else if (mode == CHANGE_VOLTAGE_3)
+        {
+            sprintf(s_current, "%2dV ch:3", change_current_val);
+        }                
+        else if (mode == CHANGE_VOLTAGE_4)
+        {
+            sprintf(s_current, "%2dV ch:4", change_current_val);
+        }                
+        else if (mode == CHANGE_VOLTAGE_5)
+        {
+            sprintf(s_current, "%2dV ch:5", change_current_val);
+        }                
+        else if (mode == CHANGE_VOLTAGE_6)
+        {
+            sprintf(s_current, "%2dV ch:6", change_current_val);
+        }                        
         else 
             return resp_finish;
 

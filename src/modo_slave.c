@@ -157,6 +157,7 @@ void FuncSlaveMode (void)
 {
     resp_t resp = resp_continue;
     unsigned char i;
+    unsigned short dummy_16;
     
     switch (slave_mode_state)
     {
@@ -195,6 +196,34 @@ void FuncSlaveMode (void)
             //le aviso al menu que se estan recibiendo paquetes dmx
             slave_mode_dmx_receiving_timer = TT_DMX_RECEIVING;            
 
+            //ajuste por grandmaster
+            if (mem_conf.dmx_grandmaster)
+            {
+                dummy_16 = data7[0] * data7[1];
+                dummy_16 >>= 8;
+                data7[1] = (unsigned char) dummy_16;
+
+                dummy_16 = data7[0] * data7[2];
+                dummy_16 >>= 8;
+                data7[2] = (unsigned char) dummy_16;
+
+                dummy_16 = data7[0] * data7[3];
+                dummy_16 >>= 8;
+                data7[3] = (unsigned char) dummy_16;
+
+                dummy_16 = data7[0] * data7[4];
+                dummy_16 >>= 8;
+                data7[4] = (unsigned char) dummy_16;
+
+                dummy_16 = data7[0] * data7[5];
+                dummy_16 >>= 8;
+                data7[5] = (unsigned char) dummy_16;
+
+                dummy_16 = data7[0] * data7[6];
+                dummy_16 >>= 8;
+                data7[6] = (unsigned char) dummy_16;
+            }
+            
             //CH1
             sp1 = DMXtoCurrent (data7[1]);
 

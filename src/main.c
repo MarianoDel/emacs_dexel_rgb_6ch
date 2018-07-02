@@ -344,7 +344,7 @@ int main(void)
     //         data512[0] = 0;
     //         data512[1] = 255;
     //         data512[2] = 255;
-    //         data512[511] = 255;
+    //         data512[511] = 0x55;
     //         SendDMXPacket (PCKT_INIT);
     //     }
     // }

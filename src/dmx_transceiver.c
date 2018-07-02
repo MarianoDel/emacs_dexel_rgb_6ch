@@ -12,6 +12,7 @@
 #include "stm32f0xx.h"
 #include "gpio.h"
 #include "tim.h"
+#include "flash_program.h"
 
 // #include "stm32f0x_tim.h"
 // #include "uart.h"
@@ -36,6 +37,7 @@ extern volatile unsigned char DMX_channel_quantity;
 extern volatile unsigned char dmx_timeout_timer;
 
 extern volatile unsigned char * pdmx;
+extern parameters_typedef mem_conf;
 //--- VARIABLES GLOBALES ---//
 volatile unsigned char dmx_state = 0;
 volatile pckt_rx_t dmx_signal_state = PCKT_RX_IDLE;
@@ -87,38 +89,39 @@ void DmxInt_Serial_Handler_Receiver (unsigned char dummy)
         else
             DMX_channel_received = 0;
 
-#ifdef DMX_WITH_GRANDMASTER
-        if (DMX_channel_received >= (DMX_channel_selected + DMX_channel_quantity + 1))
+        if (mem_conf.dmx_grandmaster)
         {
-            //los paquetes empiezan en 0 pero no lo verifico
-            //TODO: ojo agrandar data7 cuando uso grandmaster
-            data7[0] = data512[0];            
-            for (i=0; i < (DMX_channel_quantity + 1); i++)
+            if (DMX_channel_received >= (DMX_channel_selected + DMX_channel_quantity + 1))
             {
-                data7[i + 1] = data512[(DMX_channel_selected) + i];
-            }
+                //en data7[0] pongo el valor del grandmaster
+                for (i=0; i < (DMX_channel_quantity + 1); i++)
+                {
+                    data7[i] = data512[(DMX_channel_selected) + i];
+                }
 
-            //--- Reception end ---//
-            DMX_channel_received = 0;
-            dmx_receive_flag = 0;
-            Packet_Detected_Flag = 1;
+                //--- Reception end ---//
+                DMX_channel_received = 0;
+                dmx_receive_flag = 0;
+                Packet_Detected_Flag = 1;
+            }
         }
-#else
-        if (DMX_channel_received >= (DMX_channel_selected + DMX_channel_quantity))
+        else    //sin grandmaster
         {
-            //copio el inicio del buffer y luego los elegidos
-            data7[0] = data512[0];
-            for (i=0; i<DMX_channel_quantity; i++)
+            if (DMX_channel_received >= (DMX_channel_selected + DMX_channel_quantity))
             {
-                data7[i + 1] = data512[(DMX_channel_selected) + i];
-            }
+                //copio el inicio del buffer y luego los elegidos
+                data7[0] = data512[0];
+                for (i=0; i<DMX_channel_quantity; i++)
+                {
+                    data7[i + 1] = data512[(DMX_channel_selected) + i];
+                }
 
-            //--- Reception end ---//
-            DMX_channel_received = 0;
-            dmx_receive_flag = 0;
-            Packet_Detected_Flag = 1;
+                //--- Reception end ---//
+                DMX_channel_received = 0;
+                dmx_receive_flag = 0;
+                Packet_Detected_Flag = 1;
+            }
         }
-#endif
     }
 }
 
