@@ -41,6 +41,7 @@ extern unsigned short sp6_filtered;
 
 //--- VARIABLES GLOBALES ---//
 slave_mode_t slave_mode_state = SLAVE_MODE_INIT;
+unsigned char dmx_end_of_packet_update = 0;
 
 //-- timers del modulo --------------------
 volatile unsigned short slave_mode_enable_menu_timer = 0;
@@ -178,7 +179,8 @@ void FuncSlaveMode (void)
         break;
 
     case SLAVE_MODE_CONF:
-        resp = ShowConfSlaveMode();
+        // resp = ShowConfSlaveMode();
+        resp = FuncShowBlink ((const char *) "Entering", (const char *) "Slve Mod", 1, BLINK_NO);
 
         if (resp == resp_finish)
             slave_mode_state++;
@@ -241,6 +243,8 @@ void FuncSlaveMode (void)
 
             //CH6
             sp6 = DMXtoCurrent (data7[6]);
+
+            dmx_end_of_packet_update = 1;
             
         }
 
@@ -411,60 +415,64 @@ inline resp_t MenuSlaveModeRunning (void)
         break;
 
     case SLAVE_MODE_MENU_RUNNING_CHECK:
-
-        if (last_ch1 != data7[1])
+        if (dmx_end_of_packet_update)
         {
-            last_ch1 = data7[1];
-            dmx_local_channel = mem_conf.dmx_channel;
-            dmx_local_value = data7[1];
-            slave_mode_menu_state++;
-            break;
+            dmx_end_of_packet_update = 0;
+            
+            if (last_ch1 != data7[1])
+            {
+                last_ch1 = data7[1];
+                dmx_local_channel = mem_conf.dmx_channel;
+                dmx_local_value = data7[1];
+                slave_mode_menu_state++;
+                break;
+            }
+
+            if (last_ch2 != data7[2])
+            {
+                last_ch2 = data7[2];            
+                dmx_local_channel = mem_conf.dmx_channel + 1;
+                dmx_local_value = data7[2];
+                slave_mode_menu_state++;
+                break;
+            }
+
+            if (last_ch3 != data7[3])
+            {
+                last_ch3 = data7[3];
+                dmx_local_channel = mem_conf.dmx_channel + 2;
+                dmx_local_value = data7[3];
+                slave_mode_menu_state++;
+                break;
+            }
+
+            if (last_ch4 != data7[4])
+            {
+                last_ch4 = data7[4];
+                dmx_local_channel = mem_conf.dmx_channel + 3;
+                dmx_local_value = data7[4];
+                slave_mode_menu_state++;
+                break;
+            }
+
+            if (last_ch5 != data7[5])
+            {
+                last_ch5 = data7[5];
+                dmx_local_channel = mem_conf.dmx_channel + 4;
+                dmx_local_value = data7[5];
+                slave_mode_menu_state++;
+                break;
+            }
+
+            if (last_ch6 != data7[6])
+            {
+                last_ch6 = data7[6];
+                dmx_local_channel = mem_conf.dmx_channel + 5;
+                dmx_local_value = data7[6];
+                slave_mode_menu_state++;
+                break;
+            }
         }
-
-        if (last_ch2 != data7[2])
-        {
-            last_ch2 = data7[2];            
-            dmx_local_channel = mem_conf.dmx_channel + 1;
-            dmx_local_value = data7[2];
-            slave_mode_menu_state++;
-            break;
-        }
-
-        if (last_ch3 != data7[3])
-        {
-            last_ch3 = data7[3];
-            dmx_local_channel = mem_conf.dmx_channel + 2;
-            dmx_local_value = data7[3];
-            slave_mode_menu_state++;
-            break;
-        }
-
-        if (last_ch4 != data7[4])
-        {
-            last_ch4 = data7[4];
-            dmx_local_channel = mem_conf.dmx_channel + 3;
-            dmx_local_value = data7[4];
-            slave_mode_menu_state++;
-            break;
-        }
-
-        if (last_ch5 != data7[5])
-        {
-            last_ch5 = data7[5];
-            dmx_local_channel = mem_conf.dmx_channel + 4;
-            dmx_local_value = data7[5];
-            slave_mode_menu_state++;
-            break;
-        }
-
-        if (last_ch6 != data7[6])
-        {
-            last_ch6 = data7[6];
-            dmx_local_channel = mem_conf.dmx_channel + 5;
-            dmx_local_value = data7[6];
-            slave_mode_menu_state++;
-            break;
-        }        
 
         if ((CheckS1() > S_NO) || (CheckS2() > S_NO))
             slave_mode_menu_state = SLAVE_MODE_MENU_RUNNING_MANUAL_CHANGE;

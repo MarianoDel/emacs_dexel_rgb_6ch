@@ -82,7 +82,7 @@ unsigned short sp6_filtered = 0;
 // parameters_typedef const parameters_typedef_constant =
 parameters_typedef __attribute__ ((section("memParams1"))) const parameters_typedef_constant =
     {
-        .program_type = MASTER_MODE,
+        .program_type = SLAVE_MODE,
 
         .master_enable = 1,
         
@@ -259,10 +259,13 @@ int main(void)
 
     LCDTransmitStr(s_blank_line);
 
-    LCD_1ER_RENGLON;
-    LCDTransmitStr("MAXI");
-    LCD_2DO_RENGLON;
-    LCDTransmitStr("Gagliardi");
+    // LCD_1ER_RENGLON;
+    // LCDTransmitStr("Dexel   ");
+    // LCD_2DO_RENGLON;
+    // LCDTransmitStr("Lighting");
+    while (FuncShowBlink ((const char *) "Kirno 6C", (const char *) "Smrt Drv", 1, BLINK_NO) == resp_continue);
+    while (FuncShowBlink ((const char *) "Dexel   ", (const char *) "Lighting", 1, BLINK_NO) == resp_continue);
+
 
     // while (1);
     //-- Fin Prueba con LCD ----------
@@ -342,8 +345,8 @@ int main(void)
     //     {
     //         timer_standby = 40;
     //         data512[0] = 0;
-    //         data512[1] = 255;
-    //         data512[2] = 255;
+    //         data512[1] = 2;
+    //         data512[2] = 0;
     //         data512[511] = 0x55;
     //         SendDMXPacket (PCKT_INIT);
     //     }
@@ -717,6 +720,16 @@ int main(void)
             sprintf(s_to_send, "prog type: %d\n", mem_conf.program_type);
             Usart2Send(s_to_send);
             Wait_ms(100);
+            sprintf(s_to_send, "Max pwm channels: %d %d %d %d %d %d\n",
+                    mem_conf.max_pwm_ch1,
+                    mem_conf.max_pwm_ch2,
+                    mem_conf.max_pwm_ch3,
+                    mem_conf.max_pwm_ch4,
+                    mem_conf.max_pwm_ch5,
+                    mem_conf.max_pwm_ch6);
+            
+            Usart2Send(s_to_send);
+            Wait_ms(100);
             
             main_state++;            
             break;
@@ -726,6 +739,7 @@ int main(void)
             {
                 //habilito transmisiones
                 SW_RX_TX_DE;
+                DMX_Ena();                    
                 main_state = MAIN_IN_MASTER_MODE;             
             }                
 
@@ -764,7 +778,11 @@ int main(void)
                 main_state = MAIN_ENTERING_MAIN_MENU;
 
             MasterModeMenu();
-            
+            if (!timer_standby)
+            {
+                timer_standby = 40;
+                SendDMXPacket (PCKT_INIT);
+            }
             break;
             
         case MAIN_IN_SLAVE_MODE:
@@ -844,6 +862,17 @@ int main(void)
             
         case MAIN_ENTERING_MAIN_MENU:
             //deshabilitar salidas hardware
+            SW_RX_TX_RE_NEG;
+            DMX_Disa();
+
+            //reseteo canales
+            Update_TIM1_CH1(0);
+            Update_TIM1_CH2(0);    
+            Update_TIM3_CH1(0);
+            Update_TIM3_CH2(0);
+            Update_TIM3_CH3(0);
+            Update_TIM3_CH4(0);
+
             MainMenuReset();
             main_state++;
 

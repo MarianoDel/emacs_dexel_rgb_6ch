@@ -262,7 +262,8 @@ void SendDMXPacket (unsigned char new_func)
         DMX_TX_PIN_OFF;
         PB6_to_PushPull();
         dmx_state++;
-        OneShootTIM16(88);
+        // OneShootTIM16(88);
+        OneShootTIM16(200);        
         break;
 
     case PCKT_END_BREAK:

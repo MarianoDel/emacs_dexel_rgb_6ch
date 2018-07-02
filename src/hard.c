@@ -31,6 +31,7 @@ extern unsigned short sp5_filtered;
 extern unsigned short sp6_filtered;
 extern parameters_typedef mem_conf;
 extern unsigned char data7[];
+extern unsigned char data512[];
 
 /* Global variables ------------------------------------------------------------*/
 //para los switches
@@ -259,7 +260,7 @@ void PIDforProgramsCHX (unsigned char ch, unsigned char power)
     unsigned short dummysp;
 
     if (mem_conf.program_type == MASTER_MODE)
-        data7[ch] = power;
+        data512[ch] = power;
     
     dummysp = DMXtoCurrent (power);
 

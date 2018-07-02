@@ -39,7 +39,7 @@
 #define TT_SHOW_SELECT_IN_OFF   500
 
 //for func scroll in ms
-#define TT_SCROLL    100
+#define TT_SCROLL    250
 
 
 //-- Internals Defines ----------
@@ -156,7 +156,7 @@
 #define FuncChangeSecsReset()	FuncChangeReset()
 #define FuncChangeChannelsReset()	FuncChangeReset()
 #define FuncChangePrograms(X)	FuncChange(X, CHANGE_PROGRAMS, 1, 9)
-#define FuncChangeProgramsSequence(X)	FuncChange(X, CHANGE_PROGRAMS, 1, 9)
+#define FuncChangeProgramsSequence(X)	FuncChange(X, CHANGE_PROGRAMS, 0, 9)
 
 
 //-------- Functions -------------

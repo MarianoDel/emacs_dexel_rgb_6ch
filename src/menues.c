@@ -463,7 +463,7 @@ resp_t MainMenu (void)
     case MAIN_MENU_CONF_HARDWARE_4:
         dummy_16 = mem_conf.volts_ch2;
         
-        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_1, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
+        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_2, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
 
         if (resp == resp_finish)
         {
@@ -476,7 +476,7 @@ resp_t MainMenu (void)
     case MAIN_MENU_CONF_HARDWARE_5:
         dummy_16 = mem_conf.volts_ch3;
         
-        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_1, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
+        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_3, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
 
         if (resp == resp_finish)
         {
@@ -489,7 +489,7 @@ resp_t MainMenu (void)
     case MAIN_MENU_CONF_HARDWARE_6:
         dummy_16 = mem_conf.volts_ch4;
         
-        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_1, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
+        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_4, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
 
         if (resp == resp_finish)
         {
@@ -502,7 +502,7 @@ resp_t MainMenu (void)
     case MAIN_MENU_CONF_HARDWARE_7:
         dummy_16 = mem_conf.volts_ch5;
         
-        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_1, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
+        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_5, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
 
         if (resp == resp_finish)
         {
@@ -515,7 +515,7 @@ resp_t MainMenu (void)
     case MAIN_MENU_CONF_HARDWARE_8:
         dummy_16 = mem_conf.volts_ch6;
         
-        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_1, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
+        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_6, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
 
         if (resp == resp_finish)
         {
