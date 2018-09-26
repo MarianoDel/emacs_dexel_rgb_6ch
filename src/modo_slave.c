@@ -87,6 +87,13 @@ unsigned short v_sp4 [8];
 unsigned short v_sp5 [8];
 unsigned short v_sp6 [8];
 
+#ifdef USE_SAMPLES_ALTERANTIVE_TIME
+samples_state_t samples_state = SAMPLE_STANDBY;
+#endif
+
+#ifdef USE_FILTERS_ALTERANTIVE_TIME
+filters_state_t filters_state = FILTER_STANDBY;
+#endif
 //-- Private Defines -----------------
 //-- para los menues -----------------
 typedef enum {
@@ -244,24 +251,123 @@ void FuncSlaveMode (void)
             //CH6
             sp6 = DMXtoCurrent (data7[6]);
 
+            //aca tengo todas las nuevas muestras desde el dmx, actualizo los vectores
+#ifdef USE_SAMPLES_AT_THE_SAME_TIME            
+            SetNewValueInVector (sp1, v_sp1);
+            SetNewValueInVector (sp2, v_sp2);
+            SetNewValueInVector (sp3, v_sp3);
+            SetNewValueInVector (sp4, v_sp4);
+            SetNewValueInVector (sp5, v_sp5);
+            SetNewValueInVector (sp6, v_sp6);
+#endif
+#ifdef USE_SAMPLES_ALTERANTIVE_TIME
+            samples_state = SAMPLE_1;
+#endif            
             dmx_end_of_packet_update = 1;
-            
         }
 
         //filters para el dmx - generalmente 8 puntos a 200Hz -
         //desde el sp al sp_filter
         if (!dmx_filters_timer)
         {
+#ifdef USE_FILTERS_AT_THE_SAME_TIME
+            sp1_filtered = MAFilter8 (v_sp1);
+            sp2_filtered = MAFilter8 (v_sp2);
+            sp3_filtered = MAFilter8 (v_sp3);
+            sp4_filtered = MAFilter8 (v_sp4);
+            sp5_filtered = MAFilter8 (v_sp5);
+            sp6_filtered = MAFilter8 (v_sp6);
+#endif
+#ifdef USE_FILTERS_ALTERANTIVE_TIME
+            filters_state = FILTER_1;
+#endif
             dmx_filters_timer = 5;
-
-            sp1_filtered = MAFilterFast (sp1, v_sp1);
-            sp2_filtered = MAFilterFast (sp2, v_sp2);
-            sp3_filtered = MAFilterFast (sp3, v_sp3);
-            sp4_filtered = MAFilterFast (sp4, v_sp4);
-            sp5_filtered = MAFilterFast (sp5, v_sp5);
-            sp6_filtered = MAFilterFast (sp6, v_sp6);
         }
-        
+
+#ifdef USE_SAMPLES_ALTERANTIVE_TIME
+            switch (samples_state)
+            {
+            case SAMPLE_STANDBY:
+                break;
+
+            case SAMPLE_1:
+                SetNewValueInVector (sp1, v_sp1);
+                samples_state++;
+                break;
+
+            case SAMPLE_2:
+                SetNewValueInVector (sp2, v_sp2);
+                samples_state++;                
+                break;
+
+            case SAMPLE_3:
+                SetNewValueInVector (sp3, v_sp3);
+                samples_state++;                
+                break;
+
+            case SAMPLE_4:
+                SetNewValueInVector (sp4, v_sp4);
+                samples_state++;                
+                break;
+
+            case SAMPLE_5:
+                SetNewValueInVector (sp5, v_sp5);
+                samples_state++;                
+                break;
+
+            case SAMPLE_6:
+                SetNewValueInVector (sp6, v_sp6);
+                samples_state = SAMPLE_STANDBY;
+                break;
+
+            default:
+                samples_state = SAMPLE_STANDBY;
+                break;
+            }
+#endif
+
+#ifdef USE_FILTERS_ALTERANTIVE_TIME
+            switch (filters_state)
+            {
+            case FILTER_STANDBY:
+                break;
+
+            case FILTER_1:
+                sp1_filtered = MAFilter8 (v_sp1);
+                filters_state++;
+                break;
+
+            case FILTER_2:
+                sp2_filtered = MAFilter8 (v_sp2);
+                filters_state++;                
+                break;
+
+            case FILTER_3:
+                sp3_filtered = MAFilter8 (v_sp3);
+                filters_state++;                
+                break;
+
+            case FILTER_4:
+                sp4_filtered = MAFilter8 (v_sp4);
+                filters_state++;                
+                break;
+
+            case FILTER_5:
+                sp5_filtered = MAFilter8 (v_sp5);
+                filters_state++;                
+                break;
+
+            case FILTER_6:
+                sp6_filtered = MAFilter8 (v_sp6);
+                filters_state = FILTER_STANDBY;
+                break;
+
+            default:
+                filters_state = FILTER_STANDBY;
+                break;
+            }
+#endif
+            
         UpdateSamplesAndPID ();
 
         UpdateSlaveModeMenuManager();

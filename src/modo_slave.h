@@ -11,6 +11,8 @@
 #ifndef _MODO_SLAVE_H_
 #define _MODO_SLAVE_H_
 
+//-- includes to help configurations --//
+#include "hard.h"
 
 //--- Exported types ---//
 typedef enum {
@@ -20,6 +22,41 @@ typedef enum {
 
 } slave_mode_t;
 
+typedef enum {
+    
+    SAMPLE_STANDBY = 0,
+    SAMPLE_1,
+    SAMPLE_2,
+    SAMPLE_3,
+    SAMPLE_4,
+    SAMPLE_5,
+    SAMPLE_6
+    
+} samples_state_t;
+
+typedef enum {
+    
+    FILTER_STANDBY = 0,
+    FILTER_1,
+    FILTER_2,
+    FILTER_3,
+    FILTER_4,
+    FILTER_5,
+    FILTER_6
+    
+} filters_state_t;
+
+//--- Defines for configuration ---//
+// check hard.h
+#if defined USE_ALTERNATIVE
+#define USE_SAMPLES_ALTERANTIVE_TIME
+#define USE_FILTERS_ALTERANTIVE_TIME
+#elif defined USE_AT_THE_SAME_TIME
+#define USE_SAMPLES_AT_THE_SAME_TIME
+#define USE_FILTERS_AT_THE_SAME_TIME
+#else
+#error "You must select samples/filters mode on hard.h"
+#endif
 
 
 //--- Exported constants ---//

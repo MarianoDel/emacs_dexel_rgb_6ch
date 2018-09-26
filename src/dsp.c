@@ -86,22 +86,24 @@ unsigned short MAFilterFast (unsigned short new_sample, unsigned short * vsample
 	return (unsigned short) (total_ma >> 2);
 }
 
+void SetNewValueInVector (unsigned short new_sample, unsigned short * vsample)
+{
+    *(vsample + 7) = *(vsample + 6);
+    *(vsample + 6) = *(vsample + 5);
+    *(vsample + 5) = *(vsample + 4);
+    *(vsample + 4) = *(vsample + 3);
+    *(vsample + 3) = *(vsample + 2);
+    *(vsample + 2) = *(vsample + 1);
+    *(vsample + 1) = *(vsample);
+    *(vsample) = new_sample;
+}
+
 //unsigned short MAFilter8 (unsigned short new_sample, unsigned short * vsample)
 unsigned short MAFilter8 (unsigned short * vsample)
 {
 	unsigned int total_ma;
 
-	//Kernel mejorado ver 2
-	//si el vector es de 0 a 7 (+1) sumo todas las posiciones entre 1 y 8, acomodo el nuevo vector entre 0 y 7
-
 	total_ma = *(vsample) + *(vsample + 1) + *(vsample + 2) + *(vsample + 3) + *(vsample + 4) + *(vsample + 5) + *(vsample + 6) + *(vsample + 7);
-	*(vsample + 7) = *(vsample + 6);
-	*(vsample + 6) = *(vsample + 5);
-	*(vsample + 5) = *(vsample + 4);
-	*(vsample + 4) = *(vsample + 3);
-	*(vsample + 3) = *(vsample + 2);
-	*(vsample + 2) = *(vsample + 1);
-	*(vsample + 1) = *(vsample);
 
 	return (unsigned short) (total_ma >> 3);
 }

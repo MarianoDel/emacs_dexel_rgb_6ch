@@ -31,6 +31,9 @@
 //---- Features Configuration ----------------
 // #define WITH_GRANDMASTER
 #define WITH_BIDIRECTIONAL
+// #define USE_ALTERNATIVE        //recorre el vector de samples y los filtros de forma alternativa
+#define USE_AT_THE_SAME_TIME    //recorre el vector de samples y los filtros todos juntos
+
 
 //------ Configuration for Firmware-Channels -----
 
