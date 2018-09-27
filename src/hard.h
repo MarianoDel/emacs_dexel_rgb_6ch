@@ -32,7 +32,8 @@
 // #define WITH_GRANDMASTER
 #define WITH_BIDIRECTIONAL
 // #define USE_ALTERNATIVE        //recorre el vector de samples y los filtros de forma alternativa
-#define USE_AT_THE_SAME_TIME    //recorre el vector de samples y los filtros todos juntos
+// #define USE_AT_THE_SAME_TIME    //recorre el vector de samples y los filtros todos juntos
+#define USE_DELTA_FUNCTION    //el filtro sigue a los samples en modo delta
 
 
 //------ Configuration for Firmware-Channels -----

@@ -16,6 +16,9 @@
 extern volatile unsigned char timer_1seg;
 extern volatile unsigned short timer_led_comm;
 extern volatile unsigned short wait_ms_var;
+#ifdef USE_DELTA_FUNCTION
+extern volatile unsigned short timer_delta_filter;
+#endif
 
 //--- VARIABLES GLOBALES ---//
 
@@ -275,39 +278,38 @@ void OneShootTIM16 (unsigned short a)
     
 // }
 
-// void TIM16_IRQHandler (void)	//100uS
-// {
-//
-// 	if (TIM16->SR & 0x01)
-// 		//bajar flag
-// 		TIM16->SR = 0x00;
-// }
-//
-//
-// void TIM_16_Init (void)
-// {
-//
-// 	NVIC_InitTypeDef NVIC_InitStructure;
-//
-// 	if (!RCC_TIM16_CLK)
-// 		RCC_TIM16_CLK_ON;
-//
-// 	//Configuracion del timer.
-// 	TIM16->ARR = 2000; //10m
-// 	TIM16->CNT = 0;
-// 	TIM16->PSC = 479;
-// 	TIM16->EGR = TIM_EGR_UG;
-//
-// 	// Enable timer ver UDIS
-// 	TIM16->DIER |= TIM_DIER_UIE;
-// 	TIM16->CR1 |= TIM_CR1_CEN;
-//
-// 	NVIC_InitStructure.NVIC_IRQChannel = TIM16_IRQn;
-// 	NVIC_InitStructure.NVIC_IRQChannelPriority = 5;
-// 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-// 	NVIC_Init(&NVIC_InitStructure);
-// }
-//
+void TIM17_IRQHandler (void)	//100uS
+{
+#ifdef USE_DELTA_FUNCTION
+    if (timer_delta_filter)
+        timer_delta_filter--;
+#endif
+    
+    //bajar flag
+    if (TIM17->SR & 0x01)
+        TIM17->SR = 0x00;
+}
+
+
+void TIM_17_Init (void)
+{
+    if (!RCC_TIM17_CLK)
+        RCC_TIM17_CLK_ON;
+
+    //Configuracion del timer.
+    TIM17->ARR = 100; //100us
+    TIM17->CNT = 0;
+    TIM17->PSC = 47;
+    TIM17->EGR = TIM_EGR_UG;
+
+    // Enable timer ver UDIS
+    TIM17->DIER |= TIM_DIER_UIE;
+    TIM17->CR1 |= TIM_CR1_CEN;
+
+    NVIC_EnableIRQ(TIM17_IRQn);
+    NVIC_SetPriority(TIM17_IRQn, 8);
+}
+
 // void TIM17_IRQHandler (void)	//100uS
 // {
 //

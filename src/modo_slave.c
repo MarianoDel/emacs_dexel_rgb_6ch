@@ -25,8 +25,13 @@
 //--- VARIABLES EXTERNAS ---//
 extern volatile unsigned char data7[];
 
-//del Main
+//del Main para timers
 extern volatile unsigned char dmx_filters_timer;
+#ifdef USE_FILTERS_AND_SAMPLES_DELTA
+extern volatile unsigned short timer_delta_filter;
+#endif
+
+//del main para dmx
 extern volatile unsigned char Packet_Detected_Flag;
 
 extern parameters_typedef mem_conf;
@@ -80,12 +85,14 @@ unsigned short sp4 = 0;
 unsigned short sp5 = 0;
 unsigned short sp6 = 0;
 
+#if (defined USE_SAMPLES_ALTERANTIVE_TIME) || (defined USE_FILTERS_ALTERANTIVE_TIME)
 unsigned short v_sp1 [8];
 unsigned short v_sp2 [8];
 unsigned short v_sp3 [8];
 unsigned short v_sp4 [8];
 unsigned short v_sp5 [8];
 unsigned short v_sp6 [8];
+#endif
 
 #ifdef USE_SAMPLES_ALTERANTIVE_TIME
 samples_state_t samples_state = SAMPLE_STANDBY;
@@ -170,6 +177,7 @@ void FuncSlaveMode (void)
     switch (slave_mode_state)
     {
     case SLAVE_MODE_INIT:
+#if (defined USE_SAMPLES_ALTERANTIVE_TIME) || (defined USE_FILTERS_ALTERANTIVE_TIME)        
         for (i = 0; i < 8; i++)
         {
             v_sp1[i] = 0;
@@ -179,6 +187,7 @@ void FuncSlaveMode (void)
             v_sp5[i] = 0;
             v_sp6[i] = 0;
         }
+#endif
 
         slave_mode_state++;
         ShowConfSlaveModeReset();
@@ -283,6 +292,44 @@ void FuncSlaveMode (void)
 #endif
             dmx_filters_timer = 5;
         }
+
+#ifdef USE_FILTERS_AND_SAMPLES_DELTA
+        if (!timer_delta_filter)
+        {
+            if (sp1 > sp1_filtered)
+                sp1_filtered++;
+            else if (sp1_filtered)
+                    sp1_filtered--;
+
+            if (sp2 > sp2_filtered)
+                sp2_filtered++;
+            else if (sp2_filtered)
+                    sp2_filtered--;
+
+            if (sp3 > sp3_filtered)
+                sp3_filtered++;
+            else if (sp3_filtered)
+                    sp3_filtered--;
+
+            if (sp4 > sp4_filtered)
+                sp4_filtered++;
+            else if (sp4_filtered)
+                    sp4_filtered--;
+
+            if (sp5 > sp5_filtered)
+                sp5_filtered++;
+            else if (sp5_filtered)
+                    sp5_filtered--;
+
+            if (sp6 > sp6_filtered)
+                sp6_filtered++;
+            else if (sp6_filtered)
+                    sp6_filtered--;
+
+            timer_delta_filter = 12;
+        }
+#endif
+        
 
 #ifdef USE_SAMPLES_ALTERANTIVE_TIME
             switch (samples_state)

@@ -48,7 +48,9 @@ volatile unsigned char seq_ready;
 // ------- Externals de los timers -------
 volatile unsigned char timer_1seg = 0;
 volatile unsigned char switches_timer = 0;
-
+#ifdef USE_DELTA_FUNCTION
+volatile unsigned short timer_delta_filter = 0;
+#endif
 // ------- Externals del USART -------
 volatile unsigned char usart1_have_data;
 volatile unsigned char usart2_have_data;
@@ -676,6 +678,9 @@ int main(void)
     // Packet_Detected_Flag = 0;
     // DMX_channel_selected = 1;
     // DMX_channel_quantity = 6;
+#ifdef USE_DELTA_FUNCTION
+    TIM_17_Init();
+#endif
 
     
     //inicializo el hard que falta

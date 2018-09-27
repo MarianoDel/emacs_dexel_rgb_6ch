@@ -101,11 +101,14 @@ void SetNewValueInVector (unsigned short new_sample, unsigned short * vsample)
 //unsigned short MAFilter8 (unsigned short new_sample, unsigned short * vsample)
 unsigned short MAFilter8 (unsigned short * vsample)
 {
-	unsigned int total_ma;
+    unsigned int total_ma;
 
-	total_ma = *(vsample) + *(vsample + 1) + *(vsample + 2) + *(vsample + 3) + *(vsample + 4) + *(vsample + 5) + *(vsample + 6) + *(vsample + 7);
+    total_ma = *(vsample) + *(vsample + 1) +
+        *(vsample + 2) + *(vsample + 3) +
+        *(vsample + 4) + *(vsample + 5) +
+        *(vsample + 6) + *(vsample + 7);
 
-	return (unsigned short) (total_ma >> 3);
+    return (unsigned short) (total_ma >> 3);
 }
 
 unsigned short MAFilter32 (unsigned short new_sample, unsigned short * vsample)

@@ -41,7 +41,8 @@ unsigned short s2 = 0;
 //--- Para el PID ----------
 unsigned char undersampling = 0;
 // #define PID_UNDERSAMPLING    10
-#define PID_UNDERSAMPLING    20
+// #define PID_UNDERSAMPLING    20
+#define PID_UNDERSAMPLING    3    //7 canales a 73clks a 12b = 511us
 
 short d_ch1;
 short d_ch2;
