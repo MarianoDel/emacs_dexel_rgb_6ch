@@ -31,9 +31,10 @@
 //---- Features Configuration ----------------
 // #define WITH_GRANDMASTER
 #define WITH_BIDIRECTIONAL
-// #define USE_ALTERNATIVE        //recorre el vector de samples y los filtros de forma alternativa
+#define USE_ALTERNATIVE        //recorre el vector de samples y los filtros de forma alternativa
 // #define USE_AT_THE_SAME_TIME    //recorre el vector de samples y los filtros todos juntos
-#define USE_DELTA_FUNCTION    //el filtro sigue a los samples en modo delta
+// #define USE_FILTER_LENGHT_8
+#define USE_FILTER_LENGHT_16
 
 
 //------ Configuration for Firmware-Channels -----
@@ -266,6 +267,7 @@ sw_state_t CheckS1 (void);
 sw_state_t CheckS2 (void);
 void UpdateSwitches (void);
 void UpdateSamplesAndPID (void);
+void UpdatePIDWithoutUndersampling (void);
 void PIDforProgramsCHX (unsigned char, unsigned char);
 unsigned short DMXtoCurrent (unsigned char);
 

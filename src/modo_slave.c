@@ -69,13 +69,17 @@ unsigned char last_ch6;
 
 unsigned short dmx_local_channel = 0;
 unsigned short dmx_local_value = 0;
+char s_lcd1 [10];
+char s_lcd2 [10];
+    
+
 
 // unsigned char check_dmx_lcd_pckt = 0;
 
 // unsigned short dmx_channel = 0;
 // unsigned char grandmaster_value = 0;
 
-float fcalc = 1.0;
+// float fcalc = 1.0;
 
 //--- Para el PID ----------
 unsigned short sp1 = 0;
@@ -85,7 +89,7 @@ unsigned short sp4 = 0;
 unsigned short sp5 = 0;
 unsigned short sp6 = 0;
 
-#if (defined USE_SAMPLES_ALTERANTIVE_TIME) || (defined USE_FILTERS_ALTERANTIVE_TIME)
+#ifdef USE_FILTER_LENGHT_8
 unsigned short v_sp1 [8];
 unsigned short v_sp2 [8];
 unsigned short v_sp3 [8];
@@ -93,10 +97,19 @@ unsigned short v_sp4 [8];
 unsigned short v_sp5 [8];
 unsigned short v_sp6 [8];
 #endif
-
-#ifdef USE_SAMPLES_ALTERANTIVE_TIME
-samples_state_t samples_state = SAMPLE_STANDBY;
+#ifdef USE_FILTER_LENGHT_16
+unsigned short v_sp1 [16];
+unsigned short v_sp2 [16];
+unsigned short v_sp3 [16];
+unsigned short v_sp4 [16];
+unsigned short v_sp5 [16];
+unsigned short v_sp6 [16];
 #endif
+
+
+// #ifdef USE_SAMPLES_ALTERANTIVE_TIME
+// samples_state_t samples_state = SAMPLE_STANDBY;
+// #endif
 
 #ifdef USE_FILTERS_ALTERANTIVE_TIME
 filters_state_t filters_state = FILTER_STANDBY;
@@ -137,6 +150,7 @@ typedef enum {
     SLAVE_MODE_MENU_RUNNING_INIT = 0,
     SLAVE_MODE_MENU_RUNNING_CHECK,
     SLAVE_MODE_MENU_RUNNING_CHANGE,
+    SLAVE_MODE_MENU_RUNNING_CHANGE_SHOW_DISPLAY,
     SLAVE_MODE_MENU_RUNNING_MANUAL_CHANGE
 
 } slave_mode_menu_running_t;
@@ -161,6 +175,8 @@ void UpdateTimerSlaveMode (void)
 
     if (slave_mode_dmx_receiving_timer)
         slave_mode_dmx_receiving_timer--;
+
+    UpdatePIDWithoutUndersampling ();
 }
 
 void FuncSlaveModeReset (void)
@@ -260,18 +276,6 @@ void FuncSlaveMode (void)
             //CH6
             sp6 = DMXtoCurrent (data7[6]);
 
-            //aca tengo todas las nuevas muestras desde el dmx, actualizo los vectores
-#ifdef USE_SAMPLES_AT_THE_SAME_TIME            
-            SetNewValueInVector (sp1, v_sp1);
-            SetNewValueInVector (sp2, v_sp2);
-            SetNewValueInVector (sp3, v_sp3);
-            SetNewValueInVector (sp4, v_sp4);
-            SetNewValueInVector (sp5, v_sp5);
-            SetNewValueInVector (sp6, v_sp6);
-#endif
-#ifdef USE_SAMPLES_ALTERANTIVE_TIME
-            samples_state = SAMPLE_1;
-#endif            
             dmx_end_of_packet_update = 1;
         }
 
@@ -280,132 +284,63 @@ void FuncSlaveMode (void)
         if (!dmx_filters_timer)
         {
 #ifdef USE_FILTERS_AT_THE_SAME_TIME
-            sp1_filtered = MAFilter8 (v_sp1);
-            sp2_filtered = MAFilter8 (v_sp2);
-            sp3_filtered = MAFilter8 (v_sp3);
-            sp4_filtered = MAFilter8 (v_sp4);
-            sp5_filtered = MAFilter8 (v_sp5);
-            sp6_filtered = MAFilter8 (v_sp6);
+#ifdef USE_FILTER_LENGHT_16
+            sp1_filtered = MAFilterFast16 (sp1, v_sp1);
+            sp2_filtered = MAFilterFast16 (sp2, v_sp2);
+            sp3_filtered = MAFilterFast16 (sp3, v_sp3);
+            sp4_filtered = MAFilterFast16 (sp4, v_sp4);
+            sp5_filtered = MAFilterFast16 (sp5, v_sp5);
+            sp6_filtered = MAFilterFast16 (sp6, v_sp6);
+#endif
+#ifdef USE_FILTER_LENGHT_8
+            sp1_filtered = MAFilterFast (sp1, v_sp1);
+            sp2_filtered = MAFilterFast (sp2, v_sp2);
+            sp3_filtered = MAFilterFast (sp3, v_sp3);
+            sp4_filtered = MAFilterFast (sp4, v_sp4);
+            sp5_filtered = MAFilterFast (sp5, v_sp5);
+            sp6_filtered = MAFilterFast (sp6, v_sp6);
+#endif            
 #endif
 #ifdef USE_FILTERS_ALTERANTIVE_TIME
             filters_state = FILTER_1;
 #endif
             dmx_filters_timer = 5;
         }
-
-#ifdef USE_FILTERS_AND_SAMPLES_DELTA
-        if (!timer_delta_filter)
-        {
-            if (sp1 > sp1_filtered)
-                sp1_filtered++;
-            else if (sp1_filtered)
-                    sp1_filtered--;
-
-            if (sp2 > sp2_filtered)
-                sp2_filtered++;
-            else if (sp2_filtered)
-                    sp2_filtered--;
-
-            if (sp3 > sp3_filtered)
-                sp3_filtered++;
-            else if (sp3_filtered)
-                    sp3_filtered--;
-
-            if (sp4 > sp4_filtered)
-                sp4_filtered++;
-            else if (sp4_filtered)
-                    sp4_filtered--;
-
-            if (sp5 > sp5_filtered)
-                sp5_filtered++;
-            else if (sp5_filtered)
-                    sp5_filtered--;
-
-            if (sp6 > sp6_filtered)
-                sp6_filtered++;
-            else if (sp6_filtered)
-                    sp6_filtered--;
-
-            timer_delta_filter = 12;
-        }
-#endif
         
-
-#ifdef USE_SAMPLES_ALTERANTIVE_TIME
-            switch (samples_state)
-            {
-            case SAMPLE_STANDBY:
-                break;
-
-            case SAMPLE_1:
-                SetNewValueInVector (sp1, v_sp1);
-                samples_state++;
-                break;
-
-            case SAMPLE_2:
-                SetNewValueInVector (sp2, v_sp2);
-                samples_state++;                
-                break;
-
-            case SAMPLE_3:
-                SetNewValueInVector (sp3, v_sp3);
-                samples_state++;                
-                break;
-
-            case SAMPLE_4:
-                SetNewValueInVector (sp4, v_sp4);
-                samples_state++;                
-                break;
-
-            case SAMPLE_5:
-                SetNewValueInVector (sp5, v_sp5);
-                samples_state++;                
-                break;
-
-            case SAMPLE_6:
-                SetNewValueInVector (sp6, v_sp6);
-                samples_state = SAMPLE_STANDBY;
-                break;
-
-            default:
-                samples_state = SAMPLE_STANDBY;
-                break;
-            }
-#endif
-
 #ifdef USE_FILTERS_ALTERANTIVE_TIME
+#ifdef USE_FILTER_LENGHT_8        
             switch (filters_state)
             {
             case FILTER_STANDBY:
                 break;
 
             case FILTER_1:
-                sp1_filtered = MAFilter8 (v_sp1);
+                sp1_filtered = MAFilterFast (sp1, v_sp1);
                 filters_state++;
                 break;
 
             case FILTER_2:
-                sp2_filtered = MAFilter8 (v_sp2);
+                sp2_filtered = MAFilterFast (sp2, v_sp2);
                 filters_state++;                
                 break;
 
             case FILTER_3:
-                sp3_filtered = MAFilter8 (v_sp3);
+                sp3_filtered = MAFilterFast (sp3, v_sp3);
                 filters_state++;                
                 break;
 
             case FILTER_4:
-                sp4_filtered = MAFilter8 (v_sp4);
+                sp4_filtered = MAFilterFast (sp4, v_sp4);
                 filters_state++;                
                 break;
 
             case FILTER_5:
-                sp5_filtered = MAFilter8 (v_sp5);
+                sp5_filtered = MAFilterFast (sp5, v_sp5);
                 filters_state++;                
                 break;
 
             case FILTER_6:
-                sp6_filtered = MAFilter8 (v_sp6);
+                sp6_filtered = MAFilterFast (sp6, v_sp6);
                 filters_state = FILTER_STANDBY;
                 break;
 
@@ -414,10 +349,53 @@ void FuncSlaveMode (void)
                 break;
             }
 #endif
-            
-        UpdateSamplesAndPID ();
+#ifdef USE_FILTER_LENGHT_16
+            switch (filters_state)
+            {
+            case FILTER_STANDBY:
+                break;
 
-        UpdateSlaveModeMenuManager();
+            case FILTER_1:
+                sp1_filtered = MAFilterFast16 (sp1, v_sp1);
+                filters_state++;
+                break;
+
+            case FILTER_2:
+                sp2_filtered = MAFilterFast16 (sp2, v_sp2);
+                filters_state++;                
+                break;
+
+            case FILTER_3:
+                sp3_filtered = MAFilterFast16 (sp3, v_sp3);
+                filters_state++;                
+                break;
+
+            case FILTER_4:
+                sp4_filtered = MAFilterFast16 (sp4, v_sp4);
+                filters_state++;                
+                break;
+
+            case FILTER_5:
+                sp5_filtered = MAFilterFast16 (sp5, v_sp5);
+                filters_state++;                
+                break;
+
+            case FILTER_6:
+                sp6_filtered = MAFilterFast16 (sp6, v_sp6);
+                filters_state = FILTER_STANDBY;
+                break;
+
+            default:
+                filters_state = FILTER_STANDBY;
+                break;
+            }            
+#endif
+#endif
+
+            //ahora se hace con interrupcion de 1ms
+        // UpdateSamplesAndPID ();
+
+        // UpdateSlaveModeMenuManager();
         
         break;
 
@@ -544,10 +522,9 @@ inline void UpdateSlaveModeMenuManager (void)
 inline resp_t MenuSlaveModeRunning (void)
 {
     resp_t resp = resp_continue;
-    char s_lcd1 [10];
-    char s_lcd2 [10];
-    short one_int = 0, one_dec = 0;
-    
+    unsigned int one_calc = 0;
+    unsigned short one_int = 0;
+    unsigned short one_dec = 0;
 
     switch (slave_mode_menu_state)
     {
@@ -633,26 +610,43 @@ inline resp_t MenuSlaveModeRunning (void)
         break;
 
     case SLAVE_MODE_MENU_RUNNING_CHANGE:
-        
-        fcalc = dmx_local_value;
-        fcalc = fcalc * K_100P;
-        one_int = (short) fcalc;
-        fcalc = fcalc - one_int;
-        fcalc = fcalc * 10;
-        one_dec = (short) fcalc;
+
+        //trato de acelerar un poco las cuentas
+        if (dmx_local_value == 0)
+        {
+            one_int = 0;
+            one_dec = 0;
+        }
+        else if (dmx_local_value == 255)
+        {
+            one_int = 100;
+            one_dec = 0;
+        }
+        else
+        {
+            one_calc = dmx_local_value * 1000;
+            one_calc = one_calc / 255;
+            
+            one_int = one_calc / 10;
+            one_dec = one_calc - one_int * 10;
+        }
 
         sprintf(s_lcd2, "%3d.%01d", one_int, one_dec);
         strcat(s_lcd2, "%  ");
 
         sprintf(s_lcd1, "ch:%3d D", dmx_local_channel);
 
+        slave_mode_menu_state = SLAVE_MODE_MENU_RUNNING_CHANGE_SHOW_DISPLAY;
+        break;
+
+    case SLAVE_MODE_MENU_RUNNING_CHANGE_SHOW_DISPLAY:
         resp = FuncShowBlink ((const char *) s_lcd1, (const char *) s_lcd2, 0, BLINK_NO);
 
         if (resp == resp_finish)
         {
             resp = resp_continue;
             slave_mode_menu_state = SLAVE_MODE_MENU_RUNNING_CHECK;
-        }
+        }                
         break;
 
     case SLAVE_MODE_MENU_RUNNING_MANUAL_CHANGE:

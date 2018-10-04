@@ -49,13 +49,9 @@ typedef enum {
 //--- Defines for configuration ---//
 // check hard.h
 #if defined USE_ALTERNATIVE
-#define USE_SAMPLES_ALTERANTIVE_TIME
 #define USE_FILTERS_ALTERANTIVE_TIME
 #elif defined USE_AT_THE_SAME_TIME
-#define USE_SAMPLES_AT_THE_SAME_TIME
 #define USE_FILTERS_AT_THE_SAME_TIME
-#elif defined USE_DELTA_FUNCTION
-#define USE_FILTERS_AND_SAMPLES_DELTA
 #else
 #error "You must select samples/filters mode on hard.h"
 #endif
@@ -72,6 +68,7 @@ typedef enum {
 void FuncSlaveMode (void);
 void FuncSlaveModeReset (void);
 void UpdateTimerSlaveMode (void);
+
 
 #endif
 
