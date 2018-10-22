@@ -31,12 +31,14 @@ short d_last = 0;
 #define KDV	0			// 0
 
 //todos se dividen por 128
-// #define KPI	32			// 0.5
+// #define KPI	32			// 0.25
 // #define KPI	128			// 1
-#define KPI	0			// 0
+// #define KPI	512			// 0
 // #define KII	16			// .125
 // #define KII	128			// 1
-#define KII	32			// 0.25
+#define KPI     0
+// #define KII	128			// 1 es un poco inestable, la corriente oscila
+#define KII	32			// 0.25 mucho menos inestable
 #define KDI	0			// 0
 
 

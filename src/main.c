@@ -185,6 +185,7 @@ int main(void)
     char s_to_send [100];
     main_state_t main_state = MAIN_INIT;
     resp_t resp = resp_continue;
+    unsigned char loop_count;
     
     //GPIO Configuration.
     GPIO_Config();
@@ -221,6 +222,7 @@ int main(void)
     Update_TIM3_CH2(0);
     Update_TIM3_CH3(0);
     Update_TIM3_CH4(0);
+
 
     //-- Prueba con ADC INT ----------
     //-- ADC configuration.
@@ -337,8 +339,8 @@ int main(void)
     //-- Fin Prueba de Switch RX-TX DMX512 ----------
 
     //-- Prueba de Switch USART1 DMX512 PIN TX ----------
-    TIM_16_Init();
-    USART1Config();
+    // TIM_16_Init();
+    // USART1Config();
     // SW_RX_TX_DE;
     
     // while (1)
@@ -354,9 +356,6 @@ int main(void)
     //     }
     // }
     //-- Fin Prueba de Switch USART1 DMX512 PIN TX ----------    
-
-    
-    
 
     //-- Prueba con DMX512 ----------
     // TIM_14_Init();
@@ -402,6 +401,50 @@ int main(void)
     //         CTRL_FAN_OFF;
     // }    
     //-- Fin Prueba con DMX512 ----------
+
+    //-- Prueba con ADC & DMA & PWM Fijo y mido I ----------
+    //inicializo el hard que falta
+    DMX_Disa();
+    AdcConfig();
+
+    //-- DMA configuration.
+    DMAConfig();
+    DMA1_Channel1->CCR |= DMA_CCR_EN;
+
+    ADC1->CR |= ADC_CR_ADSTART;
+
+    loop_count = 0;
+    i = 0;
+    while(1)
+    {
+        if (DMA1->ISR & DMA_ISR_TCIF1)    //esto es sequence ready cada 16KHz
+            DMA1->IFCR = DMA_ISR_TCIF1;
+        
+        if (!timer_standby)
+        {
+            timer_standby = 500;
+            //envio corriente y pwm de canal 1
+            sprintf(s_to_send, "d1: %d, i1: %d\n",
+                    i,
+                    I_Channel_1);
+
+            Usart2Send(s_to_send);
+            if (loop_count >= 9)
+            {
+                loop_count = 0;
+                if (i > 100)
+                    i = 10;
+                // if (i > 4)
+                //     i = 0;
+                else
+                    i++;
+                Update_PWM1(i);
+            }
+            else
+                loop_count++;
+        }
+    }
+    //-- Fin Prueba con ADC & DMA & PWM Fijo y mido I ----------
     
     //-- Prueba con ADC & DMA ----------
     //-- ADC configuration.
@@ -672,7 +715,8 @@ int main(void)
 
     //-- Programa de Produccion del DMX
     //inicializo dmx si todavia no lo hice
-    TIM_14_Init();
+    TIM_14_Init();    //para detectar break en dmx
+    TIM_16_Init();    //para tx dmx OneShoot
     USART1Config();
 
     // Packet_Detected_Flag = 0;
@@ -711,12 +755,12 @@ int main(void)
             DMX_Disa();
 
             //reseteo canales
-            Update_TIM1_CH1(0);
-            Update_TIM1_CH2(0);    
-            Update_TIM3_CH1(0);
-            Update_TIM3_CH2(0);
-            Update_TIM3_CH3(0);
-            Update_TIM3_CH4(0);
+            Update_PWM1(0);
+            Update_PWM2(0);    
+            Update_PWM3(0);
+            Update_PWM4(0);
+            Update_PWM5(0);
+            Update_PWM6(0);
                         
             //reseteo menues
             MasterModeMenuReset();
@@ -792,32 +836,16 @@ int main(void)
             
         case MAIN_IN_SLAVE_MODE:
             FuncSlaveMode();
+            UpdateSamplesAndPID ();
             if (!timer_standby)
             {
                 timer_standby = 1000;
                 //envio corrientes
-                sprintf(s_to_send, "i1: %d, i2: %d, i3: %d, i4: %d, i5: %d, i6: %d, t: %d\n",
+                sprintf(s_to_send, "i1: %d, c1: %d, sp1: %d\n",
                         I_Channel_1,
-                        I_Channel_2,
-                        I_Channel_3,
-                        I_Channel_4,
-                        I_Channel_5,
-                        I_Channel_6,
-                        Temp_Channel);
-
-                Usart2Send(s_to_send);
-
-                //envio canales dmx
-                sprintf(s_to_send, "c0: %d, c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
-                        data7[0],
                         data7[1],
-                        data7[2],
-                        data7[3],
-                        data7[4],
-                        data7[5],
-                        data7[6]);
-                
-                Usart2Send(s_to_send);            
+                        sp1_filtered);
+                Usart2Send(s_to_send);
             }
 
             if (CheckS2() > S_HALF)

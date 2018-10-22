@@ -176,7 +176,7 @@ void UpdateTimerSlaveMode (void)
     if (slave_mode_dmx_receiving_timer)
         slave_mode_dmx_receiving_timer--;
 
-    UpdatePIDWithoutUndersampling ();
+    // UpdatePIDWithoutUndersampling ();
 }
 
 void FuncSlaveModeReset (void)
@@ -392,6 +392,7 @@ void FuncSlaveMode (void)
 #endif
 #endif
 
+            //lo hago desde el menu principal
             //ahora se hace con interrupcion de 1ms
         // UpdateSamplesAndPID ();
 

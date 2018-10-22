@@ -91,3 +91,14 @@
    - Cantidad: 16
    - Tension para seteo 1 Amper: 24.8V
    - Tension para seteo 2 Amper: 28.4V
+
+* Problemas de implementacion
+** No se mueve bien el rojo
+   - cuando se mueve el dmx el rojo parpadea
+   - con un control integral solo funciona bien con algo de corriente y hasta maximo
+   - en muy baja corriente funciona mal
+   - el que mejor sigue a la senial dmx es el proporcional, pero si agrego mucho se pone inestable
+
+** Agregar UpdatePID por interrupcion en DMA
+   - agregar tambien flag dma_low_level_update para cosas que haya que hacer despues con sincro
+

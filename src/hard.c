@@ -42,7 +42,7 @@ unsigned short s2 = 0;
 unsigned char undersampling = 0;
 // #define PID_UNDERSAMPLING    10
 // #define PID_UNDERSAMPLING    20
-#define PID_UNDERSAMPLING    20    //(71.5 + 12.5 sar) * 1 / 12MHz = 7us; 7canales -> 49us
+#define PID_UNDERSAMPLING    4    //(71.5 + 12.5 sar) * 1 / 12MHz = 7us; 7canales -> 49us
 
 short d_ch1;
 short d_ch2;
@@ -134,6 +134,10 @@ void UpdateSamplesAndPID (void)
     {
         // Clear DMA TC flag
         sequence_ready_reset;
+        // if (CTRL_FAN)
+        //     CTRL_FAN_OFF;
+        // else
+        //     CTRL_FAN_ON;
 
         if (undersampling < (PID_UNDERSAMPLING - 1))
         {
@@ -142,6 +146,11 @@ void UpdateSamplesAndPID (void)
         else
         {
             undersampling = 0;
+            if (CTRL_FAN)
+                CTRL_FAN_OFF;
+            else
+                CTRL_FAN_ON;
+
 
             //PID CH1
             if (!sp1_filtered)
@@ -154,8 +163,9 @@ void UpdateSamplesAndPID (void)
                     d_ch1 = 0;
                 else
                 {
-                    if (d_ch1 > DUTY_90_PERCENT)
-                        d_ch1 = DUTY_90_PERCENT;
+                    //como es el rojo le bajo la ganancia
+                    if (d_ch1 > DUTY_65_PERCENT)
+                        d_ch1 = DUTY_65_PERCENT;
                     
                     Update_PWM1(d_ch1);
                 }
