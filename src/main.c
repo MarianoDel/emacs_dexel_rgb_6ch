@@ -436,15 +436,15 @@ int main(void)
         {
             timer_standby = 500;
             //envio corriente y pwm de canal 1
-            sprintf(s_to_send, "c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
-                    data7[1],
-                    data7[2],
-                    data7[3],
-                    data7[4],
-                    data7[5],
-                    data7[6]);
+            // sprintf(s_to_send, "c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
+            //         data7[1],
+            //         data7[2],
+            //         data7[3],
+            //         data7[4],
+            //         data7[5],
+            //         data7[6]);
 
-            Usart2Send(s_to_send);
+            // Usart2Send(s_to_send);
 
             sprintf(s_to_send, "i1: %d, i2: %d, i3: %d, i4: %d, i5: %d, i6: %d\n",
                     I_Channel_1,

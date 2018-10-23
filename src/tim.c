@@ -151,13 +151,13 @@ void TIM1_BRK_UP_TRG_COM_IRQHandler (void)	//48Khz
         tim_soft_pwm_counter = 0;
         //arranco todos los soft pwm
         if (pwm_ch1)
-            Update_PWM1(650);
+            Update_PWM1(500);    //rojo 593
         if (pwm_ch2)
             Update_PWM2(650);
         if (pwm_ch3)
-            Update_PWM3(650);
+            Update_PWM3(500);    //azul 832
         if (pwm_ch4)
-            Update_PWM4(650);
+            Update_PWM4(500);    //verde 896
         if (pwm_ch5)
             Update_PWM5(650);
         if (pwm_ch6)
