@@ -55,6 +55,7 @@
 
 
 //--- Exported functions ---//
+void TIM1_BRK_UP_TRG_COM_IRQHandler (void);
 void TIM3_IRQHandler (void);
 void TIM_3_Init(void);
 void TIM_1_Init(void);
@@ -72,6 +73,13 @@ void Update_TIM3_CH1 (unsigned short);
 void Update_TIM3_CH2 (unsigned short);
 void Update_TIM3_CH3 (unsigned short);
 void Update_TIM3_CH4 (unsigned short);
+
+void Change_PWM1 (unsigned char);
+void Change_PWM2 (unsigned char);
+void Change_PWM3 (unsigned char);
+void Change_PWM4 (unsigned char);
+void Change_PWM5 (unsigned char);
+void Change_PWM6 (unsigned char);
 
 void Wait_ms (unsigned short wait);
 #endif

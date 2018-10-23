@@ -25,6 +25,21 @@ extern volatile unsigned short timer_delta_filter;
 volatile unsigned short timer_1000 = 0;
 volatile unsigned char tim14_counter = 0;
 
+volatile unsigned short tim_soft_pwm_counter = 0;
+volatile unsigned short tim_soft_pwm_ch1 = 0;
+volatile unsigned short tim_soft_pwm_ch2 = 0;
+volatile unsigned short tim_soft_pwm_ch3 = 0;
+volatile unsigned short tim_soft_pwm_ch4 = 0;
+volatile unsigned short tim_soft_pwm_ch5 = 0;
+volatile unsigned short tim_soft_pwm_ch6 = 0;
+
+#define pwm_ch1 tim_soft_pwm_ch1
+#define pwm_ch2 tim_soft_pwm_ch2
+#define pwm_ch3 tim_soft_pwm_ch3
+#define pwm_ch4 tim_soft_pwm_ch4
+#define pwm_ch5 tim_soft_pwm_ch5
+#define pwm_ch6 tim_soft_pwm_ch6
+
 //--- FUNCIONES DEL MODULO ---//
 void Update_TIM1_CH1 (unsigned short a)
 {
@@ -63,11 +78,102 @@ void Wait_ms (unsigned short wait)
     while (wait_ms_var);
 }
 
+void Change_PWM1 (unsigned char a)
+{
+    TIM1->DIER &= ~TIM_DIER_UIE;
+    pwm_ch1 = a;
+    TIM1->DIER |= TIM_DIER_UIE;
+}
+
+void Change_PWM2 (unsigned char a)
+{
+    TIM1->DIER &= ~TIM_DIER_UIE;
+    pwm_ch2 = a;
+    TIM1->DIER |= TIM_DIER_UIE;
+}
+
+void Change_PWM3 (unsigned char a)
+{
+    TIM1->DIER &= ~TIM_DIER_UIE;
+    pwm_ch3 = a;
+    TIM1->DIER |= TIM_DIER_UIE;
+}
+
+void Change_PWM4 (unsigned char a)
+{
+    TIM1->DIER &= ~TIM_DIER_UIE;
+    pwm_ch4 = a;
+    TIM1->DIER |= TIM_DIER_UIE;
+}
+
+void Change_PWM5 (unsigned char a)
+{
+    TIM1->DIER &= ~TIM_DIER_UIE;
+    pwm_ch5 = a;
+    TIM1->DIER |= TIM_DIER_UIE;
+}
+
+void Change_PWM6 (unsigned char a)
+{
+    TIM1->DIER &= ~TIM_DIER_UIE;
+    pwm_ch6 = a;
+    TIM1->DIER |= TIM_DIER_UIE;
+}
+
 //-------------------------------------------//
 // @brief  TIM configure.
 // @param  None
 // @retval None
 //------------------------------------------//
+void TIM1_BRK_UP_TRG_COM_IRQHandler (void)	//48Khz
+{
+    if (tim_soft_pwm_counter < 255)
+    {        
+        tim_soft_pwm_counter++;
+        if (tim_soft_pwm_counter != 255)
+        {
+            if (tim_soft_pwm_counter >= pwm_ch1)
+                Update_PWM1(0);
+            if (tim_soft_pwm_counter >= pwm_ch2)
+                Update_PWM2(0);
+            if (tim_soft_pwm_counter >= pwm_ch3)
+                Update_PWM3(0);
+            if (tim_soft_pwm_counter >= pwm_ch4)
+                Update_PWM4(0);
+            if (tim_soft_pwm_counter >= pwm_ch5)
+                Update_PWM5(0);
+            if (tim_soft_pwm_counter >= pwm_ch6)
+                Update_PWM6(0);
+        }
+    }
+    else
+    {
+        tim_soft_pwm_counter = 0;
+        //arranco todos los soft pwm
+        if (pwm_ch1)
+            Update_PWM1(650);
+        if (pwm_ch2)
+            Update_PWM2(650);
+        if (pwm_ch3)
+            Update_PWM3(650);
+        if (pwm_ch4)
+            Update_PWM4(650);
+        if (pwm_ch5)
+            Update_PWM5(650);
+        if (pwm_ch6)
+            Update_PWM6(650);
+    }
+
+    // if (CTRL_FAN)
+    //     CTRL_FAN_OFF;
+    // else
+    //     CTRL_FAN_ON;
+
+    //bajar flag
+    if (TIM1->SR & 0x01)	//bajo el flag
+        TIM1->SR = 0x00;
+}
+
 void TIM3_IRQHandler (void)	//1 ms
 {
     /*
@@ -127,8 +233,11 @@ void TIM_1_Init (void)
     temp |= 0x00000022;			//PA9 -> AF2; PA8 -> AF2
     GPIOA->AFR[1] = temp;
 
-    // Enable timer ver UDIS
-    //TIM1->DIER |= TIM_DIER_UIE;
+    // Enable timer interrupt ver UDIS
+    TIM1->DIER |= TIM_DIER_UIE;
+    NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
+    NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 6);
+    
     TIM1->CR1 |= TIM_CR1_CEN;
 }
 

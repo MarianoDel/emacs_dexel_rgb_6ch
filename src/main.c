@@ -185,7 +185,6 @@ int main(void)
     char s_to_send [100];
     main_state_t main_state = MAIN_INIT;
     resp_t resp = resp_continue;
-    unsigned char loop_count;
     
     //GPIO Configuration.
     GPIO_Config();
@@ -402,7 +401,7 @@ int main(void)
     // }    
     //-- Fin Prueba con DMX512 ----------
 
-    //-- Prueba con ADC & DMA & PWM Fijo y mido I ----------
+    //-- Prueba con TIM1 Irq PWM on-off + DMX ----------
     //inicializo el hard que falta
     DMX_Disa();
     AdcConfig();
@@ -413,8 +412,21 @@ int main(void)
 
     ADC1->CR |= ADC_CR_ADSTART;
 
-    loop_count = 0;
-    i = 0;
+    //inicializo dmx si todavia no lo hice
+    TIM_14_Init();    //para detectar break en dmx
+    TIM_16_Init();    //para tx dmx OneShoot
+    USART1Config();
+    
+    memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
+    
+    Packet_Detected_Flag = 0;
+    DMX_channel_selected = mem_conf.dmx_channel;
+    DMX_channel_quantity = mem_conf.dmx_channel_quantity;
+                
+    //habilito recepcion
+    SW_RX_TX_RE_NEG;
+    DMX_Ena();    
+    
     while(1)
     {
         if (DMA1->ISR & DMA_ISR_TCIF1)    //esto es sequence ready cada 16KHz
@@ -424,26 +436,126 @@ int main(void)
         {
             timer_standby = 500;
             //envio corriente y pwm de canal 1
-            sprintf(s_to_send, "d1: %d, i1: %d\n",
-                    i,
-                    I_Channel_1);
+            sprintf(s_to_send, "c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
+                    data7[1],
+                    data7[2],
+                    data7[3],
+                    data7[4],
+                    data7[5],
+                    data7[6]);
 
             Usart2Send(s_to_send);
-            if (loop_count >= 9)
-            {
-                loop_count = 0;
-                if (i > 100)
-                    i = 10;
-                // if (i > 4)
-                //     i = 0;
-                else
-                    i++;
-                Update_PWM1(i);
-            }
-            else
-                loop_count++;
+
+            sprintf(s_to_send, "i1: %d, i2: %d, i3: %d, i4: %d, i5: %d, i6: %d\n",
+                    I_Channel_1,
+                    I_Channel_2,
+                    I_Channel_3,
+                    I_Channel_4,
+                    I_Channel_5,
+                    I_Channel_6);
+
+            Usart2Send(s_to_send);
+        }
+
+        if (UpdateFiltersTest ())
+        {
+            Change_PWM1(sp1_filtered);
+            Change_PWM2(sp2_filtered);
+            Change_PWM3(sp3_filtered);
+            Change_PWM4(sp4_filtered);
+            Change_PWM5(sp5_filtered);
+            Change_PWM6(sp6_filtered);            
         }
     }
+
+
+
+    //-- Fin Prueba con TIM1 Irq PWM on-off + DMX ----------
+
+    //-- Prueba con TIM1 Irq PWM on-off ADC & DMA mido I ----------
+    // //inicializo el hard que falta
+    // DMX_Disa();
+    // AdcConfig();
+
+    // //-- DMA configuration.
+    // DMAConfig();
+    // DMA1_Channel1->CCR |= DMA_CCR_EN;
+
+    // ADC1->CR |= ADC_CR_ADSTART;
+
+    // unsigned char loop_count = 0;
+    // i = 0;
+    // while(1)
+    // {
+    //     if (DMA1->ISR & DMA_ISR_TCIF1)    //esto es sequence ready cada 16KHz
+    //         DMA1->IFCR = DMA_ISR_TCIF1;
+        
+    //     if (!timer_standby)
+    //     {
+    //         timer_standby = 500;
+    //         //envio corriente y pwm de canal 1
+    //         sprintf(s_to_send, "d1: %d, i1: %d\n",
+    //                 i,
+    //                 I_Channel_1);
+
+    //         Usart2Send(s_to_send);
+    //         if (loop_count >= 9)
+    //         {
+    //             loop_count = 0;
+    //             if (i > 4)
+    //                 i = 0;
+    //             else
+    //                 i++;
+    //             Change_PWM1(i);
+    //         }
+    //         else
+    //             loop_count++;
+    //     }
+    // }
+    //-- Fin Prueba con TIM1 Irq PWM on-off ADC & DMA mido I ----------
+                
+    //-- Prueba con ADC & DMA & PWM Fijo y mido I ----------
+    //inicializo el hard que falta
+    // DMX_Disa();
+    // AdcConfig();
+
+    //-- DMA configuration.
+    // DMAConfig();
+    // DMA1_Channel1->CCR |= DMA_CCR_EN;
+
+    // ADC1->CR |= ADC_CR_ADSTART;
+
+    // loop_count = 0;
+    // i = 0;
+    // while(1)
+    // {
+    //     if (DMA1->ISR & DMA_ISR_TCIF1)    //esto es sequence ready cada 16KHz
+    //         DMA1->IFCR = DMA_ISR_TCIF1;
+        
+    //     if (!timer_standby)
+    //     {
+    //         timer_standby = 500;
+    //         //envio corriente y pwm de canal 1
+    //         sprintf(s_to_send, "d1: %d, i1: %d\n",
+    //                 i,
+    //                 I_Channel_1);
+
+    //         Usart2Send(s_to_send);
+    //         if (loop_count >= 9)
+    //         {
+    //             loop_count = 0;
+    //             if (i > 100)
+    //                 i = 10;
+    //             // if (i > 4)
+    //             //     i = 0;
+    //             else
+    //                 i++;
+    //             Update_PWM1(i);
+    //         }
+    //         else
+    //             loop_count++;
+    //     }
+    // }
     //-- Fin Prueba con ADC & DMA & PWM Fijo y mido I ----------
     
     //-- Prueba con ADC & DMA ----------

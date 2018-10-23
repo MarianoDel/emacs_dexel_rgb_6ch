@@ -68,7 +68,7 @@ typedef enum {
 void FuncSlaveMode (void);
 void FuncSlaveModeReset (void);
 void UpdateTimerSlaveMode (void);
-
+unsigned char UpdateFiltersTest (void);
 
 #endif
 

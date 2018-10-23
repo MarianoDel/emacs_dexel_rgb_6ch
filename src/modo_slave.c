@@ -1184,4 +1184,24 @@ resp_t ShowConfSlaveMode (void)
     return resp;
 }
 
+unsigned char UpdateFiltersTest (void)
+{
+    unsigned char new_outputs = 0;
+    //filters para el dmx - generalmente 8 puntos a 200Hz -
+    //desde el sp al sp_filter
+    if (!dmx_filters_timer)
+    {
+        sp1_filtered = MAFilterFast16 (data7[1], v_sp1);
+        sp2_filtered = MAFilterFast16 (data7[2], v_sp2);
+        sp3_filtered = MAFilterFast16 (data7[3], v_sp3);
+        sp4_filtered = MAFilterFast16 (data7[4], v_sp4);
+        sp5_filtered = MAFilterFast16 (data7[5], v_sp5);
+        sp6_filtered = MAFilterFast16 (data7[6], v_sp6);
+        dmx_filters_timer = 5;
+        new_outputs = 1;
+    }
+    
+    return new_outputs;
+}
+
 //--- end of file ---//
