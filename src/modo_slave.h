@@ -47,14 +47,6 @@ typedef enum {
 } filters_state_t;
 
 //--- Defines for configuration ---//
-// check hard.h
-#if defined USE_ALTERNATIVE
-#define USE_FILTERS_ALTERANTIVE_TIME
-#elif defined USE_AT_THE_SAME_TIME
-#define USE_FILTERS_AT_THE_SAME_TIME
-#else
-#error "You must select samples/filters mode on hard.h"
-#endif
 
 
 //--- Exported constants ---//

@@ -27,9 +27,6 @@ extern volatile unsigned char data7[];
 
 //del Main para timers
 extern volatile unsigned char dmx_filters_timer;
-#ifdef USE_FILTERS_AND_SAMPLES_DELTA
-extern volatile unsigned short timer_delta_filter;
-#endif
 
 //del main para dmx
 extern volatile unsigned char Packet_Detected_Flag;
@@ -107,13 +104,7 @@ unsigned short v_sp6 [16];
 #endif
 
 
-// #ifdef USE_SAMPLES_ALTERANTIVE_TIME
-// samples_state_t samples_state = SAMPLE_STANDBY;
-// #endif
 
-#ifdef USE_FILTERS_ALTERANTIVE_TIME
-filters_state_t filters_state = FILTER_STANDBY;
-#endif
 //-- Private Defines -----------------
 //-- para los menues -----------------
 typedef enum {
@@ -176,7 +167,6 @@ void UpdateTimerSlaveMode (void)
     if (slave_mode_dmx_receiving_timer)
         slave_mode_dmx_receiving_timer--;
 
-    // UpdatePIDWithoutUndersampling ();
 }
 
 void FuncSlaveModeReset (void)
@@ -193,8 +183,16 @@ void FuncSlaveMode (void)
     switch (slave_mode_state)
     {
     case SLAVE_MODE_INIT:
-#if (defined USE_SAMPLES_ALTERANTIVE_TIME) || (defined USE_FILTERS_ALTERANTIVE_TIME)        
+        slave_mode_state++;
+        ShowConfSlaveModeReset();
+        SlaveModeMenuManagerReset();
+#if defined USE_FILTER_LENGHT_16
+        for (i = 0; i < 16; i++)
+#elif defined USE_FILTER_LENGHT_8
         for (i = 0; i < 8; i++)
+#else
+#error "Select filter lenght on hard.h"
+#endif
         {
             v_sp1[i] = 0;
             v_sp2[i] = 0;
@@ -202,12 +200,7 @@ void FuncSlaveMode (void)
             v_sp4[i] = 0;
             v_sp5[i] = 0;
             v_sp6[i] = 0;
-        }
-#endif
-
-        slave_mode_state++;
-        ShowConfSlaveModeReset();
-        SlaveModeMenuManagerReset();
+        }        
         break;
 
     case SLAVE_MODE_CONF:
@@ -257,146 +250,64 @@ void FuncSlaveMode (void)
                 dummy_16 >>= 8;
                 data7[6] = (unsigned char) dummy_16;
             }
-            
-            //CH1
-            sp1 = DMXtoCurrent (data7[1]);
 
-            //CH2
-            sp2 = DMXtoCurrent (data7[2]);
+            sp1 = data7[1];
+            sp2 = data7[2];
+            sp3 = data7[3];
+            sp4 = data7[4];
+            sp5 = data7[5];
+            sp6 = data7[6];            
 
-            //CH3
-            sp3 = DMXtoCurrent (data7[3]);
+            // //CH1
+            // sp1 = DMXtoCurrent (data7[1]);
 
-            //CH4
-            sp4 = DMXtoCurrent (data7[4]);
+            // //CH2
+            // sp2 = DMXtoCurrent (data7[2]);
 
-            //CH5
-            sp5 = DMXtoCurrent (data7[5]);
+            // //CH3
+            // sp3 = DMXtoCurrent (data7[3]);
 
-            //CH6
-            sp6 = DMXtoCurrent (data7[6]);
+            // //CH4
+            // sp4 = DMXtoCurrent (data7[4]);
+
+            // //CH5
+            // sp5 = DMXtoCurrent (data7[5]);
+
+            // //CH6
+            // sp6 = DMXtoCurrent (data7[6]);
 
             dmx_end_of_packet_update = 1;
         }
 
+        // UpdateFiltersTest();
+        
         //filters para el dmx - generalmente 8 puntos a 200Hz -
         //desde el sp al sp_filter
-        if (!dmx_filters_timer)
-        {
-#ifdef USE_FILTERS_AT_THE_SAME_TIME
-#ifdef USE_FILTER_LENGHT_16
-            sp1_filtered = MAFilterFast16 (sp1, v_sp1);
-            sp2_filtered = MAFilterFast16 (sp2, v_sp2);
-            sp3_filtered = MAFilterFast16 (sp3, v_sp3);
-            sp4_filtered = MAFilterFast16 (sp4, v_sp4);
-            sp5_filtered = MAFilterFast16 (sp5, v_sp5);
-            sp6_filtered = MAFilterFast16 (sp6, v_sp6);
-#endif
-#ifdef USE_FILTER_LENGHT_8
-            sp1_filtered = MAFilterFast (sp1, v_sp1);
-            sp2_filtered = MAFilterFast (sp2, v_sp2);
-            sp3_filtered = MAFilterFast (sp3, v_sp3);
-            sp4_filtered = MAFilterFast (sp4, v_sp4);
-            sp5_filtered = MAFilterFast (sp5, v_sp5);
-            sp6_filtered = MAFilterFast (sp6, v_sp6);
-#endif            
-#endif
-#ifdef USE_FILTERS_ALTERANTIVE_TIME
-            filters_state = FILTER_1;
-#endif
-            dmx_filters_timer = 5;
-        }
-        
-#ifdef USE_FILTERS_ALTERANTIVE_TIME
-#ifdef USE_FILTER_LENGHT_8        
-            switch (filters_state)
-            {
-            case FILTER_STANDBY:
-                break;
-
-            case FILTER_1:
-                sp1_filtered = MAFilterFast (sp1, v_sp1);
-                filters_state++;
-                break;
-
-            case FILTER_2:
-                sp2_filtered = MAFilterFast (sp2, v_sp2);
-                filters_state++;                
-                break;
-
-            case FILTER_3:
-                sp3_filtered = MAFilterFast (sp3, v_sp3);
-                filters_state++;                
-                break;
-
-            case FILTER_4:
-                sp4_filtered = MAFilterFast (sp4, v_sp4);
-                filters_state++;                
-                break;
-
-            case FILTER_5:
-                sp5_filtered = MAFilterFast (sp5, v_sp5);
-                filters_state++;                
-                break;
-
-            case FILTER_6:
-                sp6_filtered = MAFilterFast (sp6, v_sp6);
-                filters_state = FILTER_STANDBY;
-                break;
-
-            default:
-                filters_state = FILTER_STANDBY;
-                break;
-            }
-#endif
-#ifdef USE_FILTER_LENGHT_16
-            switch (filters_state)
-            {
-            case FILTER_STANDBY:
-                break;
-
-            case FILTER_1:
-                sp1_filtered = MAFilterFast16 (sp1, v_sp1);
-                filters_state++;
-                break;
-
-            case FILTER_2:
-                sp2_filtered = MAFilterFast16 (sp2, v_sp2);
-                filters_state++;                
-                break;
-
-            case FILTER_3:
-                sp3_filtered = MAFilterFast16 (sp3, v_sp3);
-                filters_state++;                
-                break;
-
-            case FILTER_4:
-                sp4_filtered = MAFilterFast16 (sp4, v_sp4);
-                filters_state++;                
-                break;
-
-            case FILTER_5:
-                sp5_filtered = MAFilterFast16 (sp5, v_sp5);
-                filters_state++;                
-                break;
-
-            case FILTER_6:
-                sp6_filtered = MAFilterFast16 (sp6, v_sp6);
-                filters_state = FILTER_STANDBY;
-                break;
-
-            default:
-                filters_state = FILTER_STANDBY;
-                break;
-            }            
-#endif
-#endif
-
+//         if (!dmx_filters_timer)
+//         {
+// #ifdef USE_FILTER_LENGHT_16
+//             sp1_filtered = MAFilterFast16 (sp1, v_sp1);
+//             sp2_filtered = MAFilterFast16 (sp2, v_sp2);
+//             sp3_filtered = MAFilterFast16 (sp3, v_sp3);
+//             sp4_filtered = MAFilterFast16 (sp4, v_sp4);
+//             sp5_filtered = MAFilterFast16 (sp5, v_sp5);
+//             sp6_filtered = MAFilterFast16 (sp6, v_sp6);
+// #endif
+// #ifdef USE_FILTER_LENGHT_8
+//             sp1_filtered = MAFilterFast (sp1, v_sp1);
+//             sp2_filtered = MAFilterFast (sp2, v_sp2);
+//             sp3_filtered = MAFilterFast (sp3, v_sp3);
+//             sp4_filtered = MAFilterFast (sp4, v_sp4);
+//             sp5_filtered = MAFilterFast (sp5, v_sp5);
+//             sp6_filtered = MAFilterFast (sp6, v_sp6);
+// #endif            
+//             dmx_filters_timer = 5;
+//         }
             //lo hago desde el menu principal
             //ahora se hace con interrupcion de 1ms
         // UpdateSamplesAndPID ();
 
-        // UpdateSlaveModeMenuManager();
+        UpdateSlaveModeMenuManager();
         
         break;
 
@@ -611,7 +522,6 @@ inline resp_t MenuSlaveModeRunning (void)
         break;
 
     case SLAVE_MODE_MENU_RUNNING_CHANGE:
-
         //trato de acelerar un poco las cuentas
         if (dmx_local_value == 0)
         {
@@ -1191,6 +1101,7 @@ unsigned char UpdateFiltersTest (void)
     //desde el sp al sp_filter
     if (!dmx_filters_timer)
     {
+        // CTRL_FAN_ON;
         sp1_filtered = MAFilterFast16 (data7[1], v_sp1);
         sp2_filtered = MAFilterFast16 (data7[2], v_sp2);
         sp3_filtered = MAFilterFast16 (data7[3], v_sp3);
@@ -1199,6 +1110,7 @@ unsigned char UpdateFiltersTest (void)
         sp6_filtered = MAFilterFast16 (data7[6], v_sp6);
         dmx_filters_timer = 5;
         new_outputs = 1;
+        // CTRL_FAN_OFF;
     }
     
     return new_outputs;

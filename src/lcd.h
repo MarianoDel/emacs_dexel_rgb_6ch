@@ -68,6 +68,7 @@ void LCDTransmitStr(const char * pStr);
 void LCDStartTransmit(UINT8 cData);
 void LCDTransmitArray(UINT8 *pStr, UINT8 length);
 void Lcd_SetDDRAM (unsigned char addr);
+resp_t LCDTransmitStr2(const char * pStr);
 
 #ifdef WITH_STATE_MACHINE
 void LCDTransmitSM(void);

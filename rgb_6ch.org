@@ -33,13 +33,14 @@
 *** DONE Prueba de 6CH contra DMX
     CLOSED: [2018-06-21 Thu 14:16]
 
-** Menues de Display LCD [5/6]
-   - [ ] Agregar State Machine para no interrumpir programa
+** Menues de Display LCD [6/6]
+   - [X] Agregar State Machine para no interrumpir programa
    - [X] Seteo Slave
    - [X] Seteo Master
    - [X] Seteo 2 amper, maximo canal y minimo para el forward
    - [X] seteo de canal propio
    - [X] funciones de programas
+
 ** Funcionalidad de Modos
 *** Modo Slave
 *** Modo Master
@@ -75,7 +76,6 @@
 ** Prueba canal 511 en Master Mode
 ** Mensaje de Bienvenida
 
-
 * Caracteristicas de los LEDS
 ** Rojos
    - Cantidad: 16
@@ -92,6 +92,11 @@
    - Tension para seteo 1 Amper: 24.8V
    - Tension para seteo 2 Amper: 28.4V
 
+** de la simulacion y mediciones modelo equivalente
+   - Rojo Vd = 16.4V Rd = 1.87 ohms
+   - Verde Vd = 23.55V Rd = 3.46 ohms
+   - Azul Vd = 22.1V Rd = 3.1 ohms
+
 * Problemas de implementacion
 ** No se mueve bien el rojo
    - cuando se mueve el dmx el rojo parpadea
@@ -102,3 +107,20 @@
 ** Agregar UpdatePID por interrupcion en DMA
    - agregar tambien flag dma_low_level_update para cosas que haya que hacer despues con sincro
 
+** DONE Se pasa a un modelo PWM y el PID solo para el autoseteo de corriente
+   CLOSED: [2018-10-25 Thu 08:49]
+
+* Ultimas
+** TODO pasar reset PID desde el MAIN a PWM
+   - como el reseteo de canales o el seteo
+   - chequeo de valores
+** TODO embeber funciones generales del caso de main a funciones de cada modo
+** TODO Modificar MainMenu() para el nuevo funcionamiento PWM
+   - usar pid para chequeo de corriente por canal
+   - determinar Vd led
+   - determinar el duty para el pwm
+
+* HARD
+** diafonia en canales
+   - con el 4 prendido el 5 mide 44mV
+   - con el 6 prendido el 5 mide 12mV

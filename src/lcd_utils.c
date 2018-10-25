@@ -122,6 +122,7 @@ void LCDClearScreen (void)
 //how many cantidad de pantallas en blinking
 //modo BLINK_DIRECT o BLINK_CROSS
 //si modo es BLINK_NO en how_many me pasan los segundos antes de terminar
+//modificacion 24-10-18 agrego que cuando pasan NO_BLINK respondo rapido con resp_continue
 resp_t FuncShowBlink (const char * p_text1, const char * p_text2, unsigned char how_many, unsigned char mode)
 {
     resp_t resp = resp_continue;
@@ -210,13 +211,25 @@ resp_t FuncShowBlink (const char * p_text1, const char * p_text2, unsigned char 
 
     case BLINKING_MARK_N:
         LCD_1ER_RENGLON;
-        LCDTransmitStr(p_text1);
-        LCD_2DO_RENGLON;
-        LCDTransmitStr(p_text2);
-        show_select_timer = TT_BLINKING_IN_ON * how_many;
-        blinking_state = BLINKING_SPACE_N;
+        blinking_state = BLINKING_MARK_N_SENDING_FIRST_LINE;
         break;
 
+    case BLINKING_MARK_N_SENDING_FIRST_LINE:
+        if (LCDTransmitStr2(p_text1) == resp_finish)
+        {
+            LCD_2DO_RENGLON;
+            blinking_state = BLINKING_MARK_N_SENDING_SECOND_LINE;
+        }
+        break;
+
+    case BLINKING_MARK_N_SENDING_SECOND_LINE:
+        if (LCDTransmitStr2(p_text2) == resp_finish)
+        {
+            show_select_timer = TT_BLINKING_IN_ON * how_many;
+            blinking_state = BLINKING_SPACE_N;
+        }
+        break;
+        
     case BLINKING_SPACE_N:
         if (!show_select_timer)
         {

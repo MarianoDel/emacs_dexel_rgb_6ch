@@ -18,9 +18,13 @@
 #include "flash_program.h"
 
 
+//para new UpdateSamplesAndPID, despues evaluar si vale la pena
+#include <stdio.h>
+#include "uart.h"
 
 /* Externals variables ---------------------------------------------------------*/
 extern volatile unsigned char switches_timer;
+extern volatile unsigned short timer_standby;
 
 extern volatile unsigned short adc_ch [];
 extern unsigned short sp1_filtered;
@@ -130,9 +134,10 @@ void UpdateSwitches (void)
 //TODO: reemplazar el tope hardcoded de PWM por los valores de mem_conf
 void UpdateSamplesAndPID (void)
 {
+    char s_to_send [100] = { 0 };
+    
     if (sequence_ready)
     {
-        // Clear DMA TC flag
         sequence_ready_reset;
         // if (CTRL_FAN)
         //     CTRL_FAN_OFF;
@@ -140,9 +145,7 @@ void UpdateSamplesAndPID (void)
         //     CTRL_FAN_ON;
 
         if (undersampling < (PID_UNDERSAMPLING - 1))
-        {
             undersampling++;
-        }
         else
         {
             undersampling = 0;
@@ -151,117 +154,128 @@ void UpdateSamplesAndPID (void)
             else
                 CTRL_FAN_ON;
 
-
+            //PID CH1 Filtered
+            // sp1_filtered = MAFilter8(I_Channel_1, v_sp1);
+            // d_ch1 = PID_roof (593, sp1_filtered, d_ch1, &e_z1_ch1, &e_z2_ch1);
             //PID CH1
-            if (!sp1_filtered)
-                Update_PWM1(0);
+            d_ch1 = PID_roof (486, I_Channel_1, d_ch1, &e_z1_ch1, &e_z2_ch1);
+
+            if (d_ch1 < 0)
+                d_ch1 = 0;
             else
             {
-                d_ch1 = PID_roof (sp1_filtered, I_Channel_1, d_ch1, &e_z1_ch1, &e_z2_ch1);
-
-                if (d_ch1 < 0)
-                    d_ch1 = 0;
-                else
-                {
-                    //como es el rojo le bajo la ganancia
-                    if (d_ch1 > DUTY_65_PERCENT)
-                        d_ch1 = DUTY_65_PERCENT;
+                if (d_ch1 > DUTY_95_PERCENT)
+                    d_ch1 = DUTY_95_PERCENT;
                     
-                    Update_PWM1(d_ch1);
-                }
+                Update_PWM1(d_ch1);
             }
-
-            //PID CH2
-            if (!sp2_filtered)
-                Update_PWM2(0);
-            else
-            {                
-                d_ch2 = PID_roof (sp2_filtered, I_Channel_2, d_ch2, &e_z1_ch2, &e_z2_ch2);
-
-                if (d_ch2 < 0)
-                    d_ch2 = 0;
-                else
-                {
-                    if (d_ch2 > DUTY_90_PERCENT)
-                        d_ch2 = DUTY_90_PERCENT;
-                    
-                    Update_PWM2(d_ch2);
-                }
-            }
-
-            //PID CH3
-            if (!sp3_filtered)
-                Update_PWM3(0);
-            else
-            {                                
-                d_ch3 = PID_roof (sp3_filtered, I_Channel_3, d_ch3, &e_z1_ch3, &e_z2_ch3);
-
-                if (d_ch3 < 0)
-                    d_ch3 = 0;
-                else
-                {
-                    if (d_ch3 > DUTY_90_PERCENT)
-                        d_ch3 = DUTY_90_PERCENT;
-                    
-                    Update_PWM3(d_ch3);
-                }
-            }
-
-            //PID CH4
-            if (!sp4_filtered)
-                Update_PWM4(0);
-            else
-            {
-                d_ch4 = PID_roof (sp4_filtered, I_Channel_4, d_ch4, &e_z1_ch4, &e_z2_ch4);
-
-                if (d_ch4 < 0)
-                    d_ch4 = 0;
-                else
-                {
-                    if (d_ch4 > DUTY_90_PERCENT)
-                        d_ch4 = DUTY_90_PERCENT;
-                    
-                    Update_PWM4(d_ch4);
-                }
-            }
-
-            //PID CH5
-            if (!sp5_filtered)
-                Update_PWM5(0);
-            else
-            {                
-                d_ch5 = PID_roof (sp5_filtered, I_Channel_5, d_ch5, &e_z1_ch5, &e_z2_ch5);
-
-                if (d_ch5 < 0)
-                    d_ch5 = 0;
-                else
-                {
-                    if (d_ch5 > DUTY_90_PERCENT)
-                        d_ch5 = DUTY_90_PERCENT;
-                    
-                    Update_PWM5(d_ch5);
-                }
-            }
-
-            //PID CH6
-            if (!sp6_filtered)
-                Update_PWM6(0);
-            else
-            {                                
-                d_ch6 = PID_roof (sp6_filtered, I_Channel_6, d_ch6, &e_z1_ch6, &e_z2_ch6);
-
-                if (d_ch6 < 0)
-                    d_ch6 = 0;
-                else
-                {
-                    if (d_ch6 > DUTY_90_PERCENT)
-                        d_ch6 = DUTY_90_PERCENT;
-                    
-                    Update_PWM6(d_ch6);
-                }
-            }               
         }
     }
+
+    if (!timer_standby)
+    {
+        timer_standby = 1000;
+        //envio corrientes
+        sprintf(s_to_send, "i1: %d, sp1: %d, d1: %d\n",
+                I_Channel_1,
+                486,
+                d_ch1);
+
+        Usart2Send(s_to_send);
+    }
+
+
+    //         //PID CH2
+    //         if (!sp2_filtered)
+    //             Update_PWM2(0);
+    //         else
+    //         {                
+    //             d_ch2 = PID_roof (sp2_filtered, I_Channel_2, d_ch2, &e_z1_ch2, &e_z2_ch2);
+
+    //             if (d_ch2 < 0)
+    //                 d_ch2 = 0;
+    //             else
+    //             {
+    //                 if (d_ch2 > DUTY_90_PERCENT)
+    //                     d_ch2 = DUTY_90_PERCENT;
+                    
+    //                 Update_PWM2(d_ch2);
+    //             }
+    //         }
+
+    //         //PID CH3
+    //         if (!sp3_filtered)
+    //             Update_PWM3(0);
+    //         else
+    //         {                                
+    //             d_ch3 = PID_roof (sp3_filtered, I_Channel_3, d_ch3, &e_z1_ch3, &e_z2_ch3);
+
+    //             if (d_ch3 < 0)
+    //                 d_ch3 = 0;
+    //             else
+    //             {
+    //                 if (d_ch3 > DUTY_90_PERCENT)
+    //                     d_ch3 = DUTY_90_PERCENT;
+                    
+    //                 Update_PWM3(d_ch3);
+    //             }
+    //         }
+
+    //         //PID CH4
+    //         if (!sp4_filtered)
+    //             Update_PWM4(0);
+    //         else
+    //         {
+    //             d_ch4 = PID_roof (sp4_filtered, I_Channel_4, d_ch4, &e_z1_ch4, &e_z2_ch4);
+
+    //             if (d_ch4 < 0)
+    //                 d_ch4 = 0;
+    //             else
+    //             {
+    //                 if (d_ch4 > DUTY_90_PERCENT)
+    //                     d_ch4 = DUTY_90_PERCENT;
+                    
+    //                 Update_PWM4(d_ch4);
+    //             }
+    //         }
+
+    //         //PID CH5
+    //         if (!sp5_filtered)
+    //             Update_PWM5(0);
+    //         else
+    //         {                
+    //             d_ch5 = PID_roof (sp5_filtered, I_Channel_5, d_ch5, &e_z1_ch5, &e_z2_ch5);
+
+    //             if (d_ch5 < 0)
+    //                 d_ch5 = 0;
+    //             else
+    //             {
+    //                 if (d_ch5 > DUTY_90_PERCENT)
+    //                     d_ch5 = DUTY_90_PERCENT;
+                    
+    //                 Update_PWM5(d_ch5);
+    //             }
+    //         }
+
+    //         //PID CH6
+    //         if (!sp6_filtered)
+    //             Update_PWM6(0);
+    //         else
+    //         {                                
+    //             d_ch6 = PID_roof (sp6_filtered, I_Channel_6, d_ch6, &e_z1_ch6, &e_z2_ch6);
+
+    //             if (d_ch6 < 0)
+    //                 d_ch6 = 0;
+    //             else
+    //             {
+    //                 if (d_ch6 > DUTY_90_PERCENT)
+    //                     d_ch6 = DUTY_90_PERCENT;
+                    
+    //                 Update_PWM6(d_ch6);
+    //             }
+    //         }               
+    //     }
+    // }
 }
 
 void UpdatePIDWithoutUndersampling (void)

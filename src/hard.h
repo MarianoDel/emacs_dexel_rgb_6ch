@@ -31,10 +31,9 @@
 //---- Features Configuration ----------------
 // #define WITH_GRANDMASTER
 #define WITH_BIDIRECTIONAL
-#define USE_ALTERNATIVE        //recorre el vector de samples y los filtros de forma alternativa
-// #define USE_AT_THE_SAME_TIME    //recorre el vector de samples y los filtros todos juntos
 // #define USE_FILTER_LENGHT_8
 #define USE_FILTER_LENGHT_16
+// #define USE_OVERTEMP_PROT
 
 
 //------ Configuration for Firmware-Channels -----
@@ -222,6 +221,10 @@
 #define TIMER_STANDBY_TIMEOUT_REDUCED	2000	//reduced 2 segs
 #define TIMER_STANDBY_TIMEOUT			6000	//6 segundos
 #define DMX_DISPLAY_SHOW_TIMEOUT		30000	//30 segundos
+
+//ESTADOS DEL CONTROL DE CORRIENTE EN LOS LEDs
+#define PWM_MODE    0
+#define PID_MODE    1
 
 //ESTADOS DE LOS SWITCHES
 typedef enum

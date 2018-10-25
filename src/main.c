@@ -48,9 +48,8 @@ volatile unsigned char seq_ready;
 // ------- Externals de los timers -------
 volatile unsigned char timer_1seg = 0;
 volatile unsigned char switches_timer = 0;
-#ifdef USE_DELTA_FUNCTION
-volatile unsigned short timer_delta_filter = 0;
-#endif
+volatile unsigned char led_current_mode = PWM_MODE;
+
 // ------- Externals del USART -------
 volatile unsigned char usart1_have_data;
 volatile unsigned char usart2_have_data;
@@ -402,74 +401,75 @@ int main(void)
     //-- Fin Prueba con DMX512 ----------
 
     //-- Prueba con TIM1 Irq PWM on-off + DMX ----------
-    //inicializo el hard que falta
-    DMX_Disa();
-    AdcConfig();
+    // //inicializo el hard que falta
+    // DMX_Disa();
+    // AdcConfig();
 
-    //-- DMA configuration.
-    DMAConfig();
-    DMA1_Channel1->CCR |= DMA_CCR_EN;
+    // //-- DMA configuration.
+    // DMAConfig();
+    // DMA1_Channel1->CCR |= DMA_CCR_EN;
 
-    ADC1->CR |= ADC_CR_ADSTART;
+    // ADC1->CR |= ADC_CR_ADSTART;
 
-    //inicializo dmx si todavia no lo hice
-    TIM_14_Init();    //para detectar break en dmx
-    TIM_16_Init();    //para tx dmx OneShoot
-    USART1Config();
+    // //inicializo dmx si todavia no lo hice
+    // TIM_14_Init();    //para detectar break en dmx
+    // TIM_16_Init();    //para tx dmx OneShoot
+    // USART1Config();
     
-    memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
+    // memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
     
-    Packet_Detected_Flag = 0;
-    DMX_channel_selected = mem_conf.dmx_channel;
-    DMX_channel_quantity = mem_conf.dmx_channel_quantity;
+    // Packet_Detected_Flag = 0;
+    // DMX_channel_selected = mem_conf.dmx_channel;
+    // DMX_channel_quantity = mem_conf.dmx_channel_quantity;
                 
-    //habilito recepcion
-    SW_RX_TX_RE_NEG;
-    DMX_Ena();    
+    // //habilito recepcion
+    // SW_RX_TX_RE_NEG;
+    // DMX_Ena();    
     
-    while(1)
-    {
-        if (DMA1->ISR & DMA_ISR_TCIF1)    //esto es sequence ready cada 16KHz
-            DMA1->IFCR = DMA_ISR_TCIF1;
+    // while(1)
+    // {
+    //     if (DMA1->ISR & DMA_ISR_TCIF1)    //esto es sequence ready cada 16KHz
+    //         DMA1->IFCR = DMA_ISR_TCIF1;
         
-        if (!timer_standby)
-        {
-            timer_standby = 500;
-            //envio corriente y pwm de canal 1
-            // sprintf(s_to_send, "c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
-            //         data7[1],
-            //         data7[2],
-            //         data7[3],
-            //         data7[4],
-            //         data7[5],
-            //         data7[6]);
+    //     if (!timer_standby)
+    //     {
+    //         timer_standby = 500;
+    //         //envio corriente y pwm de canal 1
+    //         // sprintf(s_to_send, "c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
+    //         //         data7[1],
+    //         //         data7[2],
+    //         //         data7[3],
+    //         //         data7[4],
+    //         //         data7[5],
+    //         //         data7[6]);
 
-            // Usart2Send(s_to_send);
+    //         // Usart2Send(s_to_send);
 
-            sprintf(s_to_send, "i1: %d, i2: %d, i3: %d, i4: %d, i5: %d, i6: %d\n",
-                    I_Channel_1,
-                    I_Channel_2,
-                    I_Channel_3,
-                    I_Channel_4,
-                    I_Channel_5,
-                    I_Channel_6);
+    //         sprintf(s_to_send, "i1: %d, i2: %d, i3: %d, i4: %d, i5: %d, i6: %d\n",
+    //                 I_Channel_1,
+    //                 I_Channel_2,
+    //                 I_Channel_3,
+    //                 I_Channel_4,
+    //                 I_Channel_5,
+    //                 I_Channel_6);
 
-            Usart2Send(s_to_send);
-        }
+    //         Usart2Send(s_to_send);
+    //     }
 
-        if (UpdateFiltersTest ())
-        {
-            Change_PWM1(sp1_filtered);
-            Change_PWM2(sp2_filtered);
-            Change_PWM3(sp3_filtered);
-            Change_PWM4(sp4_filtered);
-            Change_PWM5(sp5_filtered);
-            Change_PWM6(sp6_filtered);            
-        }
-    }
-
-
-
+    //     if (UpdateFiltersTest ())
+    //     {
+    //         Change_PWM1(sp1_filtered);
+    //         Change_PWM2(sp2_filtered);
+    //         Change_PWM3(sp3_filtered);
+    //         Change_PWM4(sp4_filtered);
+    //         Change_PWM5(sp5_filtered);
+    //         Change_PWM6(sp6_filtered);
+    //         // if (CTRL_FAN)
+    //         //     CTRL_FAN_OFF;
+    //         // else
+    //         //     CTRL_FAN_ON;
+    //     }
+    // }
     //-- Fin Prueba con TIM1 Irq PWM on-off + DMX ----------
 
     //-- Prueba con TIM1 Irq PWM on-off ADC & DMA mido I ----------
@@ -557,6 +557,62 @@ int main(void)
     //     }
     // }
     //-- Fin Prueba con ADC & DMA & PWM Fijo y mido I ----------
+
+    //-- Prueba con ADC & DMA lazo PID ----------
+    AdcConfig();
+
+    //-- DMA configuration.
+    DMAConfig();
+    DMA1_Channel1->CCR |= DMA_CCR_EN;
+
+    ADC1->CR |= ADC_CR_ADSTART;
+    led_current_mode = PID_MODE;
+    Change_PWM1(0);
+    Change_PWM2(0);
+    Change_PWM3(0);
+    Change_PWM4(0);    
+    Change_PWM5(0);
+    Change_PWM6(0);
+        
+    // Prueba ADC & DMA
+    while(1)
+    {
+        UpdateSamplesAndPID();
+        
+        // if (DMA1->ISR & DMA_ISR_TCIF1)    //esto es sequence ready a 16KHz
+        // {
+        //     DMA1->IFCR = DMA_ISR_TCIF1;
+
+        //     if (undersampling < (PID_UNDERSAMPLING - 1))
+        //         undersampling++;
+        //     else
+        //     {
+        //         undersampling = 0;
+        //         if (CTRL_FAN)
+        //             CTRL_FAN_OFF;
+        //         else
+        //             CTRL_FAN_ON;
+
+        //         //PID CH1 Filtered
+        //         // sp1_filtered = MAFilter8(I_Channel_1, v_sp1);
+        //         // d_ch1 = PID_roof (593, sp1_filtered, d_ch1, &e_z1_ch1, &e_z2_ch1);
+        //         //PID CH1                
+        //         d_ch1 = PID_roof (593, I_Channel_1, d_ch1, &e_z1_ch1, &e_z2_ch1);
+
+        //         if (d_ch1 < 0)
+        //             d_ch1 = 0;
+        //         else
+        //         {
+        //             if (d_ch1 > DUTY_95_PERCENT)
+        //                 d_ch1 = DUTY_95_PERCENT;
+                    
+        //             Update_PWM1(d_ch1);
+        //         }
+        //     }
+        // }
+
+    }
+    //-- Prueba con ADC & DMA lazo PID ----------
     
     //-- Prueba con ADC & DMA ----------
     //-- ADC configuration.
@@ -834,10 +890,6 @@ int main(void)
     // Packet_Detected_Flag = 0;
     // DMX_channel_selected = 1;
     // DMX_channel_quantity = 6;
-#ifdef USE_DELTA_FUNCTION
-    TIM_17_Init();
-#endif
-
     
     //inicializo el hard que falta
     AdcConfig();
@@ -934,7 +986,7 @@ int main(void)
 
         case MAIN_IN_MASTER_MODE:    //por ahora programs mode
             Func_PX(mem_conf.last_program_in_flash, mem_conf.last_program_deep_in_flash);
-            UpdateSamplesAndPID();
+
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;
 
@@ -948,15 +1000,37 @@ int main(void)
             
         case MAIN_IN_SLAVE_MODE:
             FuncSlaveMode();
-            UpdateSamplesAndPID ();
+            if (UpdateFiltersTest ())
+            {
+                Change_PWM1(sp1_filtered);
+                Change_PWM2(sp2_filtered);
+                Change_PWM3(sp3_filtered);
+                Change_PWM4(sp4_filtered);
+                Change_PWM5(sp5_filtered);
+                Change_PWM6(sp6_filtered);
+                if (CTRL_FAN)
+                    CTRL_FAN_OFF;
+                else
+                    CTRL_FAN_ON;
+            }
+
             if (!timer_standby)
             {
                 timer_standby = 1000;
-                //envio corrientes
-                sprintf(s_to_send, "i1: %d, c1: %d, sp1: %d\n",
-                        I_Channel_1,
-                        data7[1],
-                        sp1_filtered);
+
+                sprintf(s_to_send, "i1: %d, i2: %d, i3: %d, i4: %d, i5: %d, i6: %d\n",
+                    I_Channel_1,
+                    I_Channel_2,
+                    I_Channel_3,
+                    I_Channel_4,
+                    I_Channel_5,
+                    I_Channel_6);
+
+                // //envio corrientes
+                // sprintf(s_to_send, "i1: %d, c1: %d, sp1: %d\n",
+                //         I_Channel_1,
+                //         data7[1],
+                //         sp1_filtered);
                 Usart2Send(s_to_send);
             }
 
@@ -967,7 +1041,7 @@ int main(void)
 
         case MAIN_IN_PROGRAMS_MODE:
             Func_PX(mem_conf.last_program_in_flash, mem_conf.last_program_deep_in_flash);
-            UpdateSamplesAndPID();
+            // UpdateSamplesAndPID();
 
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;
@@ -1048,6 +1122,7 @@ int main(void)
         UpdateSwitches();
 
         //sensado de temperatura
+#ifdef USE_OVERTEMP_PROT
         if (!temp_sample_timer)
         {
             temp_sample_timer = 10;	//tomo muestra cada 10ms
@@ -1065,6 +1140,7 @@ int main(void)
                     CTRL_FAN_OFF;
             }
         }
+#endif
 
         //grabado de memoria luego de configuracion
         if ((need_to_save) && (!need_to_save_timer))

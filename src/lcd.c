@@ -12,7 +12,6 @@
 #include "tim.h"
 
 
-
 #ifdef WITH_STATE_MACHINE
 #include "string.h"
 #define LCD_BUFF_TX 128
@@ -463,7 +462,8 @@ void LCDStartTransmit(UINT8 cData)
   //lcdPort |= b;
   Lcd_WritePort (b);
   LCDSend();
-  Lcd_Delay(30);
+  // Lcd_Delay(30);
+  Lcd_Delay(1);    //modificacion 25-10-18
   b = cData;
   b &= 0x0F;  
   //lcdPort &= PMASK;
@@ -471,7 +471,8 @@ void LCDStartTransmit(UINT8 cData)
   //lcdPort |= b;
   Lcd_WritePort (b);
   LCDSend();
-  Lcd_Delay(30);       //con 30 67us; con 10 29us
+  // Lcd_Delay(30);       //con 30 67us; con 10 29us
+  Lcd_Delay(1);    //modificacion 25-10-18
   //lcdRS = 0;
   LCD_RS_OFF;
 }
@@ -496,6 +497,46 @@ void LCDTransmitStr(const char * pStr)
     LCDStartTransmit(*pStr);
     pStr++;
   }
+}
+
+#define LCD_TX_INIT    0
+#define LCD_TX_SENDING    1
+#define LCD_TX_CHECK_NEXT    2
+char * pStr2;
+unsigned char lcd_transmit_state = LCD_TX_INIT;
+resp_t LCDTransmitStr2(const char * pStr)
+{
+    resp_t resp = resp_continue;
+
+    switch (lcd_transmit_state)
+    {
+    case LCD_TX_INIT:
+        pStr2 = (char *) pStr;
+        lcd_transmit_state++;
+        break;
+
+    case LCD_TX_SENDING:
+        LCDStartTransmit(*pStr2);
+        lcd_transmit_state++;
+        break;
+
+    case LCD_TX_CHECK_NEXT:
+        pStr2++;
+        if (*pStr2 != '\0')
+            lcd_transmit_state--;
+        else
+        {
+            lcd_transmit_state = LCD_TX_INIT;
+            resp = resp_finish;
+        }
+        break;
+
+    default:
+        lcd_transmit_state = LCD_TX_INIT;
+        resp = resp_finish;
+        break;
+    }
+    return resp;
 }
 
   /* Clear display */

@@ -64,7 +64,9 @@
 #define BLINKING_MARK_C     3
 #define BLINKING_SPACE_C    4
 #define BLINKING_MARK_N     5
-#define BLINKING_SPACE_N    6
+#define BLINKING_MARK_N_SENDING_FIRST_LINE     6
+#define BLINKING_MARK_N_SENDING_SECOND_LINE    7
+#define BLINKING_SPACE_N    8
 
 //modos de blinking
 #define BLINK_DIRECT    0

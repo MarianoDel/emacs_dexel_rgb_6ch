@@ -16,9 +16,7 @@
 extern volatile unsigned char timer_1seg;
 extern volatile unsigned short timer_led_comm;
 extern volatile unsigned short wait_ms_var;
-#ifdef USE_DELTA_FUNCTION
-extern volatile unsigned short timer_delta_filter;
-#endif
+extern volatile unsigned char led_current_mode;
 
 //--- VARIABLES GLOBALES ---//
 
@@ -127,52 +125,55 @@ void Change_PWM6 (unsigned char a)
 //------------------------------------------//
 void TIM1_BRK_UP_TRG_COM_IRQHandler (void)	//48Khz
 {
-    if (tim_soft_pwm_counter < 255)
-    {        
-        tim_soft_pwm_counter++;
-        if (tim_soft_pwm_counter != 255)
+    if (led_current_mode == PWM_MODE)
+    {
+        if (tim_soft_pwm_counter < 255)
+        {        
+            tim_soft_pwm_counter++;
+            if (tim_soft_pwm_counter != 255)
+            {
+                if (tim_soft_pwm_counter >= pwm_ch1)
+                    Update_PWM1(0);
+                if (tim_soft_pwm_counter >= pwm_ch2)
+                    Update_PWM2(0);
+                if (tim_soft_pwm_counter >= pwm_ch3)
+                    Update_PWM3(0);
+                if (tim_soft_pwm_counter >= pwm_ch4)
+                    Update_PWM4(0);
+                if (tim_soft_pwm_counter >= pwm_ch5)
+                    Update_PWM5(0);
+                if (tim_soft_pwm_counter >= pwm_ch6)
+                    Update_PWM6(0);
+            }
+        }
+        else
         {
-            if (tim_soft_pwm_counter >= pwm_ch1)
-                Update_PWM1(0);
-            if (tim_soft_pwm_counter >= pwm_ch2)
-                Update_PWM2(0);
-            if (tim_soft_pwm_counter >= pwm_ch3)
-                Update_PWM3(0);
-            if (tim_soft_pwm_counter >= pwm_ch4)
-                Update_PWM4(0);
-            if (tim_soft_pwm_counter >= pwm_ch5)
-                Update_PWM5(0);
-            if (tim_soft_pwm_counter >= pwm_ch6)
-                Update_PWM6(0);
+            tim_soft_pwm_counter = 0;
+            //arranco todos los soft pwm
+            if (pwm_ch1)
+                Update_PWM1(593);    //rojo 593
+            if (pwm_ch2)
+                Update_PWM2(650);
+            if (pwm_ch3)
+                Update_PWM3(832);    //azul 832
+            if (pwm_ch4)
+                Update_PWM4(896);    //verde 896
+            if (pwm_ch5)
+                Update_PWM5(896);
+            if (pwm_ch6)
+                Update_PWM6(896);
         }
     }
-    else
-    {
-        tim_soft_pwm_counter = 0;
-        //arranco todos los soft pwm
-        if (pwm_ch1)
-            Update_PWM1(500);    //rojo 593
-        if (pwm_ch2)
-            Update_PWM2(650);
-        if (pwm_ch3)
-            Update_PWM3(500);    //azul 832
-        if (pwm_ch4)
-            Update_PWM4(500);    //verde 896
-        if (pwm_ch5)
-            Update_PWM5(650);
-        if (pwm_ch6)
-            Update_PWM6(650);
+
+        // if (CTRL_FAN)
+        //     CTRL_FAN_OFF;
+        // else
+        //     CTRL_FAN_ON;
+
+        //bajar flag
+        if (TIM1->SR & 0x01)	//bajo el flag
+            TIM1->SR = 0x00;
     }
-
-    // if (CTRL_FAN)
-    //     CTRL_FAN_OFF;
-    // else
-    //     CTRL_FAN_ON;
-
-    //bajar flag
-    if (TIM1->SR & 0x01)	//bajo el flag
-        TIM1->SR = 0x00;
-}
 
 void TIM3_IRQHandler (void)	//1 ms
 {
@@ -389,11 +390,6 @@ void OneShootTIM16 (unsigned short a)
 
 void TIM17_IRQHandler (void)	//100uS
 {
-#ifdef USE_DELTA_FUNCTION
-    if (timer_delta_filter)
-        timer_delta_filter--;
-#endif
-    
     //bajar flag
     if (TIM17->SR & 0x01)
         TIM17->SR = 0x00;
