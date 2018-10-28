@@ -29,6 +29,8 @@ char s_lcd1 [10];
 char s_lcd2 [10];
 
 unsigned char conf_changed = 0;
+led_current_settings_t led_curr;
+
 //-- timers del modulo --------------------
 volatile unsigned short main_menu_timer = 0;
 // volatile unsigned short slave_mode_dmx_receiving_timer = 0;
@@ -406,6 +408,7 @@ resp_t MainMenu (void)
 
 //------------- HARD -------------
     case MAIN_MENU_CONF_HARDWARE:
+        //max current screen
         resp = FuncShowBlink ((const char *) "Max Curr", (const char *) "Setting ", 1, BLINK_NO);
 
         if (resp == resp_finish)
@@ -435,6 +438,7 @@ resp_t MainMenu (void)
         break;
 
     case MAIN_MENU_CONF_HARDWARE_2:
+        //max voltage screen
         dummy_16 = mem_conf.volts_in_mains;
         
         resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_MAINS, MIN_MAINS_VOLTAGE, MAX_MAINS_VOLTAGE);
@@ -448,132 +452,121 @@ resp_t MainMenu (void)
         break;
 
     case MAIN_MENU_CONF_HARDWARE_3:
-        dummy_16 = mem_conf.volts_ch1;
+        //max power screen
+        dummy_16 = mem_conf.max_power;
         
-        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_1, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
+        resp = FuncChange (&dummy_16, CHANGE_MAX_POWER, MIN_MAX_POWER, MAX_MAX_POWER);
 
         if (resp == resp_finish)
         {
-            mem_conf.volts_ch1 = dummy_16;
+            mem_conf.max_power = dummy_16;
             main_menu_state = MAIN_MENU_CONF_HARDWARE_4;
+            led_curr.channel = 0;
             resp = resp_continue;            
         }
         break;
 
     case MAIN_MENU_CONF_HARDWARE_4:
-        dummy_16 = mem_conf.volts_ch2;
-        
-        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_2, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
-
-        if (resp == resp_finish)
+        //preparo autoseteo de canales
+        if (led_curr.channel < 6)
         {
-            mem_conf.volts_ch2 = dummy_16;
-            main_menu_state = MAIN_MENU_CONF_HARDWARE_5;
-            resp = resp_continue;            
+            led_curr.channel++;
+            led_curr.sp_current = mem_conf.max_current_dec * 100;
+            led_curr.sp_current += mem_conf.max_current_int * 1000;
+            
+            UpdateDutyCycleReset();
+            main_menu_state++;
+        }
+        else
+        {
+            //termine de setear canales
+            main_menu_state = MAIN_MENU_CONF_HARDWARE_10;
+            break;
         }
         break;
 
     case MAIN_MENU_CONF_HARDWARE_5:
-        dummy_16 = mem_conf.volts_ch3;
-        
-        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_3, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
+        //auto seteo canales
+        resp = UpdateDutyCycle(&led_curr);
+
+        if (resp == resp_error)
+        {
+            UpdateDutyCycleReset();
+            sprintf(s_to_send, "No current on CH%d\n", led_curr.channel);                
+            Usart2Send(s_to_send);            
+            mem_conf.pwm_chnls[led_curr.channel - 1] = 0;
+        }
 
         if (resp == resp_finish)
         {
-            mem_conf.volts_ch3 = dummy_16;
-            main_menu_state = MAIN_MENU_CONF_HARDWARE_6;
-            resp = resp_continue;            
+            UpdateDutyCycleReset();
+            sprintf(s_to_send, "More voltage needed for CH%d\n", led_curr.channel);                
+            Usart2Send(s_to_send);
+            mem_conf.pwm_chnls[led_curr.channel - 1] = DUTY_95_PERCENT;
         }
-        break;
 
-    case MAIN_MENU_CONF_HARDWARE_6:
-        dummy_16 = mem_conf.volts_ch4;
-        
-        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_4, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
-
-        if (resp == resp_finish)
+        if (resp == resp_ok)
         {
-            mem_conf.volts_ch4 = dummy_16;
-            main_menu_state = MAIN_MENU_CONF_HARDWARE_7;
-            resp = resp_continue;            
+            UpdateDutyCycleReset();
+            sprintf(s_to_send, "i: %d, d: %d, ireal: %d CH%d\n",
+                    led_curr.filtered_current_getted,
+                    led_curr.duty_getted,
+                    led_curr.real_current_getted,
+                    led_curr.channel);                
+            Usart2Send(s_to_send);
+            mem_conf.pwm_chnls[led_curr.channel - 1] = led_curr.duty_getted;
         }
         break;
 
-    case MAIN_MENU_CONF_HARDWARE_7:
-        dummy_16 = mem_conf.volts_ch5;
-        
-        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_5, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
-
-        if (resp == resp_finish)
-        {
-            mem_conf.volts_ch5 = dummy_16;
-            main_menu_state = MAIN_MENU_CONF_HARDWARE_8;
-            resp = resp_continue;            
-        }
-        break;
-
-    case MAIN_MENU_CONF_HARDWARE_8:
-        dummy_16 = mem_conf.volts_ch6;
-        
-        resp = FuncChange (&dummy_16, CHANGE_VOLTAGE_6, MIN_MAINS_VOLTAGE, mem_conf.volts_in_mains);
-
-        if (resp == resp_finish)
-        {
-            mem_conf.volts_ch6 = dummy_16;
-            main_menu_state = MAIN_MENU_CONF_HARDWARE_9;
-            resp = resp_continue;            
-        }
-        break;
-        
     case MAIN_MENU_CONF_HARDWARE_9:
         //ajusto los pwm maximos
-        dummy_16 = mem_conf.volts_ch1 * 1000;
-        dummy_16 = dummy_16 / mem_conf.volts_in_mains;
-        if (dummy_16 < DUTY_90_PERCENT)
-            mem_conf.max_pwm_ch1 = dummy_16;
-        else
-            mem_conf.max_pwm_ch1 = DUTY_90_PERCENT;
+        // dummy_16 = mem_conf.volts_ch1 * 1000;
+        // dummy_16 = dummy_16 / mem_conf.volts_in_mains;
+        // if (dummy_16 < DUTY_90_PERCENT)
+        //     mem_conf.max_pwm_ch1 = dummy_16;
+        // else
+        //     mem_conf.max_pwm_ch1 = DUTY_90_PERCENT;
 
-        dummy_16 = mem_conf.volts_ch2 * 1000;
-        dummy_16 = dummy_16 / mem_conf.volts_in_mains;
-        if (dummy_16 < DUTY_90_PERCENT)
-            mem_conf.max_pwm_ch2 = dummy_16;
-        else
-            mem_conf.max_pwm_ch2 = DUTY_90_PERCENT;
+        // dummy_16 = mem_conf.volts_ch2 * 1000;
+        // dummy_16 = dummy_16 / mem_conf.volts_in_mains;
+        // if (dummy_16 < DUTY_90_PERCENT)
+        //     mem_conf.max_pwm_ch2 = dummy_16;
+        // else
+        //     mem_conf.max_pwm_ch2 = DUTY_90_PERCENT;
         
-        dummy_16 = mem_conf.volts_ch3 * 1000;
-        dummy_16 = dummy_16 / mem_conf.volts_in_mains;
-        if (dummy_16 < DUTY_90_PERCENT)
-            mem_conf.max_pwm_ch3 = dummy_16;
-        else
-            mem_conf.max_pwm_ch3 = DUTY_90_PERCENT;
+        // dummy_16 = mem_conf.volts_ch3 * 1000;
+        // dummy_16 = dummy_16 / mem_conf.volts_in_mains;
+        // if (dummy_16 < DUTY_90_PERCENT)
+        //     mem_conf.max_pwm_ch3 = dummy_16;
+        // else
+        //     mem_conf.max_pwm_ch3 = DUTY_90_PERCENT;
         
 
-        dummy_16 = mem_conf.volts_ch4 * 1000;
-        dummy_16 = dummy_16 / mem_conf.volts_in_mains;
-        if (dummy_16 < DUTY_90_PERCENT)
-            mem_conf.max_pwm_ch4 = dummy_16;
-        else
-            mem_conf.max_pwm_ch4 = DUTY_90_PERCENT;
+        // dummy_16 = mem_conf.volts_ch4 * 1000;
+        // dummy_16 = dummy_16 / mem_conf.volts_in_mains;
+        // if (dummy_16 < DUTY_90_PERCENT)
+        //     mem_conf.max_pwm_ch4 = dummy_16;
+        // else
+        //     mem_conf.max_pwm_ch4 = DUTY_90_PERCENT;
 
 
-        dummy_16 = mem_conf.volts_ch5 * 1000;
-        dummy_16 = dummy_16 / mem_conf.volts_in_mains;
-        if (dummy_16 < DUTY_90_PERCENT)
-            mem_conf.max_pwm_ch5 = dummy_16;
-        else
-            mem_conf.max_pwm_ch5 = DUTY_90_PERCENT;
+        // dummy_16 = mem_conf.volts_ch5 * 1000;
+        // dummy_16 = dummy_16 / mem_conf.volts_in_mains;
+        // if (dummy_16 < DUTY_90_PERCENT)
+        //     mem_conf.max_pwm_ch5 = dummy_16;
+        // else
+        //     mem_conf.max_pwm_ch5 = DUTY_90_PERCENT;
 
 
-        dummy_16 = mem_conf.volts_ch6 * 1000;
-        dummy_16 = dummy_16 / mem_conf.volts_in_mains;
-        if (dummy_16 < DUTY_90_PERCENT)
-            mem_conf.max_pwm_ch6 = dummy_16;
-        else
-            mem_conf.max_pwm_ch6 = DUTY_90_PERCENT;
+        // dummy_16 = mem_conf.volts_ch6 * 1000;
+        // dummy_16 = dummy_16 / mem_conf.volts_in_mains;
+        // if (dummy_16 < DUTY_90_PERCENT)
+        //     mem_conf.max_pwm_ch6 = dummy_16;
+        // else
+        //     mem_conf.max_pwm_ch6 = DUTY_90_PERCENT;
 
         
-        main_menu_state = MAIN_MENU_CONF_HARDWARE_10;
+        // main_menu_state = MAIN_MENU_CONF_HARDWARE_10;
         break;
         
     case MAIN_MENU_CONF_HARDWARE_10:

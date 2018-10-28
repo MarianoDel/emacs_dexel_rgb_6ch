@@ -87,20 +87,20 @@ unsigned short sp5 = 0;
 unsigned short sp6 = 0;
 
 #ifdef USE_FILTER_LENGHT_8
-unsigned short v_sp1 [8];
-unsigned short v_sp2 [8];
-unsigned short v_sp3 [8];
-unsigned short v_sp4 [8];
-unsigned short v_sp5 [8];
-unsigned short v_sp6 [8];
+extern unsigned short v_sp1 [8];
+extern unsigned short v_sp2 [8];
+extern unsigned short v_sp3 [8];
+extern unsigned short v_sp4 [8];
+extern unsigned short v_sp5 [8];
+extern unsigned short v_sp6 [8];
 #endif
 #ifdef USE_FILTER_LENGHT_16
-unsigned short v_sp1 [16];
-unsigned short v_sp2 [16];
-unsigned short v_sp3 [16];
-unsigned short v_sp4 [16];
-unsigned short v_sp5 [16];
-unsigned short v_sp6 [16];
+extern unsigned short v_sp1 [16];
+extern unsigned short v_sp2 [16];
+extern unsigned short v_sp3 [16];
+extern unsigned short v_sp4 [16];
+extern unsigned short v_sp5 [16];
+extern unsigned short v_sp6 [16];
 #endif
 
 

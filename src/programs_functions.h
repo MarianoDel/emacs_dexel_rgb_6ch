@@ -11,13 +11,13 @@
 #define _PROGRAMS_FUNCTIONS_H_
 
 #include "hard.h"
-
+#include "tim.h"
 
 //-------- Defines -------------
-#define WHITE_PWM(X)	PIDforProgramsCHX(4,(X))
-#define BLUE_PWM(X)	PIDforProgramsCHX(3,(X))
-#define GREEN_PWM(X)	PIDforProgramsCHX(2,(X))
-#define RED_PWM(X)	PIDforProgramsCHX(1,(X))
+#define WHITE_PWM(X)	Update_PWM4(X)
+#define BLUE_PWM(X)	Update_PWM3(X)
+#define GREEN_PWM(X)	Update_PWM2(X)
+#define RED_PWM(X)	Update_PWM1(X)
 
 #define MAX_FADE 255
 //#define MAX_FADE 256

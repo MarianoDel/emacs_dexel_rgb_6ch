@@ -77,6 +77,23 @@ unsigned short sp3_filtered = 0;
 unsigned short sp4_filtered = 0;
 unsigned short sp5_filtered = 0;
 unsigned short sp6_filtered = 0;
+#ifdef USE_FILTER_LENGHT_8
+unsigned short v_sp1 [8];
+unsigned short v_sp2 [8];
+unsigned short v_sp3 [8];
+unsigned short v_sp4 [8];
+unsigned short v_sp5 [8];
+unsigned short v_sp6 [8];
+#endif
+#ifdef USE_FILTER_LENGHT_16
+unsigned short v_sp1 [16];
+unsigned short v_sp2 [16];
+unsigned short v_sp3 [16];
+unsigned short v_sp4 [16];
+unsigned short v_sp5 [16];
+unsigned short v_sp6 [16];
+#endif
+
 
 //--- VARIABLES GLOBALES ---//
 //para pruebas mantener esto en memoria
@@ -214,12 +231,7 @@ int main(void)
     TIM_1_Init();
     TIM_3_Init();
 
-    Update_TIM1_CH1(0);
-    Update_TIM1_CH2(0);    
-    Update_TIM3_CH1(0);
-    Update_TIM3_CH2(0);
-    Update_TIM3_CH3(0);
-    Update_TIM3_CH4(0);
+    PWMChannelsReset();
 
 
     //-- Prueba con ADC INT ----------
@@ -567,17 +579,49 @@ int main(void)
 
     ADC1->CR |= ADC_CR_ADSTART;
     led_current_mode = PID_MODE;
-    Change_PWM1(0);
-    Change_PWM2(0);
-    Change_PWM3(0);
-    Change_PWM4(0);    
-    Change_PWM5(0);
-    Change_PWM6(0);
-        
+    PWMChannelsReset();
+    
     // Prueba ADC & DMA
+    need_to_save_timer = 10000;
+
+    led_current_settings_t led_curr;
+    led_curr.sp_current = 1990;
+    led_curr.channel = 1;
+    
     while(1)
     {
-        UpdateSamplesAndPID();
+        if (!need_to_save_timer)
+        {
+            resp = UpdateDutyCycle(&led_curr);
+
+            if (resp == resp_error)
+            {
+                UpdateDutyCycleReset();
+                need_to_save_timer = 10000;
+                sprintf(s_to_send, "No current on CH%d\n", led_curr.channel);                
+                Usart2Send(s_to_send);
+            }
+
+            if (resp == resp_finish)
+            {
+                UpdateDutyCycleReset();
+                need_to_save_timer = 10000;
+                sprintf(s_to_send, "More voltage needed for CH%d\n", led_curr.channel);                
+                Usart2Send(s_to_send);
+            }
+
+            if (resp == resp_ok)
+            {
+                UpdateDutyCycleReset();
+                need_to_save_timer = 10000;
+                sprintf(s_to_send, "i: %d, d: %d, ireal: %d CH%d\n",
+                        led_curr.filtered_current_getted,
+                        led_curr.duty_getted,
+                        led_curr.real_current_getted,
+                        led_curr.channel);                
+                Usart2Send(s_to_send);
+            }
+        }
         
         // if (DMA1->ISR & DMA_ISR_TCIF1)    //esto es sequence ready a 16KHz
         // {
@@ -614,273 +658,6 @@ int main(void)
     }
     //-- Prueba con ADC & DMA lazo PID ----------
     
-    //-- Prueba con ADC & DMA ----------
-    //-- ADC configuration.
-// #ifdef ADC_WITH_DMA
-//     AdcConfig();
-
-//     //-- DMA configuration.
-//     DMAConfig();
-//     DMA1_Channel1->CCR |= DMA_CCR_EN;
-
-//     ADC1->CR |= ADC_CR_ADSTART;
-    
-//     // Prueba ADC & DMA
-//     while(1)
-//     {
-//         if (DMA1->ISR & DMA_ISR_TCIF1)    //esto es sequence ready
-//         {
-//             // Clear DMA TC flag
-//             DMA1->IFCR = DMA_ISR_TCIF1;
-
-//             if (undersampling < (PID_UNDERSAMPLING - 1))
-//             {
-//                 undersampling++;
-//             }
-//             else
-//             {
-//                 undersampling = 0;
-//                 if (CTRL_FAN)
-//                     CTRL_FAN_OFF;
-//                 else
-//                     CTRL_FAN_ON;
-
-//                 //PID CH1
-//                 if (!sp1_filtered)
-//                     Update_PWM1(0);
-//                 else
-//                 {
-//                     d_ch1 = PID_roof (sp1_filtered, I_Channel_1, d_ch1, &e_z1_ch1, &e_z2_ch1);
-
-//                     if (d_ch1 < 0)
-//                         d_ch1 = 0;
-//                     else
-//                     {
-//                         if (d_ch1 > DUTY_90_PERCENT)
-//                             d_ch1 = DUTY_90_PERCENT;
-                    
-//                         Update_PWM1(d_ch1);
-//                     }
-//                 }
-
-//                 //PID CH2
-//                 if (!sp2_filtered)
-//                     Update_PWM2(0);
-//                 else
-//                 {                
-//                     d_ch2 = PID_roof (sp2_filtered, I_Channel_2, d_ch2, &e_z1_ch2, &e_z2_ch2);
-
-//                     if (d_ch2 < 0)
-//                         d_ch2 = 0;
-//                     else
-//                     {
-//                         if (d_ch2 > DUTY_90_PERCENT)
-//                             d_ch2 = DUTY_90_PERCENT;
-                    
-//                         Update_PWM2(d_ch2);
-//                     }
-//                 }
-
-//                 //PID CH3
-//                 if (!sp3_filtered)
-//                     Update_PWM3(0);
-//                 else
-//                 {                                
-//                     d_ch3 = PID_roof (sp3_filtered, I_Channel_3, d_ch3, &e_z1_ch3, &e_z2_ch3);
-
-//                     if (d_ch3 < 0)
-//                         d_ch3 = 0;
-//                     else
-//                     {
-//                         if (d_ch3 > DUTY_90_PERCENT)
-//                             d_ch3 = DUTY_90_PERCENT;
-                    
-//                         Update_PWM3(d_ch3);
-//                     }
-//                 }
-
-//                 //PID CH4
-//                 if (!sp4_filtered)
-//                     Update_PWM4(0);
-//                 else
-//                 {
-//                     d_ch4 = PID_roof (sp4_filtered, I_Channel_4, d_ch4, &e_z1_ch4, &e_z2_ch4);
-
-//                     if (d_ch4 < 0)
-//                         d_ch4 = 0;
-//                     else
-//                     {
-//                         if (d_ch4 > DUTY_90_PERCENT)
-//                             d_ch4 = DUTY_90_PERCENT;
-                    
-//                         Update_PWM4(d_ch4);
-//                     }
-//                 }
-
-//                 //PID CH5
-//                 if (!sp5_filtered)
-//                     Update_PWM5(0);
-//                 else
-//                 {                
-//                     d_ch5 = PID_roof (sp5_filtered, I_Channel_5, d_ch5, &e_z1_ch5, &e_z2_ch5);
-
-//                     if (d_ch5 < 0)
-//                         d_ch5 = 0;
-//                     else
-//                     {
-//                         if (d_ch5 > DUTY_90_PERCENT)
-//                             d_ch5 = DUTY_90_PERCENT;
-                    
-//                         Update_PWM5(d_ch5);
-//                     }
-//                 }
-
-//                 //PID CH6
-//                 if (!sp6_filtered)
-//                     Update_PWM6(0);
-//                 else
-//                 {                                
-//                     d_ch6 = PID_roof (sp6_filtered, I_Channel_6, d_ch6, &e_z1_ch6, &e_z2_ch6);
-
-//                     if (d_ch6 < 0)
-//                         d_ch6 = 0;
-//                     else
-//                     {
-//                         if (d_ch6 > DUTY_90_PERCENT)
-//                             d_ch6 = DUTY_90_PERCENT;
-                    
-//                         Update_PWM6(d_ch6);
-//                     }
-//                 }               
-//             }
-//         }
-
-//         //me fijo si hubo overrun
-//         if (ADC1->ISR & ADC_IT_OVR)
-//         {
-//             ADC1->ISR |= ADC_IT_EOC | ADC_IT_EOSEQ | ADC_IT_OVR;
-//             Usart2Send("over\n");
-//         }
-
-//         if (!timer_standby)
-//         {
-//             timer_standby = 1000;
-//             //envio corrientes
-//             sprintf(s_to_send, "i1: %d, i2: %d, i3: %d, i4: %d, i5: %d, i6: %d, t: %d\n",
-//                     I_Channel_1,
-//                     I_Channel_2,
-//                     I_Channel_3,
-//                     I_Channel_4,
-//                     I_Channel_5,
-//                     I_Channel_6,
-//                     Temp_Channel);
-
-//             Usart2Send(s_to_send);
-
-//             //envio canales dmx
-//             sprintf(s_to_send, "c0: %d, c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
-//                     data7[0],
-//                     data7[1],
-//                     data7[2],
-//                     data7[3],
-//                     data7[4],
-//                     data7[5],
-//                     data7[6]);
-
-//             Usart2Send(s_to_send);
-            
-//         }
-
-//         //update del dmx
-//         if (Packet_Detected_Flag)
-//         {
-//             Packet_Detected_Flag = 0;
-
-//             //CH1
-//             dummysp = data7[1];
-//             dummysp <<= 2;
-//             if (dummysp > 820)
-//                 sp1 = 820;
-//             else
-//                 sp1 = dummysp;
-
-//             //CH2
-//             dummysp = data7[2];
-//             dummysp <<= 2;
-//             if (dummysp > 820)
-//                 sp2 = 820;
-//             else
-//                 sp2 = dummysp;
-
-//             //CH3
-//             dummysp = data7[3];
-//             dummysp <<= 2;
-//             if (dummysp > 820)
-//                 sp3 = 820;
-//             else
-//                 sp3 = dummysp;
-
-//             //CH4
-//             dummysp = data7[4];
-//             dummysp <<= 2;
-//             if (dummysp > 820)
-//                 sp4 = 820;
-//             else
-//                 sp4 = dummysp;
-
-//             //CH5
-//             dummysp = data7[5];
-//             dummysp <<= 2;
-//             if (dummysp > 820)
-//                 sp5 = 820;
-//             else
-//                 sp5 = dummysp;
-
-//             //CH6
-//             dummysp = data7[6];
-//             dummysp <<= 2;
-//             if (dummysp > 820)
-//                 sp6 = 820;
-//             else
-//                 sp6 = dummysp;            
-            
-//         }
-
-//         //filters para el dmx
-//         if (!dmx_filters_timer)
-//         {
-//             dmx_filters_timer = 5;
-
-//             sp1_filtered = MAFilterFast (sp1, v_sp1);
-//             sp2_filtered = MAFilterFast (sp2, v_sp2);
-//             sp3_filtered = MAFilterFast (sp3, v_sp3);
-//             sp4_filtered = MAFilterFast (sp4, v_sp4);
-//             sp5_filtered = MAFilterFast (sp5, v_sp5);
-//             sp6_filtered = MAFilterFast (sp6, v_sp6);
-//         }
-
-
-                
-        
-
-//         // UpdateSwitches();
-
-//         // if (CheckS1() && (!check_s1))
-//         // {
-//         //     check_s1 = 1;
-//         //     Usart2Send("S1\n");
-//         // }
-        
-//         // if ((CheckS2()) && (check_s1))
-//         // {
-//         //     check_s1 = 0;
-//         //     Usart2Send("not S1\n");
-//         // }
-        
-//     }
-// #endif
-    //-- Prueba con ADC & DMA ----------
-
     //-- Programa de Produccion del DMX
     //inicializo dmx si todavia no lo hice
     TIM_14_Init();    //para detectar break en dmx
@@ -919,12 +696,7 @@ int main(void)
             DMX_Disa();
 
             //reseteo canales
-            Update_PWM1(0);
-            Update_PWM2(0);    
-            Update_PWM3(0);
-            Update_PWM4(0);
-            Update_PWM5(0);
-            Update_PWM6(0);
+            PWMChannelsReset();
                         
             //reseteo menues
             MasterModeMenuReset();
@@ -1052,12 +824,7 @@ int main(void)
 
         case MAIN_IN_OVERTEMP:
             CTRL_FAN_ON;
-            Update_PWM1(0);
-            Update_PWM2(0);
-            Update_PWM3(0);
-            Update_PWM4(0);
-            Update_PWM5(0);
-            Update_PWM6(0);
+            PWMChannelsReset();
 
             LCD_1ER_RENGLON;
             LCDTransmitStr("OVERTEMP");
@@ -1085,16 +852,10 @@ int main(void)
             DMX_Disa();
 
             //reseteo canales
-            Update_TIM1_CH1(0);
-            Update_TIM1_CH2(0);    
-            Update_TIM3_CH1(0);
-            Update_TIM3_CH2(0);
-            Update_TIM3_CH3(0);
-            Update_TIM3_CH4(0);
+            PWMChannelsReset();
 
             MainMenuReset();
             main_state++;
-
             break;
 
         case MAIN_IN_MAIN_MENU:
@@ -1117,8 +878,7 @@ int main(void)
             break;
         }
 
-        //cuestiones generales
-        
+        //cuestiones generales        
         UpdateSwitches();
 
         //sensado de temperatura

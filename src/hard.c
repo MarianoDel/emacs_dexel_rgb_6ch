@@ -18,9 +18,6 @@
 #include "flash_program.h"
 
 
-//para new UpdateSamplesAndPID, despues evaluar si vale la pena
-#include <stdio.h>
-#include "uart.h"
 
 /* Externals variables ---------------------------------------------------------*/
 extern volatile unsigned char switches_timer;
@@ -33,6 +30,24 @@ extern unsigned short sp3_filtered;
 extern unsigned short sp4_filtered;
 extern unsigned short sp5_filtered;
 extern unsigned short sp6_filtered;
+
+#ifdef USE_FILTER_LENGHT_8
+extern unsigned short v_sp1 [8];
+extern unsigned short v_sp2 [8];
+extern unsigned short v_sp3 [8];
+extern unsigned short v_sp4 [8];
+extern unsigned short v_sp5 [8];
+extern unsigned short v_sp6 [8];
+#endif
+#ifdef USE_FILTER_LENGHT_16
+extern unsigned short v_sp1 [16];
+extern unsigned short v_sp2 [16];
+extern unsigned short v_sp3 [16];
+extern unsigned short v_sp4 [16];
+extern unsigned short v_sp5 [16];
+extern unsigned short v_sp6 [16];
+#endif
+
 extern parameters_typedef mem_conf;
 extern unsigned char data7[];
 extern unsigned char data512[];
@@ -48,26 +63,26 @@ unsigned char undersampling = 0;
 // #define PID_UNDERSAMPLING    20
 #define PID_UNDERSAMPLING    4    //(71.5 + 12.5 sar) * 1 / 12MHz = 7us; 7canales -> 49us
 
-short d_ch1;
-short d_ch2;
-short d_ch3;
-short d_ch4;
-short d_ch5;
-short d_ch6;
+// short d_ch1;
+// short d_ch2;
+// short d_ch3;
+// short d_ch4;
+// short d_ch5;
+// short d_ch6;
 
-short e_z1_ch1;
-short e_z1_ch2;
-short e_z1_ch3;
-short e_z1_ch4;
-short e_z1_ch5;
-short e_z1_ch6;
+// short e_z1_ch1;
+// short e_z1_ch2;
+// short e_z1_ch3;
+// short e_z1_ch4;
+// short e_z1_ch5;
+// short e_z1_ch6;
 
-short e_z2_ch1;
-short e_z2_ch2;
-short e_z2_ch3;
-short e_z2_ch4;
-short e_z2_ch5;
-short e_z2_ch6;
+// short e_z2_ch1;
+// short e_z2_ch2;
+// short e_z2_ch3;
+// short e_z2_ch4;
+// short e_z2_ch5;
+// short e_z2_ch6;
 
 #define sequence_ready         (DMA1->ISR & DMA_ISR_TCIF1)
 #define sequence_ready_reset   (DMA1->IFCR = DMA_ISR_TCIF1)
@@ -129,318 +144,141 @@ void UpdateSwitches (void)
     }
 }
 
-//Update de muestras y lazos PID
-//utiliza variables sp_filter globales
-//TODO: reemplazar el tope hardcoded de PWM por los valores de mem_conf
-void UpdateSamplesAndPID (void)
+//UpdateDutyCycle
+//determina el valor de la corriente en funcion del cyclo de trabjo
+//necesita:
+//el sp_current - corriente que va a buscar en [mA]
+//channel, canal en el que busca
+//contesta:
+//resp_ok, cuando termina ok y carga valores
+//resp_finish, llega al maximo pwm pero no consigue la corriente
+//resp_error, llego al 50% del pwm pero nunca hubo corriente
+#define I_filtered    sp1_filtered
+#define I_Sampled_Channel    sp2_filtered
+#define K_current    2390
+unsigned short duty_cycle = 0;
+unsigned char filter_cnt = 0;
+resp_t UpdateDutyCycle (led_current_settings_t * settings)
 {
-    char s_to_send [100] = { 0 };
+    resp_t resp = resp_continue;    
+    unsigned int I_real = 0;
     
-    if (sequence_ready)
+    if (sequence_ready)    //16KHz
     {
         sequence_ready_reset;
-        // if (CTRL_FAN)
-        //     CTRL_FAN_OFF;
-        // else
-        //     CTRL_FAN_ON;
 
-        if (undersampling < (PID_UNDERSAMPLING - 1))
-            undersampling++;
+        switch (settings->channel)
+        {
+        case 1:
+            I_Sampled_Channel = I_Channel_1;
+            break;
+        case 2:
+            I_Sampled_Channel = I_Channel_2;
+            break;
+        case 3:
+            I_Sampled_Channel = I_Channel_3;
+            break;
+        case 4:
+            I_Sampled_Channel = I_Channel_4;
+            break;
+        case 5:
+            I_Sampled_Channel = I_Channel_5;
+            break;
+        case 6:
+            I_Sampled_Channel = I_Channel_6;
+            break;
+        }
+
+        I_filtered = MAFilterFast16 (I_Sampled_Channel, v_sp1);
+#ifdef USE_FILTER_LENGHT_8
+        if (filter_cnt < 32)    //2ms
+#endif
+#ifdef USE_FILTER_LENGHT_16
+        if (filter_cnt < 64)    //4ms
+#endif
+            filter_cnt++;
         else
         {
-            undersampling = 0;
-            if (CTRL_FAN)
-                CTRL_FAN_OFF;
-            else
-                CTRL_FAN_ON;
+            filter_cnt = 0;
+            I_real = I_filtered * K_current;
+            I_real = I_real / duty_cycle;
 
-            //PID CH1 Filtered
-            // sp1_filtered = MAFilter8(I_Channel_1, v_sp1);
-            // d_ch1 = PID_roof (593, sp1_filtered, d_ch1, &e_z1_ch1, &e_z2_ch1);
-            //PID CH1
-            d_ch1 = PID_roof (486, I_Channel_1, d_ch1, &e_z1_ch1, &e_z2_ch1);
+            if (I_real < settings->sp_current)
+            {
+                if (duty_cycle < DUTY_95_PERCENT)
+                    duty_cycle++;
+                else
+                    resp = resp_finish;
 
-            if (d_ch1 < 0)
-                d_ch1 = 0;
+                switch (settings->channel)
+                {
+                case 1:
+                    Update_PWM1(duty_cycle);
+                    break;
+                case 2:
+                    Update_PWM2(duty_cycle);                    
+                    break;
+                case 3:
+                    Update_PWM3(duty_cycle);                    
+                    break;
+                case 4:
+                    Update_PWM4(duty_cycle);                    
+                    break;
+                case 5:
+                    Update_PWM5(duty_cycle);                    
+                    break;
+                case 6:
+                    Update_PWM6(duty_cycle);                    
+                    break;
+                }
+
+                //error en corriente
+                if ((duty_cycle > 500) && (I_real < 25))
+                    resp = resp_error;
+            }
             else
             {
-                if (d_ch1 > DUTY_95_PERCENT)
-                    d_ch1 = DUTY_95_PERCENT;
-                    
-                Update_PWM1(d_ch1);
+                settings->duty_getted = duty_cycle;
+                settings->real_current_getted = I_real;
+                settings->filtered_current_getted = I_filtered;
+                resp = resp_ok;
             }
         }
     }
+    
+    return resp;
+}
 
-    if (!timer_standby)
+void PWMChannelsReset (void)
+{
+    Update_PWM1(0);
+    Update_PWM2(0);
+    Update_PWM3(0);
+    Update_PWM4(0);
+    Update_PWM5(0);
+    Update_PWM6(0);    
+}
+
+void UpdateDutyCycleReset (void)
+{
+    unsigned char i;
+    duty_cycle = 0;
+
+    PWMChannelsReset();
+    
+    //estos se usan para corrientes
+    sp1_filtered = 0;
+    sp2_filtered = 0;
+    
+#ifdef USE_FILTER_LENGHT_16
+    for (i = 0; i < 16; i++)
+#endif
+#ifdef USE_FILTER_LENGHT_8
+    for (i = 0; i < 8; i++)
+#endif
     {
-        timer_standby = 1000;
-        //envio corrientes
-        sprintf(s_to_send, "i1: %d, sp1: %d, d1: %d\n",
-                I_Channel_1,
-                486,
-                d_ch1);
-
-        Usart2Send(s_to_send);
-    }
-
-
-    //         //PID CH2
-    //         if (!sp2_filtered)
-    //             Update_PWM2(0);
-    //         else
-    //         {                
-    //             d_ch2 = PID_roof (sp2_filtered, I_Channel_2, d_ch2, &e_z1_ch2, &e_z2_ch2);
-
-    //             if (d_ch2 < 0)
-    //                 d_ch2 = 0;
-    //             else
-    //             {
-    //                 if (d_ch2 > DUTY_90_PERCENT)
-    //                     d_ch2 = DUTY_90_PERCENT;
-                    
-    //                 Update_PWM2(d_ch2);
-    //             }
-    //         }
-
-    //         //PID CH3
-    //         if (!sp3_filtered)
-    //             Update_PWM3(0);
-    //         else
-    //         {                                
-    //             d_ch3 = PID_roof (sp3_filtered, I_Channel_3, d_ch3, &e_z1_ch3, &e_z2_ch3);
-
-    //             if (d_ch3 < 0)
-    //                 d_ch3 = 0;
-    //             else
-    //             {
-    //                 if (d_ch3 > DUTY_90_PERCENT)
-    //                     d_ch3 = DUTY_90_PERCENT;
-                    
-    //                 Update_PWM3(d_ch3);
-    //             }
-    //         }
-
-    //         //PID CH4
-    //         if (!sp4_filtered)
-    //             Update_PWM4(0);
-    //         else
-    //         {
-    //             d_ch4 = PID_roof (sp4_filtered, I_Channel_4, d_ch4, &e_z1_ch4, &e_z2_ch4);
-
-    //             if (d_ch4 < 0)
-    //                 d_ch4 = 0;
-    //             else
-    //             {
-    //                 if (d_ch4 > DUTY_90_PERCENT)
-    //                     d_ch4 = DUTY_90_PERCENT;
-                    
-    //                 Update_PWM4(d_ch4);
-    //             }
-    //         }
-
-    //         //PID CH5
-    //         if (!sp5_filtered)
-    //             Update_PWM5(0);
-    //         else
-    //         {                
-    //             d_ch5 = PID_roof (sp5_filtered, I_Channel_5, d_ch5, &e_z1_ch5, &e_z2_ch5);
-
-    //             if (d_ch5 < 0)
-    //                 d_ch5 = 0;
-    //             else
-    //             {
-    //                 if (d_ch5 > DUTY_90_PERCENT)
-    //                     d_ch5 = DUTY_90_PERCENT;
-                    
-    //                 Update_PWM5(d_ch5);
-    //             }
-    //         }
-
-    //         //PID CH6
-    //         if (!sp6_filtered)
-    //             Update_PWM6(0);
-    //         else
-    //         {                                
-    //             d_ch6 = PID_roof (sp6_filtered, I_Channel_6, d_ch6, &e_z1_ch6, &e_z2_ch6);
-
-    //             if (d_ch6 < 0)
-    //                 d_ch6 = 0;
-    //             else
-    //             {
-    //                 if (d_ch6 > DUTY_90_PERCENT)
-    //                     d_ch6 = DUTY_90_PERCENT;
-                    
-    //                 Update_PWM6(d_ch6);
-    //             }
-    //         }               
-    //     }
-    // }
-}
-
-void UpdatePIDWithoutUndersampling (void)
-{
-    if (sequence_ready)
-    {
-        // Clear DMA TC flag
-        sequence_ready_reset;
-
-        //PID CH1
-        if (!sp1_filtered)
-            Update_PWM1(0);
-        else
-        {
-            d_ch1 = PID_roof (sp1_filtered, I_Channel_1, d_ch1, &e_z1_ch1, &e_z2_ch1);
-
-            if (d_ch1 < 0)
-                d_ch1 = 0;
-            else
-            {
-                if (d_ch1 > DUTY_90_PERCENT)
-                    d_ch1 = DUTY_90_PERCENT;
-                    
-                Update_PWM1(d_ch1);
-            }
-        }
-
-        //PID CH2
-        if (!sp2_filtered)
-            Update_PWM2(0);
-        else
-        {                
-            d_ch2 = PID_roof (sp2_filtered, I_Channel_2, d_ch2, &e_z1_ch2, &e_z2_ch2);
-
-            if (d_ch2 < 0)
-                d_ch2 = 0;
-            else
-            {
-                if (d_ch2 > DUTY_90_PERCENT)
-                    d_ch2 = DUTY_90_PERCENT;
-                    
-                Update_PWM2(d_ch2);
-            }
-        }
-
-        //PID CH3
-        if (!sp3_filtered)
-            Update_PWM3(0);
-        else
-        {                                
-            d_ch3 = PID_roof (sp3_filtered, I_Channel_3, d_ch3, &e_z1_ch3, &e_z2_ch3);
-
-            if (d_ch3 < 0)
-                d_ch3 = 0;
-            else
-            {
-                if (d_ch3 > DUTY_90_PERCENT)
-                    d_ch3 = DUTY_90_PERCENT;
-                    
-                Update_PWM3(d_ch3);
-            }
-        }
-
-        //PID CH4
-        if (!sp4_filtered)
-            Update_PWM4(0);
-        else
-        {
-            d_ch4 = PID_roof (sp4_filtered, I_Channel_4, d_ch4, &e_z1_ch4, &e_z2_ch4);
-
-            if (d_ch4 < 0)
-                d_ch4 = 0;
-            else
-            {
-                if (d_ch4 > DUTY_90_PERCENT)
-                    d_ch4 = DUTY_90_PERCENT;
-                    
-                Update_PWM4(d_ch4);
-            }
-        }
-
-        //PID CH5
-        if (!sp5_filtered)
-            Update_PWM5(0);
-        else
-        {                
-            d_ch5 = PID_roof (sp5_filtered, I_Channel_5, d_ch5, &e_z1_ch5, &e_z2_ch5);
-
-            if (d_ch5 < 0)
-                d_ch5 = 0;
-            else
-            {
-                if (d_ch5 > DUTY_90_PERCENT)
-                    d_ch5 = DUTY_90_PERCENT;
-                    
-                Update_PWM5(d_ch5);
-            }
-        }
-
-        //PID CH6
-        if (!sp6_filtered)
-            Update_PWM6(0);
-        else
-        {                                
-            d_ch6 = PID_roof (sp6_filtered, I_Channel_6, d_ch6, &e_z1_ch6, &e_z2_ch6);
-
-            if (d_ch6 < 0)
-                d_ch6 = 0;
-            else
-            {
-                if (d_ch6 > DUTY_90_PERCENT)
-                    d_ch6 = DUTY_90_PERCENT;
-                    
-                Update_PWM6(d_ch6);
-            }
-        }               
+        v_sp1[i] = 0;
     }
 }
 
-//en los programas me dicen la intensidad del LED entre 0 y 255
-//con DMXtoCurrent() convierto al sp
-void PIDforProgramsCHX (unsigned char ch, unsigned char power)
-{
-    unsigned short dummysp;
-
-    if (mem_conf.program_type == MASTER_MODE)
-        data512[ch] = power;
-    
-    dummysp = DMXtoCurrent (power);
-
-    if (ch == 1)
-        sp1_filtered = dummysp;
-    else if (ch == 2)
-        sp2_filtered = dummysp;
-    else if (ch == 3)
-        sp3_filtered = dummysp;
-    else if (ch == 4)
-        sp4_filtered = dummysp;
-    else if (ch == 5)
-        sp5_filtered = dummysp;
-    else    //debe ser el ch6
-        sp6_filtered = dummysp;
-    
-}
-
-//la maxima corriente permitida son 2A -> 820 puntos ADC
-//a la vez se puede elegir menor corriente por configuracion
-//mem_cfg.max_current_int
-//mem_cfg.max_current_dec
-//por ultimo el dmx_data puede ser 255
-unsigned short DMXtoCurrent (unsigned char dmx_data)
-{
-    unsigned short dummy_dec;
-    unsigned int dummy_int;
-
-    dummy_dec = dmx_data * mem_conf.max_current_dec;
-    dummy_dec = dummy_dec / 10;
-
-    dummy_int = dmx_data * mem_conf.max_current_int;
-
-    dummy_int += dummy_dec;
-
-    dummy_int = dummy_int * MAX_CURRENT_IN_ADC_COMPENSATED;    //823
-    dummy_int >>= 9;    //divido por 512
-    
-    return (unsigned short) dummy_int;
-}
 //--- end of file ---//

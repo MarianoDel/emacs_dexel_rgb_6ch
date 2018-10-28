@@ -139,12 +139,7 @@
 #define CHANGE_CHANNELS	  2
 #define CHANGE_PROGRAMS    3
 #define CHANGE_VOLTAGE_MAINS    4
-#define CHANGE_VOLTAGE_1        5
-#define CHANGE_VOLTAGE_2        6
-#define CHANGE_VOLTAGE_3        7
-#define CHANGE_VOLTAGE_4        8
-#define CHANGE_VOLTAGE_5        9
-#define CHANGE_VOLTAGE_6        10
+#define CHANGE_MAX_POWER        5
 
 #define CHANGE_RESET	  0x80
 

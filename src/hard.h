@@ -76,6 +76,8 @@
 
 #define MIN_MAINS_VOLTAGE    20
 #define MAX_MAINS_VOLTAGE    48
+#define MIN_MAX_POWER    40
+#define MAX_MAX_POWER    100
 
 //---- Configuration for Firmware-Programs --------
 
@@ -264,14 +266,24 @@ typedef enum {
 
 } resp_t;
 
+typedef struct {
+    //asking for
+    unsigned short sp_current;
+    unsigned char channel;
+
+    //results
+    unsigned short duty_getted;
+    unsigned short real_current_getted;
+    unsigned short filtered_current_getted;
+    
+} led_current_settings_t;
 
 /* Module Functions ------------------------------------------------------------*/
 sw_state_t CheckS1 (void);
 sw_state_t CheckS2 (void);
 void UpdateSwitches (void);
-void UpdateSamplesAndPID (void);
-void UpdatePIDWithoutUndersampling (void);
-void PIDforProgramsCHX (unsigned char, unsigned char);
-unsigned short DMXtoCurrent (unsigned char);
+resp_t UpdateDutyCycle (led_current_settings_t *);
+void UpdateDutyCycleReset (void);
+void PWMChannelsReset (void);
 
 #endif /* HARD_H_ */
