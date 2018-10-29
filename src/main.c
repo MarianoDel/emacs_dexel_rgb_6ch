@@ -48,7 +48,6 @@ volatile unsigned char seq_ready;
 // ------- Externals de los timers -------
 volatile unsigned char timer_1seg = 0;
 volatile unsigned char switches_timer = 0;
-volatile unsigned char led_current_mode = PWM_MODE;
 
 // ------- Externals del USART -------
 volatile unsigned char usart1_have_data;
@@ -124,12 +123,12 @@ parameters_typedef __attribute__ ((section("memParams1"))) const parameters_type
         .volts_ch[4] = 35,
         .volts_ch[5] = 35,
 
-        .pwm_chnls[0] = DUTY_90_PERCENT,
-        .pwm_chnls[1] = DUTY_90_PERCENT,
-        .pwm_chnls[2] = DUTY_90_PERCENT,        
-        .pwm_chnls[3] = DUTY_90_PERCENT,
-        .pwm_chnls[4] = DUTY_90_PERCENT,
-        .pwm_chnls[5] = DUTY_90_PERCENT,
+        .pwm_chnls[0] = DUTY_60_PERCENT,
+        .pwm_chnls[1] = DUTY_60_PERCENT,
+        .pwm_chnls[2] = DUTY_60_PERCENT,        
+        .pwm_chnls[3] = DUTY_60_PERCENT,
+        .pwm_chnls[4] = DUTY_60_PERCENT,
+        .pwm_chnls[5] = DUTY_60_PERCENT,
         
     };
 

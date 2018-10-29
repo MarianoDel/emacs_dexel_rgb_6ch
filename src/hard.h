@@ -224,9 +224,6 @@
 #define TIMER_STANDBY_TIMEOUT			6000	//6 segundos
 #define DMX_DISPLAY_SHOW_TIMEOUT		30000	//30 segundos
 
-//ESTADOS DEL CONTROL DE CORRIENTE EN LOS LEDs
-#define PWM_MODE    0
-#define PID_MODE    1
 
 //ESTADOS DE LOS SWITCHES
 typedef enum

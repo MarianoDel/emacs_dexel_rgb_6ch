@@ -14,6 +14,7 @@
 //--- Exported types ---//
 //--- Exported constants ---//
 #define DUTY_50_PERCENT		500
+#define DUTY_60_PERCENT		600
 #define DUTY_65_PERCENT		650
 #define DUTY_70_PERCENT		700
 #define DUTY_80_PERCENT		800
@@ -53,6 +54,8 @@
 #define RCC_TIM17_CLK_ON 	RCC->APB2ENR |= 0x00040000
 #define RCC_TIM17_CLK_OFF 	RCC->APB2ENR &= ~0x00040000
 
+#define TIM1DisableInterrupt      TIM1->DIER &= ~TIM_DIER_UIE;
+#define TIM1EnableInterrupt      TIM1->DIER |= TIM_DIER_UIE;
 
 //--- Exported functions ---//
 void TIM1_BRK_UP_TRG_COM_IRQHandler (void);

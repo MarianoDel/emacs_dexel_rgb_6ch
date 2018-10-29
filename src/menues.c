@@ -464,6 +464,7 @@ resp_t MainMenu (void)
         {
             mem_conf.max_power = dummy_16;
             main_menu_state = MAIN_MENU_CONF_HARDWARE_4;
+            TIM1DisableInterrupt;
             led_curr.channel = 0;
             resp = resp_continue;
         }
@@ -624,6 +625,7 @@ resp_t MainMenu (void)
         if (resp == resp_finish)
         {
             main_menu_state = MAIN_MENU_SHOW_HARDWARE;
+            TIM1EnableInterrupt;
             conf_changed = 1;
             resp = resp_continue;
         }
