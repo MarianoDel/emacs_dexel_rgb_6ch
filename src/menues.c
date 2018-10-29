@@ -16,6 +16,7 @@
 #include "tim.h"
 #include "lcd.h"
 #include "lcd_utils.h"
+#include "uart.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -121,9 +122,11 @@ resp_t MainMenu (void)
     resp_t resp = resp_continue;
     unsigned char dummy_8 = 0;
     unsigned char dummy_8_1 = 0;
-    unsigned short dummy_16 = 0;    
+    unsigned short dummy_16 = 0;
+    unsigned int calc = 0;
     // char s_lcd1 [10];
     // char s_lcd2 [10];
+    char s_to_send[100];    //TODO: despues quitar esto de aca
     
 
     switch (main_menu_state)
@@ -462,7 +465,7 @@ resp_t MainMenu (void)
             mem_conf.max_power = dummy_16;
             main_menu_state = MAIN_MENU_CONF_HARDWARE_4;
             led_curr.channel = 0;
-            resp = resp_continue;            
+            resp = resp_continue;
         }
         break;
 
@@ -473,7 +476,10 @@ resp_t MainMenu (void)
             led_curr.channel++;
             led_curr.sp_current = mem_conf.max_current_dec * 100;
             led_curr.sp_current += mem_conf.max_current_int * 1000;
-            
+
+            sprintf(s_lcd1, "set ch%d ", led_curr.channel);
+            sprintf(s_lcd2, "%4dmA  ", led_curr.sp_current);
+        
             UpdateDutyCycleReset();
             main_menu_state++;
         }
@@ -486,6 +492,16 @@ resp_t MainMenu (void)
         break;
 
     case MAIN_MENU_CONF_HARDWARE_5:
+        resp = FuncShowBlink (s_lcd1, s_lcd2, 1, BLINK_NO);
+        
+        if (resp == resp_finish)
+        {
+            resp = resp_continue;
+            main_menu_state++;
+        }
+        break;
+        
+    case MAIN_MENU_CONF_HARDWARE_6:
         //auto seteo canales
         resp = UpdateDutyCycle(&led_curr);
 
@@ -495,6 +511,12 @@ resp_t MainMenu (void)
             sprintf(s_to_send, "No current on CH%d\n", led_curr.channel);                
             Usart2Send(s_to_send);            
             mem_conf.pwm_chnls[led_curr.channel - 1] = 0;
+            mem_conf.volts_ch[led_curr.channel - 1] = 0;            
+
+            strcpy(s_lcd1, "Vled:NOK");
+            strcpy(s_lcd2, "pwm: ---");
+            resp = resp_continue;
+            main_menu_state++;            
         }
 
         if (resp == resp_finish)
@@ -503,6 +525,13 @@ resp_t MainMenu (void)
             sprintf(s_to_send, "More voltage needed for CH%d\n", led_curr.channel);                
             Usart2Send(s_to_send);
             mem_conf.pwm_chnls[led_curr.channel - 1] = DUTY_95_PERCENT;
+
+            calc = mem_conf.volts_in_mains * DUTY_95_PERCENT;
+            calc = calc / 1000;
+            sprintf(s_lcd1, "Vled: %2d", calc);
+            sprintf(s_lcd2, "pwm: %3d", DUTY_95_PERCENT);
+            resp = resp_continue;
+            main_menu_state++;
         }
 
         if (resp == resp_ok)
@@ -514,10 +543,30 @@ resp_t MainMenu (void)
                     led_curr.real_current_getted,
                     led_curr.channel);                
             Usart2Send(s_to_send);
+
+            calc = mem_conf.volts_in_mains * led_curr.duty_getted;
+            calc = calc / 1000;
+
+            mem_conf.volts_ch[led_curr.channel -1] = calc;
             mem_conf.pwm_chnls[led_curr.channel - 1] = led_curr.duty_getted;
+
+            sprintf(s_lcd1, "Vled: %2d", calc);
+            sprintf(s_lcd2, "pwm: %3d", led_curr.duty_getted);
+            resp = resp_continue;
+            main_menu_state++;
         }
         break;
 
+    case MAIN_MENU_CONF_HARDWARE_7:
+        resp = FuncShowBlink (s_lcd1, s_lcd2, 1, BLINK_NO);
+        
+        if (resp == resp_finish)
+        {
+            resp = resp_continue;
+            main_menu_state = MAIN_MENU_CONF_HARDWARE_4;
+        }
+        break;
+        
     case MAIN_MENU_CONF_HARDWARE_9:
         //ajusto los pwm maximos
         // dummy_16 = mem_conf.volts_ch1 * 1000;

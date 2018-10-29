@@ -47,12 +47,7 @@ typedef struct parameters {
     unsigned char volts_in_mains;
     unsigned char max_power;          //12
     
-    unsigned char volts_ch1;
-    unsigned char volts_ch2;
-    unsigned char volts_ch3;
-    unsigned char volts_ch4;
-    unsigned char volts_ch5;
-    unsigned char volts_ch6;            //18
+    unsigned char volts_ch [6];    //18
     
     unsigned short pwm_chnls [6];    //30
 

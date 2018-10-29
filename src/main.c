@@ -115,19 +115,21 @@ parameters_typedef __attribute__ ((section("memParams1"))) const parameters_type
         .max_current_dec = 0,
 
         .volts_in_mains = 35,
-        .volts_ch1 = 35,
-        .volts_ch2 = 35,
-        .volts_ch3 = 35,
-        .volts_ch4 = 35,
-        .volts_ch5 = 35,
-        .volts_ch6 = 35,
+        .max_power = 40,
+        
+        .volts_ch[0] = 35,
+        .volts_ch[1] = 35,
+        .volts_ch[2] = 35,
+        .volts_ch[3] = 35,
+        .volts_ch[4] = 35,
+        .volts_ch[5] = 35,
 
-        .max_pwm_ch1 = DUTY_90_PERCENT,
-        .max_pwm_ch2 = DUTY_90_PERCENT,
-        .max_pwm_ch3 = DUTY_90_PERCENT,
-        .max_pwm_ch4 = DUTY_90_PERCENT,
-        .max_pwm_ch5 = DUTY_90_PERCENT,
-        .max_pwm_ch6 = DUTY_90_PERCENT
+        .pwm_chnls[0] = DUTY_90_PERCENT,
+        .pwm_chnls[1] = DUTY_90_PERCENT,
+        .pwm_chnls[2] = DUTY_90_PERCENT,        
+        .pwm_chnls[3] = DUTY_90_PERCENT,
+        .pwm_chnls[4] = DUTY_90_PERCENT,
+        .pwm_chnls[5] = DUTY_90_PERCENT,
         
     };
 
@@ -149,19 +151,19 @@ parameters_typedef __attribute__ ((section("memParams2"))) const parameters_type
         .max_current_dec = 0,
 
         .volts_in_mains = 2,
-        .volts_ch1 = 2,
-        .volts_ch2 = 2,
-        .volts_ch3 = 2,
-        .volts_ch4 = 2,
-        .volts_ch5 = 2,
-        .volts_ch6 = 2,
-
-        .max_pwm_ch1 = 2,
-        .max_pwm_ch2 = 2,
-        .max_pwm_ch3 = 2,
-        .max_pwm_ch4 = 2,
-        .max_pwm_ch5 = 2,
-        .max_pwm_ch6 = 2
+        .volts_ch[0] = 2,
+        .volts_ch[1] = 2,
+        .volts_ch[2] = 2,
+        .volts_ch[3] = 2,
+        .volts_ch[4] = 2,
+        .volts_ch[5] = 2,
+        
+        .pwm_chnls[0] = 2,
+        .pwm_chnls[1] = 2,
+        .pwm_chnls[2] = 2,
+        .pwm_chnls[3] = 2,
+        .pwm_chnls[4] = 2,
+        .pwm_chnls[5] = 2,
         
     };
 
@@ -570,93 +572,60 @@ int main(void)
     // }
     //-- Fin Prueba con ADC & DMA & PWM Fijo y mido I ----------
 
-    //-- Prueba con ADC & DMA lazo PID ----------
-    AdcConfig();
+    //-- Prueba con ADC & PWM for channels settings ----------
+    // AdcConfig();
 
-    //-- DMA configuration.
-    DMAConfig();
-    DMA1_Channel1->CCR |= DMA_CCR_EN;
+    // //-- DMA configuration.
+    // DMAConfig();
+    // DMA1_Channel1->CCR |= DMA_CCR_EN;
 
-    ADC1->CR |= ADC_CR_ADSTART;
-    led_current_mode = PID_MODE;
-    PWMChannelsReset();
+    // ADC1->CR |= ADC_CR_ADSTART;
+    // led_current_mode = PID_MODE;
+    // PWMChannelsReset();
     
-    // Prueba ADC & DMA
-    need_to_save_timer = 10000;
+    // // Prueba ADC & DMA
+    // need_to_save_timer = 10000;
 
-    led_current_settings_t led_curr;
-    led_curr.sp_current = 1990;
-    led_curr.channel = 1;
+    // led_current_settings_t led_curr;
+    // led_curr.sp_current = 1990;
+    // led_curr.channel = 1;
     
-    while(1)
-    {
-        if (!need_to_save_timer)
-        {
-            resp = UpdateDutyCycle(&led_curr);
+    // while(1)
+    // {
+    //     if (!need_to_save_timer)
+    //     {
+    //         resp = UpdateDutyCycle(&led_curr);
 
-            if (resp == resp_error)
-            {
-                UpdateDutyCycleReset();
-                need_to_save_timer = 10000;
-                sprintf(s_to_send, "No current on CH%d\n", led_curr.channel);                
-                Usart2Send(s_to_send);
-            }
+    //         if (resp == resp_error)
+    //         {
+    //             UpdateDutyCycleReset();
+    //             need_to_save_timer = 10000;
+    //             sprintf(s_to_send, "No current on CH%d\n", led_curr.channel);                
+    //             Usart2Send(s_to_send);
+    //         }
 
-            if (resp == resp_finish)
-            {
-                UpdateDutyCycleReset();
-                need_to_save_timer = 10000;
-                sprintf(s_to_send, "More voltage needed for CH%d\n", led_curr.channel);                
-                Usart2Send(s_to_send);
-            }
+    //         if (resp == resp_finish)
+    //         {
+    //             UpdateDutyCycleReset();
+    //             need_to_save_timer = 10000;
+    //             sprintf(s_to_send, "More voltage needed for CH%d\n", led_curr.channel);                
+    //             Usart2Send(s_to_send);
+    //         }
 
-            if (resp == resp_ok)
-            {
-                UpdateDutyCycleReset();
-                need_to_save_timer = 10000;
-                sprintf(s_to_send, "i: %d, d: %d, ireal: %d CH%d\n",
-                        led_curr.filtered_current_getted,
-                        led_curr.duty_getted,
-                        led_curr.real_current_getted,
-                        led_curr.channel);                
-                Usart2Send(s_to_send);
-            }
-        }
-        
-        // if (DMA1->ISR & DMA_ISR_TCIF1)    //esto es sequence ready a 16KHz
-        // {
-        //     DMA1->IFCR = DMA_ISR_TCIF1;
-
-        //     if (undersampling < (PID_UNDERSAMPLING - 1))
-        //         undersampling++;
-        //     else
-        //     {
-        //         undersampling = 0;
-        //         if (CTRL_FAN)
-        //             CTRL_FAN_OFF;
-        //         else
-        //             CTRL_FAN_ON;
-
-        //         //PID CH1 Filtered
-        //         // sp1_filtered = MAFilter8(I_Channel_1, v_sp1);
-        //         // d_ch1 = PID_roof (593, sp1_filtered, d_ch1, &e_z1_ch1, &e_z2_ch1);
-        //         //PID CH1                
-        //         d_ch1 = PID_roof (593, I_Channel_1, d_ch1, &e_z1_ch1, &e_z2_ch1);
-
-        //         if (d_ch1 < 0)
-        //             d_ch1 = 0;
-        //         else
-        //         {
-        //             if (d_ch1 > DUTY_95_PERCENT)
-        //                 d_ch1 = DUTY_95_PERCENT;
-                    
-        //             Update_PWM1(d_ch1);
-        //         }
-        //     }
-        // }
-
-    }
-    //-- Prueba con ADC & DMA lazo PID ----------
+    //         if (resp == resp_ok)
+    //         {
+    //             UpdateDutyCycleReset();
+    //             need_to_save_timer = 10000;
+    //             sprintf(s_to_send, "i: %d, d: %d, ireal: %d CH%d\n",
+    //                     led_curr.filtered_current_getted,
+    //                     led_curr.duty_getted,
+    //                     led_curr.real_current_getted,
+    //                     led_curr.channel);                
+    //             Usart2Send(s_to_send);
+    //         }
+    //     }
+    // }
+    //-- Fin Prueba con ADC & PWM for channels settings ----------
     
     //-- Programa de Produccion del DMX
     //inicializo dmx si todavia no lo hice
@@ -706,12 +675,12 @@ int main(void)
             Usart2Send(s_to_send);
             Wait_ms(100);
             sprintf(s_to_send, "Max pwm channels: %d %d %d %d %d %d\n",
-                    mem_conf.max_pwm_ch1,
-                    mem_conf.max_pwm_ch2,
-                    mem_conf.max_pwm_ch3,
-                    mem_conf.max_pwm_ch4,
-                    mem_conf.max_pwm_ch5,
-                    mem_conf.max_pwm_ch6);
+                    mem_conf.pwm_chnls[0],
+                    mem_conf.pwm_chnls[1],
+                    mem_conf.pwm_chnls[2],
+                    mem_conf.pwm_chnls[3],
+                    mem_conf.pwm_chnls[4],
+                    mem_conf.pwm_chnls[5]);
             
             Usart2Send(s_to_send);
             Wait_ms(100);
