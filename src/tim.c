@@ -132,6 +132,7 @@ void TIM1_BRK_UP_TRG_COM_IRQHandler (void)	//48Khz
     if (tim_soft_pwm_counter < 255)
     {        
         tim_soft_pwm_counter++;
+
         if (tim_soft_pwm_counter != 255)
         {
             if (tim_soft_pwm_counter >= pwm_ch1)
@@ -146,6 +147,8 @@ void TIM1_BRK_UP_TRG_COM_IRQHandler (void)	//48Khz
                 Update_PWM5(0);
             if (tim_soft_pwm_counter >= pwm_ch6)
                 Update_PWM6(0);
+
+            // HardUpdateMaxPower ();
         }
     }
     else
@@ -164,6 +167,8 @@ void TIM1_BRK_UP_TRG_COM_IRQHandler (void)	//48Khz
             Update_PWM5(mem_conf.pwm_chnls[4]);
         if (pwm_ch6)
             Update_PWM6(mem_conf.pwm_chnls[5]);
+
+        // HardUpdateMaxPowerReset ();
     }
         //bajar flag
     if (TIM1->SR & 0x01)	//bajo el flag

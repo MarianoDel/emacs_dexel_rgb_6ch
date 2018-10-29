@@ -281,4 +281,22 @@ void UpdateDutyCycleReset (void)
     }
 }
 
+// inline void HardUpdateMaxPower (void)
+// {
+//     max_power_state = MAX_P_INIT;    
+// }
+
+// inline void HardUpdateMaxPowerReset (void)
+// {
+//     switch (max_power_state)
+//     {
+//     case MAX_P_INIT:
+//         break;
+
+//     default:
+//         max_power_state = MAX_P_INIT;
+//         break;
+//     }    
+// }
+
 //--- end of file ---//

@@ -26,7 +26,7 @@
 #define WITH_BIDIRECTIONAL
 // #define USE_FILTER_LENGHT_8
 #define USE_FILTER_LENGHT_16
-// #define USE_OVERTEMP_PROT
+#define USE_OVERTEMP_PROT
 
 
 //------ Configuration for Firmware-Channels -----
@@ -275,5 +275,7 @@ void UpdateSwitches (void);
 resp_t UpdateDutyCycle (led_current_settings_t *);
 void UpdateDutyCycleReset (void);
 void PWMChannelsReset (void);
+void HardUpdateMaxPower (void);
+void HardUpdateMaxPowerReset (void);
 
 #endif /* HARD_H_ */

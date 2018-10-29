@@ -793,6 +793,13 @@ int main(void)
         case MAIN_IN_OVERTEMP:
             CTRL_FAN_ON;
             PWMChannelsReset();
+            
+            Change_PWM1(0);
+            Change_PWM2(0);
+            Change_PWM3(0);
+            Change_PWM4(0);
+            Change_PWM5(0);
+            Change_PWM6(0);
 
             LCD_1ER_RENGLON;
             LCDTransmitStr("OVERTEMP");
