@@ -13,13 +13,6 @@
 #include "stm32f0xx.h"
 
 
-#define Update_PWM1(X)    Update_TIM1_CH1(X)
-#define Update_PWM2(X)    Update_TIM1_CH2(X)
-#define Update_PWM3(X)    Update_TIM3_CH1(X)
-#define Update_PWM4(X)    Update_TIM3_CH2(X)
-#define Update_PWM5(X)    Update_TIM3_CH3(X)
-#define Update_PWM6(X)    Update_TIM3_CH4(X)
-
 //-- Defines For Configuration -------------------
 //---- Configuration for Hardware Versions -------
 #define HARDWARE_VERSION_1_0

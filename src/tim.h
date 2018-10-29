@@ -57,6 +57,13 @@
 #define TIM1DisableInterrupt      TIM1->DIER &= ~TIM_DIER_UIE;
 #define TIM1EnableInterrupt      TIM1->DIER |= TIM_DIER_UIE;
 
+#define Update_PWM1(X)    Update_TIM1_CH1(X)
+#define Update_PWM2(X)    Update_TIM1_CH2(X)
+#define Update_PWM3(X)    Update_TIM3_CH1(X)
+#define Update_PWM4(X)    Update_TIM3_CH2(X)
+#define Update_PWM5(X)    Update_TIM3_CH3(X)
+#define Update_PWM6(X)    Update_TIM3_CH4(X)
+
 //--- Exported functions ---//
 void TIM1_BRK_UP_TRG_COM_IRQHandler (void);
 void TIM3_IRQHandler (void);

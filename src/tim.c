@@ -32,12 +32,15 @@ volatile unsigned short tim_soft_pwm_ch4 = 0;
 volatile unsigned short tim_soft_pwm_ch5 = 0;
 volatile unsigned short tim_soft_pwm_ch6 = 0;
 
+//-- Private macros ------------------------------
 #define pwm_ch1 tim_soft_pwm_ch1
 #define pwm_ch2 tim_soft_pwm_ch2
 #define pwm_ch3 tim_soft_pwm_ch3
 #define pwm_ch4 tim_soft_pwm_ch4
 #define pwm_ch5 tim_soft_pwm_ch5
 #define pwm_ch6 tim_soft_pwm_ch6
+
+
 
 //--- FUNCIONES DEL MODULO ---//
 void Update_TIM1_CH1 (unsigned short a)

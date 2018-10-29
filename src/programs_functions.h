@@ -14,10 +14,10 @@
 #include "tim.h"
 
 //-------- Defines -------------
-#define WHITE_PWM(X)	Update_PWM4(X)
-#define BLUE_PWM(X)	Update_PWM3(X)
-#define GREEN_PWM(X)	Update_PWM2(X)
-#define RED_PWM(X)	Update_PWM1(X)
+#define WHITE_PWM(X)	Change_PWM4(X)
+#define BLUE_PWM(X)	Change_PWM3(X)
+#define GREEN_PWM(X)	Change_PWM2(X)
+#define RED_PWM(X)	Change_PWM1(X)
 
 #define MAX_FADE 255
 //#define MAX_FADE 256
