@@ -155,6 +155,19 @@ void TIM1_BRK_UP_TRG_COM_IRQHandler (void)	//48Khz
     {
         tim_soft_pwm_counter = 0;
         //arranco todos los soft pwm
+        // if (pwm_ch1)
+        //     Update_PWM1(598);
+        // if (pwm_ch2)
+        //     Update_PWM2(895);
+        // if (pwm_ch3)
+        //     Update_PWM3(839);
+        // if (pwm_ch4)
+        //     Update_PWM4(593);
+        // if (pwm_ch5)
+        //     Update_PWM5(593);
+        // if (pwm_ch6)
+        //     Update_PWM6(593);
+
         if (pwm_ch1)
             Update_PWM1(mem_conf.pwm_chnls[0]);
         if (pwm_ch2)
@@ -167,7 +180,7 @@ void TIM1_BRK_UP_TRG_COM_IRQHandler (void)	//48Khz
             Update_PWM5(mem_conf.pwm_chnls[4]);
         if (pwm_ch6)
             Update_PWM6(mem_conf.pwm_chnls[5]);
-
+        
         // HardUpdateMaxPowerReset ();
     }
         //bajar flag
@@ -204,7 +217,7 @@ void TIM3_IRQHandler (void)	//1 ms
 
 
 
-void TIM_1_Init (void)
+void TIM_1_Init_Irq (void)
 {
     unsigned long temp;
 
@@ -218,7 +231,8 @@ void TIM_1_Init (void)
     TIM1->SMCR = 0x0000;
     TIM1->CCMR1 = 0x6060;			//CH2 y CH1 output PWM mode 1
     TIM1->CCMR2 = 0x0000;
-
+    TIM1->CCMR1 |= TIM_CCMR1_OC1PE | TIM_CCMR1_OC2PE;
+    
     TIM1->CCER |= TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC1E | TIM_CCER_CC1P;	//CH2 y CH1 enable on pin
 
     TIM1->BDTR |= TIM_BDTR_MOE;
@@ -237,7 +251,46 @@ void TIM_1_Init (void)
     // Enable timer interrupt ver UDIS
     TIM1->DIER |= TIM_DIER_UIE;
     NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
-    NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 6);
+    NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 1);
+    
+    TIM1->CR1 |= TIM_CR1_CEN;
+}
+
+void TIM_1_Init_Only_PWM (void)
+{
+    unsigned long temp;
+
+    if (!RCC_TIM1_CLK)
+        RCC_TIM1_CLK_ON;
+
+    //Configuracion del timer.
+    TIM1->CR1 = 0x00;		//clk int / 1; upcounting
+    TIM1->CR2 |= TIM_CR2_MMS_1;		//UEV -> TRG0
+
+    TIM1->SMCR = 0x0000;
+    TIM1->CCMR1 = 0x6060;			//CH2 y CH1 output PWM mode 1
+    TIM1->CCMR2 = 0x0000;
+    TIM1->CCMR1 |= TIM_CCMR1_OC1PE | TIM_CCMR1_OC2PE;
+    
+    TIM1->CCER |= TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC1E | TIM_CCER_CC1P;	//CH2 y CH1 enable on pin
+
+    TIM1->BDTR |= TIM_BDTR_MOE;
+    
+    TIM1->ARR = DUTY_100_PERCENT;
+    TIM1->CNT = 0;
+    TIM1->PSC = 0;		
+
+    //Configuracion Pines
+    //Alternate Fuction
+    temp = GPIOA->AFR[1];
+    temp &= 0xFFFFFF00;    
+    temp |= 0x00000022;			//PA9 -> AF2; PA8 -> AF2
+    GPIOA->AFR[1] = temp;
+
+    // Enable timer interrupt ver UDIS
+    // TIM1->DIER |= TIM_DIER_UIE;
+    // NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
+    // NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 1);
     
     TIM1->CR1 |= TIM_CR1_CEN;
 }
@@ -257,6 +310,8 @@ void TIM_3_Init (void)
     // TIM3->SMCR |= TIM_SMCR_SMS_2 | TIM_SMCR_SMS_1;	//trigger: trigger mode; link timer 1
     TIM3->CCMR1 = 0x6060;      //CH1, CH2 output PWM mode 1 (channel active TIM3->CNT < TIM3->CCR1)
     TIM3->CCMR2 = 0x6060;      //CH3, CH4 output PWM mode 1 (channel active TIM3->CNT < TIM3->CCR1)
+    TIM3->CCMR1 |= TIM_CCMR1_OC1PE | TIM_CCMR1_OC2PE;
+    TIM3->CCMR2 |= TIM_CCMR2_OC3PE | TIM_CCMR2_OC4PE;
 
     TIM3->CCER |= TIM_CCER_CC4E | TIM_CCER_CC4P | TIM_CCER_CC3E | TIM_CCER_CC3P | TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC1E | TIM_CCER_CC1P;	//CH4 CH3 CH2 y CH1 enable on pin & polarity reversal
 

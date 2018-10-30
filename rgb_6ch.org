@@ -124,3 +124,8 @@
 ** diafonia en canales
    - con el 4 prendido el 5 mide 44mV
    - con el 6 prendido el 5 mide 12mV
+
+** PWM para canales a 35V
+   - 598 rojo
+   - 895 verde
+   - 839 azul

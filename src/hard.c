@@ -57,33 +57,6 @@ extern unsigned char data512[];
 unsigned short s1 = 0;
 unsigned short s2 = 0;
 
-//--- Para el PID ----------
-unsigned char undersampling = 0;
-// #define PID_UNDERSAMPLING    10
-// #define PID_UNDERSAMPLING    20
-#define PID_UNDERSAMPLING    4    //(71.5 + 12.5 sar) * 1 / 12MHz = 7us; 7canales -> 49us
-
-// short d_ch1;
-// short d_ch2;
-// short d_ch3;
-// short d_ch4;
-// short d_ch5;
-// short d_ch6;
-
-// short e_z1_ch1;
-// short e_z1_ch2;
-// short e_z1_ch3;
-// short e_z1_ch4;
-// short e_z1_ch5;
-// short e_z1_ch6;
-
-// short e_z2_ch1;
-// short e_z2_ch2;
-// short e_z2_ch3;
-// short e_z2_ch4;
-// short e_z2_ch5;
-// short e_z2_ch6;
-
 #define sequence_ready         (DMA1->ISR & DMA_ISR_TCIF1)
 #define sequence_ready_reset   (DMA1->IFCR = DMA_ISR_TCIF1)
 
@@ -233,7 +206,7 @@ resp_t UpdateDutyCycle (led_current_settings_t * settings)
                 }
 
                 //error en corriente
-                if ((duty_cycle > 500) && (I_real < 25))
+                if ((duty_cycle > 900) && (I_real < 25))
                     resp = resp_error;
             }
             else
@@ -281,22 +254,5 @@ void UpdateDutyCycleReset (void)
     }
 }
 
-// inline void HardUpdateMaxPower (void)
-// {
-//     max_power_state = MAX_P_INIT;    
-// }
-
-// inline void HardUpdateMaxPowerReset (void)
-// {
-//     switch (max_power_state)
-//     {
-//     case MAX_P_INIT:
-//         break;
-
-//     default:
-//         max_power_state = MAX_P_INIT;
-//         break;
-//     }    
-// }
 
 //--- end of file ---//

@@ -68,7 +68,8 @@
 void TIM1_BRK_UP_TRG_COM_IRQHandler (void);
 void TIM3_IRQHandler (void);
 void TIM_3_Init(void);
-void TIM_1_Init(void);
+void TIM_1_Init_Irq (void);
+void TIM_1_Init_Only_PWM (void);
 void TIM_6_Init (void);
 void TIM14_IRQHandler (void);
 void TIM_14_Init(void);

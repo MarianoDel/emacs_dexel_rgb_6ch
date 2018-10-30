@@ -20,8 +20,12 @@
 
 
 //--- Externals ---------------------------------------------------
+extern parameters_typedef mem_conf;
+
 
 //--- Globals -----------------------------------------------------
+unsigned short current_power = 0;
+
 
 //--- Private Module Functions Declarations -----------------------
 // extern inline void UsartSendDMX (void);
@@ -30,9 +34,12 @@
 
 
 //--- Module Function Definitions ---------------------------------
-
+void PwrCtrl_SetPWM (unsigned char ch, unsigned char duty)
+{
+    
+    
+    
+}
 
 
 //--- end of file ---//
-
-

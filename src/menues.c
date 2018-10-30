@@ -520,24 +520,16 @@ resp_t MainMenu (void)
             main_menu_state++;            
         }
 
-        if (resp == resp_finish)
+        if ((resp == resp_ok) || (resp == resp_finish))
         {
             UpdateDutyCycleReset();
-            sprintf(s_to_send, "More voltage needed for CH%d\n", led_curr.channel);                
-            Usart2Send(s_to_send);
-            mem_conf.pwm_chnls[led_curr.channel - 1] = DUTY_95_PERCENT;
-
-            calc = mem_conf.volts_in_mains * DUTY_95_PERCENT;
-            calc = calc / 1000;
-            sprintf(s_lcd1, "Vled: %2d", calc);
-            sprintf(s_lcd2, "pwm: %3d", DUTY_95_PERCENT);
-            resp = resp_continue;
-            main_menu_state++;
-        }
-
-        if (resp == resp_ok)
-        {
-            UpdateDutyCycleReset();
+            if (resp == resp_finish)
+            {
+                sprintf(s_to_send, "More voltage needed for CH%d\n", led_curr.channel);                
+                Usart2Send(s_to_send);
+                led_curr.duty_getted = DUTY_95_PERCENT;
+            }
+            
             sprintf(s_to_send, "i: %d, d: %d, ireal: %d CH%d\n",
                     led_curr.filtered_current_getted,
                     led_curr.duty_getted,
