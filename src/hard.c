@@ -254,5 +254,21 @@ void UpdateDutyCycleReset (void)
     }
 }
 
+unsigned short PWMChannelsOffset (unsigned char dmx_data, unsigned short pwm_max_curr_data)
+{
+    unsigned int calc = 0;
+    
+    if (!dmx_data)
+        calc = 0;
+    else
+    {
+        //tengo 10 puntos minimo para activar transistores y mosfet
+        calc = (dmx_data - 1) * (pwm_max_curr_data - DUTY_TRANSISTORS_ON);
+        calc = calc / 255;
+        // calc >>= 8;
+        calc += DUTY_TRANSISTORS_ON;
+    }
+    return (unsigned short) calc;
+}
 
 //--- end of file ---//

@@ -124,6 +124,8 @@
 ** diafonia en canales
    - con el 4 prendido el 5 mide 44mV
    - con el 6 prendido el 5 mide 12mV
+   - tenia un canal quemado que traia este problema
+
 
 ** PWM para canales a 35V
    - 598 rojo

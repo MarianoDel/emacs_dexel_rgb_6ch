@@ -13,6 +13,7 @@
 
 //--- Exported types ---//
 //--- Exported constants ---//
+#define DUTY_TRANSISTORS_ON	10
 #define DUTY_50_PERCENT		500
 #define DUTY_60_PERCENT		600
 #define DUTY_65_PERCENT		650

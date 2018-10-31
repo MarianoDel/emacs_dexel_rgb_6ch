@@ -277,5 +277,6 @@ void UpdateDutyCycleReset (void);
 void PWMChannelsReset (void);
 void HardUpdateMaxPower (void);
 void HardUpdateMaxPowerReset (void);
+unsigned short PWMChannelsOffset (unsigned char, unsigned short);
 
 #endif /* HARD_H_ */
