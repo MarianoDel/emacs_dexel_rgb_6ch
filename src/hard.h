@@ -27,8 +27,12 @@
 // #define USE_FILTER_LENGHT_8
 #define USE_FILTER_LENGHT_16
 #define USE_OVERTEMP_PROT
+#define USE_INDUCTOR_IN_DCM
+// #define USE_INDUCTOR_IN_CCM
 
-
+#define USE_LED_CTRL_MODE_CONTINUOS
+// #define USE_LED_CTRL_MODE_PWM
+// #define USE_LED_CTRL_MODE_MIXED
 //------ Configuration for Firmware-Channels -----
 
 

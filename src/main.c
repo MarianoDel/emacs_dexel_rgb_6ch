@@ -235,8 +235,13 @@ int main(void)
     //pruebas hard//
     USART2Config();
 
-    // TIM_1_Init_Irq();
+#if (defined USE_LED_CTRL_MODE_PWM) || (defined USE_LED_CTRL_MODE_MIXED)
+    TIM_1_Init_Irq();
+#elif defined USE_LED_CTRL_MODE_CONTINUOS
     TIM_1_Init_Only_PWM();
+#else    
+#error "set Led control mode on hard.h"
+#endif
     TIM_3_Init();
 
     PWMChannelsReset();
@@ -830,11 +835,74 @@ int main(void)
             FuncSlaveMode();
             if (UpdateFiltersTest ())
             {
+#ifdef USE_LED_CTRL_MODE_MIXED
+                //calculo el PWM de cada canal, solo si tengo leds en los canales
+                if (mem_conf.pwm_chnls[0])
+                {
+                    if (sp1_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
+                    {
+                        ch1_pwm = PWMChannelsOffset(sp1_filtered, mem_conf.pwm_chnls[0]);
+                        mem_conf.pwm_base_chnls[0] = ch1_pwm;
+                        Update_PWM1(ch1_pwm);                        
+                    }
+                }
+                
+                if (mem_conf.pwm_chnls[1])
+                {
+                    if (sp2_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
+                    {
+                        ch2_pwm = PWMChannelsOffset(sp2_filtered, mem_conf.pwm_chnls[1]);
+                        mem_conf.pwm_base_chnls[1] = ch2_pwm;
+                        Update_PWM2(ch2_pwm);
+                    }
+                }
+
+                if (mem_conf.pwm_chnls[2])
+                {
+                    if (sp3_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
+                    {
+                        ch3_pwm = PWMChannelsOffset(sp3_filtered, mem_conf.pwm_chnls[2]);
+                        mem_conf.pwm_base_chnls[2] = ch3_pwm;
+                        Update_PWM3(ch3_pwm);
+                    }
+                }
+
+                if (mem_conf.pwm_chnls[3])
+                {
+                    if (sp4_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
+                    {
+                        ch4_pwm = PWMChannelsOffset(sp4_filtered, mem_conf.pwm_chnls[3]);
+                        mem_conf.pwm_base_chnls[3] = ch4_pwm;
+                        Update_PWM4(ch4_pwm);
+                    }
+                }
+
+                if (mem_conf.pwm_chnls[4])
+                {
+                    if (sp5_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
+                    {
+                        ch5_pwm = PWMChannelsOffset(sp5_filtered, mem_conf.pwm_chnls[4]);
+                        mem_conf.pwm_base_chnls[4] = ch5_pwm;
+                        Update_PWM5(ch5_pwm);
+                    }
+                }
+
+                if (mem_conf.pwm_chnls[5])
+                {
+                    if (sp6_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
+                    {
+                        ch6_pwm = PWMChannelsOffset(sp6_filtered, mem_conf.pwm_chnls[5]);
+                        mem_conf.pwm_base_chnls[5] = ch6_pwm;
+                        Update_PWM6(ch6_pwm);
+                    }
+                }
+#endif
+#ifdef USE_LED_CTRL_MODE_CONTINUOS
                 //calculo el PWM de cada canal, solo si tengo leds en los canales
                 if (mem_conf.pwm_chnls[0])
                 {
                     ch1_pwm = PWMChannelsOffset(sp1_filtered, mem_conf.pwm_chnls[0]);
-                    Update_PWM1(ch1_pwm);
+                    Update_PWM1(ch1_pwm);                        
                 }
                 
                 if (mem_conf.pwm_chnls[1])
@@ -866,6 +934,7 @@ int main(void)
                     ch6_pwm = PWMChannelsOffset(sp6_filtered, mem_conf.pwm_chnls[5]);
                     Update_PWM6(ch6_pwm);
                 }
+#endif
             }
 
             if (!timer_standby)

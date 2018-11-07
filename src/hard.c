@@ -128,7 +128,15 @@ void UpdateSwitches (void)
 //resp_error, llego al 50% del pwm pero nunca hubo corriente
 #define I_filtered    sp1_filtered
 #define I_Sampled_Channel    sp2_filtered
+#if defined USE_INDUCTOR_IN_CCM
 #define K_current    2390
+#elif defined USE_INDUCTOR_IN_DCM
+//2A mide 2V/3.67 = 545mV
+//545mV -> 676 adc; 2000[mA] / 676 = 2.96
+#define K_current    296
+#else
+#message "Select current mode in hard.h"
+#endif
 unsigned short duty_cycle = 0;
 unsigned char filter_cnt = 0;
 resp_t UpdateDutyCycle (led_current_settings_t * settings)
@@ -165,16 +173,27 @@ resp_t UpdateDutyCycle (led_current_settings_t * settings)
         I_filtered = MAFilterFast16 (I_Sampled_Channel, v_sp1);
 #ifdef USE_FILTER_LENGHT_8
         if (filter_cnt < 32)    //2ms
+        {
+            filter_cnt++;
+        }
 #endif
 #ifdef USE_FILTER_LENGHT_16
         if (filter_cnt < 64)    //4ms
-#endif
+        {
             filter_cnt++;
+        }
+#endif
         else
         {
             filter_cnt = 0;
+#ifdef USE_INDUCTOR_IN_CCM                
             I_real = I_filtered * K_current;
             I_real = I_real / duty_cycle;
+#endif
+#ifdef USE_INDUCTOR_IN_DCM                
+            I_real = I_filtered * K_current;
+            I_real = I_real / 100;
+#endif
 
             if (I_real < settings->sp_current)
             {

@@ -19,6 +19,13 @@ extern volatile unsigned short timer_led_comm;
 extern volatile unsigned short wait_ms_var;
 extern parameters_typedef mem_conf;
 
+extern unsigned short sp1_filtered;
+extern unsigned short sp2_filtered;
+extern unsigned short sp3_filtered;
+extern unsigned short sp4_filtered;
+extern unsigned short sp5_filtered;
+extern unsigned short sp6_filtered;
+
 //--- VARIABLES GLOBALES ---//
 
 volatile unsigned short timer_1000 = 0;
@@ -129,61 +136,84 @@ void Change_PWM6 (unsigned char a)
 //------------------------------------------//
 void TIM1_BRK_UP_TRG_COM_IRQHandler (void)	//48Khz
 {
+#ifdef USE_LED_CTRL_MODE_MIXED
+    if (tim_soft_pwm_counter < TIM_CNTR_FOR_DMX_DELTA)
+    {        
+        tim_soft_pwm_counter++;
+
+        if (tim_soft_pwm_counter != TIM_CNTR_FOR_DMX_DELTA)
+        {
+            if (tim_soft_pwm_counter >= (sp1_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
+                Update_PWM1(mem_conf.pwm_base_chnls[0]);
+            if (tim_soft_pwm_counter >= (sp2_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
+                Update_PWM2(mem_conf.pwm_base_chnls[1]);
+            if (tim_soft_pwm_counter >= (sp3_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
+                Update_PWM3(mem_conf.pwm_base_chnls[2]);
+            if (tim_soft_pwm_counter >= (sp4_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
+                Update_PWM4(mem_conf.pwm_base_chnls[3]);
+            if (tim_soft_pwm_counter >= (sp5_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
+                Update_PWM5(mem_conf.pwm_base_chnls[4]);
+            if (tim_soft_pwm_counter >= (sp6_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
+                Update_PWM6(mem_conf.pwm_base_chnls[5]);
+        }
+    }
+    else
+    {
+        tim_soft_pwm_counter = 0;
+        if (sp1_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
+            Update_PWM1(mem_conf.pwm_chnls[0]);
+        if (sp2_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
+            Update_PWM2(mem_conf.pwm_chnls[1]);
+        if (sp3_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
+            Update_PWM3(mem_conf.pwm_chnls[2]);
+        if (sp4_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
+            Update_PWM4(mem_conf.pwm_chnls[3]);
+        if (sp5_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
+            Update_PWM5(mem_conf.pwm_chnls[4]);
+        if (sp6_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
+            Update_PWM6(mem_conf.pwm_chnls[5]);
+    }
+#endif
+#ifdef USE_LED_CTRL_MODE_PWM
     if (tim_soft_pwm_counter < 255)
     {        
         tim_soft_pwm_counter++;
 
         if (tim_soft_pwm_counter != 255)
         {
-            if (tim_soft_pwm_counter >= pwm_ch1)
+            if (tim_soft_pwm_counter >= sp1_filtered)
                 Update_PWM1(0);
-            if (tim_soft_pwm_counter >= pwm_ch2)
+            if (tim_soft_pwm_counter >= sp2_filtered)
                 Update_PWM2(0);
-            if (tim_soft_pwm_counter >= pwm_ch3)
+            if (tim_soft_pwm_counter >= sp3_filtered)
                 Update_PWM3(0);
-            if (tim_soft_pwm_counter >= pwm_ch4)
+            if (tim_soft_pwm_counter >= sp4_filtered)
                 Update_PWM4(0);
-            if (tim_soft_pwm_counter >= pwm_ch5)
+            if (tim_soft_pwm_counter >= sp5_filtered)
                 Update_PWM5(0);
-            if (tim_soft_pwm_counter >= pwm_ch6)
+            if (tim_soft_pwm_counter >= sp6_filtered)
                 Update_PWM6(0);
-
-            // HardUpdateMaxPower ();
         }
     }
     else
     {
         tim_soft_pwm_counter = 0;
-        //arranco todos los soft pwm
-        // if (pwm_ch1)
-        //     Update_PWM1(598);
-        // if (pwm_ch2)
-        //     Update_PWM2(895);
-        // if (pwm_ch3)
-        //     Update_PWM3(839);
-        // if (pwm_ch4)
-        //     Update_PWM4(593);
-        // if (pwm_ch5)
-        //     Update_PWM5(593);
-        // if (pwm_ch6)
-        //     Update_PWM6(593);
-
-        if (pwm_ch1)
+        if (sp1_filtered)
             Update_PWM1(mem_conf.pwm_chnls[0]);
-        if (pwm_ch2)
+        if (sp2_filtered)
             Update_PWM2(mem_conf.pwm_chnls[1]);
-        if (pwm_ch3)
+        if (sp3_filtered)
             Update_PWM3(mem_conf.pwm_chnls[2]);
-        if (pwm_ch4)
+        if (sp4_filtered)
             Update_PWM4(mem_conf.pwm_chnls[3]);
-        if (pwm_ch5)
+        if (sp5_filtered)
             Update_PWM5(mem_conf.pwm_chnls[4]);
-        if (pwm_ch6)
+        if (sp6_filtered)
             Update_PWM6(mem_conf.pwm_chnls[5]);
-        
-        // HardUpdateMaxPowerReset ();
     }
-        //bajar flag
+#endif
+    
+    //bajar flag
     if (TIM1->SR & 0x01)	//bajo el flag
         TIM1->SR = 0x00;
 }

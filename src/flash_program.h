@@ -50,9 +50,10 @@ typedef struct parameters {
     unsigned char volts_ch [6];    //18
     
     unsigned short pwm_chnls [6];    //30
+    unsigned short pwm_base_chnls [6];    //42
 
     unsigned char dummy1;
-    unsigned char dummy2;            //32
+    unsigned char dummy2;            //44
     // unsigned char dummy3;            //32
 
 } parameters_typedef;
