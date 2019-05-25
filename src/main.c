@@ -915,6 +915,12 @@ int main(void)
                 {
                     ch3_pwm = PWMChannelsOffset(sp3_filtered, mem_conf.pwm_chnls[2]);
                     Update_PWM3(ch3_pwm);
+// #ifdef USE_FREQ_48KHZ
+//                     Update_PWM3(sp3_filtered + 9);
+// #endif
+// #ifdef USE_FREQ_16KHZ
+//                     Update_PWM3(sp3_filtered + 3);
+// #endif
                 }
 
                 if (mem_conf.pwm_chnls[3])

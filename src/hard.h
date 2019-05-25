@@ -27,12 +27,28 @@
 // #define USE_FILTER_LENGHT_8
 #define USE_FILTER_LENGHT_16
 #define USE_OVERTEMP_PROT
-#define USE_INDUCTOR_IN_DCM
-// #define USE_INDUCTOR_IN_CCM
+// #define USE_INDUCTOR_IN_DCM
+#define USE_INDUCTOR_IN_CCM
 
-#define USE_LED_CTRL_MODE_CONTINUOS
+//----- PWM Frequency ------------------------
+#define USE_FREQ_48KHZ
+// #define USE_FREQ_24KHZ
+// #define USE_FREQ_16KHZ
+
+//----- PWM Modes ----------------------------
+// lo que llega por dmx se escala y se manda al pwm (funciona mas parejo en DCM)
+// #define USE_LED_CTRL_MODE_CONTINUOS
+
+// utiliza el pwm fijo para la maxima corriente ciclo a ciclo, luego arma un
+// soft-pwm con el que regula la intensidad por medio de TIM1
 // #define USE_LED_CTRL_MODE_PWM
-// #define USE_LED_CTRL_MODE_MIXED
+
+// debajo del valor TIM_CNTR_FOR_DMX_MODE_CHANGE usa pwm directo (continuo)
+// arriba de este valor usa soft pwm con el ultimo valor de pwm directo
+#define USE_LED_CTRL_MODE_MIXED    
+
+//--- FIN MODOS DEL PWM ---//
+
 //------ Configuration for Firmware-Channels -----
 
 
