@@ -204,10 +204,15 @@ int main(void)
     resp_t resp = resp_continue;
     unsigned short ch1_pwm = 0;
     unsigned short ch2_pwm = 0;
-    unsigned short ch3_pwm = 0;    
+    unsigned short ch3_pwm = 0;
     unsigned short ch4_pwm = 0;
     unsigned short ch5_pwm = 0;
     unsigned short ch6_pwm = 0;    
+
+#ifdef USE_PWM_DELTA_FUNCTION
+    unsigned char delta_index = 0;
+    unsigned short delta_ch3_pwm = 0;
+#endif
     
     //GPIO Configuration.
     GPIO_Config();
@@ -863,7 +868,23 @@ int main(void)
                     {
                         ch3_pwm = PWMChannelsOffset(sp3_filtered, mem_conf.pwm_chnls[2]);
                         mem_conf.pwm_base_chnls[2] = ch3_pwm;
+                        // Update_PWM3(ch3_pwm);
+#ifdef USE_PWM_DELTA_FUNCTION
+                        if (!delta_index)
+                        {
+                            delta_index = 5;
+                            if (delta_ch3_pwm < ch3_pwm)
+                                delta_ch3_pwm++;
+                            else if (delta_ch3_pwm > ch3_pwm)
+                                delta_ch3_pwm--;
+                    
+                            Update_PWM3(delta_ch3_pwm);
+                        }
+                        else
+                            delta_index--;
+#else
                         Update_PWM3(ch3_pwm);
+#endif                        
                     }
                 }
 
@@ -914,7 +935,22 @@ int main(void)
                 if (mem_conf.pwm_chnls[2])
                 {
                     ch3_pwm = PWMChannelsOffset(sp3_filtered, mem_conf.pwm_chnls[2]);
+#ifdef USE_PWM_DELTA_FUNCTION
+                    // if (!delta_index)
+                    // {
+                    //     delta_index = 5;
+                        if (delta_ch3_pwm < ch3_pwm)
+                            delta_ch3_pwm++;
+                        else if (delta_ch3_pwm > ch3_pwm)
+                            delta_ch3_pwm--;
+                    
+                        Update_PWM3(delta_ch3_pwm);
+                    // }
+                    // else
+                    //     delta_index--;
+#else
                     Update_PWM3(ch3_pwm);
+#endif
 // #ifdef USE_FREQ_48KHZ
 //                     Update_PWM3(sp3_filtered + 9);
 // #endif

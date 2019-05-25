@@ -37,7 +37,7 @@
 
 //----- PWM Modes ----------------------------
 // lo que llega por dmx se escala y se manda al pwm (funciona mas parejo en DCM)
-// #define USE_LED_CTRL_MODE_CONTINUOS
+#define USE_LED_CTRL_MODE_CONTINUOS
 
 // utiliza el pwm fijo para la maxima corriente ciclo a ciclo, luego arma un
 // soft-pwm con el que regula la intensidad por medio de TIM1
@@ -45,9 +45,12 @@
 
 // debajo del valor TIM_CNTR_FOR_DMX_MODE_CHANGE usa pwm directo (continuo)
 // arriba de este valor usa soft pwm con el ultimo valor de pwm directo
-#define USE_LED_CTRL_MODE_MIXED    
+// #define USE_LED_CTRL_MODE_MIXED    
 
-//--- FIN MODOS DEL PWM ---//
+//para los modos MIXED y CONTINUOS se puede acercar al valor con funcion delta
+//TODO: mixed tiene un problema con delta, se mezcla en algun lado (ver int por ejemplo)
+#define USE_PWM_DELTA_FUNCTION
+//----- End of PWM Modes ---------------------
 
 //------ Configuration for Firmware-Channels -----
 
