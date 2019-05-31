@@ -173,6 +173,7 @@ volatile unsigned short timer_standby;
 volatile unsigned short wait_ms_var = 0;
 volatile unsigned char temp_sample_timer = 0;
 volatile unsigned short need_to_save_timer = 0;
+volatile unsigned char delta_timer = 0;
 
 // ------- para la memoria -------
 unsigned char need_to_save = 0;
@@ -210,7 +211,6 @@ int main(void)
     unsigned short ch6_pwm = 0;    
 
 #ifdef USE_PWM_DELTA_FUNCTION
-    unsigned char delta_index = 0;
     unsigned short delta_ch3_pwm = 0;
 #endif
     
@@ -932,32 +932,27 @@ int main(void)
                     Update_PWM2(ch2_pwm);
                 }
 
-                if (mem_conf.pwm_chnls[2])
-                {
-                    ch3_pwm = PWMChannelsOffset(sp3_filtered, mem_conf.pwm_chnls[2]);
-#ifdef USE_PWM_DELTA_FUNCTION
-                    // if (!delta_index)
-                    // {
-                    //     delta_index = 5;
-                        if (delta_ch3_pwm < ch3_pwm)
-                            delta_ch3_pwm++;
-                        else if (delta_ch3_pwm > ch3_pwm)
-                            delta_ch3_pwm--;
+//                 if (mem_conf.pwm_chnls[2])
+//                 {
+//                     ch3_pwm = PWMChannelsOffset(sp3_filtered, mem_conf.pwm_chnls[2]);
+//                     // ch3_pwm = PWMChannelsOffset(DMXMapping(sp3_filtered), mem_conf.pwm_chnls[2]);
+// #ifdef USE_PWM_DELTA_FUNCTION
+//                     // if (!delta_index)
+//                     // {
+//                     //     delta_index = 5;
+//                         if (delta_ch3_pwm < ch3_pwm)
+//                             delta_ch3_pwm++;
+//                         else if (delta_ch3_pwm > ch3_pwm)
+//                             delta_ch3_pwm--;
                     
-                        Update_PWM3(delta_ch3_pwm);
-                    // }
-                    // else
-                    //     delta_index--;
-#else
-                    Update_PWM3(ch3_pwm);
-#endif
-// #ifdef USE_FREQ_48KHZ
-//                     Update_PWM3(sp3_filtered + 9);
+//                         Update_PWM3(delta_ch3_pwm);
+//                     // }
+//                     // else
+//                     //     delta_index--;
+// #else
+//                     Update_PWM3(ch3_pwm);
 // #endif
-// #ifdef USE_FREQ_16KHZ
-//                     Update_PWM3(sp3_filtered + 3);
-// #endif
-                }
+//                 }
 
                 if (mem_conf.pwm_chnls[3])
                 {
@@ -977,7 +972,34 @@ int main(void)
                     Update_PWM6(ch6_pwm);
                 }
 #endif
+            }    //end of filters
+
+            if (mem_conf.pwm_chnls[2])
+            {
+#ifdef USE_PWM_DELTA_FUNCTION
+                if (!delta_timer)
+                {
+                    delta_timer = 5;
+                    // ch3_pwm = PWMChannelsOffset(sp3_filtered, mem_conf.pwm_chnls[2]);
+                    ch3_pwm = PWMChannelsOffset(DMXMapping(sp3_filtered), mem_conf.pwm_chnls[2]);
+
+                    if (ch3_pwm > (delta_ch3_pwm + 10))
+                        delta_ch3_pwm += 10;
+                    else if (ch3_pwm > delta_ch3_pwm)
+                        delta_ch3_pwm++;
+                    else if (ch3_pwm < (delta_ch3_pwm - 10))
+                        delta_ch3_pwm -= 10;
+                    else if (ch3_pwm < delta_ch3_pwm)
+                        delta_ch3_pwm--;
+                    
+                    Update_PWM3(delta_ch3_pwm);
+                }
+#else
+                ch3_pwm = PWMChannelsOffset(sp3_filtered, mem_conf.pwm_chnls[2]);
+                Update_PWM3(ch3_pwm);
+#endif
             }
+
 
             if (!timer_standby)
             {
@@ -1188,6 +1210,11 @@ void TimingDelay_Decrement(void)
     else
         EXTIOn();    //dejo 20ms del paquete sin INT
 
+#ifdef USE_PWM_DELTA_FUNCTION
+    if (delta_timer)
+        delta_timer--;
+#endif
+    
     //para lcd_utils
     UpdateTimerLCD ();
 

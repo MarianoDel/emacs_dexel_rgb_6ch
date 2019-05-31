@@ -301,5 +301,6 @@ void PWMChannelsReset (void);
 void HardUpdateMaxPower (void);
 void HardUpdateMaxPowerReset (void);
 unsigned short PWMChannelsOffset (unsigned char, unsigned short);
+unsigned char DMXMapping (unsigned char);
 
 #endif /* HARD_H_ */

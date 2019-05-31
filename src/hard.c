@@ -290,4 +290,21 @@ unsigned short PWMChannelsOffset (unsigned char dmx_data, unsigned short pwm_max
     return (unsigned short) calc;
 }
 
+unsigned char DMXMapping (unsigned char to_map)
+{
+    unsigned short temp = 0;
+    if (to_map < 30)
+    {
+        temp = to_map * 183;
+        temp = temp / 30;
+    }
+    else
+    {
+        temp = to_map * 72;
+        temp = temp / 225;
+        temp += 173;
+    }
+
+    return temp;
+}
 //--- end of file ---//
