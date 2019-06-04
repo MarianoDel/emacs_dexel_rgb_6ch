@@ -745,50 +745,32 @@ int main(void)
 
 
     //nuevas pruebas por segmentos de corriente para channel3
-    unsigned short segments[4];
+#define SEGMENTS_QTTY    8
+    unsigned short segments[SEGMENTS_QTTY];
     led_current_settings_t led_curr;
 
-    //busco 0.5A
-    led_curr.sp_current = 500;
-    led_curr.channel = 3;
+    for (i = 0; i < SEGMENTS_QTTY; i++)
+    {
+        led_curr.channel = 3;
+        led_curr.sp_current = 2000 * (i + 1);
+        led_curr.sp_current = led_curr.sp_current / SEGMENTS_QTTY;
 
-    UpdateDutyCycleReset();
-    while (UpdateDutyCycle(&led_curr) == resp_continue);
-    segments[0] = led_curr.duty_getted;
-
-    //busco 1A
-    led_curr.sp_current = 1000;
-    led_curr.channel = 3;
-
-    UpdateDutyCycleReset();
-    while (UpdateDutyCycle(&led_curr) == resp_continue);
-    segments[1] = led_curr.duty_getted;
-
-    //busco 1.5A
-    led_curr.sp_current = 1500;
-    led_curr.channel = 3;
-
-    UpdateDutyCycleReset();
-    while (UpdateDutyCycle(&led_curr) == resp_continue);
-    segments[2] = led_curr.duty_getted;
-
-    //busco 2A
-    led_curr.sp_current = 2000;
-    led_curr.channel = 3;
-
-    UpdateDutyCycleReset();
-    while (UpdateDutyCycle(&led_curr) == resp_continue);
-    segments[3] = led_curr.duty_getted;
-
-    //mando info al puerto
-    sprintf(s_to_send, "segments: %d %d %d %d\n",
-            segments[3],
-            segments[2],
-            segments[1],
-            segments[0]);
-            
-    Usart2Send(s_to_send);
+        UpdateDutyCycleReset();
+        while (UpdateDutyCycle(&led_curr) == resp_continue);
+        segments[i] = led_curr.duty_getted;
+    }
     
+    //mando info al puerto
+    sprintf(s_to_send, "segments[%d]: ", SEGMENTS_QTTY);
+    Usart2Send(s_to_send);
+    for (i = SEGMENTS_QTTY; i > 0; i--)
+    {
+        sprintf(s_to_send, "%d ", segments[i - 1]);
+        Usart2Send(s_to_send);
+        Wait_ms(10);
+    }
+    Usart2Send("\n");   
+        
         
     while (1)
     {
@@ -1022,60 +1004,97 @@ int main(void)
 
             if (mem_conf.pwm_chnls[2])
             {
-#ifdef USE_PWM_DELTA_FUNCTION
                 if (!delta_timer)
                 {
+#ifdef USE_PWM_DELTA_FUNCTION
+                    unsigned char use_delta_on_segment = 0;
+#endif
                     unsigned short dummy = 0;
                     delta_timer = 5;
-                    // ch3_pwm = PWMChannelsOffset(sp3_filtered, mem_conf.pwm_chnls[2]);
-                    // // ch3_pwm = PWMChannelsOffset(DMXMapping(sp3_filtered), mem_conf.pwm_chnls[2]);
-
-                    // if (ch3_pwm > (delta_ch3_pwm + 10))
-                    //     delta_ch3_pwm += 10;
-                    // else if (ch3_pwm > delta_ch3_pwm)
-                    //     delta_ch3_pwm++;
-                    // else if (ch3_pwm < (delta_ch3_pwm - 10))
-                    //     delta_ch3_pwm -= 10;
-                    // else if (ch3_pwm < delta_ch3_pwm)
-                    //     delta_ch3_pwm--;
-                    
-                    // Update_PWM3(delta_ch3_pwm);
 
                     //mapeo los segmentos
-                    if (sp3_filtered > 191)
+                    if (sp3_filtered > 223)
+                    {
+                        dummy = sp3_filtered - 224;
+                        dummy = dummy * (segments[7] - segments[6]);
+                        dummy >>= 5;
+                        ch3_pwm = dummy + segments[6];
+                    }
+                    else if (sp3_filtered > 191)
                     {
                         dummy = sp3_filtered - 192;
-                        dummy = dummy * (segments[3] - segments[2]);
-                        dummy >>= 6;
-                        ch3_pwm = dummy + segments[2];
+                        dummy = dummy * (segments[6] - segments[5]);
+                        dummy >>= 5;
+                        ch3_pwm = dummy + segments[5];
+                    }
+                    else if (sp3_filtered > 159)
+                    {
+                        dummy = sp3_filtered - 160;
+                        dummy = dummy * (segments[5] - segments[4]);
+                        dummy >>= 5;
+                        ch3_pwm = dummy + segments[4];
                     }
                     else if (sp3_filtered > 123)
                     {
                         dummy = sp3_filtered - 124;
-                        dummy = dummy * (segments[2] - segments[1]);
-                        dummy >>= 6;
-                        ch3_pwm = dummy + segments[1];
+                        dummy = dummy * (segments[4] - segments[3]);
+                        dummy >>= 5;
+                        ch3_pwm = dummy + segments[3];
+                    }
+                    else if (sp3_filtered > 91)
+                    {
+                        dummy = sp3_filtered - 92;
+                        dummy = dummy * (segments[3] - segments[2]);
+                        dummy >>= 5;
+                        ch3_pwm = dummy + segments[2];
                     }
                     else if (sp3_filtered > 63)
                     {
                         dummy = sp3_filtered - 64;
+                        dummy = dummy * (segments[2] - segments[1]);
+                        dummy >>= 5;
+                        ch3_pwm = dummy + segments[1];
+#ifdef USE_PWM_DELTA_FUNCTION
+                        use_delta_on_segment = 1;
+#endif                        
+                    }
+                    else if (sp3_filtered > 31)
+                    {
+                        dummy = sp3_filtered - 32;
                         dummy = dummy * (segments[1] - segments[0]);
-                        dummy >>= 6;
-                        ch3_pwm = dummy + segments[0];
+                        dummy >>= 5;
+                        ch3_pwm = dummy + segments[0];                        
+#ifdef USE_PWM_DELTA_FUNCTION
+                        use_delta_on_segment = 1;
+#endif
                     }
                     else
                     {
                         dummy = sp3_filtered * segments[0];
-                        dummy >>= 6;
+                        dummy >>= 5;
                         ch3_pwm = dummy;
                     }
 
-                    Update_PWM3(ch3_pwm);
-                }
+#ifdef USE_PWM_DELTA_FUNCTION
+                    if (use_delta_on_segment)
+                    {
+                        use_delta_on_segment = 0;
+                        if (ch3_pwm > delta_ch3_pwm)
+                            delta_ch3_pwm++;
+                        else if (ch3_pwm < delta_ch3_pwm)
+                            delta_ch3_pwm--;
+
+                        Update_PWM3(delta_ch3_pwm);
+                    }
+                    else
+                    {
+                        Update_PWM3(ch3_pwm);
+                        delta_ch3_pwm = ch3_pwm;
+                    }
 #else
-                ch3_pwm = PWMChannelsOffset(sp3_filtered, mem_conf.pwm_chnls[2]);
-                Update_PWM3(ch3_pwm);
+                    Update_PWM3(ch3_pwm);
 #endif
+                }
             }
 
 
@@ -1288,10 +1307,8 @@ void TimingDelay_Decrement(void)
     else
         EXTIOn();    //dejo 20ms del paquete sin INT
 
-#ifdef USE_PWM_DELTA_FUNCTION
     if (delta_timer)
         delta_timer--;
-#endif
     
     //para lcd_utils
     UpdateTimerLCD ();
