@@ -744,6 +744,52 @@ int main(void)
     ADC1->CR |= ADC_CR_ADSTART;
 
 
+    //nuevas pruebas por segmentos de corriente para channel3
+    unsigned short segments[4];
+    led_current_settings_t led_curr;
+
+    //busco 0.5A
+    led_curr.sp_current = 500;
+    led_curr.channel = 3;
+
+    UpdateDutyCycleReset();
+    while (UpdateDutyCycle(&led_curr) == resp_continue);
+    segments[0] = led_curr.duty_getted;
+
+    //busco 1A
+    led_curr.sp_current = 1000;
+    led_curr.channel = 3;
+
+    UpdateDutyCycleReset();
+    while (UpdateDutyCycle(&led_curr) == resp_continue);
+    segments[1] = led_curr.duty_getted;
+
+    //busco 1.5A
+    led_curr.sp_current = 1500;
+    led_curr.channel = 3;
+
+    UpdateDutyCycleReset();
+    while (UpdateDutyCycle(&led_curr) == resp_continue);
+    segments[2] = led_curr.duty_getted;
+
+    //busco 2A
+    led_curr.sp_current = 2000;
+    led_curr.channel = 3;
+
+    UpdateDutyCycleReset();
+    while (UpdateDutyCycle(&led_curr) == resp_continue);
+    segments[3] = led_curr.duty_getted;
+
+    //mando info al puerto
+    sprintf(s_to_send, "segments: %d %d %d %d\n",
+            segments[3],
+            segments[2],
+            segments[1],
+            segments[0]);
+            
+    Usart2Send(s_to_send);
+    
+        
     while (1)
     {
         switch (main_state)
@@ -979,20 +1025,52 @@ int main(void)
 #ifdef USE_PWM_DELTA_FUNCTION
                 if (!delta_timer)
                 {
+                    unsigned short dummy = 0;
                     delta_timer = 5;
                     // ch3_pwm = PWMChannelsOffset(sp3_filtered, mem_conf.pwm_chnls[2]);
-                    ch3_pwm = PWMChannelsOffset(DMXMapping(sp3_filtered), mem_conf.pwm_chnls[2]);
+                    // // ch3_pwm = PWMChannelsOffset(DMXMapping(sp3_filtered), mem_conf.pwm_chnls[2]);
 
-                    if (ch3_pwm > (delta_ch3_pwm + 10))
-                        delta_ch3_pwm += 10;
-                    else if (ch3_pwm > delta_ch3_pwm)
-                        delta_ch3_pwm++;
-                    else if (ch3_pwm < (delta_ch3_pwm - 10))
-                        delta_ch3_pwm -= 10;
-                    else if (ch3_pwm < delta_ch3_pwm)
-                        delta_ch3_pwm--;
+                    // if (ch3_pwm > (delta_ch3_pwm + 10))
+                    //     delta_ch3_pwm += 10;
+                    // else if (ch3_pwm > delta_ch3_pwm)
+                    //     delta_ch3_pwm++;
+                    // else if (ch3_pwm < (delta_ch3_pwm - 10))
+                    //     delta_ch3_pwm -= 10;
+                    // else if (ch3_pwm < delta_ch3_pwm)
+                    //     delta_ch3_pwm--;
                     
-                    Update_PWM3(delta_ch3_pwm);
+                    // Update_PWM3(delta_ch3_pwm);
+
+                    //mapeo los segmentos
+                    if (sp3_filtered > 191)
+                    {
+                        dummy = sp3_filtered - 192;
+                        dummy = dummy * (segments[3] - segments[2]);
+                        dummy >>= 6;
+                        ch3_pwm = dummy + segments[2];
+                    }
+                    else if (sp3_filtered > 123)
+                    {
+                        dummy = sp3_filtered - 124;
+                        dummy = dummy * (segments[2] - segments[1]);
+                        dummy >>= 6;
+                        ch3_pwm = dummy + segments[1];
+                    }
+                    else if (sp3_filtered > 63)
+                    {
+                        dummy = sp3_filtered - 64;
+                        dummy = dummy * (segments[1] - segments[0]);
+                        dummy >>= 6;
+                        ch3_pwm = dummy + segments[0];
+                    }
+                    else
+                    {
+                        dummy = sp3_filtered * segments[0];
+                        dummy >>= 6;
+                        ch3_pwm = dummy;
+                    }
+
+                    Update_PWM3(ch3_pwm);
                 }
 #else
                 ch3_pwm = PWMChannelsOffset(sp3_filtered, mem_conf.pwm_chnls[2]);
