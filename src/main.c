@@ -182,6 +182,8 @@ unsigned char need_to_save = 0;
 extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
 void DMAConfig(void);
+unsigned short Distance (unsigned short, unsigned short);
+unsigned char GetProcessedSegment (unsigned short, unsigned short *);
 
 // ------- del DMX -------
 // extern void EXTI4_15_IRQHandler(void);
@@ -746,6 +748,9 @@ int main(void)
 
     //nuevas pruebas por segmentos de corriente para channel3
 #define SEGMENTS_QTTY    8
+#define SEGMENTS_VALUE    32
+    
+unsigned short const_segments[SEGMENTS_QTTY] = {31, 63, 95, 127, 159, 191, 223, 255};
     unsigned short segments[SEGMENTS_QTTY];
     led_current_settings_t led_curr;
 
@@ -1006,91 +1011,77 @@ int main(void)
             {
                 if (!delta_timer)
                 {
-#ifdef USE_PWM_DELTA_FUNCTION
-                    unsigned char use_delta_on_segment = 0;
-#endif
+                    unsigned char new_segment = 0;
                     unsigned short dummy = 0;
                     delta_timer = 5;
 
                     //mapeo los segmentos
-                    if (sp3_filtered > 223)
+                    new_segment = GetProcessedSegment(sp3_filtered, const_segments);
+
+                    if (new_segment)
                     {
-                        dummy = sp3_filtered - 224;
-                        dummy = dummy * (segments[7] - segments[6]);
-                        dummy >>= 5;
-                        ch3_pwm = dummy + segments[6];
-                    }
-                    else if (sp3_filtered > 191)
-                    {
-                        dummy = sp3_filtered - 192;
-                        dummy = dummy * (segments[6] - segments[5]);
-                        dummy >>= 5;
-                        ch3_pwm = dummy + segments[5];
-                    }
-                    else if (sp3_filtered > 159)
-                    {
-                        dummy = sp3_filtered - 160;
-                        dummy = dummy * (segments[5] - segments[4]);
-                        dummy >>= 5;
-                        ch3_pwm = dummy + segments[4];
-                    }
-                    else if (sp3_filtered > 123)
-                    {
-                        dummy = sp3_filtered - 124;
-                        dummy = dummy * (segments[4] - segments[3]);
-                        dummy >>= 5;
-                        ch3_pwm = dummy + segments[3];
-                    }
-                    else if (sp3_filtered > 91)
-                    {
-                        dummy = sp3_filtered - 92;
-                        dummy = dummy * (segments[3] - segments[2]);
-                        dummy >>= 5;
-                        ch3_pwm = dummy + segments[2];
-                    }
-                    else if (sp3_filtered > 63)
-                    {
-                        dummy = sp3_filtered - 64;
-                        dummy = dummy * (segments[2] - segments[1]);
-                        dummy >>= 5;
-                        ch3_pwm = dummy + segments[1];
-#ifdef USE_PWM_DELTA_FUNCTION
-                        use_delta_on_segment = 1;
-#endif                        
-                    }
-                    else if (sp3_filtered > 31)
-                    {
-                        dummy = sp3_filtered - 32;
-                        dummy = dummy * (segments[1] - segments[0]);
-                        dummy >>= 5;
-                        ch3_pwm = dummy + segments[0];                        
-#ifdef USE_PWM_DELTA_FUNCTION
-                        use_delta_on_segment = 1;
-#endif
+                        dummy = sp3_filtered - new_segment * SEGMENTS_VALUE;
+                        dummy = dummy * (segments[new_segment] - segments[new_segment - 1]);
+                        dummy /= SEGMENTS_VALUE;
+                        ch3_pwm = dummy + segments[new_segment - 1];
                     }
                     else
                     {
+                        
                         dummy = sp3_filtered * segments[0];
-                        dummy >>= 5;
+                        dummy /= SEGMENTS_VALUE;
                         ch3_pwm = dummy;
                     }
-
+                    
 #ifdef USE_PWM_DELTA_FUNCTION
-                    if (use_delta_on_segment)
-                    {
-                        use_delta_on_segment = 0;
-                        if (ch3_pwm > delta_ch3_pwm)
-                            delta_ch3_pwm++;
-                        else if (ch3_pwm < delta_ch3_pwm)
-                            delta_ch3_pwm--;
 
-                        Update_PWM3(delta_ch3_pwm);
+                    // if ((GetProcessedSegment(delta_ch3_pwm, segments) == 2) ||
+                    //     (GetProcessedSegment(delta_ch3_pwm, segments) == 1) ||
+                    //     (GetProcessedSegment(delta_ch3_pwm, segments) == 0))
+                    // if ((GetProcessedSegment(delta_ch3_pwm, segments) == 3) ||
+                    //     (GetProcessedSegment(delta_ch3_pwm, segments) == 2))
+                    if (GetProcessedSegment(delta_ch3_pwm, segments) == 1)
+                    {
+                        delta_timer += 5;
+                        if (ch3_pwm > delta_ch3_pwm)
+                        {
+                            // if (Distance(ch3_pwm, delta_ch3_pwm) > 5)
+                            //     delta_ch3_pwm += 5;
+                            // else
+                                delta_ch3_pwm++;
+                        }
+                        else if (ch3_pwm < delta_ch3_pwm)
+                        {
+                            // if (Distance(delta_ch3_pwm, ch3_pwm) > 5)
+                            //     delta_ch3_pwm -= 5;
+                            // else
+                                delta_ch3_pwm--;
+                        }
+
+
                     }
                     else
                     {
-                        Update_PWM3(ch3_pwm);
-                        delta_ch3_pwm = ch3_pwm;
+                        if (ch3_pwm > delta_ch3_pwm)
+                        {
+                            if (Distance(ch3_pwm, delta_ch3_pwm) > 5)
+                                delta_ch3_pwm += 5;
+                            else
+                                delta_ch3_pwm++;
+                        }
+                        else if (ch3_pwm < delta_ch3_pwm)
+                        {
+                            if (Distance(delta_ch3_pwm, ch3_pwm) > 5)
+                                delta_ch3_pwm -= 5;
+                            else
+                                delta_ch3_pwm--;
+                        }
+                        
+                        // Update_PWM3(ch3_pwm);
+                        // delta_ch3_pwm = ch3_pwm;                        
                     }
+
+                    Update_PWM3(delta_ch3_pwm);
 #else
                     Update_PWM3(ch3_pwm);
 #endif
@@ -1330,6 +1321,28 @@ void EXTI4_15_IRQHandler (void)    //nueva detecta el primer 0 en usart Consola 
         DmxInt_Break_Handler();
         EXTI->PR |= 0x0100;
     }
+}
+
+unsigned short Distance (unsigned short a, unsigned short b)
+{
+    if (a < b)
+        return 0;
+
+    return (a - b);
+}
+
+unsigned char GetProcessedSegment (unsigned short check_segment_by_value, unsigned short * s)
+{
+    char * s_to_send[100];
+    unsigned char i;
+    
+    for (i = SEGMENTS_QTTY; i > 0; i--)
+    {
+        if (check_segment_by_value > *(s + i - 1))
+            return i;
+    }
+
+    return 0;
 }
 
 //--- end of file ---//
