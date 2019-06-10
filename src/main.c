@@ -782,18 +782,74 @@ unsigned short const_segments[SEGMENTS_QTTY] = {15, 31, 47, 63, 79, 95, 111, 127
     //mando info al puerto
     sprintf(s_to_send, "segments[%d]: ", SEGMENTS_QTTY);
     Usart2Send(s_to_send);
-    for (i = SEGMENTS_QTTY; i > 0; i--)
+    for (i = 0; i < SEGMENTS_QTTY; i++)
     {
-        sprintf(s_to_send, "%d ", segments[i - 1]);
+        sprintf(s_to_send, "%d ", segments[i]);
         Usart2Send(s_to_send);
         Wait_ms(10);
     }
     Usart2Send("\n");
 
-    // slow_segment = GetSlowSegment(segments);
-    slow_segment = 3; 
-    sprintf(s_to_send, "slow_segments: %d\n", slow_segment);
+#define RANGES_QTTY    5
+    unsigned short ranges[RANGES_QTTY] = { 0 };
+    unsigned char freq_vect[RANGES_QTTY] = { 0 };
+    unsigned short deltas_vect[SEGMENTS_QTTY] = { 0 };
+    unsigned short last_segment = 0;
+
+    //convierto segmentos a deltas
+    sprintf(s_to_send, "deltas_vect[%d]: ", SEGMENTS_QTTY);
     Usart2Send(s_to_send);    
+    for (i = 0; i < SEGMENTS_QTTY; i++)
+    {
+        deltas_vect[i] = segments[i] - last_segment;
+        last_segment = segments[i];
+        sprintf(s_to_send, "%d ", deltas_vect[i]);
+        Usart2Send(s_to_send);
+        Wait_ms(10);        
+    }
+    Usart2Send("\n");
+    
+    
+    DSP_Vector_Calcule_Frequencies(deltas_vect,
+                                   SEGMENTS_QTTY,
+                                   ranges,
+                                   RANGES_QTTY,
+                                   freq_vect);
+
+    sprintf(s_to_send, "ranges[%d]: ", RANGES_QTTY);
+    Usart2Send(s_to_send);    
+    for (i = 0; i < RANGES_QTTY; i++)
+    {
+        sprintf(s_to_send, "%d ", ranges[i]);
+        Usart2Send(s_to_send);
+        Wait_ms(10);        
+    }
+    Usart2Send("\n");
+
+    sprintf(s_to_send, "frequencies[%d]: ", RANGES_QTTY);
+    Usart2Send(s_to_send);    
+    for (i = 0; i < RANGES_QTTY; i++)
+    {
+        sprintf(s_to_send, "%d ", freq_vect[i]);
+        Usart2Send(s_to_send);
+        Wait_ms(10);        
+    }
+    Usart2Send("\n");
+    
+    // sprintf(s_to_send, "const_seg[%d]: ", SEGMENTS_QTTY);
+    // Usart2Send(s_to_send);
+    // for (i = 0; i < SEGMENTS_QTTY; i++)
+    // {
+    //     sprintf(s_to_send, "%d ", const_segments[i]);
+    //     Usart2Send(s_to_send);
+    //     Wait_ms(10);
+    // }
+    // Usart2Send("\n");
+    
+    // // slow_segment = GetSlowSegment(segments);
+    // slow_segment = 2; 
+    // sprintf(s_to_send, "slow_segments: %d\n", slow_segment);
+    // Usart2Send(s_to_send);    
         
         
     while (1)
@@ -1074,8 +1130,8 @@ unsigned short const_segments[SEGMENTS_QTTY] = {15, 31, 47, 63, 79, 95, 111, 127
 #if (SEGMENTS_QTTY == 16)
                     if (new_segment < slow_segment)    //segmento bajo, tengo muchos puntos, voy mas rapido
                         delta_timer = 1;
-                    // else if (new_segment == slow_segment)    //segmento de cambio de modo voy bien lento
-                    //     delta_timer = 15;
+                    else if (new_segment == slow_segment)    //segmento de cambio de modo voy bien lento
+                        delta_timer = 8;
                     else
                         delta_timer = 5;
 #endif
@@ -1355,6 +1411,9 @@ unsigned char GetSlowSegment (unsigned short * s)
     unsigned char slow = 0;
     unsigned short last_delta = 0;
     unsigned short delta = 0;
+    unsigned int total = 0;
+
+    //busco el promedio de los segmentos
 
     //busco el mayor numero de segmento que tenga un valor alto
     for (i = 0; i < SEGMENTS_QTTY; i++)

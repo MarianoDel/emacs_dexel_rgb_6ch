@@ -13,6 +13,9 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include <stdio.h>
+#include "uart.h"
+
 
 /* Externals variables ---------------------------------------------------------*/
 
@@ -73,6 +76,8 @@ unsigned short RandomGen (unsigned int seed)
 	return (unsigned short) random;
 
 }
+
+
 unsigned short MAFilterFast (unsigned short new_sample, unsigned short * vsample)
 {
     unsigned int total_ma;
@@ -91,6 +96,7 @@ unsigned short MAFilterFast (unsigned short new_sample, unsigned short * vsample
 
     return (unsigned short) (total_ma >> 3);
 }
+
 
 unsigned short MAFilterFast16 (unsigned short new_sample, unsigned short * vsample)
 {
@@ -121,6 +127,7 @@ unsigned short MAFilterFast16 (unsigned short new_sample, unsigned short * vsamp
     return (unsigned short) (total_ma >> 4);
 }
 
+
 void SetNewValueInVector (unsigned short new_sample, unsigned short * vsample)
 {
     *(vsample + 7) = *(vsample + 6);
@@ -132,6 +139,7 @@ void SetNewValueInVector (unsigned short new_sample, unsigned short * vsample)
     *(vsample + 1) = *(vsample);
     *(vsample) = new_sample;
 }
+
 
 //unsigned short MAFilter8 (unsigned short new_sample, unsigned short * vsample)
 unsigned short MAFilter8 (unsigned short * vsample)
@@ -145,6 +153,7 @@ unsigned short MAFilter8 (unsigned short * vsample)
 
     return (unsigned short) (total_ma >> 3);
 }
+
 
 unsigned short MAFilter32 (unsigned short new_sample, unsigned short * vsample)
 {
@@ -193,6 +202,7 @@ unsigned short MAFilter32 (unsigned short new_sample, unsigned short * vsample)
 	return total_ma >> 5;
 }
 
+
 //Filtro circular, recibe
 //new_sample, p_vec_samples: vector donde se guardan todas las muestras
 //p_vector: puntero que recorre el vector de muestras, p_sum: puntero al valor de la sumatoria de muestras
@@ -227,6 +237,7 @@ unsigned short MAFilter32Circular (unsigned short new_sample, unsigned short * p
 	return total_ma >> 5;
 }
 
+
 short PID (short setpoint, short sample)
 {
 	short error = 0;
@@ -260,6 +271,7 @@ short PID (short setpoint, short sample)
 	return d;
 }
 
+
 short PID_roof (short setpoint, short sample, short local_last_d, short * e_z1, short * e_z2)
 {
 	short error = 0;
@@ -291,4 +303,85 @@ short PID_roof (short setpoint, short sample, short local_last_d, short * e_z1, 
 
 	return d;
 }
+
+
+//calculate the samples fequencies from a samples vector
+//the size of the vector ranges must be at least one more of the size of the selected classes (ranges_size)
+//frequencies vector must be the same size
+void DSP_Vector_Calcule_Frequencies (unsigned short *samples,
+                                     unsigned char samples_size,
+                                     unsigned short *ranges,
+                                     unsigned char ranges_size,
+                                     unsigned char *frequencies)
+{
+    char s_to_send [64];
+    unsigned char i, j;
+    unsigned short min_value = 0;
+    unsigned short max_value = 0;
+    unsigned short range;
+    unsigned short width;
+    
+    //get the MAX and min from the vector samples
+    min_value = DSP_Vector_Get_Min_Value(samples, samples_size);
+    max_value = DSP_Vector_Get_Max_Value(samples, samples_size);
+
+    sprintf(s_to_send, "min_value: %d, max_value: %d\n",
+            min_value,
+            max_value);
+    Usart2Send(s_to_send);    
+
+    range = max_value - min_value;
+
+    width = range / (ranges_size - 1);
+    
+    //assembly of the ranges vector
+    for (i = 0; i < (ranges_size - 1); i++)
+        *(ranges + i) = min_value + width * i;
+
+    *(ranges + ranges_size - 1) = max_value;
+    //end of assembly
+    
+    for (i = 0; i < ranges_size; i++)
+    {
+        for (j = 0; j < samples_size; j++)
+        {
+            if ((*(samples + j) >= *(ranges + i)) &&
+                 (*(samples + j) <= *(ranges + i + 1)))
+                *(frequencies + i) += 1;
+        }
+    }
+}
+
+//get a vector min value
+unsigned short DSP_Vector_Get_Min_Value (unsigned short *vect, unsigned char vect_size)
+{
+    unsigned char i;
+    unsigned short min_value = 0xFFFF;
+    
+    for (i = 0; i < vect_size; i++)
+    {
+        if (min_value > *(vect + i))
+            min_value = *(vect + i);
+    }
+
+    return min_value;
+}
+
+//get a vector MAX value
+unsigned short DSP_Vector_Get_Max_Value (unsigned short *vect, unsigned char vect_size)
+{
+    unsigned char i;
+    unsigned short max_value = 0;
+    
+    for (i = 0; i < vect_size; i++)
+    {
+        if (max_value < *(vect + i))
+            max_value = *(vect + i);
+    }
+
+    return max_value;
+}
+
+
+//--- end of file ---//
 

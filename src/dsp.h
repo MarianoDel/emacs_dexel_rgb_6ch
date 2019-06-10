@@ -23,6 +23,13 @@ unsigned short MAFilter32Circular (unsigned short, unsigned short *, unsigned ch
 
 short PID (short, short);
 short PID_roof (short, short, short, short *, short *);
+void DSP_Vector_Calcule_Frequencies (unsigned short *,
+                                     unsigned char,
+                                     unsigned short *,
+                                     unsigned char,
+                                     unsigned char *);
+unsigned short DSP_Vector_Get_Max_Value (unsigned short *, unsigned char);
+unsigned short DSP_Vector_Get_Min_Value (unsigned short *, unsigned char);
 
 
 
