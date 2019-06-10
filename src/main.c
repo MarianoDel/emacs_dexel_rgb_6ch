@@ -835,9 +835,16 @@ unsigned short const_segments[SEGMENTS_QTTY] = {15, 31, 47, 63, 79, 95, 111, 127
         Wait_ms(10);        
     }
     Usart2Send("\n");
+
+    //seak for the mayor segment that is not appering in the most frequency
+    for (i = 0; i < SEGMENTS_QTTY; i++)
+    {
+        if (*(deltas_vect + i) > (ranges[1] - ranges[0]))
+            slow_segment = i;
+    }
     
-    // sprintf(s_to_send, "const_seg[%d]: ", SEGMENTS_QTTY);
-    // Usart2Send(s_to_send);
+    sprintf(s_to_send, "slow_segment: %d\n", slow_segment);
+    Usart2Send(s_to_send);
     // for (i = 0; i < SEGMENTS_QTTY; i++)
     // {
     //     sprintf(s_to_send, "%d ", const_segments[i]);
