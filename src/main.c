@@ -184,7 +184,8 @@ void TimingDelay_Decrement(void);
 void DMAConfig(void);
 unsigned short Distance (unsigned short, unsigned short);
 unsigned char GetProcessedSegment (unsigned short, unsigned short *);
-
+unsigned char GetSlowSegment (unsigned short *);
+    
 // ------- del DMX -------
 // extern void EXTI4_15_IRQHandler(void);
 
@@ -212,6 +213,8 @@ int main(void)
     unsigned short ch5_pwm = 0;
     unsigned short ch6_pwm = 0;    
 
+    unsigned char slow_segment = 0;
+    
 #ifdef USE_PWM_DELTA_FUNCTION
     unsigned short delta_ch3_pwm = 0;
 #endif
@@ -747,10 +750,21 @@ int main(void)
 
 
     //nuevas pruebas por segmentos de corriente para channel3
-#define SEGMENTS_QTTY    8
-#define SEGMENTS_VALUE    32
-    
+// #define SEGMENTS_QTTY    8
+#define SEGMENTS_QTTY    16 
+
+
+#if (SEGMENTS_QTTY == 8)
 unsigned short const_segments[SEGMENTS_QTTY] = {31, 63, 95, 127, 159, 191, 223, 255};
+#define SEGMENTS_VALUE    32
+#endif
+
+#if (SEGMENTS_QTTY == 16)
+unsigned short const_segments[SEGMENTS_QTTY] = {15, 31, 47, 63, 79, 95, 111, 127,
+                                                143, 159, 175, 191, 207, 223, 239, 255};
+#define SEGMENTS_VALUE    16
+#endif
+
     unsigned short segments[SEGMENTS_QTTY];
     led_current_settings_t led_curr;
 
@@ -774,7 +788,12 @@ unsigned short const_segments[SEGMENTS_QTTY] = {31, 63, 95, 127, 159, 191, 223, 
         Usart2Send(s_to_send);
         Wait_ms(10);
     }
-    Usart2Send("\n");   
+    Usart2Send("\n");
+
+    // slow_segment = GetSlowSegment(segments);
+    slow_segment = 3; 
+    sprintf(s_to_send, "slow_segments: %d\n", slow_segment);
+    Usart2Send(s_to_send);    
         
         
     while (1)
@@ -1013,7 +1032,7 @@ unsigned short const_segments[SEGMENTS_QTTY] = {31, 63, 95, 127, 159, 191, 223, 
                 {
                     unsigned char new_segment = 0;
                     unsigned short dummy = 0;
-                    delta_timer = 5;
+                    // delta_timer = 5;
 
                     //mapeo los segmentos
                     new_segment = GetProcessedSegment(sp3_filtered, const_segments);
@@ -1027,7 +1046,6 @@ unsigned short const_segments[SEGMENTS_QTTY] = {31, 63, 95, 127, 159, 191, 223, 
                     }
                     else
                     {
-                        
                         dummy = sp3_filtered * segments[0];
                         dummy /= SEGMENTS_VALUE;
                         ch3_pwm = dummy;
@@ -1040,46 +1058,32 @@ unsigned short const_segments[SEGMENTS_QTTY] = {31, 63, 95, 127, 159, 191, 223, 
                     //     (GetProcessedSegment(delta_ch3_pwm, segments) == 0))
                     // if ((GetProcessedSegment(delta_ch3_pwm, segments) == 3) ||
                     //     (GetProcessedSegment(delta_ch3_pwm, segments) == 2))
-                    if (GetProcessedSegment(delta_ch3_pwm, segments) == 1)
-                    {
-                        delta_timer += 5;
-                        if (ch3_pwm > delta_ch3_pwm)
-                        {
-                            // if (Distance(ch3_pwm, delta_ch3_pwm) > 5)
-                            //     delta_ch3_pwm += 5;
-                            // else
-                                delta_ch3_pwm++;
-                        }
-                        else if (ch3_pwm < delta_ch3_pwm)
-                        {
-                            // if (Distance(delta_ch3_pwm, ch3_pwm) > 5)
-                            //     delta_ch3_pwm -= 5;
-                            // else
-                                delta_ch3_pwm--;
-                        }
+                    // siempre hago funcion delta, pero segun el segmento donde estoy le muevo la
+                    // velocidad                    
+                    new_segment = GetProcessedSegment(delta_ch3_pwm, segments);
 
-
-                    }
+#if (SEGMENTS_QTTY == 8)
+                    if (new_segment < slow_segment)    //segmento bajo, tengo muchos puntos, voy mas rapido
+                        delta_timer = 1;
+                    else if (new_segment == slow_segment)    //segmento de cambio de modo voy bien lento
+                        delta_timer = 15;
                     else
-                    {
-                        if (ch3_pwm > delta_ch3_pwm)
-                        {
-                            if (Distance(ch3_pwm, delta_ch3_pwm) > 5)
-                                delta_ch3_pwm += 5;
-                            else
-                                delta_ch3_pwm++;
-                        }
-                        else if (ch3_pwm < delta_ch3_pwm)
-                        {
-                            if (Distance(delta_ch3_pwm, ch3_pwm) > 5)
-                                delta_ch3_pwm -= 5;
-                            else
-                                delta_ch3_pwm--;
-                        }
-                        
-                        // Update_PWM3(ch3_pwm);
-                        // delta_ch3_pwm = ch3_pwm;                        
-                    }
+                        delta_timer = 5;
+#endif
+
+#if (SEGMENTS_QTTY == 16)
+                    if (new_segment < slow_segment)    //segmento bajo, tengo muchos puntos, voy mas rapido
+                        delta_timer = 1;
+                    // else if (new_segment == slow_segment)    //segmento de cambio de modo voy bien lento
+                    //     delta_timer = 15;
+                    else
+                        delta_timer = 5;
+#endif
+
+                    if (ch3_pwm > delta_ch3_pwm)
+                        delta_ch3_pwm++;
+                    else if (ch3_pwm < delta_ch3_pwm)
+                        delta_ch3_pwm--;
 
                     Update_PWM3(delta_ch3_pwm);
 #else
@@ -1343,6 +1347,27 @@ unsigned char GetProcessedSegment (unsigned short check_segment_by_value, unsign
     }
 
     return 0;
+}
+
+unsigned char GetSlowSegment (unsigned short * s)
+{
+    unsigned char i;
+    unsigned char slow = 0;
+    unsigned short last_delta = 0;
+    unsigned short delta = 0;
+
+    //busco el mayor numero de segmento que tenga un valor alto
+    for (i = 0; i < SEGMENTS_QTTY; i++)
+    {
+        delta = *(s + i + 1) - *(s + i);
+        if (delta < last_delta)
+        {
+            slow = i;
+            i = SEGMENTS_QTTY;
+        }
+    }
+    
+    return slow;
 }
 
 //--- end of file ---//

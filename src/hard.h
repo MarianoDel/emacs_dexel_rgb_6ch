@@ -49,7 +49,7 @@
 
 //para los modos MIXED y CONTINUOS se puede acercar al valor con funcion delta
 //TODO: mixed tiene un problema con delta, se mezcla en algun lado (ver int por ejemplo)
-// #define USE_PWM_DELTA_FUNCTION
+#define USE_PWM_DELTA_FUNCTION
 //----- End of PWM Modes ---------------------
 
 //------ Configuration for Firmware-Channels -----
