@@ -13,8 +13,8 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include <stdio.h>
-#include "uart.h"
+// #include <stdio.h>
+// #include "uart.h"
 
 
 /* Externals variables ---------------------------------------------------------*/
@@ -314,7 +314,7 @@ void DSP_Vector_Calcule_Frequencies (unsigned short *samples,
                                      unsigned char ranges_size,
                                      unsigned char *frequencies)
 {
-    char s_to_send [64];
+    // char s_to_send [64];
     unsigned char i, j;
     unsigned short min_value = 0;
     unsigned short max_value = 0;
@@ -325,10 +325,10 @@ void DSP_Vector_Calcule_Frequencies (unsigned short *samples,
     min_value = DSP_Vector_Get_Min_Value(samples, samples_size);
     max_value = DSP_Vector_Get_Max_Value(samples, samples_size);
 
-    sprintf(s_to_send, "min_value: %d, max_value: %d\n",
-            min_value,
-            max_value);
-    Usart2Send(s_to_send);    
+    // sprintf(s_to_send, "min_value: %d, max_value: %d\n",
+    //         min_value,
+    //         max_value);
+    // Usart2Send(s_to_send);    
 
     range = max_value - min_value;
 
@@ -343,10 +343,12 @@ void DSP_Vector_Calcule_Frequencies (unsigned short *samples,
     
     for (i = 0; i < ranges_size; i++)
     {
+        //TODO: mejorar este algoritmo, no entra en el ultimo rango
+        //o si es <= lo cuenta dos veces
         for (j = 0; j < samples_size; j++)
         {
             if ((*(samples + j) >= *(ranges + i)) &&
-                 (*(samples + j) <= *(ranges + i + 1)))
+                 (*(samples + j) < *(ranges + i + 1)))
                 *(frequencies + i) += 1;
         }
     }

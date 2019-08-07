@@ -183,8 +183,8 @@ extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
 void DMAConfig(void);
 unsigned short Distance (unsigned short, unsigned short);
-unsigned char GetProcessedSegment (unsigned short, unsigned short *);
-unsigned char GetSlowSegment (unsigned short *);
+unsigned char GetProcessedSegment (unsigned short, unsigned short *, unsigned char);
+
     
 // ------- del DMX -------
 // extern void EXTI4_15_IRQHandler(void);
@@ -750,34 +750,92 @@ int main(void)
 
 
     //nuevas pruebas por segmentos de corriente para channel3
-// #define SEGMENTS_QTTY    8
-#define SEGMENTS_QTTY    16 
-
-
-#if (SEGMENTS_QTTY == 8)
+#define MAX_CURRENT_MILLIS    1100
+// #define LINEAR_SEGMENT_8
+#define LINEAR_SEGMENT_16
+// #define LINEAR_SEGMENT_32
+// #define FIBONACCI_12
+// #define FIBONACCI_8    
+    
+#ifdef LINEAR_SEGMENT_8
+#define SEGMENTS_QTTY    8
 unsigned short const_segments[SEGMENTS_QTTY] = {31, 63, 95, 127, 159, 191, 223, 255};
 #define SEGMENTS_VALUE    32
 #endif
-
-#if (SEGMENTS_QTTY == 16)
+#ifdef LINEAR_SEGMENT_16    
+#define SEGMENTS_QTTY    16
 unsigned short const_segments[SEGMENTS_QTTY] = {15, 31, 47, 63, 79, 95, 111, 127,
                                                 143, 159, 175, 191, 207, 223, 239, 255};
 #define SEGMENTS_VALUE    16
+#endif
+#ifdef LINEAR_SEGMENT_32
+#define SEGMENTS_QTTY    32
+unsigned short const_segments[SEGMENTS_QTTY] = {7, 15, 23, 31, 39, 47, 55, 63,
+                                                71, 79, 87, 95, 103, 111, 119, 127,
+                                                135, 143, 151, 159, 167, 175, 183, 191,
+                                                199, 207, 215, 223, 231, 239, 247, 255};
+#define SEGMENTS_VALUE    8
+#endif
+#ifdef FIBONACCI_12
+#define SEGMENTS_QTTY    12
+//numeros fibonacci ajustados a 255;  {1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233}
+unsigned short const_segments[SEGMENTS_QTTY] = {1, 2, 3, 5, 9, 14, 23, 37,
+                                                60, 97, 157, 255};
+
+#endif
+
+#ifdef FIBONACCI_8
+#define SEGMENTS_QTTY    8
+//numeros fibonacci ajustados a 255;  {1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233}
+unsigned short const_segments[SEGMENTS_QTTY] = {9, 14, 23, 37, 60, 97, 157, 255};
+
 #endif
 
     unsigned short segments[SEGMENTS_QTTY];
     led_current_settings_t led_curr;
 
+#if (defined LINEAR_SEGMENT_8) || (defined LINEAR_SEGMENT_16) || (defined LINEAR_SEGMENT_32)
     for (i = 0; i < SEGMENTS_QTTY; i++)
     {
         led_curr.channel = 3;
-        led_curr.sp_current = 2000 * (i + 1);
+        led_curr.sp_current = MAX_CURRENT_MILLIS * (i + 1);
         led_curr.sp_current = led_curr.sp_current / SEGMENTS_QTTY;
 
         UpdateDutyCycleReset();
         while (UpdateDutyCycle(&led_curr) == resp_continue);
         segments[i] = led_curr.duty_getted;
     }
+#endif
+
+#if (defined FIBONACCI_12) || (defined FIBONACCI_8)
+    sprintf(s_to_send, "dummys[%d]: ", SEGMENTS_QTTY);
+    Usart2Send(s_to_send);
+
+    for (i = 0; i < SEGMENTS_QTTY; i++)
+    {
+        unsigned int dummy = 0;
+        led_curr.channel = 3;
+        dummy = MAX_CURRENT_MILLIS * (*(const_segments + i));
+        dummy = dummy / (*(const_segments + SEGMENTS_QTTY - 1));
+        led_curr.sp_current = dummy;
+
+        sprintf(s_to_send, "%d ", dummy);
+        Usart2Send(s_to_send);
+
+        UpdateDutyCycleReset();
+        while (UpdateDutyCycle(&led_curr) == resp_continue);
+        if (i)
+        {
+            if (led_curr.duty_getted <= segments[i - 1])
+                segments[i] = segments[i - 1] + 1;
+            else
+                segments[i] = led_curr.duty_getted;
+        }
+        else
+            segments[i] = led_curr.duty_getted;
+    }
+    Usart2Send("\n");
+#endif
     
     //mando info al puerto
     sprintf(s_to_send, "segments[%d]: ", SEGMENTS_QTTY);
@@ -796,13 +854,20 @@ unsigned short const_segments[SEGMENTS_QTTY] = {15, 31, 47, 63, 79, 95, 111, 127
     unsigned short deltas_vect[SEGMENTS_QTTY] = { 0 };
     unsigned short last_segment = 0;
 
-    //convierto segmentos a deltas
+    //convierto segmentos a deltas, si el segmento anterior es mas chico repito el valor
     sprintf(s_to_send, "deltas_vect[%d]: ", SEGMENTS_QTTY);
     Usart2Send(s_to_send);    
     for (i = 0; i < SEGMENTS_QTTY; i++)
     {
-        deltas_vect[i] = segments[i] - last_segment;
-        last_segment = segments[i];
+        if (segments[i] <= last_segment)
+        {
+            deltas_vect[i] = 0;
+        }
+        else
+        {
+            deltas_vect[i] = segments[i] - last_segment;
+            last_segment = segments[i];
+        }
         sprintf(s_to_send, "%d ", deltas_vect[i]);
         Usart2Send(s_to_send);
         Wait_ms(10);        
@@ -845,18 +910,6 @@ unsigned short const_segments[SEGMENTS_QTTY] = {15, 31, 47, 63, 79, 95, 111, 127
     
     sprintf(s_to_send, "slow_segment: %d\n", slow_segment);
     Usart2Send(s_to_send);
-    // for (i = 0; i < SEGMENTS_QTTY; i++)
-    // {
-    //     sprintf(s_to_send, "%d ", const_segments[i]);
-    //     Usart2Send(s_to_send);
-    //     Wait_ms(10);
-    // }
-    // Usart2Send("\n");
-    
-    // // slow_segment = GetSlowSegment(segments);
-    // slow_segment = 2; 
-    // sprintf(s_to_send, "slow_segments: %d\n", slow_segment);
-    // Usart2Send(s_to_send);    
         
         
     while (1)
@@ -1098,8 +1151,9 @@ unsigned short const_segments[SEGMENTS_QTTY] = {15, 31, 47, 63, 79, 95, 111, 127
                     // delta_timer = 5;
 
                     //mapeo los segmentos
-                    new_segment = GetProcessedSegment(sp3_filtered, const_segments);
+                    new_segment = GetProcessedSegment(sp3_filtered, const_segments, SEGMENTS_QTTY);
 
+#if (defined LINEAR_SEGMENT_8) || (defined LINEAR_SEGMENT_16) || (defined LINEAR_SEGMENT_32)                    
                     if (new_segment)
                     {
                         dummy = sp3_filtered - new_segment * SEGMENTS_VALUE;
@@ -1113,36 +1167,70 @@ unsigned short const_segments[SEGMENTS_QTTY] = {15, 31, 47, 63, 79, 95, 111, 127
                         dummy /= SEGMENTS_VALUE;
                         ch3_pwm = dummy;
                     }
+#endif
+
+#if (defined FIBONACCI_12) || (defined FIBONACCI_8)
+                    //tengo que mapear el dmx a la corriente
+                    //ch3_pwm es el valor de pwm que necesito para la corriente mapeada
+                    delta_timer = 5;
+
+                    if (new_segment)
+                    {
+                        //traslado a 0 el segmento
+                        dummy = sp3_filtered - const_segments[new_segment - 1];
+                        dummy = dummy * (segments[new_segment] - segments[new_segment - 1]);
+                        dummy /= const_segments[new_segment] - const_segments[new_segment - 1];
+                        //traslado el delta al segmento elegido
+                        ch3_pwm = dummy + segments[new_segment - 1];
+                    }
+                    else
+                    {
+                        dummy = sp3_filtered * segments[0];
+                        dummy /= const_segments[0];
+                        ch3_pwm = dummy;
+                    }
+#endif
                     
 #ifdef USE_PWM_DELTA_FUNCTION
 
-                    // if ((GetProcessedSegment(delta_ch3_pwm, segments) == 2) ||
-                    //     (GetProcessedSegment(delta_ch3_pwm, segments) == 1) ||
-                    //     (GetProcessedSegment(delta_ch3_pwm, segments) == 0))
-                    // if ((GetProcessedSegment(delta_ch3_pwm, segments) == 3) ||
-                    //     (GetProcessedSegment(delta_ch3_pwm, segments) == 2))
+#if (SEGMENTS_QTTY == 8)
                     // siempre hago funcion delta, pero segun el segmento donde estoy le muevo la
                     // velocidad                    
-                    new_segment = GetProcessedSegment(delta_ch3_pwm, segments);
-
-#if (SEGMENTS_QTTY == 8)
+                    new_segment = GetProcessedSegment(delta_ch3_pwm, segments, SEGMENTS_QTTY);
                     if (new_segment < slow_segment)    //segmento bajo, tengo muchos puntos, voy mas rapido
                         delta_timer = 1;
                     else if (new_segment == slow_segment)    //segmento de cambio de modo voy bien lento
-                        delta_timer = 15;
+                        delta_timer = 2;
                     else
                         delta_timer = 5;
 #endif
 
 #if (SEGMENTS_QTTY == 16)
+                    // siempre hago funcion delta, pero segun el segmento donde estoy le muevo la
+                    // velocidad                    
+                    new_segment = GetProcessedSegment(delta_ch3_pwm, segments, SEGMENTS_QTTY);
                     if (new_segment < slow_segment)    //segmento bajo, tengo muchos puntos, voy mas rapido
                         delta_timer = 1;
                     else if (new_segment == slow_segment)    //segmento de cambio de modo voy bien lento
-                        delta_timer = 8;
+                        delta_timer = 2;
                     else
                         delta_timer = 5;
 #endif
 
+#if (SEGMENTS_QTTY == 32)
+                    // siempre hago funcion delta, pero segun el segmento donde estoy le muevo la
+                    // velocidad                    
+                    new_segment = GetProcessedSegment(delta_ch3_pwm, segments, SEGMENTS_QTTY);
+                    if (new_segment < slow_segment)    //segmento bajo, tengo muchos puntos, voy mas rapido
+                        delta_timer = 1;
+                    else if (new_segment == slow_segment)    //segmento de cambio de modo voy bien lento
+                        delta_timer = 2;
+                    else if (new_segment == (slow_segment + 1))    //empiezo a acelerar
+                        delta_timer = 12;
+                    else
+                        delta_timer = 5;
+#endif
+                    
                     if (ch3_pwm > delta_ch3_pwm)
                         delta_ch3_pwm++;
                     else if (ch3_pwm < delta_ch3_pwm)
@@ -1398,12 +1486,14 @@ unsigned short Distance (unsigned short a, unsigned short b)
     return (a - b);
 }
 
-unsigned char GetProcessedSegment (unsigned short check_segment_by_value, unsigned short * s)
+unsigned char GetProcessedSegment (unsigned short check_segment_by_value,
+                                   unsigned short * s,
+                                   unsigned char seg_qtty)
 {
-    char * s_to_send[100];
+    // char * s_to_send[100];
     unsigned char i;
     
-    for (i = SEGMENTS_QTTY; i > 0; i--)
+    for (i = seg_qtty; i > 0; i--)
     {
         if (check_segment_by_value > *(s + i - 1))
             return i;
@@ -1412,29 +1502,6 @@ unsigned char GetProcessedSegment (unsigned short check_segment_by_value, unsign
     return 0;
 }
 
-unsigned char GetSlowSegment (unsigned short * s)
-{
-    unsigned char i;
-    unsigned char slow = 0;
-    unsigned short last_delta = 0;
-    unsigned short delta = 0;
-    unsigned int total = 0;
-
-    //busco el promedio de los segmentos
-
-    //busco el mayor numero de segmento que tenga un valor alto
-    for (i = 0; i < SEGMENTS_QTTY; i++)
-    {
-        delta = *(s + i + 1) - *(s + i);
-        if (delta < last_delta)
-        {
-            slow = i;
-            i = SEGMENTS_QTTY;
-        }
-    }
-    
-    return slow;
-}
 
 //--- end of file ---//
 

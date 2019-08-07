@@ -62,25 +62,25 @@ UDEFS =
 UADEFS =
 
 # List C source files here
-LIBSDIR    = ../STM32F0xx_StdPeriph_Lib_V1.3.1/Libraries/STM32F0xx_StdPeriph_Driver
+# LIBSDIR    = ../STM32F0xx_StdPeriph_Lib_V1.3.1/Libraries/STM32F0xx_StdPeriph_Driver
+# LIBSDIR    = 
 CORELIBDIR = ./cmsis_core
-DEVDIR  =	./cmsis_boot
+BOOTDIR = ./cmsis_boot
 
 
-STMSPDDIR    = ./stm_lib
-
-STMSPSRCDDIR = $(LIBSDIR)/src
-STMSPINCDDIR = $(LIBSDIR)/inc
-#STMSPSRCDDIR = $(STMSPDDIR)/src
-#STMSPINCDDIR = $(STMSPDDIR)/inc
+# STMSPDDIR    = ./stm_lib
+# STMSPSRCDDIR = $(LIBSDIR)/src
+# STMSPINCDDIR = $(LIBSDIR)/inc
+# STMSPSRCDDIR = $(STMSPDDIR)/src
+# STMSPINCDDIR = $(STMSPDDIR)/inc
 
 #DISCOVERY    = ../STM32F0-Discovery_FW_V1.0.0/Utilities/STM32F0-Discovery
 
 LINKER = ./cmsis_boot/startup
 
 SRC  = ./src/main.c
-SRC += $(DEVDIR)/system_stm32f0xx.c
-SRC += $(DEVDIR)/syscalls/syscalls.c
+SRC += $(BOOTDIR)/system_stm32f0xx.c
+SRC += $(BOOTDIR)/syscalls/syscalls.c
 
 SRC += ./src/it.c
 SRC += ./src/gpio.c
@@ -104,20 +104,19 @@ SRC += ./src/power_control.c
 #SRC += $(DISCOVERY)/stm32f0_discovery.c
 #SRC += ./src/Sim900.c
 ## Core Support
-#SRC += ./startup_src/syscalls.c
 SRC += $(CORELIBDIR)/core_cm0.c
-## used parts of the STM-Library
+
+
+## Other Peripherals libraries
 
 # List ASM source files here
 ASRC = ./cmsis_boot/startup/startup_stm32f0xx.s
 
 # List all user directories here
-UINCDIR = $(DEVDIR) \
+UINCDIR = $(BOOTDIR) \
           $(CORELIBDIR) \
-          $(STMSPINCDDIR) \
-          $(DISCOVERY)    \
-          ./inc  \
-          ./cmsis_boot
+			 #../paho.mqtt.embedded-c/MQTTPacket/src
+
 # List the user directory to look for the libraries here
 ULIBDIR =
 
@@ -161,7 +160,7 @@ ASFLAGS = $(MCFLAGS) -g -gdwarf-2 -mthumb  -Wa,-amhls=$(<:.s=.lst) $(ADEFS)
 CPFLAGS = $(MCFLAGS) $(OPT) -g -gdwarf-2 -mthumb -fomit-frame-pointer -Wall -fdata-sections -ffunction-sections -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DDEFS)
 
 # SIN DEAD CODE, hace el STRIP
-LDFLAGS = $(MCFLAGS) -mthumb --specs=nano.specs -Wl,--gc-sections -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).map,--cref,--no-warn-mismatch $(LIBDIR)
+LDFLAGS = $(MCFLAGS) -mthumb -lm --specs=nano.specs -Wl,--gc-sections -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).map,--cref,--no-warn-mismatch $(LIBDIR)
 # CON DEAD CODE
 #LDFLAGS = $(MCFLAGS) -mthumb --specs=nano.specs -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).map,--cref,--no-warn-mismatch $(LIBDIR)
 #LDFLAGS = $(MCFLAGS) -mthumb -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).map,--cref,--no-warn-mismatch $(LIBDIR)
@@ -207,6 +206,9 @@ $(assobjects): %.o: %.s
 
 flash:
 	sudo openocd -f stm32f0_flash.cfg
+
+flash_lock:
+	sudo openocd -f stm32f0_flash_lock.cfg
 
 gdb:
 	sudo openocd -f stm32f0_gdb.cfg
