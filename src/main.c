@@ -775,7 +775,9 @@ unsigned short const_segments[SEGMENTS_QTTY] = {7, 15, 23, 31, 39, 47, 55, 63,
 #endif
 
 
-unsigned short segments [6] [SEGMENTS_QTTY] = { 0 };
+// unsigned short segments [6] [SEGMENTS_QTTY] = { 0 };
+memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
+unsigned short * p_seg = &mem_conf.segments[0][0];
     led_current_settings_t led_curr;
 
 // #if (defined LINEAR_SEGMENT_8) || (defined LINEAR_SEGMENT_16) || (defined LINEAR_SEGMENT_32)
@@ -791,7 +793,8 @@ unsigned short segments [6] [SEGMENTS_QTTY] = { 0 };
 //     }
 // #endif
 
-    HARD_Find_Current_Segments(&led_curr, &segments[0][0], SEGMENTS_QTTY);
+    // HARD_Find_Current_Segments(&led_curr, &segments[0][0], SEGMENTS_QTTY);
+    HARD_Find_Current_Segments(&led_curr, p_seg, SEGMENTS_QTTY);    
 
     //mando info al puerto
     for (unsigned char j = 0; j < 6; j++)
@@ -800,7 +803,8 @@ unsigned short segments [6] [SEGMENTS_QTTY] = { 0 };
         Usart2Send(s_to_send);
         for (unsigned char i = 0; i < SEGMENTS_QTTY; i++)
         {
-            sprintf(s_to_send, "%d ", segments[j][i]);
+            // sprintf(s_to_send, "%d ", segments[j][i]);
+            sprintf(s_to_send, "%d ", mem_conf.segments[j][i]);
             Usart2Send(s_to_send);
             Wait_ms(10);
         }
@@ -812,7 +816,7 @@ unsigned short segments [6] [SEGMENTS_QTTY] = { 0 };
         switch (main_state)
         {
         case MAIN_INIT:
-            memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
+            // memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
             main_state++;
             break;
 
@@ -949,7 +953,7 @@ unsigned short segments [6] [SEGMENTS_QTTY] = { 0 };
                     new_segment = GetProcessedSegment(sp3_filtered, const_segments, SEGMENTS_QTTY);
 
                     //apunto a los valores medidos y guardados en memoria
-                    pseg = &segments[2][0];
+                    pseg = &mem_conf.segments[2][0];
                     
                     if (new_segment)
                     {
