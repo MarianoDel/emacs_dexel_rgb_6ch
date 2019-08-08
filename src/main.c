@@ -918,7 +918,6 @@ unsigned short const_segments[SEGMENTS_QTTY] = {9, 14, 23, 37, 60, 97, 157, 255}
         {
         case MAIN_INIT:
             memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
-
             main_state++;
             break;
 
