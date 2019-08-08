@@ -148,4 +148,4 @@ void SetADC1_SampleTime (void);
 unsigned short ReadADC1Check (unsigned char);
 unsigned int ADCGetCalibrationFactor (void);
 
-#endif /* ADC_H_ */
+#endif /* _ADC_H_ */

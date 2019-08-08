@@ -1,13 +1,12 @@
-//---------------------------------------------
-// #### PROYECTO LIPO LASER - Custom Board ####
+//----------------------------------------------------------------------
+// #### PROYECTO DEXEL/LUIS_CASINO 6CH BIDIRECCIONAL - Custom Board ####
 // ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### HARD.C ################################
-//---------------------------------------------
-
+// #### HARD.C #########################################################
+//----------------------------------------------------------------------
 #include "hard.h"
 #include "stm32f0xx.h"
 
@@ -19,7 +18,7 @@
 
 
 
-/* Externals variables ---------------------------------------------------------*/
+/* Externals variables --------------------------------------------------------*/
 extern volatile unsigned char switches_timer;
 extern volatile unsigned short timer_standby;
 
@@ -307,4 +306,65 @@ unsigned char DMXMapping (unsigned char to_map)
 
     return temp;
 }
+
+resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
+                                 unsigned short * segments,
+                                 unsigned char segment_qtty)
+{
+    resp_t resp = resp_continue;
+    
+    //espero tres tipos de respuesta resp_ok, resp_finish, resp_error
+    //estas respuestas las traslado
+    for (unsigned char j = 0; j < 6; j++)
+    {
+        //busco segmentos para cada canal
+        UpdateDutyCycleReset();
+        settings->channel = j + 1;
+        
+        for (unsigned char i = 0; i < segment_qtty; i++)
+        {
+            settings->sp_current = MAX_CURRENT_MILLIS * (i + 1);
+            settings->sp_current = settings->sp_current / segment_qtty;
+
+            do {
+                resp = UpdateDutyCycle(settings);
+            }
+            while (resp == resp_continue);
+
+            //reviso errores tipo (menues.c line: 509)
+            //no current
+            if (resp == resp_error)
+            {
+                mem_conf.pwm_chnls[settings->channel - 1] = 0;
+                mem_conf.volts_ch[settings->channel - 1] = 0;
+                i = segment_qtty;
+            }
+
+            if (resp == resp_finish)
+            {
+                settings->duty_getted = DUTY_95_PERCENT;
+                resp = resp_ok;
+            }
+
+            if (resp == resp_ok)
+            {
+                //si es el ultimo segmento
+                if (i == (segment_qtty - 1))
+                {
+                    unsigned int calc = 0;
+                    
+                    calc = mem_conf.volts_in_mains * settings->duty_getted;
+                    calc = calc / 1000;
+                    mem_conf.volts_ch[settings->channel - 1] = calc;
+                    mem_conf.pwm_chnls[settings->channel - 1] = settings->duty_getted;                    
+                }
+
+                *(segments + j * segment_qtty + i) = settings->duty_getted;
+            }
+        }
+    }
+
+    return resp;
+}
+
 //--- end of file ---//

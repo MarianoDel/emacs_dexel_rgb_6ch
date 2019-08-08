@@ -86,6 +86,8 @@
 #define MAX_CURRENT_INT    2
 #define MAX_CURRENT_DEC    0
 
+#define MAX_CURRENT_MILLIS    1100
+
 //esto es dmx_data * MAX_CURRENT * MAX_CURRENT_IN_ADC_COMPENSATED / 512
 //255 * 2.0 * 823 / 512 = 820
 #define MAX_CURRENT_IN_ADC_COMPENSATED    (MAX_CURRENT_IN_ADC + 3)
@@ -302,5 +304,8 @@ void HardUpdateMaxPower (void);
 void HardUpdateMaxPowerReset (void);
 unsigned short PWMChannelsOffset (unsigned char, unsigned short);
 unsigned char DMXMapping (unsigned char);
+resp_t HARD_Find_Current_Segments (led_current_settings_t *,
+                                   unsigned short *,
+                                   unsigned char);
 
 #endif /* HARD_H_ */

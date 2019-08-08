@@ -748,9 +748,6 @@ int main(void)
 
     ADC1->CR |= ADC_CR_ADSTART;
 
-
-    //nuevas pruebas por segmentos de corriente para channel3
-#define MAX_CURRENT_MILLIS    1100
 // #define LINEAR_SEGMENT_8
 #define LINEAR_SEGMENT_16
 // #define LINEAR_SEGMENT_32
@@ -776,142 +773,40 @@ unsigned short const_segments[SEGMENTS_QTTY] = {7, 15, 23, 31, 39, 47, 55, 63,
                                                 199, 207, 215, 223, 231, 239, 247, 255};
 #define SEGMENTS_VALUE    8
 #endif
-#ifdef FIBONACCI_12
-#define SEGMENTS_QTTY    12
-//numeros fibonacci ajustados a 255;  {1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233}
-unsigned short const_segments[SEGMENTS_QTTY] = {1, 2, 3, 5, 9, 14, 23, 37,
-                                                60, 97, 157, 255};
 
-#endif
 
-#ifdef FIBONACCI_8
-#define SEGMENTS_QTTY    8
-//numeros fibonacci ajustados a 255;  {1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233}
-unsigned short const_segments[SEGMENTS_QTTY] = {9, 14, 23, 37, 60, 97, 157, 255};
-
-#endif
-
-    unsigned short segments[SEGMENTS_QTTY];
+unsigned short segments [6] [SEGMENTS_QTTY] = { 0 };
     led_current_settings_t led_curr;
 
-#if (defined LINEAR_SEGMENT_8) || (defined LINEAR_SEGMENT_16) || (defined LINEAR_SEGMENT_32)
-    for (i = 0; i < SEGMENTS_QTTY; i++)
-    {
-        led_curr.channel = 3;
-        led_curr.sp_current = MAX_CURRENT_MILLIS * (i + 1);
-        led_curr.sp_current = led_curr.sp_current / SEGMENTS_QTTY;
+// #if (defined LINEAR_SEGMENT_8) || (defined LINEAR_SEGMENT_16) || (defined LINEAR_SEGMENT_32)
+//     for (i = 0; i < SEGMENTS_QTTY; i++)
+//     {
+//         led_curr.channel = 3;
+//         led_curr.sp_current = MAX_CURRENT_MILLIS * (i + 1);
+//         led_curr.sp_current = led_curr.sp_current / SEGMENTS_QTTY;
 
-        UpdateDutyCycleReset();
-        while (UpdateDutyCycle(&led_curr) == resp_continue);
-        segments[i] = led_curr.duty_getted;
-    }
-#endif
+//         UpdateDutyCycleReset();
+//         while (UpdateDutyCycle(&led_curr) == resp_continue);
+//         segments[i] = led_curr.duty_getted;
+//     }
+// #endif
 
-#if (defined FIBONACCI_12) || (defined FIBONACCI_8)
-    sprintf(s_to_send, "dummys[%d]: ", SEGMENTS_QTTY);
-    Usart2Send(s_to_send);
+    HARD_Find_Current_Segments(&led_curr, &segments[0][0], SEGMENTS_QTTY);
 
-    for (i = 0; i < SEGMENTS_QTTY; i++)
-    {
-        unsigned int dummy = 0;
-        led_curr.channel = 3;
-        dummy = MAX_CURRENT_MILLIS * (*(const_segments + i));
-        dummy = dummy / (*(const_segments + SEGMENTS_QTTY - 1));
-        led_curr.sp_current = dummy;
-
-        sprintf(s_to_send, "%d ", dummy);
-        Usart2Send(s_to_send);
-
-        UpdateDutyCycleReset();
-        while (UpdateDutyCycle(&led_curr) == resp_continue);
-        if (i)
-        {
-            if (led_curr.duty_getted <= segments[i - 1])
-                segments[i] = segments[i - 1] + 1;
-            else
-                segments[i] = led_curr.duty_getted;
-        }
-        else
-            segments[i] = led_curr.duty_getted;
-    }
-    Usart2Send("\n");
-#endif
-    
     //mando info al puerto
-    sprintf(s_to_send, "segments[%d]: ", SEGMENTS_QTTY);
-    Usart2Send(s_to_send);
-    for (i = 0; i < SEGMENTS_QTTY; i++)
-    {
-        sprintf(s_to_send, "%d ", segments[i]);
+    for (unsigned char j = 0; j < 6; j++)
+    {        
+        sprintf(s_to_send, "segments[%d]: ", j);
         Usart2Send(s_to_send);
-        Wait_ms(10);
-    }
-    Usart2Send("\n");
-
-#define RANGES_QTTY    5
-    unsigned short ranges[RANGES_QTTY] = { 0 };
-    unsigned char freq_vect[RANGES_QTTY] = { 0 };
-    unsigned short deltas_vect[SEGMENTS_QTTY] = { 0 };
-    unsigned short last_segment = 0;
-
-    //convierto segmentos a deltas, si el segmento anterior es mas chico repito el valor
-    sprintf(s_to_send, "deltas_vect[%d]: ", SEGMENTS_QTTY);
-    Usart2Send(s_to_send);    
-    for (i = 0; i < SEGMENTS_QTTY; i++)
-    {
-        if (segments[i] <= last_segment)
+        for (unsigned char i = 0; i < SEGMENTS_QTTY; i++)
         {
-            deltas_vect[i] = 0;
+            sprintf(s_to_send, "%d ", segments[j][i]);
+            Usart2Send(s_to_send);
+            Wait_ms(10);
         }
-        else
-        {
-            deltas_vect[i] = segments[i] - last_segment;
-            last_segment = segments[i];
-        }
-        sprintf(s_to_send, "%d ", deltas_vect[i]);
-        Usart2Send(s_to_send);
-        Wait_ms(10);        
-    }
-    Usart2Send("\n");
-    
-    
-    DSP_Vector_Calcule_Frequencies(deltas_vect,
-                                   SEGMENTS_QTTY,
-                                   ranges,
-                                   RANGES_QTTY,
-                                   freq_vect);
-
-    sprintf(s_to_send, "ranges[%d]: ", RANGES_QTTY);
-    Usart2Send(s_to_send);    
-    for (i = 0; i < RANGES_QTTY; i++)
-    {
-        sprintf(s_to_send, "%d ", ranges[i]);
-        Usart2Send(s_to_send);
-        Wait_ms(10);        
-    }
-    Usart2Send("\n");
-
-    sprintf(s_to_send, "frequencies[%d]: ", RANGES_QTTY);
-    Usart2Send(s_to_send);    
-    for (i = 0; i < RANGES_QTTY; i++)
-    {
-        sprintf(s_to_send, "%d ", freq_vect[i]);
-        Usart2Send(s_to_send);
-        Wait_ms(10);        
-    }
-    Usart2Send("\n");
-
-    //seak for the mayor segment that is not appering in the most frequency
-    for (i = 0; i < SEGMENTS_QTTY; i++)
-    {
-        if (*(deltas_vect + i) > (ranges[1] - ranges[0]))
-            slow_segment = i;
+        Usart2Send("\n");
     }
     
-    sprintf(s_to_send, "slow_segment: %d\n", slow_segment);
-    Usart2Send(s_to_send);
-        
-        
     while (1)
     {
         switch (main_state)
@@ -1007,85 +902,6 @@ unsigned short const_segments[SEGMENTS_QTTY] = {9, 14, 23, 37, 60, 97, 157, 255}
             FuncSlaveMode();
             if (UpdateFiltersTest ())
             {
-#ifdef USE_LED_CTRL_MODE_MIXED
-                //calculo el PWM de cada canal, solo si tengo leds en los canales
-                if (mem_conf.pwm_chnls[0])
-                {
-                    if (sp1_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
-                    {
-                        ch1_pwm = PWMChannelsOffset(sp1_filtered, mem_conf.pwm_chnls[0]);
-                        mem_conf.pwm_base_chnls[0] = ch1_pwm;
-                        Update_PWM1(ch1_pwm);                        
-                    }
-                }
-                
-                if (mem_conf.pwm_chnls[1])
-                {
-                    if (sp2_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
-                    {
-                        ch2_pwm = PWMChannelsOffset(sp2_filtered, mem_conf.pwm_chnls[1]);
-                        mem_conf.pwm_base_chnls[1] = ch2_pwm;
-                        Update_PWM2(ch2_pwm);
-                    }
-                }
-
-                if (mem_conf.pwm_chnls[2])
-                {
-                    if (sp3_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
-                    {
-                        ch3_pwm = PWMChannelsOffset(sp3_filtered, mem_conf.pwm_chnls[2]);
-                        mem_conf.pwm_base_chnls[2] = ch3_pwm;
-                        // Update_PWM3(ch3_pwm);
-#ifdef USE_PWM_DELTA_FUNCTION
-                        if (!delta_index)
-                        {
-                            delta_index = 5;
-                            if (delta_ch3_pwm < ch3_pwm)
-                                delta_ch3_pwm++;
-                            else if (delta_ch3_pwm > ch3_pwm)
-                                delta_ch3_pwm--;
-                    
-                            Update_PWM3(delta_ch3_pwm);
-                        }
-                        else
-                            delta_index--;
-#else
-                        Update_PWM3(ch3_pwm);
-#endif                        
-                    }
-                }
-
-                if (mem_conf.pwm_chnls[3])
-                {
-                    if (sp4_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
-                    {
-                        ch4_pwm = PWMChannelsOffset(sp4_filtered, mem_conf.pwm_chnls[3]);
-                        mem_conf.pwm_base_chnls[3] = ch4_pwm;
-                        Update_PWM4(ch4_pwm);
-                    }
-                }
-
-                if (mem_conf.pwm_chnls[4])
-                {
-                    if (sp5_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
-                    {
-                        ch5_pwm = PWMChannelsOffset(sp5_filtered, mem_conf.pwm_chnls[4]);
-                        mem_conf.pwm_base_chnls[4] = ch5_pwm;
-                        Update_PWM5(ch5_pwm);
-                    }
-                }
-
-                if (mem_conf.pwm_chnls[5])
-                {
-                    if (sp6_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
-                    {
-                        ch6_pwm = PWMChannelsOffset(sp6_filtered, mem_conf.pwm_chnls[5]);
-                        mem_conf.pwm_base_chnls[5] = ch6_pwm;
-                        Update_PWM6(ch6_pwm);
-                    }
-                }
-#endif
-#ifdef USE_LED_CTRL_MODE_CONTINUOS
                 //calculo el PWM de cada canal, solo si tengo leds en los canales
                 if (mem_conf.pwm_chnls[0])
                 {
@@ -1099,28 +915,8 @@ unsigned short const_segments[SEGMENTS_QTTY] = {9, 14, 23, 37, 60, 97, 157, 255}
                     Update_PWM2(ch2_pwm);
                 }
 
-//                 if (mem_conf.pwm_chnls[2])
-//                 {
-//                     ch3_pwm = PWMChannelsOffset(sp3_filtered, mem_conf.pwm_chnls[2]);
-//                     // ch3_pwm = PWMChannelsOffset(DMXMapping(sp3_filtered), mem_conf.pwm_chnls[2]);
-// #ifdef USE_PWM_DELTA_FUNCTION
-//                     // if (!delta_index)
-//                     // {
-//                     //     delta_index = 5;
-//                         if (delta_ch3_pwm < ch3_pwm)
-//                             delta_ch3_pwm++;
-//                         else if (delta_ch3_pwm > ch3_pwm)
-//                             delta_ch3_pwm--;
-                    
-//                         Update_PWM3(delta_ch3_pwm);
-//                     // }
-//                     // else
-//                     //     delta_index--;
-// #else
-//                     Update_PWM3(ch3_pwm);
-// #endif
-//                 }
-
+                //quite CH3 pwm_chnls[2] fuera del filtro
+                
                 if (mem_conf.pwm_chnls[3])
                 {
                     ch4_pwm = PWMChannelsOffset(sp4_filtered, mem_conf.pwm_chnls[3]);
@@ -1138,7 +934,6 @@ unsigned short const_segments[SEGMENTS_QTTY] = {9, 14, 23, 37, 60, 97, 157, 255}
                     ch6_pwm = PWMChannelsOffset(sp6_filtered, mem_conf.pwm_chnls[5]);
                     Update_PWM6(ch6_pwm);
                 }
-#endif
             }    //end of filters
 
             if (mem_conf.pwm_chnls[2])
@@ -1147,98 +942,33 @@ unsigned short const_segments[SEGMENTS_QTTY] = {9, 14, 23, 37, 60, 97, 157, 255}
                 {
                     unsigned char new_segment = 0;
                     unsigned short dummy = 0;
-                    // delta_timer = 5;
+                    unsigned short * pseg;
 
+                    
                     //mapeo los segmentos
                     new_segment = GetProcessedSegment(sp3_filtered, const_segments, SEGMENTS_QTTY);
 
-#if (defined LINEAR_SEGMENT_8) || (defined LINEAR_SEGMENT_16) || (defined LINEAR_SEGMENT_32)                    
+                    //apunto a los valores medidos y guardados en memoria
+                    pseg = &segments[2][0];
+                    
                     if (new_segment)
                     {
                         dummy = sp3_filtered - new_segment * SEGMENTS_VALUE;
-                        dummy = dummy * (segments[new_segment] - segments[new_segment - 1]);
+                        // dummy = dummy * (segments[new_segment] - segments[new_segment - 1]);
+                        dummy = dummy * (*(pseg + new_segment) - *(pseg + new_segment - 1));
                         dummy /= SEGMENTS_VALUE;
-                        ch3_pwm = dummy + segments[new_segment - 1];
+                        // ch3_pwm = dummy + segments[new_segment - 1];
+                        ch3_pwm = dummy + *(pseg + new_segment - 1);
                     }
                     else
                     {
-                        dummy = sp3_filtered * segments[0];
+                        // dummy = sp3_filtered * segments[0];
+                        dummy = sp3_filtered * *pseg;
                         dummy /= SEGMENTS_VALUE;
                         ch3_pwm = dummy;
                     }
-#endif
-
-#if (defined FIBONACCI_12) || (defined FIBONACCI_8)
-                    //tengo que mapear el dmx a la corriente
-                    //ch3_pwm es el valor de pwm que necesito para la corriente mapeada
-                    delta_timer = 5;
-
-                    if (new_segment)
-                    {
-                        //traslado a 0 el segmento
-                        dummy = sp3_filtered - const_segments[new_segment - 1];
-                        dummy = dummy * (segments[new_segment] - segments[new_segment - 1]);
-                        dummy /= const_segments[new_segment] - const_segments[new_segment - 1];
-                        //traslado el delta al segmento elegido
-                        ch3_pwm = dummy + segments[new_segment - 1];
-                    }
-                    else
-                    {
-                        dummy = sp3_filtered * segments[0];
-                        dummy /= const_segments[0];
-                        ch3_pwm = dummy;
-                    }
-#endif
                     
-#ifdef USE_PWM_DELTA_FUNCTION
-
-#if (SEGMENTS_QTTY == 8)
-                    // siempre hago funcion delta, pero segun el segmento donde estoy le muevo la
-                    // velocidad                    
-                    new_segment = GetProcessedSegment(delta_ch3_pwm, segments, SEGMENTS_QTTY);
-                    if (new_segment < slow_segment)    //segmento bajo, tengo muchos puntos, voy mas rapido
-                        delta_timer = 1;
-                    else if (new_segment == slow_segment)    //segmento de cambio de modo voy bien lento
-                        delta_timer = 2;
-                    else
-                        delta_timer = 5;
-#endif
-
-#if (SEGMENTS_QTTY == 16)
-                    // siempre hago funcion delta, pero segun el segmento donde estoy le muevo la
-                    // velocidad                    
-                    new_segment = GetProcessedSegment(delta_ch3_pwm, segments, SEGMENTS_QTTY);
-                    if (new_segment < slow_segment)    //segmento bajo, tengo muchos puntos, voy mas rapido
-                        delta_timer = 1;
-                    else if (new_segment == slow_segment)    //segmento de cambio de modo voy bien lento
-                        delta_timer = 2;
-                    else
-                        delta_timer = 5;
-#endif
-
-#if (SEGMENTS_QTTY == 32)
-                    // siempre hago funcion delta, pero segun el segmento donde estoy le muevo la
-                    // velocidad                    
-                    new_segment = GetProcessedSegment(delta_ch3_pwm, segments, SEGMENTS_QTTY);
-                    if (new_segment < slow_segment)    //segmento bajo, tengo muchos puntos, voy mas rapido
-                        delta_timer = 1;
-                    else if (new_segment == slow_segment)    //segmento de cambio de modo voy bien lento
-                        delta_timer = 2;
-                    else if (new_segment == (slow_segment + 1))    //empiezo a acelerar
-                        delta_timer = 12;
-                    else
-                        delta_timer = 5;
-#endif
-                    
-                    if (ch3_pwm > delta_ch3_pwm)
-                        delta_ch3_pwm++;
-                    else if (ch3_pwm < delta_ch3_pwm)
-                        delta_ch3_pwm--;
-
-                    Update_PWM3(delta_ch3_pwm);
-#else
                     Update_PWM3(ch3_pwm);
-#endif
                 }
             }
 
