@@ -52,6 +52,14 @@
 // #define USE_PWM_DELTA_FUNCTION
 //----- End of PWM Modes ---------------------
 
+//----- Segments Modes ----------------------------
+// #define LINEAR_SEGMENT_8
+#define LINEAR_SEGMENT_16
+// #define LINEAR_SEGMENT_32
+// #define FIBONACCI_12
+// #define FIBONACCI_8    
+//----- End of Segments Modes ---------------------
+
 //------ Configuration for Firmware-Channels -----
 
 
@@ -96,6 +104,8 @@
 #define MAX_MAINS_VOLTAGE    48
 #define MIN_MAX_POWER    40
 #define MAX_MAX_POWER    100
+
+#define MAX_DUTY_CYCLE    DUTY_95_PERCENT
 
 //---- Configuration for Firmware-Programs --------
 
@@ -304,8 +314,6 @@ void HardUpdateMaxPower (void);
 void HardUpdateMaxPowerReset (void);
 unsigned short PWMChannelsOffset (unsigned char, unsigned short);
 unsigned char DMXMapping (unsigned char);
-resp_t HARD_Find_Current_Segments (led_current_settings_t *,
-                                   unsigned short *,
-                                   unsigned char);
-
+resp_t HARD_Find_Current_Segments (led_current_settings_t *, unsigned short *);
+unsigned short HARD_Process_New_PWM_Data (unsigned char, unsigned char);
 #endif /* HARD_H_ */

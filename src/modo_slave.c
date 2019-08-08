@@ -78,14 +78,6 @@ char s_lcd2 [10];
 
 // float fcalc = 1.0;
 
-//--- Para el PID ----------
-unsigned short sp1 = 0;
-unsigned short sp2 = 0;
-unsigned short sp3 = 0;
-unsigned short sp4 = 0;
-unsigned short sp5 = 0;
-unsigned short sp6 = 0;
-
 #ifdef USE_FILTER_LENGHT_8
 extern unsigned short v_sp1 [8];
 extern unsigned short v_sp2 [8];
@@ -251,61 +243,8 @@ void FuncSlaveMode (void)
                 data7[6] = (unsigned char) dummy_16;
             }
 
-            sp1 = data7[1];
-            sp2 = data7[2];
-            sp3 = data7[3];
-            sp4 = data7[4];
-            sp5 = data7[5];
-            sp6 = data7[6];            
-
-            // //CH1
-            // sp1 = DMXtoCurrent (data7[1]);
-
-            // //CH2
-            // sp2 = DMXtoCurrent (data7[2]);
-
-            // //CH3
-            // sp3 = DMXtoCurrent (data7[3]);
-
-            // //CH4
-            // sp4 = DMXtoCurrent (data7[4]);
-
-            // //CH5
-            // sp5 = DMXtoCurrent (data7[5]);
-
-            // //CH6
-            // sp6 = DMXtoCurrent (data7[6]);
-
             dmx_end_of_packet_update = 1;
         }
-
-        // UpdateFiltersTest();
-        
-        //filters para el dmx - generalmente 8 puntos a 200Hz -
-        //desde el sp al sp_filter
-//         if (!dmx_filters_timer)
-//         {
-// #ifdef USE_FILTER_LENGHT_16
-//             sp1_filtered = MAFilterFast16 (sp1, v_sp1);
-//             sp2_filtered = MAFilterFast16 (sp2, v_sp2);
-//             sp3_filtered = MAFilterFast16 (sp3, v_sp3);
-//             sp4_filtered = MAFilterFast16 (sp4, v_sp4);
-//             sp5_filtered = MAFilterFast16 (sp5, v_sp5);
-//             sp6_filtered = MAFilterFast16 (sp6, v_sp6);
-// #endif
-// #ifdef USE_FILTER_LENGHT_8
-//             sp1_filtered = MAFilterFast (sp1, v_sp1);
-//             sp2_filtered = MAFilterFast (sp2, v_sp2);
-//             sp3_filtered = MAFilterFast (sp3, v_sp3);
-//             sp4_filtered = MAFilterFast (sp4, v_sp4);
-//             sp5_filtered = MAFilterFast (sp5, v_sp5);
-//             sp6_filtered = MAFilterFast (sp6, v_sp6);
-// #endif            
-//             dmx_filters_timer = 5;
-//         }
-            //lo hago desde el menu principal
-            //ahora se hace con interrupcion de 1ms
-        // UpdateSamplesAndPID ();
 
         UpdateSlaveModeMenuManager();
         

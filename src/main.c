@@ -173,7 +173,7 @@ volatile unsigned short timer_standby;
 volatile unsigned short wait_ms_var = 0;
 volatile unsigned char temp_sample_timer = 0;
 volatile unsigned short need_to_save_timer = 0;
-volatile unsigned char delta_timer = 0;
+
 
 // ------- para la memoria -------
 unsigned char need_to_save = 0;
@@ -183,7 +183,6 @@ extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
 void DMAConfig(void);
 unsigned short Distance (unsigned short, unsigned short);
-unsigned char GetProcessedSegment (unsigned short, unsigned short *, unsigned char);
 
     
 // ------- del DMX -------
@@ -213,7 +212,7 @@ int main(void)
     unsigned short ch5_pwm = 0;
     unsigned short ch6_pwm = 0;    
 
-    unsigned char slow_segment = 0;
+    // unsigned char slow_segment = 0;
     
 #ifdef USE_PWM_DELTA_FUNCTION
     unsigned short delta_ch3_pwm = 0;
@@ -748,60 +747,19 @@ int main(void)
 
     ADC1->CR |= ADC_CR_ADSTART;
 
-// #define LINEAR_SEGMENT_8
-#define LINEAR_SEGMENT_16
-// #define LINEAR_SEGMENT_32
-// #define FIBONACCI_12
-// #define FIBONACCI_8    
-    
-#ifdef LINEAR_SEGMENT_8
-#define SEGMENTS_QTTY    8
-unsigned short const_segments[SEGMENTS_QTTY] = {31, 63, 95, 127, 159, 191, 223, 255};
-#define SEGMENTS_VALUE    32
-#endif
-#ifdef LINEAR_SEGMENT_16    
-#define SEGMENTS_QTTY    16
-unsigned short const_segments[SEGMENTS_QTTY] = {15, 31, 47, 63, 79, 95, 111, 127,
-                                                143, 159, 175, 191, 207, 223, 239, 255};
-#define SEGMENTS_VALUE    16
-#endif
-#ifdef LINEAR_SEGMENT_32
-#define SEGMENTS_QTTY    32
-unsigned short const_segments[SEGMENTS_QTTY] = {7, 15, 23, 31, 39, 47, 55, 63,
-                                                71, 79, 87, 95, 103, 111, 119, 127,
-                                                135, 143, 151, 159, 167, 175, 183, 191,
-                                                199, 207, 215, 223, 231, 239, 247, 255};
-#define SEGMENTS_VALUE    8
-#endif
-
-
-// unsigned short segments [6] [SEGMENTS_QTTY] = { 0 };
-memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
-unsigned short * p_seg = &mem_conf.segments[0][0];
+    memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
+    unsigned short * p_seg = &mem_conf.segments[0][0];
     led_current_settings_t led_curr;
 
-// #if (defined LINEAR_SEGMENT_8) || (defined LINEAR_SEGMENT_16) || (defined LINEAR_SEGMENT_32)
-//     for (i = 0; i < SEGMENTS_QTTY; i++)
-//     {
-//         led_curr.channel = 3;
-//         led_curr.sp_current = MAX_CURRENT_MILLIS * (i + 1);
-//         led_curr.sp_current = led_curr.sp_current / SEGMENTS_QTTY;
-
-//         UpdateDutyCycleReset();
-//         while (UpdateDutyCycle(&led_curr) == resp_continue);
-//         segments[i] = led_curr.duty_getted;
-//     }
-// #endif
-
-    // HARD_Find_Current_Segments(&led_curr, &segments[0][0], SEGMENTS_QTTY);
-    HARD_Find_Current_Segments(&led_curr, p_seg, SEGMENTS_QTTY);    
+    HARD_Find_Current_Segments(&led_curr, p_seg);    
 
     //mando info al puerto
     for (unsigned char j = 0; j < 6; j++)
     {        
         sprintf(s_to_send, "segments[%d]: ", j);
         Usart2Send(s_to_send);
-        for (unsigned char i = 0; i < SEGMENTS_QTTY; i++)
+        // for (unsigned char i = 0; i < SEGMENTS_QTTY; i++)
+        for (unsigned char i = 0; i < 16; i++)            
         {
             // sprintf(s_to_send, "%d ", segments[j][i]);
             sprintf(s_to_send, "%d ", mem_conf.segments[j][i]);
@@ -852,14 +810,6 @@ unsigned short * p_seg = &mem_conf.segments[0][0];
             break;
 
         case MAIN_GET_CONF:
-            if (mem_conf.program_type == MASTER_MODE)
-            {
-                //habilito transmisiones
-                SW_RX_TX_DE;
-                DMX_Ena();                    
-                main_state = MAIN_IN_MASTER_MODE;             
-            }                
-
             if (mem_conf.program_type == SLAVE_MODE)
             {
                 //variables de recepcion
@@ -873,33 +823,12 @@ unsigned short * p_seg = &mem_conf.segments[0][0];
                 main_state = MAIN_IN_SLAVE_MODE;
             }
 
-            if (mem_conf.program_type == PROGRAMS_MODE)
-            {
-                //me aseguro no cargar la linea
-                SW_RX_TX_RE_NEG;
-                main_state = MAIN_IN_PROGRAMS_MODE;
-            }
-
             //default state no debiera estar nunca aca!
             if (main_state == MAIN_GET_CONF)
             {
                 mem_conf.program_type = SLAVE_MODE;
                 main_state = MAIN_IN_SLAVE_MODE;
             }                
-            break;
-
-        case MAIN_IN_MASTER_MODE:    //por ahora programs mode
-            Func_PX(mem_conf.last_program_in_flash, mem_conf.last_program_deep_in_flash);
-
-            if (CheckS2() > S_HALF)
-                main_state = MAIN_ENTERING_MAIN_MENU;
-
-            MasterModeMenu();
-            if (!timer_standby)
-            {
-                timer_standby = 40;
-                SendDMXPacket (PCKT_INIT);
-            }
             break;
             
         case MAIN_IN_SLAVE_MODE:
@@ -909,72 +838,40 @@ unsigned short * p_seg = &mem_conf.segments[0][0];
                 //calculo el PWM de cada canal, solo si tengo leds en los canales
                 if (mem_conf.pwm_chnls[0])
                 {
-                    ch1_pwm = PWMChannelsOffset(sp1_filtered, mem_conf.pwm_chnls[0]);
+                    ch1_pwm = HARD_Process_New_PWM_Data (0, sp1_filtered);
                     Update_PWM1(ch1_pwm);                        
                 }
                 
                 if (mem_conf.pwm_chnls[1])
                 {
-                    ch2_pwm = PWMChannelsOffset(sp2_filtered, mem_conf.pwm_chnls[1]);
+                    ch2_pwm = HARD_Process_New_PWM_Data (1, sp2_filtered);                    
                     Update_PWM2(ch2_pwm);
                 }
 
-                //quite CH3 pwm_chnls[2] fuera del filtro
+                if (mem_conf.pwm_chnls[2])
+                {
+                    ch3_pwm = HARD_Process_New_PWM_Data (2, sp3_filtered);
+                    Update_PWM3(ch3_pwm);
+                }
                 
                 if (mem_conf.pwm_chnls[3])
                 {
-                    ch4_pwm = PWMChannelsOffset(sp4_filtered, mem_conf.pwm_chnls[3]);
+                    ch4_pwm = HARD_Process_New_PWM_Data (3, sp4_filtered);                    
                     Update_PWM4(ch4_pwm);
                 }
 
                 if (mem_conf.pwm_chnls[4])
                 {
-                    ch5_pwm = PWMChannelsOffset(sp5_filtered, mem_conf.pwm_chnls[4]);
+                    ch5_pwm = HARD_Process_New_PWM_Data (4, sp5_filtered);
                     Update_PWM5(ch5_pwm);
                 }
 
                 if (mem_conf.pwm_chnls[5])
                 {
-                    ch6_pwm = PWMChannelsOffset(sp6_filtered, mem_conf.pwm_chnls[5]);
+                    ch6_pwm = HARD_Process_New_PWM_Data (5, sp6_filtered);
                     Update_PWM6(ch6_pwm);
                 }
             }    //end of filters
-
-            if (mem_conf.pwm_chnls[2])
-            {
-                if (!delta_timer)
-                {
-                    unsigned char new_segment = 0;
-                    unsigned short dummy = 0;
-                    unsigned short * pseg;
-
-                    
-                    //mapeo los segmentos
-                    new_segment = GetProcessedSegment(sp3_filtered, const_segments, SEGMENTS_QTTY);
-
-                    //apunto a los valores medidos y guardados en memoria
-                    pseg = &mem_conf.segments[2][0];
-                    
-                    if (new_segment)
-                    {
-                        dummy = sp3_filtered - new_segment * SEGMENTS_VALUE;
-                        // dummy = dummy * (segments[new_segment] - segments[new_segment - 1]);
-                        dummy = dummy * (*(pseg + new_segment) - *(pseg + new_segment - 1));
-                        dummy /= SEGMENTS_VALUE;
-                        // ch3_pwm = dummy + segments[new_segment - 1];
-                        ch3_pwm = dummy + *(pseg + new_segment - 1);
-                    }
-                    else
-                    {
-                        // dummy = sp3_filtered * segments[0];
-                        dummy = sp3_filtered * *pseg;
-                        dummy /= SEGMENTS_VALUE;
-                        ch3_pwm = dummy;
-                    }
-                    
-                    Update_PWM3(ch3_pwm);
-                }
-            }
 
 
             if (!timer_standby)
@@ -1003,17 +900,6 @@ unsigned short * p_seg = &mem_conf.segments[0][0];
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;
 
-            break;
-
-        case MAIN_IN_PROGRAMS_MODE:
-            Func_PX(mem_conf.last_program_in_flash, mem_conf.last_program_deep_in_flash);
-            // UpdateSamplesAndPID();
-
-            if (CheckS2() > S_HALF)
-                main_state = MAIN_ENTERING_MAIN_MENU;
-
-            ProgramsModeMenu();
-            
             break;
 
         case MAIN_IN_OVERTEMP:
@@ -1186,9 +1072,6 @@ void TimingDelay_Decrement(void)
     else
         EXTIOn();    //dejo 20ms del paquete sin INT
 
-    if (delta_timer)
-        delta_timer--;
-    
     //para lcd_utils
     UpdateTimerLCD ();
 
@@ -1219,21 +1102,6 @@ unsigned short Distance (unsigned short a, unsigned short b)
     return (a - b);
 }
 
-unsigned char GetProcessedSegment (unsigned short check_segment_by_value,
-                                   unsigned short * s,
-                                   unsigned char seg_qtty)
-{
-    // char * s_to_send[100];
-    unsigned char i;
-    
-    for (i = seg_qtty; i > 0; i--)
-    {
-        if (check_segment_by_value > *(s + i - 1))
-            return i;
-    }
-
-    return 0;
-}
 
 
 //--- end of file ---//
