@@ -1,5 +1,4 @@
 //---------------------------------------------
-// ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
@@ -13,55 +12,52 @@
 #include <stdlib.h>
 #include <math.h>
 
-// #include <stdio.h>
-// #include "uart.h"
-
 
 /* Externals variables ---------------------------------------------------------*/
 
 
 /* Global variables ---------------------------------------------------------*/
 //------- de los PID ---------
-volatile int acc = 0;
+#ifdef USE_PID_CONTROLLERS
+int acc = 0;
 short error_z1 = 0;
 short error_z2 = 0;
 short d_last = 0;
+#endif
 
 /* Module Definitions ---------------------------------------------------------*/
-//todos se dividen por 128
-#define KPV	857			// 6.7 desde python PI_zpk_KpKi.py
-#define KIV	844			// 6.6 desde python PI_zpk_KpKi.py
-#define KDV	0			// 0
+// #define PID_CONSTANT_DIVIDER    10    //todos se dividen por 1024
+// #define PID_CONSTANT_DIVIDER    8    //todos se dividen por 256
+#define PID_CONSTANT_DIVIDER    7    //todos se dividen por 128
+// #define PID_CONSTANT_DIVIDER    6    //todos se dividen por 64
 
-//todos se dividen por 128
-// #define KPI	32			// 0.25
-// #define KPI	128			// 1
-// #define KPI	512			// 0
-// #define KII	16			// .125
-// #define KII	128			// 1
-#define KPI     0
-// #define KII	128			// 1 es un poco inestable, la corriente oscila
-#define KII	32			// 0.25 mucho menos inestable
-#define KDI	0			// 0
+//from microinverter01.py
+// #define KPV	14    //0.108
+// #define KIV	11    //0.08333
+// #define KDV	0
+
+//estos funcionan bastante bien para tension en vacio, prende apaga alrededor de 100V
+//usan divisor por 128, ajusta en 35.6V, este con carga ajusta mejor 34.3 a 35.6
+#define KPV    5    //kp_dig = 0.039
+// #define KIV    3    //ki_dig = 0.023, ajusta pero tiene bastante error 42pts
+#define KIV    128    //ki_dig = 0.023, ajusta pero tiene bastante error 42pts
+#define KDV    0
+
+//estos funcionan bastante bien para tension en vacio, prende apaga alrededor de 80V
+//usan divisor por 128, ajustan en 34.3V, ajusta muy rapido diferentes cambios de tension
+//con carga no ajusta tan bien 32.3 a 34.6
+// #define KPV	19    //kp_dig = 0.15
+// #define KIV	1    //ki_dig = 0.0078
+// #define KDV	182    //kd_dig = 1.42
+
+// #define KPV	2    //kp_dig = 0.01
+// #define KIV	1    //ki_dig = 0.0000416
+// #define KDV	24    //kd_dig = 0.024
 
 
 #define K1V (KPV + KIV + KDV)
 #define K2V (KPV + KDV + KDV)
 #define K3V (KDV)
-
-#define K1I (KPI + KII + KDI)
-#define K2I (KPI + KDI + KDI)
-#define K3I (KDI)
-
-#define STRING2(x) #x
-#define STRING(x) STRING2(x)
-// #warning STRING(K1V)
-// #pragma message K1V
-#pragma message(STRING(K1I))
-#pragma message(STRING(K2I))
-#pragma message(STRING(K3I))
-
-
 
 /* Module functions ---------------------------------------------------------*/
 
@@ -237,7 +233,7 @@ unsigned short MAFilter32Circular (unsigned short new_sample, unsigned short * p
 	return total_ma >> 5;
 }
 
-
+#ifdef USE_PID_CONTROLLERS
 short PID (short setpoint, short sample)
 {
 	short error = 0;
@@ -303,6 +299,49 @@ short PID_roof (short setpoint, short sample, short local_last_d, short * e_z1, 
 
 	return d;
 }
+#endif     //USE_PID_CONTROLLERS
+
+#ifdef USE_MA16_CIRCULAR
+//set de punteros y vaciado del filtro
+//recibe:
+// puntero a estructura de datos del filtro "ma16_data_obj_t *"
+void MA16Circular_Reset (ma16_data_obj_t * p_data)
+{
+    unsigned char i;
+    
+    for (i = 0; i < 16; i++)
+        p_data->v_ma[i] = 0;
+
+    p_data->p_ma = p_data->v_ma;
+    p_data->total_ma = 0;
+}
+
+//Filtro circular, necesito activar previamente con MA16Circular_Reset()
+//recibe:
+// puntero a estructura de datos del filtro "ma16_data_obj_t *"
+// nueva mustra "new_sample"
+//contesta:
+// resultado del filtro
+unsigned short MA16Circular (ma16_data_obj_t *p_data, unsigned short new_sample)
+{
+    p_data->total_ma -= *(p_data->p_ma);
+    p_data->total_ma += new_sample;
+    *(p_data->p_ma) = new_sample;
+
+    if (p_data->p_ma < ((p_data->v_ma) + 15))
+        p_data->p_ma += 1;
+    else
+        p_data->p_ma = p_data->v_ma;
+
+    return (unsigned short) (p_data->total_ma >> 4);    
+}
+
+unsigned short MA16Circular_Only_Calc (ma16_data_obj_t *p_data)
+{
+    return (unsigned short) (p_data->total_ma >> 4);
+}
+
+#endif
 
 
 //calculate the samples fequencies from a samples vector

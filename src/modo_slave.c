@@ -40,6 +40,15 @@ extern unsigned short sp4_filtered;
 extern unsigned short sp5_filtered;
 extern unsigned short sp6_filtered;
 
+#ifdef USE_FILTER_LENGHT_16
+extern ma16_data_obj_t st_sp1;
+extern ma16_data_obj_t st_sp2;
+extern ma16_data_obj_t st_sp3;
+extern ma16_data_obj_t st_sp4;
+extern ma16_data_obj_t st_sp5;
+extern ma16_data_obj_t st_sp6;
+#endif
+
 
 //--- VARIABLES GLOBALES ---//
 slave_mode_t slave_mode_state = SLAVE_MODE_INIT;
@@ -68,33 +77,6 @@ unsigned short dmx_local_channel = 0;
 unsigned short dmx_local_value = 0;
 char s_lcd1 [10];
 char s_lcd2 [10];
-    
-
-
-// unsigned char check_dmx_lcd_pckt = 0;
-
-// unsigned short dmx_channel = 0;
-// unsigned char grandmaster_value = 0;
-
-// float fcalc = 1.0;
-
-#ifdef USE_FILTER_LENGHT_8
-extern unsigned short v_sp1 [8];
-extern unsigned short v_sp2 [8];
-extern unsigned short v_sp3 [8];
-extern unsigned short v_sp4 [8];
-extern unsigned short v_sp5 [8];
-extern unsigned short v_sp6 [8];
-#endif
-#ifdef USE_FILTER_LENGHT_16
-extern unsigned short v_sp1 [16];
-extern unsigned short v_sp2 [16];
-extern unsigned short v_sp3 [16];
-extern unsigned short v_sp4 [16];
-extern unsigned short v_sp5 [16];
-extern unsigned short v_sp6 [16];
-#endif
-
 
 
 //-- Private Defines -----------------
@@ -178,21 +160,11 @@ void FuncSlaveMode (void)
         slave_mode_state++;
         ShowConfSlaveModeReset();
         SlaveModeMenuManagerReset();
-#if defined USE_FILTER_LENGHT_16
-        for (i = 0; i < 16; i++)
-#elif defined USE_FILTER_LENGHT_8
-        for (i = 0; i < 8; i++)
+#if (defined USE_FILTER_LENGHT_16) || (defined USE_FILTER_LENGHT_8)
+        UpdateFiltersTest_Reset ();
 #else
 #error "Select filter lenght on hard.h"
 #endif
-        {
-            v_sp1[i] = 0;
-            v_sp2[i] = 0;
-            v_sp3[i] = 0;
-            v_sp4[i] = 0;
-            v_sp5[i] = 0;
-            v_sp6[i] = 0;
-        }        
         break;
 
     case SLAVE_MODE_CONF:
@@ -1041,18 +1013,28 @@ unsigned char UpdateFiltersTest (void)
     if (!dmx_filters_timer)
     {
         // CTRL_FAN_ON;
-        sp1_filtered = MAFilterFast16 (data7[1], v_sp1);
-        sp2_filtered = MAFilterFast16 (data7[2], v_sp2);
-        sp3_filtered = MAFilterFast16 (data7[3], v_sp3);
-        sp4_filtered = MAFilterFast16 (data7[4], v_sp4);
-        sp5_filtered = MAFilterFast16 (data7[5], v_sp5);
-        sp6_filtered = MAFilterFast16 (data7[6], v_sp6);
+        sp1_filtered = MA16Circular (&st_sp1, data7[1]);
+        sp2_filtered = MA16Circular (&st_sp2, data7[2]);
+        sp3_filtered = MA16Circular (&st_sp3, data7[3]);
+        sp4_filtered = MA16Circular (&st_sp4, data7[4]);
+        sp5_filtered = MA16Circular (&st_sp5, data7[5]);
+        sp6_filtered = MA16Circular (&st_sp6, data7[6]);
         dmx_filters_timer = 5;
         new_outputs = 1;
         // CTRL_FAN_OFF;
     }
     
     return new_outputs;
+}
+
+void UpdateFiltersTest_Reset (void)
+{
+    MA16Circular_Reset(&st_sp1);
+    MA16Circular_Reset(&st_sp2);
+    MA16Circular_Reset(&st_sp3);
+    MA16Circular_Reset(&st_sp4);
+    MA16Circular_Reset(&st_sp5);
+    MA16Circular_Reset(&st_sp6);
 }
 
 //--- end of file ---//

@@ -76,21 +76,13 @@ unsigned short sp3_filtered = 0;
 unsigned short sp4_filtered = 0;
 unsigned short sp5_filtered = 0;
 unsigned short sp6_filtered = 0;
-#ifdef USE_FILTER_LENGHT_8
-unsigned short v_sp1 [8];
-unsigned short v_sp2 [8];
-unsigned short v_sp3 [8];
-unsigned short v_sp4 [8];
-unsigned short v_sp5 [8];
-unsigned short v_sp6 [8];
-#endif
 #ifdef USE_FILTER_LENGHT_16
-unsigned short v_sp1 [16];
-unsigned short v_sp2 [16];
-unsigned short v_sp3 [16];
-unsigned short v_sp4 [16];
-unsigned short v_sp5 [16];
-unsigned short v_sp6 [16];
+ma16_data_obj_t st_sp1;
+ma16_data_obj_t st_sp2;
+ma16_data_obj_t st_sp3;
+ma16_data_obj_t st_sp4;
+ma16_data_obj_t st_sp5;
+ma16_data_obj_t st_sp6;
 #endif
 
 
@@ -300,7 +292,7 @@ int main(void)
     // LCD_2DO_RENGLON;
     // LCDTransmitStr("Lighting");
     while (FuncShowBlink ((const char *) "Kirno 6C", (const char *) "Smrt Drv", 1, BLINK_NO) == resp_continue);
-    while (FuncShowBlink ((const char *) "Dexel   ", (const char *) "Lighting", 1, BLINK_NO) == resp_continue);
+    while (FuncShowBlink ((const char *) " -LUIS- ", (const char *) "Lighting", 1, BLINK_NO) == resp_continue);
 
 
     // while (1);
@@ -308,7 +300,8 @@ int main(void)
 
     //--- Mensaje Bienvenida ---//
     //---- Defines from hard.h -----//
-    Usart2Send("\nDexel RGB 6CH Bidireccional\n -- powered by: Kirno Technology --\n");
+    // Usart2Send("\nDexel RGB 6CH Bidireccional\n -- powered by: Kirno Technology --\n");
+    Usart2Send("\nLUIS Casino RGB 6CH Bidireccional\n -- powered by: Kirno Technology --\n");    
     Wait_ms(100);
 #ifdef HARD
     Usart2Send(HARD);
@@ -748,10 +741,10 @@ int main(void)
     ADC1->CR |= ADC_CR_ADSTART;
 
     memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
-    unsigned short * p_seg = &mem_conf.segments[0][0];
-    led_current_settings_t led_curr;
+    // unsigned short * p_seg = &mem_conf.segments[0][0];
+    // led_current_settings_t led_curr;
 
-    HARD_Find_Current_Segments(&led_curr, p_seg);    
+    // HARD_Find_Current_Segments(&led_curr, p_seg);    
 
     //mando info al puerto
     for (unsigned char j = 0; j < 6; j++)
@@ -821,6 +814,9 @@ int main(void)
                 SW_RX_TX_RE_NEG;
                 DMX_Ena();    
                 main_state = MAIN_IN_SLAVE_MODE;
+
+                //limpio los filtros del DMX
+                UpdateFiltersTest_Reset();
             }
 
             //default state no debiera estar nunca aca!

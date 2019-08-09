@@ -30,22 +30,7 @@ extern unsigned short sp4_filtered;
 extern unsigned short sp5_filtered;
 extern unsigned short sp6_filtered;
 
-#ifdef USE_FILTER_LENGHT_8
-extern unsigned short v_sp1 [8];
-extern unsigned short v_sp2 [8];
-extern unsigned short v_sp3 [8];
-extern unsigned short v_sp4 [8];
-extern unsigned short v_sp5 [8];
-extern unsigned short v_sp6 [8];
-#endif
-#ifdef USE_FILTER_LENGHT_16
-extern unsigned short v_sp1 [16];
-extern unsigned short v_sp2 [16];
-extern unsigned short v_sp3 [16];
-extern unsigned short v_sp4 [16];
-extern unsigned short v_sp5 [16];
-extern unsigned short v_sp6 [16];
-#endif
+extern ma16_data_obj_t st_sp1;
 
 extern parameters_typedef mem_conf;
 extern unsigned char data7[];
@@ -172,7 +157,9 @@ resp_t UpdateDutyCycle (led_current_settings_t * settings)
             break;
         }
 
-        I_filtered = MAFilterFast16 (I_Sampled_Channel, v_sp1);
+        //uso st_sp1 para determinar corrientes
+        I_filtered = MA16Circular (&st_sp1, I_Sampled_Channel);
+        // I_filtered = MAFilterFast16 (I_Sampled_Channel, v_sp1);
 #ifdef USE_FILTER_LENGHT_8
         if (filter_cnt < 32)    //2ms
         {
@@ -243,6 +230,17 @@ resp_t UpdateDutyCycle (led_current_settings_t * settings)
     return resp;
 }
 
+
+void UpdateDutyCycleReset (void)
+{
+    duty_cycle = 0;
+    PWMChannelsReset();
+
+    //uso st_sp1 para determinar corrientes
+    MA16Circular_Reset(&st_sp1);
+}
+
+
 void PWMChannelsReset (void)
 {
     Update_PWM1(0);
@@ -253,27 +251,6 @@ void PWMChannelsReset (void)
     Update_PWM6(0);    
 }
 
-void UpdateDutyCycleReset (void)
-{
-    unsigned char i;
-    duty_cycle = 0;
-
-    PWMChannelsReset();
-    
-    //estos se usan para corrientes
-    sp1_filtered = 0;
-    sp2_filtered = 0;
-    
-#ifdef USE_FILTER_LENGHT_16
-    for (i = 0; i < 16; i++)
-#endif
-#ifdef USE_FILTER_LENGHT_8
-    for (i = 0; i < 8; i++)
-#endif
-    {
-        v_sp1[i] = 0;
-    }
-}
 
 unsigned short PWMChannelsOffset (unsigned char dmx_data, unsigned short pwm_max_curr_data)
 {
@@ -334,6 +311,7 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
                                    unsigned short * segments)
 {
     resp_t resp = resp_continue;
+    unsigned short max_current_in_channel_millis = 0;
     
     //espero tres tipos de respuesta resp_ok, resp_finish, resp_error
     //estas respuestas las traslado
@@ -342,10 +320,34 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
         //busco segmentos para cada canal
         UpdateDutyCycleReset();
         settings->channel = j + 1;
+
+        //TODO: mejorar esto; hardcodeo la corriente segun el canal; y el for de abajo
+        switch (j)
+        {
+        case 0:
+            max_current_in_channel_millis = 1170;
+            break;
+        case 1:
+            max_current_in_channel_millis = 1100;
+            break;
+        case 2:
+            max_current_in_channel_millis = 1100;
+            break;
+        case 3:
+            max_current_in_channel_millis = 1100;
+            break;
+        case 4:
+            max_current_in_channel_millis = 1100;
+            break;
+        case 5:
+            max_current_in_channel_millis = 1100;
+            break;
+        }
         
         for (unsigned char i = 0; i < SEGMENTS_QTTY; i++)
         {
-            settings->sp_current = MAX_CURRENT_MILLIS * (i + 1);
+            // settings->sp_current = MAX_CURRENT_MILLIS * (i + 1);
+            settings->sp_current = max_current_in_channel_millis * (i + 1);            
             settings->sp_current = settings->sp_current / SEGMENTS_QTTY;
 
             do {
