@@ -165,6 +165,7 @@ volatile unsigned short timer_standby;
 volatile unsigned short wait_ms_var = 0;
 volatile unsigned char temp_sample_timer = 0;
 volatile unsigned short need_to_save_timer = 0;
+volatile unsigned char wifi_timer = 0;
 
 
 // ------- para la memoria -------
@@ -206,6 +207,7 @@ int main(void)
     resp_t resp = resp_continue;
 
     unsigned char ch_values [6] = { 0 };
+    wifi_state_t wifi_state = WIFI_FUNDIDO_W;
 
     // unsigned char slow_segment = 0;
     
@@ -908,16 +910,67 @@ int main(void)
 
         case MAIN_IN_WIFI_MODE:
             //llamo a la funcion de programas
-            Func_PX(ch_values,9,0);
 
-            //ahora en ch_values tengo los nuevos parametros de los programas
-            //los filtro los escalo y los mando al pwm
-            data7[1] = *(ch_values+0);
-            data7[2] = *(ch_values+1);
-            data7[3] = *(ch_values+2);
-            data7[4] = *(ch_values+3);
-            data7[5] = *(ch_values+4);
-            data7[6] = *(ch_values+5);
+            // COMM_ReadMsgs(&wifi_state, ch_values);    //TODO: ver esto podrian modificarse sin querer
+
+            switch(wifi_state)
+            {
+            case WIFI_RGBW:
+                //paso los valores que llegan por el serie a los filtros
+                
+                break;
+
+            case WIFI_FUNDIDO_RGB:
+                Func_PX(ch_values,8,0);
+
+                //ahora en ch_values tengo los nuevos parametros de los programas
+                //los filtro los escalo y los mando al pwm
+                data7[1] = *(ch_values+0);
+                data7[2] = *(ch_values+1);
+                data7[3] = *(ch_values+2);
+                data7[4] = *(ch_values+3);
+                data7[5] = *(ch_values+4);
+                data7[6] = *(ch_values+5);
+                break;
+
+            case WIFI_FUNDIDO_W:
+                data7[1] = 0;
+                data7[2] = 0;
+                data7[3] = 0;
+                data7[4] = 0;
+                wifi_state++;
+                break;
+
+            case WIFI_FUNDIDO_W1:
+                if (!wifi_timer)
+                {
+                    if (data7[4] < 255)
+                    {
+                        data7[4] += 1;
+                        wifi_timer = 5;                        
+                    }
+                    else
+                        wifi_state = WIFI_FUNDIDO_W2;
+                }
+                break;
+
+            case WIFI_FUNDIDO_W2:
+                if (!wifi_timer)
+                {
+                    if (data7[4] > 0)
+                    {
+                        data7[4] -= 1;
+                        wifi_timer = 5;                        
+                    }
+                    else
+                        wifi_state = WIFI_FUNDIDO_W;
+                }
+                break;
+
+            default:
+                wifi_state = WIFI_FUNDIDO_W;
+                break;
+            }
 
             CheckFiltersAndOffsets ();
 
@@ -1076,8 +1129,8 @@ void TimingDelay_Decrement(void)
     // if (timer_signals)
     //     timer_signals--;
 
-    // if (timer_signals_gen)
-    //     timer_signals_gen--;
+    if (wifi_timer)
+        wifi_timer--;
 
     if (need_to_save_timer)
         need_to_save_timer--;

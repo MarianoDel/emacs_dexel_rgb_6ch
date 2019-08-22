@@ -76,6 +76,7 @@ void Func_P6(unsigned char *, unsigned char);
 void Func_P7(unsigned char *, unsigned char);
 void Func_P8(unsigned char *, unsigned char);
 void Func_P9(unsigned char *, unsigned char);
+void Func_P10(unsigned char *, unsigned char);
 
 
 //-- End of Private Module Functions --------------
@@ -205,6 +206,10 @@ void Func_PX_Ds(unsigned char * ch_val, unsigned char ds1, unsigned char ds2, un
         Func_P9(ch_val, ds3);
         break;
 
+    case 10:
+        Func_P10(ch_val, ds3);
+        break;
+        
     default:
         break;
     }
@@ -1136,6 +1141,82 @@ void Func_P9(unsigned char * ch_val, unsigned char deep)
         *(ch_val+1) = 0;
         *(ch_val+2) = 0;
         *(ch_val+3) = 0;
+        break;
+    }
+}
+
+
+//single color fading - only white Y SOLO CON LED BLANCO
+#undef WHITE_AS_IN_RGB
+#define WHITE_AS_WHITE
+void Func_P10(unsigned char * ch_val, unsigned char deep)
+{
+    if (deep > 9)	//chequeo errores
+        return;
+
+    if (l_deep != deep)		//fuerzo el update
+    {
+        l_deep = deep;
+        prog_state = P8_INCREASE_COLOR1;
+        prog_timer = 0;
+    }
+
+    switch (prog_state)
+    {
+    case P8_INCREASE_COLOR1:	//WHITE
+        if (!prog_timer)
+        {
+            if (prog_fade < MAX_FADE)
+            {
+#ifdef WHITE_AS_IN_RGB
+                *(ch_val+0) = prog_fade;
+                *(ch_val+1) = prog_fade;
+                *(ch_val+2) = prog_fade;
+                *(ch_val+3) = 0;
+#else
+                *(ch_val+0) = 0;
+                *(ch_val+1) = 0;
+                *(ch_val+2) = 0;
+                *(ch_val+3) = prog_fade;                
+#endif
+                prog_fade++;
+            }
+            else
+            {
+                prog_state++;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
+
+    case P8_DECREASE_COLOR1:
+        if (!prog_timer)
+        {
+            if (prog_fade)
+            {
+#ifdef WHITE_AS_IN_RGB
+                *(ch_val+0) = prog_fade;
+                *(ch_val+1) = prog_fade;
+                *(ch_val+2) = prog_fade;
+                *(ch_val+3) = 0;
+#else
+                *(ch_val+0) = 0;
+                *(ch_val+1) = 0;
+                *(ch_val+2) = 0;
+                *(ch_val+3) = prog_fade;                
+#endif
+                prog_fade--;
+            }
+            else
+            {
+                prog_state--;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
+
+    default:
+        prog_state = P8_INCREASE_COLOR1;
         break;
     }
 }

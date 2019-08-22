@@ -306,6 +306,15 @@ typedef struct {
     
 } led_current_settings_t;
 
+typedef enum {
+    WIFI_RGBW = 0,
+    WIFI_FUNDIDO_W,
+    WIFI_FUNDIDO_W1,
+    WIFI_FUNDIDO_W2,
+    WIFI_FUNDIDO_RGB
+
+} wifi_state_t;
+
 /* Module Functions ------------------------------------------------------------*/
 sw_state_t CheckS1 (void);
 sw_state_t CheckS2 (void);
