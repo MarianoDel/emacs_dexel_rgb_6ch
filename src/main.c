@@ -831,6 +831,18 @@ int main(void)
                 UpdateFiltersTest_Reset();
             }
 
+            if (mem_conf.program_type == WIFI_MODE)
+            {
+                main_state = MAIN_IN_WIFI_MODE;
+
+                //limpio los filtros del DMX
+                UpdateFiltersTest_Reset();
+                while (FuncShowBlink ((const char *) "WiFi    ",
+                                      (const char *) "    Mode",
+                                      1,
+                                      BLINK_NO) == resp_continue);
+            }
+            
             //default state no debiera estar nunca aca!
             if (main_state == MAIN_GET_CONF)
             {

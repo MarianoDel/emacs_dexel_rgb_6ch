@@ -21,6 +21,7 @@
 #define MASTER_MODE    1
 #define SLAVE_MODE     2
 #define PROGRAMS_MODE  3
+#define WIFI_MODE      4
 
 //-- Memory Struct to Save --------------------
 typedef struct parameters {
