@@ -162,7 +162,7 @@ resp_t MainMenu (void)
         resp = FuncShowSelectv2 ((const char * ) "Slave cf");
 
         if (resp == resp_change)	//cambio de menu
-            main_menu_state = MAIN_MENU_SHOW_HARDWARE;
+            main_menu_state = MAIN_MENU_SHOW_PROGRAMS;
 
         if (resp == resp_selected)	//se eligio el menu
             main_menu_state = MAIN_MENU_CONF_SLAVE;

@@ -823,6 +823,14 @@ int main(void)
                 UpdateFiltersTest_Reset();
             }
 
+            if (mem_conf.program_type == PROGRAMS_MODE)
+            {
+                main_state = MAIN_IN_PROGRAMS_MODE;
+
+                //limpio los filtros del DMX
+                UpdateFiltersTest_Reset();
+            }
+
             //default state no debiera estar nunca aca!
             if (main_state == MAIN_GET_CONF)
             {
@@ -861,6 +869,29 @@ int main(void)
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;
 
+            break;
+
+        case MAIN_IN_PROGRAMS_MODE:
+            Func_PX(ch_values,
+                    mem_conf.last_program_in_flash,
+                    mem_conf.last_program_deep_in_flash);
+
+            //ahora en ch_values tengo los nuevos parametros de los programas
+            //los filtro los escalo y los mando al pwm
+            data7[1] = *(ch_values+0);
+            data7[2] = *(ch_values+1);
+            data7[3] = *(ch_values+2);
+            data7[4] = *(ch_values+3);
+            data7[5] = *(ch_values+4);
+            data7[6] = *(ch_values+5);
+
+            CheckFiltersAndOffsets ();
+
+            if (CheckS2() > S_HALF)
+                main_state = MAIN_ENTERING_MAIN_MENU;
+
+            ProgramsModeMenu();
+            
             break;
 
         case MAIN_IN_WIFI_MODE:

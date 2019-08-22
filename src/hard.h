@@ -61,6 +61,8 @@
 //----- End of Segments Modes ---------------------
 
 //------ Configuration for Firmware-Channels -----
+#define WHITE_AS_IN_RGB		//el blanco lo forma con los 3 colores
+//#define WHITE_AS_WHITE	//el blanco tiene leds blancos individuales
 
 
 //---- End of Features Configuration ----------
