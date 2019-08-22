@@ -175,7 +175,7 @@ extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
 void DMAConfig(void);
 unsigned short Distance (unsigned short, unsigned short);
-
+void CheckFiltersAndOffsets (void);
     
 // ------- del DMX -------
 // extern void EXTI4_15_IRQHandler(void);
@@ -186,6 +186,13 @@ unsigned short Distance (unsigned short, unsigned short);
 #define RCC_DMA_CLK_OFF 	RCC->AHBENR &= ~RCC_AHBENR_DMAEN
 
 const char s_blank_line [] = {"                "};
+unsigned short ch1_pwm = 0;
+unsigned short ch2_pwm = 0;
+unsigned short ch3_pwm = 0;
+unsigned short ch4_pwm = 0;
+unsigned short ch5_pwm = 0;
+unsigned short ch6_pwm = 0;
+
 //-------------------------------------------//
 // @brief  Main program.
 // @param  None
@@ -197,12 +204,8 @@ int main(void)
     char s_to_send [100];
     main_state_t main_state = MAIN_INIT;
     resp_t resp = resp_continue;
-    unsigned short ch1_pwm = 0;
-    unsigned short ch2_pwm = 0;
-    unsigned short ch3_pwm = 0;
-    unsigned short ch4_pwm = 0;
-    unsigned short ch5_pwm = 0;
-    unsigned short ch6_pwm = 0;    
+
+    unsigned char ch_values [6] = { 0 };
 
     // unsigned char slow_segment = 0;
     
@@ -829,47 +832,8 @@ int main(void)
             break;
             
         case MAIN_IN_SLAVE_MODE:
-            FuncSlaveMode();
-            if (UpdateFiltersTest ())
-            {
-                //calculo el PWM de cada canal, solo si tengo leds en los canales
-                if (mem_conf.pwm_chnls[0])
-                {
-                    ch1_pwm = HARD_Process_New_PWM_Data (0, sp1_filtered);
-                    Update_PWM1(ch1_pwm);                        
-                }
-                
-                if (mem_conf.pwm_chnls[1])
-                {
-                    ch2_pwm = HARD_Process_New_PWM_Data (1, sp2_filtered);                    
-                    Update_PWM2(ch2_pwm);
-                }
-
-                if (mem_conf.pwm_chnls[2])
-                {
-                    ch3_pwm = HARD_Process_New_PWM_Data (2, sp3_filtered);
-                    Update_PWM3(ch3_pwm);
-                }
-                
-                if (mem_conf.pwm_chnls[3])
-                {
-                    ch4_pwm = HARD_Process_New_PWM_Data (3, sp4_filtered);                    
-                    Update_PWM4(ch4_pwm);
-                }
-
-                if (mem_conf.pwm_chnls[4])
-                {
-                    ch5_pwm = HARD_Process_New_PWM_Data (4, sp5_filtered);
-                    Update_PWM5(ch5_pwm);
-                }
-
-                if (mem_conf.pwm_chnls[5])
-                {
-                    ch6_pwm = HARD_Process_New_PWM_Data (5, sp6_filtered);
-                    Update_PWM6(ch6_pwm);
-                }
-            }    //end of filters
-
+            FuncSlaveMode ();
+            CheckFiltersAndOffsets ();
 
             if (!timer_standby)
             {
@@ -901,7 +865,22 @@ int main(void)
 
         case MAIN_IN_WIFI_MODE:
             //llamo a la funcion de programas
-            Func_PX(9,9);
+            Func_PX(ch_values,9,0);
+
+            //ahora en ch_values tengo los nuevos parametros de los programas
+            //los filtro los escalo y los mando al pwm
+            data7[1] = *(ch_values+0);
+            data7[2] = *(ch_values+1);
+            data7[3] = *(ch_values+2);
+            data7[4] = *(ch_values+3);
+            data7[5] = *(ch_values+4);
+            data7[6] = *(ch_values+5);
+
+            CheckFiltersAndOffsets ();
+
+            if (CheckS2() > S_HALF)
+                main_state = MAIN_ENTERING_MAIN_MENU;
+
             break;
 
         case MAIN_IN_OVERTEMP:
@@ -1105,6 +1084,49 @@ unsigned short Distance (unsigned short a, unsigned short b)
 }
 
 
+void CheckFiltersAndOffsets (void)
+{
+    if (UpdateFiltersTest ())
+    {
+        //calculo el PWM de cada canal, solo si tengo leds en los canales
+        if (mem_conf.pwm_chnls[0])
+        {
+            ch1_pwm = HARD_Process_New_PWM_Data (0, sp1_filtered);
+            Update_PWM1(ch1_pwm);                        
+        }
+                
+        if (mem_conf.pwm_chnls[1])
+        {
+            ch2_pwm = HARD_Process_New_PWM_Data (1, sp2_filtered);                    
+            Update_PWM2(ch2_pwm);
+        }
+
+        if (mem_conf.pwm_chnls[2])
+        {
+            ch3_pwm = HARD_Process_New_PWM_Data (2, sp3_filtered);
+            Update_PWM3(ch3_pwm);
+        }
+                
+        if (mem_conf.pwm_chnls[3])
+        {
+            ch4_pwm = HARD_Process_New_PWM_Data (3, sp4_filtered);                    
+            Update_PWM4(ch4_pwm);
+        }
+
+        if (mem_conf.pwm_chnls[4])
+        {
+            ch5_pwm = HARD_Process_New_PWM_Data (4, sp5_filtered);
+            Update_PWM5(ch5_pwm);
+        }
+
+        if (mem_conf.pwm_chnls[5])
+        {
+            ch6_pwm = HARD_Process_New_PWM_Data (5, sp6_filtered);
+            Update_PWM6(ch6_pwm);
+        }
+    }    //end of filters
+
+}
 
 //--- end of file ---//
 
