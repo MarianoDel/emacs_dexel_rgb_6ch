@@ -811,9 +811,10 @@ int main(void)
                 DMX_channel_quantity = mem_conf.dmx_channel_quantity;
 
                 //habilito recepcion
-                SW_RX_TX_RE_NEG;
-                DMX_Ena();    
-                main_state = MAIN_IN_SLAVE_MODE;
+                // SW_RX_TX_RE_NEG;
+                // DMX_Ena();    
+                // main_state = MAIN_IN_SLAVE_MODE;
+                main_state = MAIN_IN_WIFI_MODE;
 
                 //limpio los filtros del DMX
                 UpdateFiltersTest_Reset();
@@ -896,6 +897,11 @@ int main(void)
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;
 
+            break;
+
+        case MAIN_IN_WIFI_MODE:
+            //llamo a la funcion de programas
+            Func_PX(9,9);
             break;
 
         case MAIN_IN_OVERTEMP:
