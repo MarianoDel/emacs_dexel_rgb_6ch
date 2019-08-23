@@ -76,7 +76,7 @@ void Func_P6(unsigned char *, unsigned char);
 void Func_P7(unsigned char *, unsigned char);
 void Func_P8(unsigned char *, unsigned char);
 void Func_P9(unsigned char *, unsigned char);
-void Func_P10(unsigned char *, unsigned char);
+
 
 
 //-- End of Private Module Functions --------------
@@ -206,10 +206,6 @@ void Func_PX_Ds(unsigned char * ch_val, unsigned char ds1, unsigned char ds2, un
         Func_P9(ch_val, ds3);
         break;
 
-    case 10:
-        Func_P10(ch_val, ds3);
-        break;
-        
     default:
         break;
     }
@@ -1146,72 +1142,73 @@ void Func_P9(unsigned char * ch_val, unsigned char deep)
 }
 
 
+//funcion que incrementa o decrementa colores independiente del timer
 //single color fading - only white Y SOLO CON LED BLANCO
 #undef WHITE_AS_IN_RGB
 #define WHITE_AS_WHITE
-void Func_P10(unsigned char * ch_val, unsigned char deep)
+void Func_Fading_Reset(void)
 {
-    if (deep > 9)	//chequeo errores
-        return;
+    prog_state = P8_DECREASE_COLOR1;
+    prog_fade = 0;
+}
 
-    if (l_deep != deep)		//fuerzo el update
-    {
-        l_deep = deep;
-        prog_state = P8_INCREASE_COLOR1;
-        prog_timer = 0;
-    }
+//contesta:
+//resp_ok, cada vez que cambia el fade
+//resp_continue, cuando hay que seguir llamando
+//resp_error, si tiene error en el canal elegido
+//resp_finish, cuando apago la secuencia
+resp_t Func_Fading(unsigned char * ch_val, unsigned char which_ch)
+{
+    resp_t resp = resp_continue;
 
+    if (which_ch > 5)
+        return resp_error;
+        
     switch (prog_state)
     {
-    case P8_INCREASE_COLOR1:	//WHITE
-        if (!prog_timer)
+    case P8_INCREASE_COLOR1:
+        if (prog_fade < MAX_FADE)
         {
-            if (prog_fade < MAX_FADE)
-            {
+            prog_fade++;
 #ifdef WHITE_AS_IN_RGB
+            if (which_ch == 3)    //seria el canal 4
+            {
                 *(ch_val+0) = prog_fade;
                 *(ch_val+1) = prog_fade;
                 *(ch_val+2) = prog_fade;
                 *(ch_val+3) = 0;
+            }
 #else
-                *(ch_val+0) = 0;
-                *(ch_val+1) = 0;
-                *(ch_val+2) = 0;
-                *(ch_val+3) = prog_fade;                
+            *(ch_val + which_ch) = prog_fade;
 #endif
-                prog_fade++;
-            }
-            else
-            {
-                prog_state++;
-            }
-            prog_timer = v_speed_fading[deep];
+            resp = resp_ok;
         }
+        else
+            prog_state++;
+
         break;
 
     case P8_DECREASE_COLOR1:
-        if (!prog_timer)
+        if (prog_fade)
         {
-            if (prog_fade)
-            {
+            prog_fade--;            
 #ifdef WHITE_AS_IN_RGB
+            if (which_ch == 3)    //seria el canal 4
+            {
                 *(ch_val+0) = prog_fade;
                 *(ch_val+1) = prog_fade;
                 *(ch_val+2) = prog_fade;
                 *(ch_val+3) = 0;
+            }
 #else
-                *(ch_val+0) = 0;
-                *(ch_val+1) = 0;
-                *(ch_val+2) = 0;
-                *(ch_val+3) = prog_fade;                
+            *(ch_val + which_ch) = prog_fade;            
 #endif
-                prog_fade--;
-            }
-            else
-            {
-                prog_state--;
-            }
-            prog_timer = v_speed_fading[deep];
+            resp = resp_ok;
+        }
+        else
+        {            
+            prog_state--;
+            resp = resp_finish;
         }
         break;
 
@@ -1219,6 +1216,8 @@ void Func_P10(unsigned char * ch_val, unsigned char deep)
         prog_state = P8_INCREASE_COLOR1;
         break;
     }
+
+    return resp;
 }
 
 //--- end of file ---//

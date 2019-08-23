@@ -167,7 +167,6 @@ volatile unsigned char temp_sample_timer = 0;
 volatile unsigned short need_to_save_timer = 0;
 volatile unsigned char wifi_timer = 0;
 
-
 // ------- para la memoria -------
 unsigned char need_to_save = 0;
 
@@ -176,7 +175,8 @@ extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
 void DMAConfig(void);
 unsigned short Distance (unsigned short, unsigned short);
-void CheckFiltersAndOffsets (void);
+unsigned char CheckFiltersAndOffsets (void);
+unsigned char CheckFiltersAndOffsets2 ();
     
 // ------- del DMX -------
 // extern void EXTI4_15_IRQHandler(void);
@@ -816,10 +816,9 @@ int main(void)
                 DMX_channel_quantity = mem_conf.dmx_channel_quantity;
 
                 //habilito recepcion
-                // SW_RX_TX_RE_NEG;
-                // DMX_Ena();    
-                // main_state = MAIN_IN_SLAVE_MODE;
-                main_state = MAIN_IN_WIFI_MODE;
+                SW_RX_TX_RE_NEG;
+                DMX_Ena();    
+                main_state = MAIN_IN_SLAVE_MODE;
 
                 //limpio los filtros del DMX
                 UpdateFiltersTest_Reset();
@@ -855,7 +854,8 @@ int main(void)
             
         case MAIN_IN_SLAVE_MODE:
             FuncSlaveMode ();
-            CheckFiltersAndOffsets ();
+            // CheckFiltersAndOffsets ();
+            CheckFiltersAndOffsets2 ();            
 
             if (!timer_standby)
             {
@@ -921,6 +921,7 @@ int main(void)
                 break;
 
             case WIFI_FUNDIDO_RGB:
+#define TIMER_FUNDIDO    16
                 Func_PX(ch_values,8,0);
 
                 //ahora en ch_values tengo los nuevos parametros de los programas
@@ -939,31 +940,19 @@ int main(void)
                 data7[3] = 0;
                 data7[4] = 0;
                 wifi_state++;
+                Func_Fading_Reset();
                 break;
 
             case WIFI_FUNDIDO_W1:
                 if (!wifi_timer)
                 {
-                    if (data7[4] < 255)
-                    {
-                        data7[4] += 1;
-                        wifi_timer = 5;                        
+                    //busco los nuevos valores para el fade
+                    resp_t resp = resp_continue;
+                    do {
+                        resp = Func_Fading(ch_values, 3);
                     }
-                    else
-                        wifi_state = WIFI_FUNDIDO_W2;
-                }
-                break;
-
-            case WIFI_FUNDIDO_W2:
-                if (!wifi_timer)
-                {
-                    if (data7[4] > 0)
-                    {
-                        data7[4] -= 1;
-                        wifi_timer = 5;                        
-                    }
-                    else
-                        wifi_state = WIFI_FUNDIDO_W;
+                    while ((resp != resp_ok) || (resp != resp_finish));
+                    wifi_timer = TIMER_FUNDIDO;
                 }
                 break;
 
@@ -972,7 +961,7 @@ int main(void)
                 break;
             }
 
-            CheckFiltersAndOffsets ();
+            CheckFiltersAndOffsets2 ();
 
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;
@@ -1126,9 +1115,6 @@ void TimingDelay_Decrement(void)
     if (timer_standby)
         timer_standby--;
 
-    // if (timer_signals)
-    //     timer_signals--;
-
     if (wifi_timer)
         wifi_timer--;
 
@@ -1180,9 +1166,12 @@ unsigned short Distance (unsigned short a, unsigned short b)
 }
 
 
-void CheckFiltersAndOffsets (void)
+unsigned char CheckFiltersAndOffsets (void)
 {
-    if (UpdateFiltersTest ())
+    unsigned char new_outputs = 0;
+
+    new_outputs = UpdateFiltersTest ();
+    if (new_outputs)
     {
         //calculo el PWM de cada canal, solo si tengo leds en los canales
         if (mem_conf.pwm_chnls[0])
@@ -1221,6 +1210,66 @@ void CheckFiltersAndOffsets (void)
             Update_PWM6(ch6_pwm);
         }
     }    //end of filters
+
+    return new_outputs;
+
+}
+
+//aca filtro los offsets del pwm en vez del valor del canal
+unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
+{
+    unsigned char new_outputs = 0;
+
+    //solo por compativilidad cargo sp_filtered
+    new_outputs = UpdateFiltersTest2 (unsigned char * ch_val);
+    //tomo valores del dmx cada 5ms    
+    if (new_outputs)
+    {
+        //filtro los offsets
+        if (mem_conf.pwm_chnls[0])
+        {
+            ch1_pwm = HARD_Process_New_PWM_Data (0, sp1_filtered);
+            ch1_pwm = MA16Circular (&st_sp1, ch1_pwm);    
+            Update_PWM1(ch1_pwm);                        
+        }
+                
+        if (mem_conf.pwm_chnls[1])
+        {
+            ch2_pwm = HARD_Process_New_PWM_Data (1, sp2_filtered);
+            ch2_pwm = MA16Circular (&st_sp2, ch2_pwm);
+            Update_PWM2(ch2_pwm);
+        }
+
+        if (mem_conf.pwm_chnls[2])
+        {
+            ch3_pwm = HARD_Process_New_PWM_Data (2, sp3_filtered);
+            ch3_pwm = MA16Circular (&st_sp3, ch3_pwm);
+            Update_PWM3(ch3_pwm);
+        }
+                
+        if (mem_conf.pwm_chnls[3])
+        {
+            ch4_pwm = HARD_Process_New_PWM_Data (3, sp4_filtered);
+            ch4_pwm = MA16Circular (&st_sp4, ch4_pwm);
+            Update_PWM4(ch4_pwm);
+        }
+
+        if (mem_conf.pwm_chnls[4])
+        {
+            ch5_pwm = HARD_Process_New_PWM_Data (4, sp5_filtered);
+            ch5_pwm = MA16Circular (&st_sp5, ch5_pwm);
+            Update_PWM5(ch5_pwm);
+        }
+
+        if (mem_conf.pwm_chnls[5])
+        {
+            ch6_pwm = HARD_Process_New_PWM_Data (5, sp6_filtered);
+            ch6_pwm = MA16Circular (&st_sp6, ch6_pwm);
+            Update_PWM6(ch6_pwm);
+        }
+    }    //end of filters
+
+    return new_outputs;
 
 }
 

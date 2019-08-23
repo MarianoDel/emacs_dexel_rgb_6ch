@@ -66,6 +66,7 @@ void UpdateProgTimers (void);
 void ResetLastValues(void);
 void Func_PX(unsigned char *, unsigned char, unsigned char);
 void Func_PX_Ds(unsigned char *, unsigned char, unsigned char, unsigned char);
-
+resp_t Func_Fading(unsigned char *, unsigned char);
+void Func_Fading_Reset(void);
 
 #endif /* PROGRAMS_FUNCTIONS_H_ */

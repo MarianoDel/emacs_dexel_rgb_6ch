@@ -62,7 +62,7 @@ void FuncSlaveModeReset (void);
 void UpdateTimerSlaveMode (void);
 unsigned char UpdateFiltersTest (void);
 void UpdateFiltersTest_Reset (void);
-
+unsigned char UpdateFiltersTest2 (unsigned char *);
 #endif
 
 //--- END OF FILE ---//

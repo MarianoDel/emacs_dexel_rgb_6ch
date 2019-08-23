@@ -1012,7 +1012,6 @@ unsigned char UpdateFiltersTest (void)
     //desde el sp al sp_filter
     if (!dmx_filters_timer)
     {
-        // CTRL_FAN_ON;
         sp1_filtered = MA16Circular (&st_sp1, data7[1]);
         sp2_filtered = MA16Circular (&st_sp2, data7[2]);
         sp3_filtered = MA16Circular (&st_sp3, data7[3]);
@@ -1021,7 +1020,27 @@ unsigned char UpdateFiltersTest (void)
         sp6_filtered = MA16Circular (&st_sp6, data7[6]);
         dmx_filters_timer = 5;
         new_outputs = 1;
-        // CTRL_FAN_OFF;
+    }
+    
+    return new_outputs;
+}
+
+unsigned char UpdateFiltersTest2 (unsigned char * ch_val)
+{
+    unsigned char new_outputs = 0;
+    //filters para el dmx - generalmente 8 puntos a 200Hz -
+    //desde el sp al sp_filter
+    if (!dmx_filters_timer)
+    {
+        sp1_filtered = *(ch_val + 0);
+        sp2_filtered = *(ch_val + 1);
+        sp3_filtered = *(ch_val + 2);
+        sp4_filtered = *(ch_val + 3);
+        sp5_filtered = *(ch_val + 4);
+        sp6_filtered = *(ch_val + 5);
+
+        dmx_filters_timer = 5;
+        new_outputs = 1;
     }
     
     return new_outputs;
