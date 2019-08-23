@@ -1216,15 +1216,25 @@ unsigned char CheckFiltersAndOffsets (void)
 }
 
 //aca filtro los offsets del pwm en vez del valor del canal
+//cada 5ms
 unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
 {
     unsigned char new_outputs = 0;
 
-    //solo por compativilidad cargo sp_filtered
-    new_outputs = UpdateFiltersTest2 (unsigned char * ch_val);
-    //tomo valores del dmx cada 5ms    
-    if (new_outputs)
+    //filters para el dmx - generalmente 8 puntos a 200Hz -
+    //desde el sp al sp_filter
+    if (!dmx_filters_timer)
     {
+        dmx_filters_timer = 5;
+
+        //solo por compativilidad con programa de prueba
+        sp1_filtered = *(ch_val + 0);
+        sp2_filtered = *(ch_val + 1);
+        sp3_filtered = *(ch_val + 2);
+        sp4_filtered = *(ch_val + 3);
+        sp5_filtered = *(ch_val + 4);
+        sp6_filtered = *(ch_val + 5);
+
         //filtro los offsets
         if (mem_conf.pwm_chnls[0])
         {
@@ -1267,7 +1277,9 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
             ch6_pwm = MA16Circular (&st_sp6, ch6_pwm);
             Update_PWM6(ch6_pwm);
         }
-    }    //end of filters
+
+        new_outputs = 1;
+    }    //end of filters and timer
 
     return new_outputs;
 
