@@ -61,6 +61,7 @@
 #define P9_INCREASE_COLOR7_DECREASE_COLOR6		7
 
 //-------- Functions -------------
+void FuncsProgramsMode (unsigned char *);
 void UpdateProgTimers (void);
 void ResetLastValues(void);
 void Func_PX(unsigned char *, unsigned char, unsigned char);

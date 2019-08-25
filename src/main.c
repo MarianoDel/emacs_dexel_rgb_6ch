@@ -886,27 +886,14 @@ int main(void)
             break;
 
         case MAIN_IN_PROGRAMS_MODE:
-            Func_PX(ch_values,
-                    mem_conf.last_program_in_flash,
-                    mem_conf.last_program_deep_in_flash);
+            FuncsProgramsMode(ch_values);
 
             //ahora en ch_values tengo los nuevos parametros de los programas
-            //los filtro los escalo y los mando al pwm
-            //TODO: cambiar esto al nuevo formato
-            // data7[1] = *(ch_values+0);
-            // data7[2] = *(ch_values+1);
-            // data7[3] = *(ch_values+2);
-            // data7[4] = *(ch_values+3);
-            // data7[5] = *(ch_values+4);
-            // data7[6] = *(ch_values+5);
-
             CheckFiltersAndOffsets2 (ch_values);
 
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;
 
-            ProgramsModeMenu();
-            
             break;
 
         case MAIN_IN_WIFI_MODE:
@@ -1107,8 +1094,6 @@ int main(void)
                 Usart2Send((char *) "Memory problems\n");
 
             need_to_save = 0;
-            //update de memoria RAM
-            // memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
         }
         
     }    //end of while 1

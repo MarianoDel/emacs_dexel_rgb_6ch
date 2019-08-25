@@ -9,13 +9,15 @@
 
 #include "programs_functions.h"
 #include "hard.h"
+#include "flash_program.h"
+#include "menues.h"
 
 //cual es el de mas ciclo de trabajo el 1 o el 9
 #define ONE_FOR_NINE
 
 
 /* Externals variables ---------------------------------------------------------*/
-
+extern parameters_typedef mem_conf;
 
 /* Global variables ------------------------------------------------------------*/
 volatile unsigned short prog_timer;
@@ -90,6 +92,17 @@ void UpdateProgTimers (void)
     if (prog_timer)
         prog_timer--;
 }
+
+
+void FuncsProgramsMode (unsigned char * ch_val)
+{
+    Func_PX(ch_val,
+            mem_conf.last_program_in_flash,
+            mem_conf.last_program_deep_in_flash);
+
+    ProgramsModeMenu();
+}
+
 
 //funcion general la llamo para determinar las funciones individuales, la llamo con programa y profundidad
 //es un wrapper de Func_PX_Ds()
