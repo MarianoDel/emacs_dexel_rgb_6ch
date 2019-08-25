@@ -144,7 +144,6 @@ void FuncSlaveModeReset (void)
 void FuncSlaveMode (unsigned char * ch_val)
 {
     resp_t resp = resp_continue;
-    unsigned char i;
     unsigned short dummy_16;
     
     switch (slave_mode_state)

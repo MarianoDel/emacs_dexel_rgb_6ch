@@ -124,7 +124,6 @@ resp_t MainMenu (void)
 {
     resp_t resp = resp_continue;
     unsigned char dummy_8 = 0;
-    unsigned char dummy_8_1 = 0;
     unsigned short dummy_16 = 0;
     unsigned int calc = 0;
     unsigned short * p_seg;
@@ -455,23 +454,6 @@ resp_t MainMenu (void)
         break;
         
     case MAIN_MENU_CONF_HARDWARE_1:
-        // dummy_8 = mem_conf.max_current_int;
-        // dummy_8_1 = mem_conf.max_current_dec;
-        
-        // resp = FuncChangeDecimals (&dummy_8, &dummy_8_1,
-        //                            MIN_CURRENT_INT,
-        //                            MIN_CURRENT_DEC,
-        //                            MAX_CURRENT_INT,
-        //                            MAX_CURRENT_DEC);
-
-        // if (resp == resp_finish)
-        // {
-        //     mem_conf.max_current_int = dummy_8;
-        //     mem_conf.max_current_dec = dummy_8_1;            
-        //     main_menu_state = MAIN_MENU_CONF_HARDWARE_2;
-        //     resp = resp_continue;            
-        // }
-
         p_seg = &mem_conf.segments[0][0];
         HARD_Find_Current_Segments(&led_curr, p_seg);
         main_menu_state = MAIN_MENU_CONF_HARDWARE_10;

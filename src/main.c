@@ -27,6 +27,7 @@
 #include "modo_slave.h"
 #include "lcd_utils.h"
 #include "programs_functions.h"
+#include "wifi_mode.h"
 
 #include "flash_program.h"
 
@@ -48,6 +49,7 @@ volatile unsigned char seq_ready;
 // ------- Externals de los timers -------
 volatile unsigned char timer_1seg = 0;
 volatile unsigned char switches_timer = 0;
+volatile unsigned char wifi_timer = 0;
 
 // ------- Externals del USART -------
 volatile unsigned char usart1_have_data;
@@ -165,7 +167,7 @@ volatile unsigned short timer_standby;
 volatile unsigned short wait_ms_var = 0;
 volatile unsigned char temp_sample_timer = 0;
 volatile unsigned short need_to_save_timer = 0;
-volatile unsigned char wifi_timer = 0;
+
 
 // ------- para la memoria -------
 unsigned char need_to_save = 0;
@@ -208,7 +210,7 @@ int main(void)
     resp_t resp = resp_continue;
 
     unsigned char ch_values [6] = { 0 };
-    wifi_state_t wifi_state = WIFI_FUNDIDO_RGB;
+
 
     // unsigned char slow_segment = 0;
     
@@ -804,6 +806,9 @@ int main(void)
             
             Usart2Send(s_to_send);
             Wait_ms(100);
+
+            //limpio los filtros
+            UpdateFiltersTest_Reset();
             
             main_state++;            
             break;
@@ -820,29 +825,21 @@ int main(void)
                 SW_RX_TX_RE_NEG;
                 DMX_Ena();    
                 main_state = MAIN_IN_SLAVE_MODE;
-
-                //limpio los filtros del DMX
-                UpdateFiltersTest_Reset();
             }
 
             if (mem_conf.program_type == PROGRAMS_MODE)
             {
                 main_state = MAIN_IN_PROGRAMS_MODE;
-
-                //limpio los filtros del DMX
-                UpdateFiltersTest_Reset();
             }
 
             if (mem_conf.program_type == WIFI_MODE)
             {
-                main_state = MAIN_IN_WIFI_MODE;
-
-                //limpio los filtros del DMX
-                UpdateFiltersTest_Reset();
                 while (FuncShowBlink ((const char *) "WiFi    ",
                                       (const char *) "    Mode",
                                       1,
                                       BLINK_NO) == resp_continue);
+
+                main_state = MAIN_IN_WIFI_MODE;
             }
             
             //default state no debiera estar nunca aca!
@@ -897,96 +894,7 @@ int main(void)
             break;
 
         case MAIN_IN_WIFI_MODE:
-            //llamo a la funcion de programas
-#define TIMER_FUNDIDO    16
-            // COMM_ReadMsgs(&wifi_state, ch_values);    //TODO: ver esto podrian modificarse sin querer
-
-            switch(wifi_state)
-            {
-            case WIFI_RGBW:
-                //paso los valores que llegan por el serie a los filtros
-                
-                break;
-
-            case WIFI_FUNDIDO_RGB:
-                for (i = 0; i < 6; i++)
-                    *(ch_values + i) = 0;
-                
-                wifi_state++;
-                Func_Fading_Reset();
-                break;
-
-            case WIFI_FUNDIDO_RGB1:
-                if (!wifi_timer)
-                {
-                    //busco los nuevos valores para el fade
-                    resp_t resp = resp_continue;
-                    do {
-                        resp = Func_Fading(ch_values, 0);
-                    }
-                    while (resp == resp_continue);
-                    wifi_timer = TIMER_FUNDIDO;
-                    if (resp == resp_finish)
-                        wifi_state++;
-                }
-                break;
-
-            case WIFI_FUNDIDO_RGB2:
-                if (!wifi_timer)
-                {
-                    //busco los nuevos valores para el fade
-                    resp_t resp = resp_continue;
-                    do {
-                        resp = Func_Fading(ch_values, 1);
-                    }
-                    while (resp == resp_continue);
-                    wifi_timer = TIMER_FUNDIDO;
-                    if (resp == resp_finish)
-                        wifi_state++;
-                }
-                break;
-
-            case WIFI_FUNDIDO_RGB3:
-                if (!wifi_timer)
-                {
-                    //busco los nuevos valores para el fade
-                    resp_t resp = resp_continue;
-                    do {
-                        resp = Func_Fading(ch_values, 2);
-                    }
-                    while (resp == resp_continue);
-                    wifi_timer = TIMER_FUNDIDO;
-                    if (resp == resp_finish)
-                        wifi_state = WIFI_FUNDIDO_RGB1;
-                }
-                break;
-                
-            case WIFI_FUNDIDO_W:
-                for (i = 0; i < 6; i++)
-                    *(ch_values + i) = 0;
-                
-                wifi_state++;
-                Func_Fading_Reset();
-                break;
-
-            case WIFI_FUNDIDO_W1:
-                if (!wifi_timer)
-                {
-                    //busco los nuevos valores para el fade
-                    resp_t resp = resp_continue;
-                    do {
-                        resp = Func_Fading(ch_values, 3);
-                    }
-                    while (resp == resp_continue);
-                    // resp = Func_Fading(ch_values, 3);
-                    wifi_timer = TIMER_FUNDIDO;
-                }
-                break;
-
-            default:
-                wifi_state = WIFI_FUNDIDO_W;
-                break;
-            }
+            FuncsWifiMode(ch_values);
 
             CheckFiltersAndOffsets2 (ch_values);
 
