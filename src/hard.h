@@ -311,7 +311,10 @@ typedef enum {
     WIFI_FUNDIDO_W,
     WIFI_FUNDIDO_W1,
     WIFI_FUNDIDO_W2,
-    WIFI_FUNDIDO_RGB
+    WIFI_FUNDIDO_RGB,
+    WIFI_FUNDIDO_RGB1,
+    WIFI_FUNDIDO_RGB2,
+    WIFI_FUNDIDO_RGB3    
 
 } wifi_state_t;
 

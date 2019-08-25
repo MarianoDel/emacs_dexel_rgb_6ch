@@ -16,7 +16,6 @@
 //-------- Defines -------------
 
 #define MAX_FADE 255
-//#define MAX_FADE 256
 
 //states del P7
 #define P7_COLOR1_ON		0

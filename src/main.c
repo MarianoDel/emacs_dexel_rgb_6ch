@@ -175,8 +175,9 @@ extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
 void DMAConfig(void);
 unsigned short Distance (unsigned short, unsigned short);
-unsigned char CheckFiltersAndOffsets (void);
+// unsigned char CheckFiltersAndOffsets (void);
 unsigned char CheckFiltersAndOffsets2 ();
+void UpdateFiltersTest_Reset (void);
     
 // ------- del DMX -------
 // extern void EXTI4_15_IRQHandler(void);
@@ -207,7 +208,7 @@ int main(void)
     resp_t resp = resp_continue;
 
     unsigned char ch_values [6] = { 0 };
-    wifi_state_t wifi_state = WIFI_FUNDIDO_W;
+    wifi_state_t wifi_state = WIFI_FUNDIDO_RGB;
 
     // unsigned char slow_segment = 0;
     
@@ -853,21 +854,20 @@ int main(void)
             break;
             
         case MAIN_IN_SLAVE_MODE:
-            FuncSlaveMode ();
-            // CheckFiltersAndOffsets ();
-            CheckFiltersAndOffsets2 ();            
+            FuncSlaveMode (ch_values);
+            CheckFiltersAndOffsets2 (ch_values);
 
             if (!timer_standby)
             {
                 timer_standby = 1000;
 
                 sprintf(s_to_send, "c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
-                    sp1_filtered,
-                    sp2_filtered,
-                    sp3_filtered,
-                    sp4_filtered,
-                    sp5_filtered,
-                    sp6_filtered);
+                        *(ch_values + 0),
+                        *(ch_values + 1),
+                        *(ch_values + 2),
+                        *(ch_values + 3),
+                        *(ch_values + 4),
+                        *(ch_values + 5));
                 Usart2Send(s_to_send);
                 
                 sprintf(s_to_send, "d1: %d, d2: %d, d3: %d, d4: %d, d5: %d, d6: %d\n",
@@ -892,14 +892,15 @@ int main(void)
 
             //ahora en ch_values tengo los nuevos parametros de los programas
             //los filtro los escalo y los mando al pwm
-            data7[1] = *(ch_values+0);
-            data7[2] = *(ch_values+1);
-            data7[3] = *(ch_values+2);
-            data7[4] = *(ch_values+3);
-            data7[5] = *(ch_values+4);
-            data7[6] = *(ch_values+5);
+            //TODO: cambiar esto al nuevo formato
+            // data7[1] = *(ch_values+0);
+            // data7[2] = *(ch_values+1);
+            // data7[3] = *(ch_values+2);
+            // data7[4] = *(ch_values+3);
+            // data7[5] = *(ch_values+4);
+            // data7[6] = *(ch_values+5);
 
-            CheckFiltersAndOffsets ();
+            CheckFiltersAndOffsets2 (ch_values);
 
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;
@@ -910,7 +911,7 @@ int main(void)
 
         case MAIN_IN_WIFI_MODE:
             //llamo a la funcion de programas
-
+#define TIMER_FUNDIDO    16
             // COMM_ReadMsgs(&wifi_state, ch_values);    //TODO: ver esto podrian modificarse sin querer
 
             switch(wifi_state)
@@ -921,24 +922,62 @@ int main(void)
                 break;
 
             case WIFI_FUNDIDO_RGB:
-#define TIMER_FUNDIDO    16
-                Func_PX(ch_values,8,0);
-
-                //ahora en ch_values tengo los nuevos parametros de los programas
-                //los filtro los escalo y los mando al pwm
-                data7[1] = *(ch_values+0);
-                data7[2] = *(ch_values+1);
-                data7[3] = *(ch_values+2);
-                data7[4] = *(ch_values+3);
-                data7[5] = *(ch_values+4);
-                data7[6] = *(ch_values+5);
+                for (i = 0; i < 6; i++)
+                    *(ch_values + i) = 0;
+                
+                wifi_state++;
+                Func_Fading_Reset();
                 break;
 
+            case WIFI_FUNDIDO_RGB1:
+                if (!wifi_timer)
+                {
+                    //busco los nuevos valores para el fade
+                    resp_t resp = resp_continue;
+                    do {
+                        resp = Func_Fading(ch_values, 0);
+                    }
+                    while (resp == resp_continue);
+                    wifi_timer = TIMER_FUNDIDO;
+                    if (resp == resp_finish)
+                        wifi_state++;
+                }
+                break;
+
+            case WIFI_FUNDIDO_RGB2:
+                if (!wifi_timer)
+                {
+                    //busco los nuevos valores para el fade
+                    resp_t resp = resp_continue;
+                    do {
+                        resp = Func_Fading(ch_values, 1);
+                    }
+                    while (resp == resp_continue);
+                    wifi_timer = TIMER_FUNDIDO;
+                    if (resp == resp_finish)
+                        wifi_state++;
+                }
+                break;
+
+            case WIFI_FUNDIDO_RGB3:
+                if (!wifi_timer)
+                {
+                    //busco los nuevos valores para el fade
+                    resp_t resp = resp_continue;
+                    do {
+                        resp = Func_Fading(ch_values, 2);
+                    }
+                    while (resp == resp_continue);
+                    wifi_timer = TIMER_FUNDIDO;
+                    if (resp == resp_finish)
+                        wifi_state = WIFI_FUNDIDO_RGB1;
+                }
+                break;
+                
             case WIFI_FUNDIDO_W:
-                data7[1] = 0;
-                data7[2] = 0;
-                data7[3] = 0;
-                data7[4] = 0;
+                for (i = 0; i < 6; i++)
+                    *(ch_values + i) = 0;
+                
                 wifi_state++;
                 Func_Fading_Reset();
                 break;
@@ -951,7 +990,8 @@ int main(void)
                     do {
                         resp = Func_Fading(ch_values, 3);
                     }
-                    while ((resp != resp_ok) || (resp != resp_finish));
+                    while (resp == resp_continue);
+                    // resp = Func_Fading(ch_values, 3);
                     wifi_timer = TIMER_FUNDIDO;
                 }
                 break;
@@ -961,7 +1001,7 @@ int main(void)
                 break;
             }
 
-            CheckFiltersAndOffsets2 ();
+            CheckFiltersAndOffsets2 (ch_values);
 
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;
@@ -1166,55 +1206,6 @@ unsigned short Distance (unsigned short a, unsigned short b)
 }
 
 
-unsigned char CheckFiltersAndOffsets (void)
-{
-    unsigned char new_outputs = 0;
-
-    new_outputs = UpdateFiltersTest ();
-    if (new_outputs)
-    {
-        //calculo el PWM de cada canal, solo si tengo leds en los canales
-        if (mem_conf.pwm_chnls[0])
-        {
-            ch1_pwm = HARD_Process_New_PWM_Data (0, sp1_filtered);
-            Update_PWM1(ch1_pwm);                        
-        }
-                
-        if (mem_conf.pwm_chnls[1])
-        {
-            ch2_pwm = HARD_Process_New_PWM_Data (1, sp2_filtered);                    
-            Update_PWM2(ch2_pwm);
-        }
-
-        if (mem_conf.pwm_chnls[2])
-        {
-            ch3_pwm = HARD_Process_New_PWM_Data (2, sp3_filtered);
-            Update_PWM3(ch3_pwm);
-        }
-                
-        if (mem_conf.pwm_chnls[3])
-        {
-            ch4_pwm = HARD_Process_New_PWM_Data (3, sp4_filtered);                    
-            Update_PWM4(ch4_pwm);
-        }
-
-        if (mem_conf.pwm_chnls[4])
-        {
-            ch5_pwm = HARD_Process_New_PWM_Data (4, sp5_filtered);
-            Update_PWM5(ch5_pwm);
-        }
-
-        if (mem_conf.pwm_chnls[5])
-        {
-            ch6_pwm = HARD_Process_New_PWM_Data (5, sp6_filtered);
-            Update_PWM6(ch6_pwm);
-        }
-    }    //end of filters
-
-    return new_outputs;
-
-}
-
 //aca filtro los offsets del pwm en vez del valor del canal
 //cada 5ms
 unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
@@ -1227,53 +1218,45 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
     {
         dmx_filters_timer = 5;
 
-        //solo por compativilidad con programa de prueba
-        sp1_filtered = *(ch_val + 0);
-        sp2_filtered = *(ch_val + 1);
-        sp3_filtered = *(ch_val + 2);
-        sp4_filtered = *(ch_val + 3);
-        sp5_filtered = *(ch_val + 4);
-        sp6_filtered = *(ch_val + 5);
-
         //filtro los offsets
         if (mem_conf.pwm_chnls[0])
         {
-            ch1_pwm = HARD_Process_New_PWM_Data (0, sp1_filtered);
+            ch1_pwm = HARD_Process_New_PWM_Data (0, *(ch_val + 0));
             ch1_pwm = MA16Circular (&st_sp1, ch1_pwm);    
             Update_PWM1(ch1_pwm);                        
         }
                 
         if (mem_conf.pwm_chnls[1])
         {
-            ch2_pwm = HARD_Process_New_PWM_Data (1, sp2_filtered);
+            ch2_pwm = HARD_Process_New_PWM_Data (1, *(ch_val + 1));
             ch2_pwm = MA16Circular (&st_sp2, ch2_pwm);
             Update_PWM2(ch2_pwm);
         }
 
         if (mem_conf.pwm_chnls[2])
         {
-            ch3_pwm = HARD_Process_New_PWM_Data (2, sp3_filtered);
+            ch3_pwm = HARD_Process_New_PWM_Data (2, *(ch_val + 2));
             ch3_pwm = MA16Circular (&st_sp3, ch3_pwm);
             Update_PWM3(ch3_pwm);
         }
                 
         if (mem_conf.pwm_chnls[3])
         {
-            ch4_pwm = HARD_Process_New_PWM_Data (3, sp4_filtered);
+            ch4_pwm = HARD_Process_New_PWM_Data (3, *(ch_val + 3));
             ch4_pwm = MA16Circular (&st_sp4, ch4_pwm);
             Update_PWM4(ch4_pwm);
         }
 
         if (mem_conf.pwm_chnls[4])
         {
-            ch5_pwm = HARD_Process_New_PWM_Data (4, sp5_filtered);
+            ch5_pwm = HARD_Process_New_PWM_Data (4, *(ch_val + 4));
             ch5_pwm = MA16Circular (&st_sp5, ch5_pwm);
             Update_PWM5(ch5_pwm);
         }
 
         if (mem_conf.pwm_chnls[5])
         {
-            ch6_pwm = HARD_Process_New_PWM_Data (5, sp6_filtered);
+            ch6_pwm = HARD_Process_New_PWM_Data (5, *(ch_val + 5));
             ch6_pwm = MA16Circular (&st_sp6, ch6_pwm);
             Update_PWM6(ch6_pwm);
         }
@@ -1283,6 +1266,16 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
 
     return new_outputs;
 
+}
+
+void UpdateFiltersTest_Reset (void)
+{
+    MA16Circular_Reset(&st_sp1);
+    MA16Circular_Reset(&st_sp2);
+    MA16Circular_Reset(&st_sp3);
+    MA16Circular_Reset(&st_sp4);
+    MA16Circular_Reset(&st_sp5);
+    MA16Circular_Reset(&st_sp6);
 }
 
 //--- end of file ---//

@@ -1148,7 +1148,7 @@ void Func_P9(unsigned char * ch_val, unsigned char deep)
 #define WHITE_AS_WHITE
 void Func_Fading_Reset(void)
 {
-    prog_state = P8_DECREASE_COLOR1;
+    prog_state = P8_INCREASE_COLOR1;
     prog_fade = 0;
 }
 

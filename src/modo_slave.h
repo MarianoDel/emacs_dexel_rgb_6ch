@@ -57,11 +57,9 @@ typedef enum {
 
 
 //--- Exported functions ---//
-void FuncSlaveMode (void);
+void FuncSlaveMode (unsigned char *);
 void FuncSlaveModeReset (void);
 void UpdateTimerSlaveMode (void);
-unsigned char UpdateFiltersTest (void);
-void UpdateFiltersTest_Reset (void);
 
 #endif
 

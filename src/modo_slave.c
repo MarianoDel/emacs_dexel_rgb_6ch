@@ -33,21 +33,14 @@ extern volatile unsigned char Packet_Detected_Flag;
 
 extern parameters_typedef mem_conf;
 
-extern unsigned short sp1_filtered;
-extern unsigned short sp2_filtered;
-extern unsigned short sp3_filtered;
-extern unsigned short sp4_filtered;
-extern unsigned short sp5_filtered;
-extern unsigned short sp6_filtered;
-
-#ifdef USE_FILTER_LENGHT_16
-extern ma16_data_obj_t st_sp1;
-extern ma16_data_obj_t st_sp2;
-extern ma16_data_obj_t st_sp3;
-extern ma16_data_obj_t st_sp4;
-extern ma16_data_obj_t st_sp5;
-extern ma16_data_obj_t st_sp6;
-#endif
+// #ifdef USE_FILTER_LENGHT_16
+// extern ma16_data_obj_t st_sp1;
+// extern ma16_data_obj_t st_sp2;
+// extern ma16_data_obj_t st_sp3;
+// extern ma16_data_obj_t st_sp4;
+// extern ma16_data_obj_t st_sp5;
+// extern ma16_data_obj_t st_sp6;
+// #endif
 
 
 //--- VARIABLES GLOBALES ---//
@@ -148,7 +141,7 @@ void FuncSlaveModeReset (void)
     slave_mode_state = SLAVE_MODE_INIT;
 }
 
-void FuncSlaveMode (void)
+void FuncSlaveMode (unsigned char * ch_val)
 {
     resp_t resp = resp_continue;
     unsigned char i;
@@ -160,11 +153,11 @@ void FuncSlaveMode (void)
         slave_mode_state++;
         ShowConfSlaveModeReset();
         SlaveModeMenuManagerReset();
-#if (defined USE_FILTER_LENGHT_16) || (defined USE_FILTER_LENGHT_8)
-        UpdateFiltersTest_Reset ();
-#else
-#error "Select filter lenght on hard.h"
-#endif
+// #if (defined USE_FILTER_LENGHT_16) || (defined USE_FILTER_LENGHT_8)
+//         UpdateFiltersTest_Reset ();
+// #else
+// #error "Select filter lenght on hard.h"
+// #endif
         break;
 
     case SLAVE_MODE_CONF:
@@ -215,6 +208,14 @@ void FuncSlaveMode (void)
                 data7[6] = (unsigned char) dummy_16;
             }
 
+            //update de valores recibidos
+            *(ch_val + 0) = data7[1];
+            *(ch_val + 1) = data7[2];
+            *(ch_val + 2) = data7[3];
+            *(ch_val + 3) = data7[4];
+            *(ch_val + 4) = data7[5];
+            *(ch_val + 5) = data7[6];
+            
             dmx_end_of_packet_update = 1;
         }
 
@@ -1003,37 +1004,6 @@ resp_t ShowConfSlaveMode (void)
         break;
     }
     return resp;
-}
-
-unsigned char UpdateFiltersTest (void)
-{
-    unsigned char new_outputs = 0;
-    //filters para el dmx - generalmente 8 puntos a 200Hz -
-    //desde el sp al sp_filter
-    if (!dmx_filters_timer)
-    {
-        sp1_filtered = MA16Circular (&st_sp1, data7[1]);
-        sp2_filtered = MA16Circular (&st_sp2, data7[2]);
-        sp3_filtered = MA16Circular (&st_sp3, data7[3]);
-        sp4_filtered = MA16Circular (&st_sp4, data7[4]);
-        sp5_filtered = MA16Circular (&st_sp5, data7[5]);
-        sp6_filtered = MA16Circular (&st_sp6, data7[6]);
-        dmx_filters_timer = 5;
-        new_outputs = 1;
-    }
-    
-    return new_outputs;
-}
-
-
-void UpdateFiltersTest_Reset (void)
-{
-    MA16Circular_Reset(&st_sp1);
-    MA16Circular_Reset(&st_sp2);
-    MA16Circular_Reset(&st_sp3);
-    MA16Circular_Reset(&st_sp4);
-    MA16Circular_Reset(&st_sp5);
-    MA16Circular_Reset(&st_sp6);
 }
 
 //--- end of file ---//
