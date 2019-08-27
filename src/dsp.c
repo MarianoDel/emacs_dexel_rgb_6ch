@@ -301,11 +301,11 @@ short PID_roof (short setpoint, short sample, short local_last_d, short * e_z1, 
 }
 #endif     //USE_PID_CONTROLLERS
 
-#ifdef USE_MA16_CIRCULAR
+#ifdef USE_MA16_U16_CIRCULAR
 //set de punteros y vaciado del filtro
 //recibe:
-// puntero a estructura de datos del filtro "ma16_data_obj_t *"
-void MA16Circular_Reset (ma16_data_obj_t * p_data)
+// puntero a estructura de datos del filtro "ma16_u16_data_obj_t *"
+void MA16_U16Circular_Reset (ma16_u16_data_obj_t * p_data)
 {
     unsigned char i;
     
@@ -316,13 +316,13 @@ void MA16Circular_Reset (ma16_data_obj_t * p_data)
     p_data->total_ma = 0;
 }
 
-//Filtro circular, necesito activar previamente con MA16Circular_Reset()
+//Filtro circular, necesito activar previamente con MA16_U16Circular_Reset()
 //recibe:
-// puntero a estructura de datos del filtro "ma16_data_obj_t *"
+// puntero a estructura de datos del filtro "ma16_u16_data_obj_t *"
 // nueva mustra "new_sample"
 //contesta:
 // resultado del filtro
-unsigned short MA16Circular (ma16_data_obj_t *p_data, unsigned short new_sample)
+unsigned short MA16_U16Circular (ma16_u16_data_obj_t *p_data, unsigned short new_sample)
 {
     p_data->total_ma -= *(p_data->p_ma);
     p_data->total_ma += new_sample;
@@ -336,12 +336,54 @@ unsigned short MA16Circular (ma16_data_obj_t *p_data, unsigned short new_sample)
     return (unsigned short) (p_data->total_ma >> 4);    
 }
 
-unsigned short MA16Circular_Only_Calc (ma16_data_obj_t *p_data)
+unsigned short MA16_U16Circular_Only_Calc (ma16_u16_data_obj_t *p_data)
 {
     return (unsigned short) (p_data->total_ma >> 4);
 }
 
-#endif
+#endif    //USE_MA16_U16_CIRCULAR
+
+#ifdef USE_MA32_U8_CIRCULAR
+//set de punteros y vaciado del filtro
+//recibe:
+// puntero a estructura de datos del filtro "ma32_u8_data_obj_t *"
+void MA32_U8Circular_Reset (ma32_u8_data_obj_t * p_data)
+{
+    unsigned char i;
+    
+    for (i = 0; i < 32; i++)
+        p_data->v_ma[i] = 0;
+
+    p_data->p_ma = p_data->v_ma;
+    p_data->total_ma = 0;
+}
+
+//Filtro circular, necesito activar previamente con MA32_U8Circular_Reset()
+//recibe:
+// puntero a estructura de datos del filtro "ma32_u8_data_obj_t *"
+// nueva mustra "new_sample"
+//contesta:
+// resultado del filtro
+unsigned char MA32_U8Circular (ma32_u8_data_obj_t *p_data, unsigned char new_sample)
+{
+    p_data->total_ma -= *(p_data->p_ma);
+    p_data->total_ma += new_sample;
+    *(p_data->p_ma) = new_sample;
+
+    if (p_data->p_ma < ((p_data->v_ma) + 31))
+        p_data->p_ma += 1;
+    else
+        p_data->p_ma = p_data->v_ma;
+
+    return (unsigned char) (p_data->total_ma >> 5);    
+}
+
+unsigned char MA32_U8Circular_Only_Calc (ma32_u8_data_obj_t *p_data)
+{
+    return (unsigned char) (p_data->total_ma >> 5);
+}
+
+#endif    //USE_MA32_U8_CIRCULAR
 
 
 //calculate the samples fequencies from a samples vector

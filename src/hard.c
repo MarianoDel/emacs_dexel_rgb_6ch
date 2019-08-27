@@ -24,7 +24,7 @@ extern volatile unsigned short timer_standby;
 
 extern volatile unsigned short adc_ch [];
 
-extern ma16_data_obj_t st_sp1;
+extern ma16_u16_data_obj_t st_sp1;
 
 extern parameters_typedef mem_conf;
 extern unsigned char data7[];
@@ -152,7 +152,7 @@ resp_t UpdateDutyCycle (led_current_settings_t * settings)
         }
 
         //uso st_sp1 para determinar corrientes
-        I_filtered = MA16Circular (&st_sp1, I_Sampled_Channel);
+        I_filtered = MA16_U16Circular (&st_sp1, I_Sampled_Channel);
         // I_filtered = MAFilterFast16 (I_Sampled_Channel, v_sp1);
 #ifdef USE_FILTER_LENGHT_8
         if (filter_cnt < 32)    //2ms
@@ -231,7 +231,7 @@ void UpdateDutyCycleReset (void)
     PWMChannelsReset();
 
     //uso st_sp1 para determinar corrientes
-    MA16Circular_Reset(&st_sp1);
+    MA16_U16Circular_Reset(&st_sp1);
 }
 
 

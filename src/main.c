@@ -79,12 +79,12 @@ unsigned short sp4_filtered = 0;
 unsigned short sp5_filtered = 0;
 unsigned short sp6_filtered = 0;
 #ifdef USE_FILTER_LENGHT_16
-ma16_data_obj_t st_sp1;
-ma16_data_obj_t st_sp2;
-ma16_data_obj_t st_sp3;
-ma16_data_obj_t st_sp4;
-ma16_data_obj_t st_sp5;
-ma16_data_obj_t st_sp6;
+ma16_u16_data_obj_t st_sp1;
+ma16_u16_data_obj_t st_sp2;
+ma16_u16_data_obj_t st_sp3;
+ma16_u16_data_obj_t st_sp4;
+ma16_u16_data_obj_t st_sp5;
+ma16_u16_data_obj_t st_sp6;
 #endif
 
 
@@ -1128,42 +1128,42 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
         if (mem_conf.pwm_chnls[0])
         {
             ch1_pwm = HARD_Process_New_PWM_Data (0, *(ch_val + 0));
-            ch1_pwm = MA16Circular (&st_sp1, ch1_pwm);    
+            ch1_pwm = MA16_U16Circular (&st_sp1, ch1_pwm);    
             Update_PWM1(ch1_pwm);                        
         }
                 
         if (mem_conf.pwm_chnls[1])
         {
             ch2_pwm = HARD_Process_New_PWM_Data (1, *(ch_val + 1));
-            ch2_pwm = MA16Circular (&st_sp2, ch2_pwm);
+            ch2_pwm = MA16_U16Circular (&st_sp2, ch2_pwm);
             Update_PWM2(ch2_pwm);
         }
 
         if (mem_conf.pwm_chnls[2])
         {
             ch3_pwm = HARD_Process_New_PWM_Data (2, *(ch_val + 2));
-            ch3_pwm = MA16Circular (&st_sp3, ch3_pwm);
+            ch3_pwm = MA16_U16Circular (&st_sp3, ch3_pwm);
             Update_PWM3(ch3_pwm);
         }
                 
         if (mem_conf.pwm_chnls[3])
         {
             ch4_pwm = HARD_Process_New_PWM_Data (3, *(ch_val + 3));
-            ch4_pwm = MA16Circular (&st_sp4, ch4_pwm);
+            ch4_pwm = MA16_U16Circular (&st_sp4, ch4_pwm);
             Update_PWM4(ch4_pwm);
         }
 
         if (mem_conf.pwm_chnls[4])
         {
             ch5_pwm = HARD_Process_New_PWM_Data (4, *(ch_val + 4));
-            ch5_pwm = MA16Circular (&st_sp5, ch5_pwm);
+            ch5_pwm = MA16_U16Circular (&st_sp5, ch5_pwm);
             Update_PWM5(ch5_pwm);
         }
 
         if (mem_conf.pwm_chnls[5])
         {
             ch6_pwm = HARD_Process_New_PWM_Data (5, *(ch_val + 5));
-            ch6_pwm = MA16Circular (&st_sp6, ch6_pwm);
+            ch6_pwm = MA16_U16Circular (&st_sp6, ch6_pwm);
             Update_PWM6(ch6_pwm);
         }
 
@@ -1176,12 +1176,12 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
 
 void UpdateFiltersTest_Reset (void)
 {
-    MA16Circular_Reset(&st_sp1);
-    MA16Circular_Reset(&st_sp2);
-    MA16Circular_Reset(&st_sp3);
-    MA16Circular_Reset(&st_sp4);
-    MA16Circular_Reset(&st_sp5);
-    MA16Circular_Reset(&st_sp6);
+    MA16_U16Circular_Reset(&st_sp1);
+    MA16_U16Circular_Reset(&st_sp2);
+    MA16_U16Circular_Reset(&st_sp3);
+    MA16_U16Circular_Reset(&st_sp4);
+    MA16_U16Circular_Reset(&st_sp5);
+    MA16_U16Circular_Reset(&st_sp6);
 }
 
 //--- end of file ---//

@@ -14,7 +14,7 @@
 // #define USE_PID_UPDATED_CONSTANTS
 
 // #define USE_MA8_CIRCULAR
-#define USE_MA16_CIRCULAR
+#define USE_MA16_U16_CIRCULAR
 // #define USE_MA32_CIRCULAR
 
 //--- Exported constants ------------------------
@@ -24,7 +24,13 @@ typedef struct {
     unsigned short v_ma[16];
     unsigned short * p_ma;
     unsigned int total_ma;
-} ma16_data_obj_t;
+} ma16_u16_data_obj_t;
+
+typedef struct {
+    unsigned char v_ma[32];
+    unsigned char * p_ma;
+    unsigned int total_ma;
+} ma32_u8_data_obj_t;
 
 // #define MAFilter32Pote(X)  MAFilter32Circular(X, v_pote_samples, &v_pote_index, &pote_sumation)
 
@@ -48,10 +54,16 @@ void DSP_Vector_Calcule_Frequencies (unsigned short *,
 unsigned short DSP_Vector_Get_Max_Value (unsigned short *, unsigned char);
 unsigned short DSP_Vector_Get_Min_Value (unsigned short *, unsigned char);
 
-#ifdef USE_MA16_CIRCULAR
-void MA16Circular_Reset (ma16_data_obj_t *);
-unsigned short MA16Circular (ma16_data_obj_t *, unsigned short);
-unsigned short MA16Circular_Only_Calc (ma16_data_obj_t *);
+#ifdef USE_MA16_U16_CIRCULAR
+void MA16_U16Circular_Reset (ma16_u16_data_obj_t *);
+unsigned short MA16_U16Circular (ma16_u16_data_obj_t *, unsigned short);
+unsigned short MA16_U16Circular_Only_Calc (ma16_u16_data_obj_t *);
+#endif
+
+#ifdef USE_MA32_U8_CIRCULAR
+void MA32_U8Circular_Reset (ma32_u8_data_obj_t *);
+unsigned char MA32_U8Circular (ma32_u8_data_obj_t *, unsigned short);
+unsigned char MA32_U8Circular_Only_Calc (ma32_u8_data_obj_t *);
 #endif
 
 
