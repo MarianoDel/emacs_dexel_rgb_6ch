@@ -50,11 +50,10 @@ wifi_state_t wifi_state = WIFI_FUNDIDO_RGB;
 char buffMessages [100];
 unsigned char rgbw_sliders [6] = { 0 };
 
-char s_set_fade [] = {"fade"};
-char s_rgb_on [] = {"rgb on"};
-char s_rgb_off [] = {"rgb off"};
-char s_w_on [] = {"w on"};
-char s_w_off [] = {"w off"};
+char s_fade_rgb [] = {"fade_rgb:"};
+char s_fade_w [] = {"fade_w:"};
+char s_on [] = {"on"};
+char s_off [] = {"off"};
 char s_R_from_sliders [] = {"R:"};
 char s_G_from_sliders [] = {"G:"};
 char s_B_from_sliders [] = {"B:"};
@@ -209,18 +208,27 @@ resp_t WIFI_InterpretarMsg (void)
     unsigned char decimales = 0;
     // char b [30];
 
-    //-- Fade Settings
-    if (strncmp(pStr, s_set_fade, sizeof(s_set_fade) - 1) == 0)
+    //-- Fade RGB Settings
+    if (strncmp(pStr, s_fade_rgb, sizeof(s_fade_rgb) - 1) == 0)
     {
-        pStr += sizeof(s_set_fade);    //normalizo al payload, hay un espacio
+        pStr += sizeof(s_fade_rgb) - 1;    //normalizo al payload
 
-        if (strncmp(pStr, s_rgb_on, sizeof(s_rgb_on) - 1) == 0)
+        if (strncmp(pStr, s_on, sizeof(s_on) - 1) == 0)
             WIFI_SetFadeType (RGB_SIGNAL_ON);
-        else if (strncmp(pStr, s_rgb_off, sizeof(s_rgb_off) - 1) == 0)
+        else if (strncmp(pStr, s_off, sizeof(s_off) - 1) == 0)
             WIFI_SetFadeType (RGB_SIGNAL_OFF);
-        else if (strncmp(pStr, s_w_on, sizeof(s_w_on) - 1) == 0)
+        else
+            resp = resp_error;
+    }
+
+    //-- Fade W Settings
+    else if (strncmp(pStr, s_fade_w, sizeof(s_fade_w) - 1) == 0)
+    {
+        pStr += sizeof(s_fade_w) - 1;    //normalizo al payload
+
+        if (strncmp(pStr, s_on, sizeof(s_on) - 1) == 0)
             WIFI_SetFadeType (W_SIGNAL_ON);
-        else if (strncmp(pStr, s_w_off, sizeof(s_w_off) - 1) == 0)
+        else if (strncmp(pStr, s_off, sizeof(s_off) - 1) == 0)
             WIFI_SetFadeType (W_SIGNAL_OFF);
         else
             resp = resp_error;

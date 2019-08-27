@@ -167,6 +167,9 @@ void USART2_IRQHandler(void)
                 prx2++;
             }
         }
+        else
+            prx2 = rx2buff;    //soluciona problema bloqueo con garbage
+
     }
     /* USART in mode Transmitter -------------------------------------------------*/
 
@@ -239,7 +242,8 @@ void USART2Config(void)
     if (!USART2_CLK)
         USART2_CLK_ON;
 
-    USART2->BRR = USART_9600;
+    // lo paso a 115200 por errores del esp
+    USART2->BRR = USART_115200;
     USART2->CR1 = USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_TE | USART_CR1_UE;
 
     temp = GPIOA->AFR[0];
