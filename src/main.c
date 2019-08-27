@@ -308,6 +308,7 @@ int main(void)
 
     //--- Mensaje Bienvenida ---//
     //---- Defines from hard.h -----//
+#ifdef USART2_DEBUG_MODE
     // Usart2Send("\nDexel RGB 6CH Bidireccional\n -- powered by: Kirno Technology --\n");
     Usart2Send("\nLUIS Casino RGB 6CH Bidireccional\n -- powered by: Kirno Technology --\n");    
     Wait_ms(100);
@@ -324,7 +325,7 @@ int main(void)
 #else
 #error	"No Soft Version defined in hard.h file"
 #endif
-
+#endif    //USART2_DEBUG_MODE
 
     //---- End of Defines from hard.h -----//
 
@@ -749,12 +750,16 @@ int main(void)
     ADC1->CR |= ADC_CR_ADSTART;
 
     memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
-    // unsigned short * p_seg = &mem_conf.segments[0][0];
-    // led_current_settings_t led_curr;
 
-    // HARD_Find_Current_Segments(&led_curr, p_seg);    
+    //-- Para Debug Test inicial de corriente
+    unsigned short * p_seg = &mem_conf.segments[0][0];
+    led_current_settings_t led_curr;
+
+    HARD_Find_Current_Segments(&led_curr, p_seg);
+    //-- FIN Para Debug Test inicial de corriente    
 
     //mando info al puerto
+#ifdef USART2_DEBUG_MODE
     for (unsigned char j = 0; j < 6; j++)
     {        
         sprintf(s_to_send, "segments[%d]: ", j);
@@ -769,6 +774,9 @@ int main(void)
         }
         Usart2Send("\n");
     }
+#endif
+
+    while (1);
     
     while (1)
     {
@@ -793,6 +801,7 @@ int main(void)
             MasterModeMenuReset();
             FuncSlaveModeReset();
 
+#ifdef USART2_DEBUG_MODE            
             sprintf(s_to_send, "prog type: %d\n", mem_conf.program_type);
             Usart2Send(s_to_send);
             Wait_ms(100);
@@ -806,6 +815,7 @@ int main(void)
             
             Usart2Send(s_to_send);
             Wait_ms(100);
+#endif
 
             //limpio los filtros
             UpdateFiltersTest_Reset();
@@ -854,6 +864,7 @@ int main(void)
             FuncSlaveMode (ch_values);
             CheckFiltersAndOffsets2 (ch_values);
 
+#ifdef USART2_DEBUG_MODE
             if (!timer_standby)
             {
                 timer_standby = 1000;
@@ -876,6 +887,7 @@ int main(void)
                     ch6_pwm);
                 Usart2Send(s_to_send);                
             }
+#endif
 
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;
@@ -884,8 +896,6 @@ int main(void)
 
         case MAIN_IN_PROGRAMS_MODE:
             FuncsProgramsMode(ch_values);
-
-            //ahora en ch_values tengo los nuevos parametros de los programas
             CheckFiltersAndOffsets2 (ch_values);
 
             if (CheckS2() > S_HALF)
@@ -895,7 +905,6 @@ int main(void)
 
         case MAIN_IN_WIFI_MODE:
             FuncsWifiMode(ch_values);
-
             CheckFiltersAndOffsets2 (ch_values);
 
             if (CheckS2() > S_HALF)
@@ -919,8 +928,10 @@ int main(void)
             LCD_2DO_RENGLON;
             LCDTransmitStr(s_blank_line);
 
+#ifdef USART2_DEBUG_MODE
             sprintf(s_to_send, "overtemp: %d\n", Temp_Channel);
             Usart2Send(s_to_send);
+#endif
 
             main_state = MAIN_IN_OVERTEMP_B;
             break;
@@ -996,10 +1007,12 @@ int main(void)
             
             need_to_save = WriteConfigurations();
 
+#ifdef USART2_DEBUG_MODE
             if (need_to_save)
                 Usart2Send((char *) "Memory Saved OK!\n");
             else
                 Usart2Send((char *) "Memory problems\n");
+#endif
 
             need_to_save = 0;
         }

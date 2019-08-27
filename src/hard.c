@@ -23,12 +23,6 @@ extern volatile unsigned char switches_timer;
 extern volatile unsigned short timer_standby;
 
 extern volatile unsigned short adc_ch [];
-extern unsigned short sp1_filtered;
-extern unsigned short sp2_filtered;
-extern unsigned short sp3_filtered;
-extern unsigned short sp4_filtered;
-extern unsigned short sp5_filtered;
-extern unsigned short sp6_filtered;
 
 extern ma16_data_obj_t st_sp1;
 
@@ -346,7 +340,7 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
         
         for (unsigned char i = 0; i < SEGMENTS_QTTY; i++)
         {
-            // settings->sp_current = MAX_CURRENT_MILLIS * (i + 1);
+            //voy pidiendo los pwm de la corriente segmento a segmento
             settings->sp_current = max_current_in_channel_millis * (i + 1);            
             settings->sp_current = settings->sp_current / SEGMENTS_QTTY;
 
@@ -372,7 +366,7 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
 
             if (resp == resp_ok)
             {
-                //si es el ultimo segmento
+                //si es el ultimo segmento guardo info adicional
                 if (i == (SEGMENTS_QTTY - 1))
                 {
                     unsigned int calc = 0;

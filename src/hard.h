@@ -60,6 +60,11 @@
 // #define FIBONACCI_8    
 //----- End of Segments Modes ---------------------
 
+//----- Usart2 Modes ----------------------------
+#define USART2_DEBUG_MODE
+// #define USART2_WIFI_MODE
+//----- End of Usart2 Modes ---------------------
+
 //------ Configuration for Firmware-Channels -----
 #define WHITE_AS_IN_RGB		//el blanco lo forma con los 3 colores
 //#define WHITE_AS_WHITE	//el blanco tiene leds blancos individuales
