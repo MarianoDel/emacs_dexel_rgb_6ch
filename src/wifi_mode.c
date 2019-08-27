@@ -239,7 +239,7 @@ resp_t WIFI_InterpretarMsg (void)
         if (decimales < 4)
         {
             WIFI_SetPowerLed (0, new_power);
-            pStr += decimales;
+            pStr += decimales + 1;
 
             //busco valor de G
             if (strncmp(pStr, s_G_from_sliders, sizeof(s_G_from_sliders) - 1) == 0)
@@ -251,7 +251,7 @@ resp_t WIFI_InterpretarMsg (void)
                 if (decimales < 4)
                 {
                     WIFI_SetPowerLed (1, new_power);
-                    pStr += decimales;
+                    pStr += decimales + 1;
                     
                     //busco valor de B
                     if (strncmp(pStr, s_B_from_sliders, sizeof(s_B_from_sliders) - 1) == 0)
@@ -263,7 +263,7 @@ resp_t WIFI_InterpretarMsg (void)
                         if (decimales < 4)
                         {
                             WIFI_SetPowerLed (2, new_power);
-                            pStr += decimales;
+                            pStr += decimales + 1;
 
                             //busco valor de W
                             if (strncmp(pStr, s_W_from_sliders, sizeof(s_W_from_sliders) - 1) == 0)
@@ -320,6 +320,9 @@ void WIFI_SetPowerLed (unsigned char ch, unsigned short new_power)
 {
     if (ch < 6)
     {
+        if (new_power > 255)
+            new_power = 255;
+        
         rgbw_sliders[ch] = (unsigned char) new_power;
     }
 }

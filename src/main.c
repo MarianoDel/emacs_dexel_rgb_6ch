@@ -752,10 +752,10 @@ int main(void)
     memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
 
     //-- Para Debug Test inicial de corriente
-    unsigned short * p_seg = &mem_conf.segments[0][0];
-    led_current_settings_t led_curr;
+    // unsigned short * p_seg = &mem_conf.segments[0][0];
+    // led_current_settings_t led_curr;
 
-    HARD_Find_Current_Segments(&led_curr, p_seg);
+    // HARD_Find_Current_Segments(&led_curr, p_seg);
     //-- FIN Para Debug Test inicial de corriente    
 
     //mando info al puerto
@@ -776,7 +776,7 @@ int main(void)
     }
 #endif
 
-    while (1);
+    // while (1);
     
     while (1)
     {
