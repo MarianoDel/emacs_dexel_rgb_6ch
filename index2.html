@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      /* For the Slider Control */
+      .slidecontainer {
+      width: 100%;
+      }
+
+      .slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 15px;
+      border-radius: 5px;
+      background: #d3d3d3;
+      outline: none;
+      opacity: 0.7;
+      -webkit-transition: .2s;
+      transition: opacity .2s;
+      }
+
+      .slider:hover {
+      opacity: 1;
+      }
+
+      .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      background: #4CAF50;
+      cursor: pointer;
+      }
+
+      .sl1::-webkit-slider-thumb {
+      background: #FF0000;
+      }
+      .sl2::-webkit-slider-thumb {
+      background: #00FF00;
+      }
+      .sl3::-webkit-slider-thumb {
+      background: #0000FF;
+      }
+      .sl4::-webkit-slider-thumb {
+      border-style: solid;
+      border-color: #000000;
+      background: #FFFFFF;
+      }
+
+      .sl1 {
+      background: #F5A9A9;
+      }
+      .sl2 {
+      background: #81F781;
+      }
+      .sl3 {
+      background: #8181F7;
+      }
+      .sl4 {
+      background: #BDBDBD;
+      }
+
+      /* Styles for the Buttons */
+      .button {
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 15px 32px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 4px 2px;
+      cursor: pointer;
+      }
+      
+    </style>
+  </head>
+
+  <body>
+    <h1>Round Range Slider</h1>
+
+    <input type="range" min="0" max="255" value="127" class="slider sl1" id="Range_R">
+    <p>Red Intensity: <span id="Value_R"></span></p>
+
+    <input type="range" min="0" max="255" value="127" class="slider sl2" id="Range_G">
+    <p>Green Intensity: <span id="Value_G"></span></p>
+    
+    <input type="range" min="0" max="255" value="127" class="slider sl3" id="Range_B">
+    <p>Blue Intensity: <span id="Value_B"></span></p>
+
+    <input type="range" min="0" max="255" value="127" class="slider sl4" id="Range_W">
+    <p>White Intensity: <span id="Value_W"></span></p>
+
+
+    <button class="button" onclick="localButtonRGB()">
+      Apagar RGB
+    </button>
+    <button class="button" onclick="localButtonW()">
+      Apagar Blanco
+    </button>
+    <button class="button" onclick="checkButton('FADE_RGB')" id="FADE_RGB">
+      Fundido RGB
+    </button>
+    <button class="button" onclick="checkButton('FADE_W')" id="FADE_W">
+      Fundido Blanco
+    </button>
+
+    <p>Comms Status: <span id="CommStatus"></span></p>
+
+    <script>
+      var slider_r = document.getElementById("Range_R");
+      var slider_g = document.getElementById("Range_G");
+      var slider_b = document.getElementById("Range_B");
+      var slider_w = document.getElementById("Range_W");
+      var value_r = document.getElementById("Value_R");
+      var value_g = document.getElementById("Value_G");
+      var value_b = document.getElementById("Value_B");
+      var value_w = document.getElementById("Value_W");
+
+      value_r.innerHTML = slider_r.value;
+      value_g.innerHTML = slider_g.value;
+      value_b.innerHTML = slider_b.value;
+      value_w.innerHTML = slider_w.value;
+
+      <!-- Cambio de valores de sliders -->
+      slider_r.oninput = function() {
+      value_r.innerHTML = this.value;
+      }
+      slider_g.oninput = function() {
+      value_g.innerHTML = this.value;
+      }
+      slider_b.oninput = function() {
+      value_b.innerHTML = this.value;
+      }
+      slider_w.oninput = function() {
+      value_w.innerHTML = this.value;
+      }
+
+      <!-- Cambio Texto en Botones -->
+      function checkButton(who) {
+      if (who == 'FADE_W') {
+      if (document.getElementById("FADE_W").innerHTML == "Fundido Blanco") {
+      document.getElementById("FADE_W").innerHTML = "Detener Fundido Blanco";
+      document.getElementById("FADE_RGB").innerHTML = "Fundido RGB";
+      sendButtons('fade_w','on')
+      }
+      else {
+      document.getElementById("FADE_W").innerHTML = "Fundido Blanco";
+      sendButtons('fade_w','off');
+      }
+      }
+      if (who == 'FADE_RGB') {
+      if (document.getElementById("FADE_RGB").innerHTML == "Fundido RGB") {
+      document.getElementById("FADE_RGB").innerHTML = "Detener Fundido RGB";
+      document.getElementById("FADE_W").innerHTML = "Fundido Blanco";
+      sendButtons('fade_rgb','on')
+      }
+      else {
+      document.getElementById("FADE_RGB").innerHTML = "Fundido RGB";
+      sendButtons('fade_rgb','off');
+      }
+      }      
+      }
+
+      <!-- Handlers de Botones Locales -->
+      function localButtonRGB() {
+      slider_r.value = 0;
+      slider_g.value = 0;
+      slider_b.value = 0;
+      value_r.innerHTML = slider_r.value;
+      value_g.innerHTML = slider_g.value;
+      value_b.innerHTML = slider_b.value;
+      }
+
+      function localButtonW() {
+      slider_w.value = 0;
+      value_w.innerHTML = slider_w.value;
+      }
+      
+      <!-- Interacion AJAX -->
+      function sendButtons(action,value) {
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+      document.getElementById("CommStatus").innerHTML =
+      this.responseText;
+      }
+      };
+      xhttp.open("GET", "Button?"+action+"="+value, true);      
+      xhttp.send();
+      }
+
+      function sendSliders() {
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+      document.getElementById("CommStatus").innerHTML =
+      this.responseText;
+      }
+      };
+      xhttp.open("GET", "Slider?R="+value_r.innerHTML
+      +"&G="+value_g.innerHTML
+      +"&B="+value_b.innerHTML
+      +"&W="+value_w.innerHTML, true);      
+      xhttp.send();
+      }
+
+      <!-- Two seconds Timer -->
+      setInterval(function() {
+      sendSliders();
+      }, 2000); //2000mSeconds update rate 
+    </script>
+  </body>
+</html>
