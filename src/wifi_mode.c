@@ -9,6 +9,7 @@
 //----------------------------------------------------------------------
 #include "wifi_mode.h"
 #include "programs_functions.h"
+#include "dsp.h"
 
 //comunicaciones
 #include "uart.h"
@@ -59,6 +60,12 @@ char s_G_from_sliders [] = {"G:"};
 char s_B_from_sliders [] = {"B:"};
 char s_W_from_sliders [] = {"W:"};
 
+ma32_u8_data_obj_t wf_sp1;
+ma32_u8_data_obj_t wf_sp2;
+ma32_u8_data_obj_t wf_sp3;
+ma32_u8_data_obj_t wf_sp4;
+ma32_u8_data_obj_t wf_sp5;
+ma32_u8_data_obj_t wf_sp6;
 
 /* Module Private Function Declarations ---------------------------------------*/
 void WIFI_UpdateCommunications (void);
@@ -66,6 +73,7 @@ unsigned char WIFI_SerialProcess (void);
 resp_t WIFI_InterpretarMsg (void);
 void WIFI_SetFadeType (fade_t);
 void WIFI_SetPowerLed (unsigned char, unsigned short);
+void WIFI_ResetFiltersChannels (unsigned char *);
 
 /* Module Functions Definitions -----------------------------------------------*/
 void FuncsWifiMode (unsigned char * ch_val)
@@ -76,20 +84,25 @@ void FuncsWifiMode (unsigned char * ch_val)
     switch(wifi_state)
     {
     case WIFI_RGBW:
-        for (unsigned char i = 0; i < 6; i++)
-            *(ch_val + i) = 0;
+        WIFI_ResetFiltersChannels (ch_val);
                 
         wifi_state++;
         break;
 
     case WIFI_RGBW1:
         //paso los valores que llegan por el serie a los filtros
-        *(ch_val + 0) = rgbw_sliders [0];
-        *(ch_val + 1) = rgbw_sliders [1];
-        *(ch_val + 2) = rgbw_sliders [2];
-        *(ch_val + 3) = rgbw_sliders [3];
-        *(ch_val + 4) = rgbw_sliders [4];
-        *(ch_val + 5) = rgbw_sliders [5];
+        //filtrados cada 62ms
+        if (!wifi_timer)
+        {
+            wifi_timer = 62;
+            
+            *(ch_val + 0) = MA32_U8Circular(&wf_sp1, rgbw_sliders [0]);
+            *(ch_val + 1) = MA32_U8Circular(&wf_sp2, rgbw_sliders [1]);
+            *(ch_val + 2) = MA32_U8Circular(&wf_sp3, rgbw_sliders [2]);
+            *(ch_val + 3) = MA32_U8Circular(&wf_sp4, rgbw_sliders [3]);
+            *(ch_val + 4) = MA32_U8Circular(&wf_sp5, rgbw_sliders [4]);
+            *(ch_val + 5) = MA32_U8Circular(&wf_sp6, rgbw_sliders [5]);
+        }
                 
         break;
         
@@ -335,4 +348,17 @@ void WIFI_SetPowerLed (unsigned char ch, unsigned short new_power)
     }
 }
 
+
+void WIFI_ResetFiltersChannels (unsigned char * ch_val)
+{
+    for (unsigned char i = 0; i < 6; i++)
+        *(ch_val + i) = 0;
+
+    MA32_U8Circular_Reset(&wf_sp1);
+    MA32_U8Circular_Reset(&wf_sp2);
+    MA32_U8Circular_Reset(&wf_sp3);
+    MA32_U8Circular_Reset(&wf_sp4);
+    MA32_U8Circular_Reset(&wf_sp5);
+    MA32_U8Circular_Reset(&wf_sp6);    
+}
 //--- end of file ---//

@@ -15,7 +15,7 @@
 
 // #define USE_MA8_CIRCULAR
 #define USE_MA16_U16_CIRCULAR
-// #define USE_MA32_CIRCULAR
+#define USE_MA32_U8_CIRCULAR
 
 //--- Exported constants ------------------------
 
@@ -62,7 +62,7 @@ unsigned short MA16_U16Circular_Only_Calc (ma16_u16_data_obj_t *);
 
 #ifdef USE_MA32_U8_CIRCULAR
 void MA32_U8Circular_Reset (ma32_u8_data_obj_t *);
-unsigned char MA32_U8Circular (ma32_u8_data_obj_t *, unsigned short);
+unsigned char MA32_U8Circular (ma32_u8_data_obj_t *, unsigned char);
 unsigned char MA32_U8Circular_Only_Calc (ma32_u8_data_obj_t *);
 #endif
 
