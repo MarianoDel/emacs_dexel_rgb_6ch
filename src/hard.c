@@ -319,16 +319,16 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
         switch (j)
         {
         case 0:
-            max_current_in_channel_millis = 750;
+            max_current_in_channel_millis = 1700;
             break;
         case 1:
-            max_current_in_channel_millis = 700;
+            max_current_in_channel_millis = 1700;
             break;
         case 2:
-            max_current_in_channel_millis = 700;
+            max_current_in_channel_millis = 1700;
             break;
         case 3:
-            max_current_in_channel_millis = 1050;
+            max_current_in_channel_millis = 1700;
             break;
         case 4:
             max_current_in_channel_millis = 1100;
