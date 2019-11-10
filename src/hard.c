@@ -1,13 +1,12 @@
-//---------------------------------------------
-// #### PROYECTO LIPO LASER - Custom Board ####
+//----------------------------------------------------------------------
+// #### PROYECTO DEXEL/LUIS_CASINO 6CH BIDIRECCIONAL - Custom Board ####
 // ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### HARD.C ################################
-//---------------------------------------------
-
+// #### HARD.C #########################################################
+//----------------------------------------------------------------------
 #include "hard.h"
 #include "stm32f0xx.h"
 
@@ -19,40 +18,19 @@
 
 
 
-/* Externals variables ---------------------------------------------------------*/
+/* Externals variables --------------------------------------------------------*/
 extern volatile unsigned char switches_timer;
 extern volatile unsigned short timer_standby;
 
 extern volatile unsigned short adc_ch [];
-extern unsigned short sp1_filtered;
-extern unsigned short sp2_filtered;
-extern unsigned short sp3_filtered;
-extern unsigned short sp4_filtered;
-extern unsigned short sp5_filtered;
-extern unsigned short sp6_filtered;
 
-#ifdef USE_FILTER_LENGHT_8
-extern unsigned short v_sp1 [8];
-extern unsigned short v_sp2 [8];
-extern unsigned short v_sp3 [8];
-extern unsigned short v_sp4 [8];
-extern unsigned short v_sp5 [8];
-extern unsigned short v_sp6 [8];
-#endif
-#ifdef USE_FILTER_LENGHT_16
-extern unsigned short v_sp1 [16];
-extern unsigned short v_sp2 [16];
-extern unsigned short v_sp3 [16];
-extern unsigned short v_sp4 [16];
-extern unsigned short v_sp5 [16];
-extern unsigned short v_sp6 [16];
-#endif
+extern ma16_u16_data_obj_t st_sp1;
 
 extern parameters_typedef mem_conf;
 extern unsigned char data7[];
 extern unsigned char data512[];
 
-/* Global variables ------------------------------------------------------------*/
+/* Global variables -----------------------------------------------------------*/
 //para los switches
 unsigned short s1 = 0;
 unsigned short s2 = 0;
@@ -60,8 +38,11 @@ unsigned short s2 = 0;
 #define sequence_ready         (DMA1->ISR & DMA_ISR_TCIF1)
 #define sequence_ready_reset   (DMA1->IFCR = DMA_ISR_TCIF1)
 
-/* Module Functions ------------------------------------------------------------*/
+/* Module Private Function Declarations ---------------------------------------*/ 
+unsigned char GetProcessedSegment (unsigned short, unsigned short *, unsigned char);
 
+
+/* Module Functions Definitions -----------------------------------------------*/
 unsigned char CheckS1 (void)	//cada check tiene 10ms
 {
     if (s1 > SWITCHES_THRESHOLD_FULL)
@@ -126,8 +107,6 @@ void UpdateSwitches (void)
 //resp_ok, cuando termina ok y carga valores
 //resp_finish, llega al maximo pwm pero no consigue la corriente
 //resp_error, llego al 50% del pwm pero nunca hubo corriente
-#define I_filtered    sp1_filtered
-#define I_Sampled_Channel    sp2_filtered
 #if defined USE_INDUCTOR_IN_CCM
 #define K_current    2390
 #elif defined USE_INDUCTOR_IN_DCM
@@ -143,6 +122,8 @@ resp_t UpdateDutyCycle (led_current_settings_t * settings)
 {
     resp_t resp = resp_continue;    
     unsigned int I_real = 0;
+    unsigned short I_Sampled_Channel = 0;
+    unsigned short I_filtered = 0;
     
     if (sequence_ready)    //16KHz
     {
@@ -170,7 +151,9 @@ resp_t UpdateDutyCycle (led_current_settings_t * settings)
             break;
         }
 
-        I_filtered = MAFilterFast16 (I_Sampled_Channel, v_sp1);
+        //uso st_sp1 para determinar corrientes
+        I_filtered = MA16_U16Circular (&st_sp1, I_Sampled_Channel);
+        // I_filtered = MAFilterFast16 (I_Sampled_Channel, v_sp1);
 #ifdef USE_FILTER_LENGHT_8
         if (filter_cnt < 32)    //2ms
         {
@@ -241,6 +224,17 @@ resp_t UpdateDutyCycle (led_current_settings_t * settings)
     return resp;
 }
 
+
+void UpdateDutyCycleReset (void)
+{
+    duty_cycle = 0;
+    PWMChannelsReset();
+
+    //uso st_sp1 para determinar corrientes
+    MA16_U16Circular_Reset(&st_sp1);
+}
+
+
 void PWMChannelsReset (void)
 {
     Update_PWM1(0);
@@ -251,27 +245,6 @@ void PWMChannelsReset (void)
     Update_PWM6(0);    
 }
 
-void UpdateDutyCycleReset (void)
-{
-    unsigned char i;
-    duty_cycle = 0;
-
-    PWMChannelsReset();
-    
-    //estos se usan para corrientes
-    sp1_filtered = 0;
-    sp2_filtered = 0;
-    
-#ifdef USE_FILTER_LENGHT_16
-    for (i = 0; i < 16; i++)
-#endif
-#ifdef USE_FILTER_LENGHT_8
-    for (i = 0; i < 8; i++)
-#endif
-    {
-        v_sp1[i] = 0;
-    }
-}
 
 unsigned short PWMChannelsOffset (unsigned char dmx_data, unsigned short pwm_max_curr_data)
 {
@@ -307,4 +280,159 @@ unsigned char DMXMapping (unsigned char to_map)
 
     return temp;
 }
+
+#ifdef LINEAR_SEGMENT_8
+#define SEGMENTS_QTTY    8
+unsigned short const_segments[SEGMENTS_QTTY] = {31, 63, 95, 127, 159, 191, 223, 255};
+#define SEGMENTS_VALUE    32
+#endif
+#ifdef LINEAR_SEGMENT_16    
+#define SEGMENTS_QTTY    16
+unsigned short const_segments[SEGMENTS_QTTY] = {15, 31, 47, 63, 79, 95, 111, 127,
+                                                143, 159, 175, 191, 207, 223, 239, 255};
+#define SEGMENTS_VALUE    16
+#endif
+#ifdef LINEAR_SEGMENT_32
+#define SEGMENTS_QTTY    32
+unsigned short const_segments[SEGMENTS_QTTY] = {7, 15, 23, 31, 39, 47, 55, 63,
+                                                71, 79, 87, 95, 103, 111, 119, 127,
+                                                135, 143, 151, 159, 167, 175, 183, 191,
+                                                199, 207, 215, 223, 231, 239, 247, 255};
+#define SEGMENTS_VALUE    8
+#endif
+
+resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
+                                   unsigned short * segments)
+{
+    resp_t resp = resp_continue;
+    unsigned short max_current_in_channel_millis = 0;
+    
+    //espero tres tipos de respuesta resp_ok, resp_finish, resp_error
+    //estas respuestas las traslado
+    for (unsigned char j = 0; j < 6; j++)
+    {
+        //busco segmentos para cada canal
+        UpdateDutyCycleReset();
+        settings->channel = j + 1;
+
+        //TODO: mejorar esto; hardcodeo la corriente segun el canal; y el for de abajo
+        switch (j)
+        {
+        case 0:
+            max_current_in_channel_millis = 1700;
+            break;
+        case 1:
+            max_current_in_channel_millis = 1700;
+            break;
+        case 2:
+            max_current_in_channel_millis = 1700;
+            break;
+        case 3:
+            max_current_in_channel_millis = 1700;
+            break;
+        case 4:
+            max_current_in_channel_millis = 1100;
+            break;
+        case 5:
+            max_current_in_channel_millis = 1100;
+            break;
+        }
+        
+        for (unsigned char i = 0; i < SEGMENTS_QTTY; i++)
+        {
+            //voy pidiendo los pwm de la corriente segmento a segmento
+            settings->sp_current = max_current_in_channel_millis * (i + 1);            
+            settings->sp_current = settings->sp_current / SEGMENTS_QTTY;
+
+            do {
+                resp = UpdateDutyCycle(settings);
+            }
+            while (resp == resp_continue);
+
+            //reviso errores tipo (menues.c line: 509)
+            //no current
+            if (resp == resp_error)
+            {
+                mem_conf.pwm_chnls[settings->channel - 1] = 0;
+                mem_conf.volts_ch[settings->channel - 1] = 0;
+                i = SEGMENTS_QTTY;
+            }
+
+            if (resp == resp_finish)
+            {
+                settings->duty_getted = DUTY_95_PERCENT;
+                resp = resp_ok;
+            }
+
+            if (resp == resp_ok)
+            {
+                //si es el ultimo segmento guardo info adicional
+                if (i == (SEGMENTS_QTTY - 1))
+                {
+                    unsigned int calc = 0;
+                    
+                    calc = mem_conf.volts_in_mains * settings->duty_getted;
+                    calc = calc / 1000;
+                    mem_conf.volts_ch[settings->channel - 1] = calc;
+                    mem_conf.pwm_chnls[settings->channel - 1] = settings->duty_getted;                    
+                }
+
+                *(segments + j * SEGMENTS_QTTY + i) = settings->duty_getted;
+            }
+        }
+    }
+
+    return resp;
+}
+
+//recibe canales del 0 al 5
+unsigned short HARD_Process_New_PWM_Data (unsigned char ch, unsigned char data_filtered)
+{
+    unsigned char segment_number = 0;
+    unsigned short dummy = 0;
+    unsigned short pwm_output = 0;
+    unsigned short * pseg;
+
+                    
+    //mapeo los segmentos
+    segment_number = GetProcessedSegment(data_filtered, const_segments, SEGMENTS_QTTY);
+
+    //apunto a los valores medidos y guardados en memoria
+    pseg = &mem_conf.segments[ch][0];
+                    
+    if (segment_number)    //todos los segmentos mayores a 0 tienen offset
+    {
+        dummy = data_filtered - segment_number * SEGMENTS_VALUE;
+        dummy = dummy * (*(pseg + segment_number) - *(pseg + segment_number - 1));
+        dummy /= SEGMENTS_VALUE;
+        pwm_output = dummy + *(pseg + segment_number - 1);
+    }
+    else    //el segmento 0 va sin offset
+    {
+        dummy = data_filtered * *pseg;
+        dummy /= SEGMENTS_VALUE;
+        pwm_output = dummy;
+    }
+
+    if (pwm_output > MAX_DUTY_CYCLE)
+        pwm_output = MAX_DUTY_CYCLE;
+    
+    return pwm_output;
+}
+
+unsigned char GetProcessedSegment (unsigned short check_segment_by_value,
+                                   unsigned short * s,
+                                   unsigned char seg_qtty)
+{
+    unsigned char i;
+    
+    for (i = seg_qtty; i > 0; i--)
+    {
+        if (check_segment_by_value > *(s + i - 1))
+            return i;
+    }
+
+    return 0;
+}
+
 //--- end of file ---//

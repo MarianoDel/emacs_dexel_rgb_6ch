@@ -33,12 +33,14 @@ extern volatile unsigned char Packet_Detected_Flag;
 
 extern parameters_typedef mem_conf;
 
-extern unsigned short sp1_filtered;
-extern unsigned short sp2_filtered;
-extern unsigned short sp3_filtered;
-extern unsigned short sp4_filtered;
-extern unsigned short sp5_filtered;
-extern unsigned short sp6_filtered;
+// #ifdef USE_FILTER_LENGHT_16
+// extern ma16_data_obj_t st_sp1;
+// extern ma16_data_obj_t st_sp2;
+// extern ma16_data_obj_t st_sp3;
+// extern ma16_data_obj_t st_sp4;
+// extern ma16_data_obj_t st_sp5;
+// extern ma16_data_obj_t st_sp6;
+// #endif
 
 
 //--- VARIABLES GLOBALES ---//
@@ -68,41 +70,6 @@ unsigned short dmx_local_channel = 0;
 unsigned short dmx_local_value = 0;
 char s_lcd1 [10];
 char s_lcd2 [10];
-    
-
-
-// unsigned char check_dmx_lcd_pckt = 0;
-
-// unsigned short dmx_channel = 0;
-// unsigned char grandmaster_value = 0;
-
-// float fcalc = 1.0;
-
-//--- Para el PID ----------
-unsigned short sp1 = 0;
-unsigned short sp2 = 0;
-unsigned short sp3 = 0;
-unsigned short sp4 = 0;
-unsigned short sp5 = 0;
-unsigned short sp6 = 0;
-
-#ifdef USE_FILTER_LENGHT_8
-extern unsigned short v_sp1 [8];
-extern unsigned short v_sp2 [8];
-extern unsigned short v_sp3 [8];
-extern unsigned short v_sp4 [8];
-extern unsigned short v_sp5 [8];
-extern unsigned short v_sp6 [8];
-#endif
-#ifdef USE_FILTER_LENGHT_16
-extern unsigned short v_sp1 [16];
-extern unsigned short v_sp2 [16];
-extern unsigned short v_sp3 [16];
-extern unsigned short v_sp4 [16];
-extern unsigned short v_sp5 [16];
-extern unsigned short v_sp6 [16];
-#endif
-
 
 
 //-- Private Defines -----------------
@@ -174,10 +141,9 @@ void FuncSlaveModeReset (void)
     slave_mode_state = SLAVE_MODE_INIT;
 }
 
-void FuncSlaveMode (void)
+void FuncSlaveMode (unsigned char * ch_val)
 {
     resp_t resp = resp_continue;
-    unsigned char i;
     unsigned short dummy_16;
     
     switch (slave_mode_state)
@@ -186,21 +152,11 @@ void FuncSlaveMode (void)
         slave_mode_state++;
         ShowConfSlaveModeReset();
         SlaveModeMenuManagerReset();
-#if defined USE_FILTER_LENGHT_16
-        for (i = 0; i < 16; i++)
-#elif defined USE_FILTER_LENGHT_8
-        for (i = 0; i < 8; i++)
-#else
-#error "Select filter lenght on hard.h"
-#endif
-        {
-            v_sp1[i] = 0;
-            v_sp2[i] = 0;
-            v_sp3[i] = 0;
-            v_sp4[i] = 0;
-            v_sp5[i] = 0;
-            v_sp6[i] = 0;
-        }        
+// #if (defined USE_FILTER_LENGHT_16) || (defined USE_FILTER_LENGHT_8)
+//         UpdateFiltersTest_Reset ();
+// #else
+// #error "Select filter lenght on hard.h"
+// #endif
         break;
 
     case SLAVE_MODE_CONF:
@@ -251,61 +207,16 @@ void FuncSlaveMode (void)
                 data7[6] = (unsigned char) dummy_16;
             }
 
-            sp1 = data7[1];
-            sp2 = data7[2];
-            sp3 = data7[3];
-            sp4 = data7[4];
-            sp5 = data7[5];
-            sp6 = data7[6];            
-
-            // //CH1
-            // sp1 = DMXtoCurrent (data7[1]);
-
-            // //CH2
-            // sp2 = DMXtoCurrent (data7[2]);
-
-            // //CH3
-            // sp3 = DMXtoCurrent (data7[3]);
-
-            // //CH4
-            // sp4 = DMXtoCurrent (data7[4]);
-
-            // //CH5
-            // sp5 = DMXtoCurrent (data7[5]);
-
-            // //CH6
-            // sp6 = DMXtoCurrent (data7[6]);
-
+            //update de valores recibidos
+            *(ch_val + 0) = data7[1];
+            *(ch_val + 1) = data7[2];
+            *(ch_val + 2) = data7[3];
+            *(ch_val + 3) = data7[4];
+            *(ch_val + 4) = data7[5];
+            *(ch_val + 5) = data7[6];
+            
             dmx_end_of_packet_update = 1;
         }
-
-        // UpdateFiltersTest();
-        
-        //filters para el dmx - generalmente 8 puntos a 200Hz -
-        //desde el sp al sp_filter
-//         if (!dmx_filters_timer)
-//         {
-// #ifdef USE_FILTER_LENGHT_16
-//             sp1_filtered = MAFilterFast16 (sp1, v_sp1);
-//             sp2_filtered = MAFilterFast16 (sp2, v_sp2);
-//             sp3_filtered = MAFilterFast16 (sp3, v_sp3);
-//             sp4_filtered = MAFilterFast16 (sp4, v_sp4);
-//             sp5_filtered = MAFilterFast16 (sp5, v_sp5);
-//             sp6_filtered = MAFilterFast16 (sp6, v_sp6);
-// #endif
-// #ifdef USE_FILTER_LENGHT_8
-//             sp1_filtered = MAFilterFast (sp1, v_sp1);
-//             sp2_filtered = MAFilterFast (sp2, v_sp2);
-//             sp3_filtered = MAFilterFast (sp3, v_sp3);
-//             sp4_filtered = MAFilterFast (sp4, v_sp4);
-//             sp5_filtered = MAFilterFast (sp5, v_sp5);
-//             sp6_filtered = MAFilterFast (sp6, v_sp6);
-// #endif            
-//             dmx_filters_timer = 5;
-//         }
-            //lo hago desde el menu principal
-            //ahora se hace con interrupcion de 1ms
-        // UpdateSamplesAndPID ();
 
         UpdateSlaveModeMenuManager();
         
@@ -1092,28 +1003,6 @@ resp_t ShowConfSlaveMode (void)
         break;
     }
     return resp;
-}
-
-unsigned char UpdateFiltersTest (void)
-{
-    unsigned char new_outputs = 0;
-    //filters para el dmx - generalmente 8 puntos a 200Hz -
-    //desde el sp al sp_filter
-    if (!dmx_filters_timer)
-    {
-        // CTRL_FAN_ON;
-        sp1_filtered = MAFilterFast16 (data7[1], v_sp1);
-        sp2_filtered = MAFilterFast16 (data7[2], v_sp2);
-        sp3_filtered = MAFilterFast16 (data7[3], v_sp3);
-        sp4_filtered = MAFilterFast16 (data7[4], v_sp4);
-        sp5_filtered = MAFilterFast16 (data7[5], v_sp5);
-        sp6_filtered = MAFilterFast16 (data7[6], v_sp6);
-        dmx_filters_timer = 5;
-        new_outputs = 1;
-        // CTRL_FAN_OFF;
-    }
-    
-    return new_outputs;
 }
 
 //--- end of file ---//

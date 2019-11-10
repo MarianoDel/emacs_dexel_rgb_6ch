@@ -14,13 +14,8 @@
 #include "tim.h"
 
 //-------- Defines -------------
-#define WHITE_PWM(X)	Change_PWM4(X)
-#define BLUE_PWM(X)	Change_PWM3(X)
-#define GREEN_PWM(X)	Change_PWM2(X)
-#define RED_PWM(X)	Change_PWM1(X)
 
 #define MAX_FADE 255
-//#define MAX_FADE 256
 
 //states del P7
 #define P7_COLOR1_ON		0
@@ -66,10 +61,12 @@
 #define P9_INCREASE_COLOR7_DECREASE_COLOR6		7
 
 //-------- Functions -------------
+void FuncsProgramsMode (unsigned char *);
 void UpdateProgTimers (void);
-void Func_PX_Ds(unsigned char, unsigned char, unsigned char);
 void ResetLastValues(void);
-void Func_PX(unsigned char, unsigned char);
-//void Func_For_Cat(unsigned char, unsigned char, unsigned char, unsigned char);
+void Func_PX(unsigned char *, unsigned char, unsigned char);
+void Func_PX_Ds(unsigned char *, unsigned char, unsigned char, unsigned char);
+resp_t Func_Fading(unsigned char *, unsigned char);
+void Func_Fading_Reset(void);
 
 #endif /* PROGRAMS_FUNCTIONS_H_ */

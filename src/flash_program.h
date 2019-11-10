@@ -21,6 +21,7 @@
 #define MASTER_MODE    1
 #define SLAVE_MODE     2
 #define PROGRAMS_MODE  3
+#define WIFI_MODE      4
 
 //-- Memory Struct to Save --------------------
 typedef struct parameters {
@@ -52,8 +53,10 @@ typedef struct parameters {
     unsigned short pwm_chnls [6];    //30
     unsigned short pwm_base_chnls [6];    //42
 
+    unsigned short segments [6][16];    //2 * 6 * 16 = 192
+                                        //42 + 192 = 234
     unsigned char dummy1;
-    unsigned char dummy2;            //44
+    unsigned char dummy2;            //236
     // unsigned char dummy3;            //32
 
 } parameters_typedef;

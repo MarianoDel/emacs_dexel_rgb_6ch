@@ -9,13 +9,15 @@
 
 #include "programs_functions.h"
 #include "hard.h"
+#include "flash_program.h"
+#include "menues.h"
 
 //cual es el de mas ciclo de trabajo el 1 o el 9
 #define ONE_FOR_NINE
 
 
 /* Externals variables ---------------------------------------------------------*/
-
+extern parameters_typedef mem_conf;
 
 /* Global variables ------------------------------------------------------------*/
 volatile unsigned short prog_timer;
@@ -67,18 +69,17 @@ const unsigned char v_cycles_strobe[] = {  9,  9,   8,   8,   7,   7,   6,   6, 
 
 
 //-- Private Module Functions --------------------
-void Func_PX(unsigned char, unsigned char);
-void Func_P1(unsigned char);
-void Func_P2(unsigned char);
-void Func_P3(unsigned char);
-void Func_P4(unsigned char);
+void Func_P1(unsigned char *, unsigned char);
+void Func_P2(unsigned char *, unsigned char);
+void Func_P3(unsigned char *, unsigned char);
+void Func_P4(unsigned char *, unsigned char);
+void Func_P5(unsigned char *, unsigned char);
+void Func_P6(unsigned char *, unsigned char);
+void Func_P7(unsigned char *, unsigned char);
+void Func_P8(unsigned char *, unsigned char);
+void Func_P9(unsigned char *, unsigned char);
 
-void Func_P5(unsigned char);
-void Func_P6(unsigned char);
-void Func_P7(unsigned char);
-void Func_P8(unsigned char);
-void Func_P9(unsigned char);
-void Func_For_Cat(unsigned char, unsigned char);
+
 
 //-- End of Private Module Functions --------------
 
@@ -92,10 +93,21 @@ void UpdateProgTimers (void)
         prog_timer--;
 }
 
+
+void FuncsProgramsMode (unsigned char * ch_val)
+{
+    Func_PX(ch_val,
+            mem_conf.last_program_in_flash,
+            mem_conf.last_program_deep_in_flash);
+
+    ProgramsModeMenu();
+}
+
+
 //funcion general la llamo para determinar las funciones individuales, la llamo con programa y profundidad
 //es un wrapper de Func_PX_Ds()
 //
-void Func_PX(unsigned char prog, unsigned char deep)
+void Func_PX(unsigned char * ch_val, unsigned char prog, unsigned char deep)
 {
 	unsigned char ds1, ds2, ds3;
 
@@ -104,7 +116,7 @@ void Func_PX(unsigned char prog, unsigned char deep)
 	ds2 = prog;
 	ds3 = deep;
 
-	Func_PX_Ds(ds1, ds2, ds3);
+	Func_PX_Ds(ch_val, ds1, ds2, ds3);
 }
 
 
@@ -142,6 +154,7 @@ void Func_For_Cat(unsigned char r, unsigned char g)
 	}
 }
 
+
 void ResetLastValues(void)
 {
 	last_r = 0;
@@ -149,1215 +162,1075 @@ void ResetLastValues(void)
 	last_b = 0;
 	last_w = 0;
 }
+#endif    //RGB_FOR_CHANNELS
 
-/*
-void Func_For_Cat(unsigned char r, unsigned char g, unsigned char b, unsigned char w)
-{
-	unsigned short acc;
-
-	if (last_r != r)
-	{
-		acc = r * 255;
-		acc = acc / 100;
-		RED_PWM(acc);
-		last_r = r;
-	}
-
-	if (last_g != g)
-	{
-		acc = g * 255;
-		acc = acc / 100;
-		GREEN_PWM(acc);
-		last_g = g;
-	}
-
-	if (last_b != b)
-	{
-		acc = b * 255;
-		acc = acc / 100;
-		BLUE_PWM(acc);
-		last_b = b;
-	}
-
-	if (last_w != w)
-	{
-		acc = w * 255;
-		acc = acc / 100;
-		WHITE_PWM(acc);
-		last_w = w;
-	}
-}
-*/
-#endif
 
 //funcion general la llamo para determinar las funciones individuales, la llamo con los 3 DS
-void Func_PX_Ds(unsigned char ds1, unsigned char ds2, unsigned char ds3)
+void Func_PX_Ds(unsigned char * ch_val, unsigned char ds1, unsigned char ds2, unsigned char ds3)
 {
-	//ds1 lo uso como chequeo
-	// if (ds1 != DISPLAY_PROG)
-	// 	return;
+    //ds1 lo uso como chequeo
+    // if (ds1 != DISPLAY_PROG)
+    // 	return;
 
-	if ((last_ds2 != ds2) || (last_ds3 != ds3))
-	{
-		//algo cambio, fuerzo el update
-		last_ds2 = ds2;
-		last_ds3 = ds3;
+    if ((last_ds2 != ds2) || (last_ds3 != ds3))
+    {
+        //algo cambio, fuerzo el update
+        last_ds2 = ds2;
+        last_ds3 = ds3;
 
-		l_deep = 0;		//fuerza update
-	}
+        l_deep = 0;		//fuerza update
+    }
 
-	switch (ds2)	//tiene el programa de 1 a 9
-	{
-		case 1:
-			Func_P1(ds3);
-			break;
+    switch (ds2)	//tiene el programa de 1 a 9
+    {
+    case 1:
+        Func_P1(ch_val, ds3);
+        break;
 
-		case 2:
-			Func_P2(ds3);
-			break;
+    case 2:
+        Func_P2(ch_val, ds3);
+        break;
 
-		case 3:
-			Func_P3(ds3);
-			break;
+    case 3:
+        Func_P3(ch_val, ds3);
+        break;
 
-		case 4:
-			Func_P4(ds3);
-			break;
+    case 4:
+        Func_P4(ch_val, ds3);
+        break;
 
-		case 5:
-			Func_P5(ds3);
-			break;
+    case 5:
+        Func_P5(ch_val, ds3);
+        break;
 
-		case 6:
-			Func_P6(ds3);
-			break;
+    case 6:
+        Func_P6(ch_val, ds3);
+        break;
 
-		case 7:
-			Func_P7(ds3);
-			break;
+    case 7:
+        Func_P7(ch_val, ds3);
+        break;
 
-		case 8:
-			Func_P8(ds3);
-			break;
+    case 8:
+        Func_P8(ch_val, ds3);
+        break;
 
-		case 9:
-			Func_P9(ds3);
-			break;
+    case 9:
+        Func_P9(ch_val, ds3);
+        break;
 
-		default:
-			break;
-	}
+    default:
+        break;
+    }
 
 }
 
-//solo ejecuta el programa especifico, los switches y otras cosas se resuelven fuera
-void Func_P1(unsigned char deep)	//static RED
-{
-	if (deep > 9)	//chequeo errores
-		return;
 
-	if (l_deep != deep)
-	{
-		l_deep = deep;
-		RED_PWM(v_percent[deep]);
-		GREEN_PWM(0);
-		BLUE_PWM(0);
-		WHITE_PWM(0);
-	}
+//Estas funciones ejecutan los programas especificos
+//devuelven los valores en un vector de 6 posiciones
+//-- static RED
+void Func_P1(unsigned char * ch_val, unsigned char deep)
+{
+    if (deep > 9)	//chequeo errores
+        return;
+
+    if (l_deep != deep)
+    {
+        l_deep = deep;
+        *(ch_val+0) = v_percent[deep];
+        *(ch_val+1) = 0;
+        *(ch_val+2) = 0;
+        *(ch_val+3) = 0;
+    }
 }
 
-void Func_P2(unsigned char deep)	//static GREEN
-{
-	if (deep > 9)	//chequeo errores
-		return;
 
-	if (l_deep != deep)
-	{
-		l_deep = deep;
-		RED_PWM(0);
-		GREEN_PWM(v_percent[deep]);
-		BLUE_PWM(0);
-		WHITE_PWM(0);
-	}
+//-- static GREEN
+void Func_P2(unsigned char * ch_val, unsigned char deep)
+{
+    if (deep > 9)	//chequeo errores
+        return;
+
+    if (l_deep != deep)
+    {
+        l_deep = deep;
+        *(ch_val+0) = 0;
+        *(ch_val+1) = v_percent[deep];
+        *(ch_val+2) = 0;
+        *(ch_val+3) = 0;
+    }
 }
 
-void Func_P3(unsigned char deep)	//static BLUE
-{
-	if (deep > 9)	//chequeo errores
-		return;
 
-	if (l_deep != deep)
-	{
-		l_deep = deep;
-		RED_PWM(0);
-		GREEN_PWM(0);
-		BLUE_PWM(v_percent[deep]);
-		WHITE_PWM(0);
-	}
+//static BLUE
+void Func_P3(unsigned char * ch_val, unsigned char deep)
+{
+    if (deep > 9)	//chequeo errores
+        return;
+
+    if (l_deep != deep)
+    {
+        l_deep = deep;
+        *(ch_val+0) = 0;
+        *(ch_val+1) = 0;
+        *(ch_val+2) = v_percent[deep];
+        *(ch_val+3) = 0;
+    }
 }
 
-void Func_P4(unsigned char deep)	//static PURPLE
-{
-	if (deep > 9)	//chequeo errores
-		return;
 
-	if (l_deep != deep)
-	{
-		l_deep = deep;
-		RED_PWM(v_percent[deep]);
-		GREEN_PWM(0);
-		BLUE_PWM(v_percent[deep]);
-		WHITE_PWM(0);
-	}
+//static PURPLE
+void Func_P4(unsigned char * ch_val, unsigned char deep)	
+{
+    if (deep > 9)	//chequeo errores
+        return;
+
+    if (l_deep != deep)
+    {
+        l_deep = deep;
+        *(ch_val+0) = v_percent[deep];
+        *(ch_val+1) = 0;
+        *(ch_val+2) = v_percent[deep];
+        *(ch_val+3) = 0;
+    }
 }
 
-void Func_P5(unsigned char deep)	//static YELLOW
-{
-	if (deep > 9)	//chequeo errores
-		return;
 
-	if (l_deep != deep)
-	{
-		l_deep = deep;
-		RED_PWM(v_percent[deep]);
-		GREEN_PWM(v_percent[deep]);
-		BLUE_PWM(0);
-		WHITE_PWM(0);
-	}
+//static YELLOW
+void Func_P5(unsigned char * ch_val, unsigned char deep)	
+{
+    if (deep > 9)	//chequeo errores
+        return;
+
+    if (l_deep != deep)
+    {
+        l_deep = deep;
+        *(ch_val+0) = v_percent[deep];
+        *(ch_val+1) = v_percent[deep];
+        *(ch_val+2) = 0;
+        *(ch_val+3) = 0;
+    }
 }
 
-void Func_P6(unsigned char deep)	//static CYAN
-{
-	if (deep > 9)	//chequeo errores
-		return;
 
-	if (l_deep != deep)
-	{
-		l_deep = deep;
-		RED_PWM(0);
-		GREEN_PWM(v_percent[deep]);
-		BLUE_PWM(v_percent[deep]);
-		WHITE_PWM(0);
-	}
+//static CYAN
+void Func_P6(unsigned char * ch_val, unsigned char deep)	
+{
+    if (deep > 9)	//chequeo errores
+        return;
+
+    if (l_deep != deep)
+    {
+        l_deep = deep;
+        *(ch_val+0) = 0;
+        *(ch_val+1) = v_percent[deep];
+        *(ch_val+2) = v_percent[deep];
+        *(ch_val+3) = 0;
+    }
 }
 
-void Func_P7(unsigned char deep)	//hago un strobe del 50% de toda la paleta de colores
+
+//hago un strobe del 50% de toda la paleta de colores
+void Func_P7(unsigned char * ch_val, unsigned char deep)
 {
+    if (deep > 9)	//chequeo errores
+        return;
 
-	if (deep > 9)	//chequeo errores
-		return;
+    if (l_deep != deep)		//fuerzo el update
+    {
+        l_deep = deep;
+        prog_state = P7_COLOR1_ON;
+        prog_timer = 0;
+        cycles_strobe = v_cycles_strobe[deep];
+    }
 
-	if (l_deep != deep)		//fuerzo el update
-	{
-		l_deep = deep;
-		prog_state = P7_COLOR1_ON;
-		prog_timer = 0;
-		cycles_strobe = v_cycles_strobe[deep];
-	}
+    switch (prog_state)
+    {
+    case P7_COLOR1_ON:		//RED
+        if (!prog_timer)
+        {
+            *(ch_val+0) = 255;
+            *(ch_val+1) = 0;
+            *(ch_val+2) = 0;
+            *(ch_val+3) = 0;
+            prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
+            prog_state++;
+        }
+        break;
 
-	switch (prog_state)
-	{
-		case P7_COLOR1_ON:		//RED
-			if (!prog_timer)
-			{
-				RED_PWM(255);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+    case P7_COLOR1_OFF:
+        if (!prog_timer)
+        {
+            *(ch_val+0) = 0;
+            *(ch_val+1) = 0;
+            *(ch_val+2) = 0;
+            *(ch_val+3) = 0;
+            prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
+            if ((cycles_strobe - 1) > 0)
+            {
+                cycles_strobe--;
+                prog_state--;
+            }
+            else
+            {
+                cycles_strobe = v_cycles_strobe[deep];
+                prog_state++;
+            }
+        }
+        break;
 
-		case P7_COLOR1_OFF:
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				if ((cycles_strobe - 1) > 0)
-				{
-					cycles_strobe--;
-					prog_state--;
-				}
-				else
-				{
-					cycles_strobe = v_cycles_strobe[deep];
-					prog_state++;
-				}
-			}
-			break;
+    case P7_COLOR2_ON:		//GREEN
+        if (!prog_timer)
+        {
+            *(ch_val+0) = 0;
+            *(ch_val+1) = 255;
+            *(ch_val+2) = 0;
+            *(ch_val+3) = 0;
+            prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
+            prog_state++;
+        }
+        break;
 
-		case P7_COLOR2_ON:		//GREEN
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(255);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+    case P7_COLOR2_OFF:
+        if (!prog_timer)
+        {
+            *(ch_val+0) = 0;
+            *(ch_val+1) = 0;
+            *(ch_val+2) = 0;
+            *(ch_val+3) = 0;
+            prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
+            if ((cycles_strobe - 1) > 0)
+            {
+                cycles_strobe--;
+                prog_state--;
+            }
+            else
+            {
+                cycles_strobe = v_cycles_strobe[deep];
+                prog_state++;
+            }
+        }
+        break;
 
-		case P7_COLOR2_OFF:
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				if ((cycles_strobe - 1) > 0)
-				{
-					cycles_strobe--;
-					prog_state--;
-				}
-				else
-				{
-					cycles_strobe = v_cycles_strobe[deep];
-					prog_state++;
-				}
-			}
-			break;
+    case P7_COLOR3_ON:		//BLUE
+        if (!prog_timer)
+        {
+            *(ch_val+0) = 0;
+            *(ch_val+1) = 0;
+            *(ch_val+2) = 255;
+            *(ch_val+3) = 0;
+            prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
+            prog_state++;
+        }
+        break;
 
-		case P7_COLOR3_ON:		//BLUE
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(255);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+    case P7_COLOR3_OFF:
+        if (!prog_timer)
+        {
+            *(ch_val+0) = 0;
+            *(ch_val+1) = 0;
+            *(ch_val+2) = 0;
+            *(ch_val+3) = 0;
+            prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
+            if ((cycles_strobe - 1) > 0)
+            {
+                cycles_strobe--;
+                prog_state--;
+            }
+            else
+            {
+                cycles_strobe = v_cycles_strobe[deep];
+                prog_state++;
+            }
 
-		case P7_COLOR3_OFF:
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				if ((cycles_strobe - 1) > 0)
-				{
-					cycles_strobe--;
-					prog_state--;
-				}
-				else
-				{
-					cycles_strobe = v_cycles_strobe[deep];
-					prog_state++;
-				}
+        }
+        break;
 
-			}
-			break;
+    case P7_COLOR4_ON:		//PURPLE
+        if (!prog_timer)
+        {
+            *(ch_val+0) = 255;
+            *(ch_val+1) = 0;
+            *(ch_val+2) = 255;
+            *(ch_val+3) = 0;
+            prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
+            prog_state++;
+        }
+        break;
 
-		case P7_COLOR4_ON:		//PURPLE
-			if (!prog_timer)
-			{
-				RED_PWM(255);
-				GREEN_PWM(0);
-				BLUE_PWM(255);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+    case P7_COLOR4_OFF:
+        if (!prog_timer)
+        {
+            *(ch_val+0) = 0;
+            *(ch_val+1) = 0;
+            *(ch_val+2) = 0;
+            *(ch_val+3) = 0;
+            prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
+            if ((cycles_strobe - 1) > 0)
+            {
+                cycles_strobe--;
+                prog_state--;
+            }
+            else
+            {
+                cycles_strobe = v_cycles_strobe[deep];
+                prog_state++;
+            }
 
-		case P7_COLOR4_OFF:
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				if ((cycles_strobe - 1) > 0)
-				{
-					cycles_strobe--;
-					prog_state--;
-				}
-				else
-				{
-					cycles_strobe = v_cycles_strobe[deep];
-					prog_state++;
-				}
+        }
+        break;
 
-			}
-			break;
+    case P7_COLOR5_ON:		//YELLOW
+        if (!prog_timer)
+        {
+            *(ch_val+0) = 255;
+            *(ch_val+1) = 255;
+            *(ch_val+2) = 0;
+            *(ch_val+3) = 0;
+            prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
+            prog_state++;
+        }
+        break;
 
-		case P7_COLOR5_ON:		//YELLOW
-			if (!prog_timer)
-			{
-				RED_PWM(255);
-				GREEN_PWM(255);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+    case P7_COLOR5_OFF:
+        if (!prog_timer)
+        {
+            *(ch_val+0) = 0;
+            *(ch_val+1) = 0;
+            *(ch_val+2) = 0;
+            *(ch_val+3) = 0;
+            prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
+            if ((cycles_strobe - 1) > 0)
+            {
+                cycles_strobe--;
+                prog_state--;
+            }
+            else
+            {
+                cycles_strobe = v_cycles_strobe[deep];
+                prog_state++;
+            }
 
-		case P7_COLOR5_OFF:
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				if ((cycles_strobe - 1) > 0)
-				{
-					cycles_strobe--;
-					prog_state--;
-				}
-				else
-				{
-					cycles_strobe = v_cycles_strobe[deep];
-					prog_state++;
-				}
+        }
+        break;
 
-			}
-			break;
+    case P7_COLOR6_ON:		//CYAN
+        if (!prog_timer)
+        {
+            *(ch_val+0) = 0;
+            *(ch_val+1) = 255;
+            *(ch_val+2) = 255;
+            *(ch_val+3) = 0;
+            prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
+            prog_state++;
+        }
+        break;
 
-		case P7_COLOR6_ON:		//CYAN
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(255);
-				BLUE_PWM(255);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+    case P7_COLOR6_OFF:
+        if (!prog_timer)
+        {
+            *(ch_val+0) = 0;
+            *(ch_val+1) = 0;
+            *(ch_val+2) = 0;
+            *(ch_val+3) = 0;
+            prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
+            if ((cycles_strobe - 1) > 0)
+            {
+                cycles_strobe--;
+                prog_state--;
+            }
+            else
+            {
+                cycles_strobe = v_cycles_strobe[deep];
+                prog_state++;
+            }
 
-		case P7_COLOR6_OFF:
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				if ((cycles_strobe - 1) > 0)
-				{
-					cycles_strobe--;
-					prog_state--;
-				}
-				else
-				{
-					cycles_strobe = v_cycles_strobe[deep];
-					prog_state++;
-				}
+        }
+        break;
 
-			}
-			break;
-
-		case P7_COLOR7_ON:		//WHITE
-			if (!prog_timer)
-			{
+    case P7_COLOR7_ON:		//WHITE
+        if (!prog_timer)
+        {
 #ifdef WHITE_AS_IN_RGB
-				RED_PWM(255);
-				GREEN_PWM(255);
-				BLUE_PWM(255);
-				WHITE_PWM(0);
+            *(ch_val+0) = 255;
+            *(ch_val+1) = 255;
+            *(ch_val+2) = 255;
+            *(ch_val+3) = 0;
 #endif
 #ifdef WHITE_AS_WHITE
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM255);
+            *(ch_val+0) = 0;
+            *(ch_val+1) = 0;
+            *(ch_val+2) = 0;
+            *(ch_val+3) = 255;
 #endif
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+            prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
+            prog_state++;
+        }
+        break;
 
-		case P7_COLOR7_OFF:
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				if ((cycles_strobe - 1) > 0)
-				{
-					cycles_strobe--;
-					prog_state--;
-				}
-				else
-				{
-					cycles_strobe = v_cycles_strobe[deep];
-					prog_state = P7_COLOR1_ON;
-				}
-			}
-			break;
+    case P7_COLOR7_OFF:
+        if (!prog_timer)
+        {
+            *(ch_val+0) = 0;
+            *(ch_val+1) = 0;
+            *(ch_val+2) = 0;
+            *(ch_val+3) = 0;
+            prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
+            if ((cycles_strobe - 1) > 0)
+            {
+                cycles_strobe--;
+                prog_state--;
+            }
+            else
+            {
+                cycles_strobe = v_cycles_strobe[deep];
+                prog_state = P7_COLOR1_ON;
+            }
+        }
+        break;
 
-		default:
-			prog_state = P7_COLOR1_ON;
-			break;
-	}
-
+        default:
+            prog_state = P7_COLOR1_ON;
+            break;
+    }
 }
 
-/*
-void Func_P7(unsigned char deep)	//hago un strobe del 50% de toda la paleta de colores
+
+//single color fading
+void Func_P8(unsigned char * ch_val, unsigned char deep)
 {
+    if (deep > 9)	//chequeo errores
+        return;
 
-	if (deep > 9)	//chequeo errores
-		return;
+    if (l_deep != deep)		//fuerzo el update
+    {
+        l_deep = deep;
+        prog_state = P8_INCREASE_COLOR1;
+        prog_timer = 0;
+    }
 
-	if (l_deep != deep)		//fuerzo el update
-	{
-		l_deep = deep;
-		prog_state = P7_COLOR1_ON;
-		prog_timer = 0;
-		cycles_strobe = v_cycles_strobe[deep];
-	}
+    switch (prog_state)
+    {
+    case P8_INCREASE_COLOR1:	//RED
+        if (!prog_timer)
+        {
+            if (prog_fade < MAX_FADE)
+            {
+                *(ch_val+0) = prog_fade;
+                *(ch_val+1) = 0;
+                *(ch_val+2) = 0;
+                *(ch_val+3) = 0;
+                prog_fade++;
+            }
+            else
+            {
+                prog_state++;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-	switch (prog_state)
-	{
-		case P7_COLOR1_ON:		//RED
-			if (!prog_timer)
-			{
-				RED_PWM(255);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+    case P8_DECREASE_COLOR1:
+        if (!prog_timer)
+        {
+            if (prog_fade)
+            {
+                *(ch_val+0) = prog_fade;
+                *(ch_val+1) = 0;
+                *(ch_val+2) = 0;
+                *(ch_val+3) = 0;
+                prog_fade--;
+            }
+            else
+            {
+                prog_state++;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P7_COLOR1_OFF:
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+    case P8_INCREASE_COLOR2:	//GREEN
+        if (!prog_timer)
+        {
+            if (prog_fade < MAX_FADE)
+            {
+                *(ch_val+0) = 0;
+                *(ch_val+1) = prog_fade;
+                *(ch_val+2) = 0;
+                *(ch_val+3) = 0;
+                prog_fade++;
+            }
+            else
+            {
+                prog_state++;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P7_COLOR2_ON:		//GREEN
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(255);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+    case P8_DECREASE_COLOR2:
+        if (!prog_timer)
+        {
+            if (prog_fade)
+            {
+                *(ch_val+0) = 0;
+                *(ch_val+1) = prog_fade;
+                *(ch_val+2) = 0;
+                *(ch_val+3) = 0;
+                prog_fade--;
+            }
+            else
+            {
+                prog_state++;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P7_COLOR2_OFF:
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+    case P8_INCREASE_COLOR3:	//BLUE
+        if (!prog_timer)
+        {
+            if (prog_fade < MAX_FADE)
+            {
+                *(ch_val+0) = 0;
+                *(ch_val+1) = 0;
+                *(ch_val+2) = prog_fade;
+                *(ch_val+3) = 0;
+                prog_fade++;
+            }
+            else
+            {
+                prog_state++;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P7_COLOR3_ON:		//BLUE
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(255);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+    case P8_DECREASE_COLOR3:
+        if (!prog_timer)
+        {
+            if (prog_fade)
+            {
+                *(ch_val+0) = 0;
+                *(ch_val+1) = 0;
+                *(ch_val+2) = prog_fade;
+                *(ch_val+3) = 0;
+                prog_fade--;
+            }
+            else
+            {
+                prog_state++;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P7_COLOR3_OFF:
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+    case P8_INCREASE_COLOR4:	//PURPLE
+        if (!prog_timer)
+        {
+            if (prog_fade < MAX_FADE)
+            {
+                *(ch_val+0) = prog_fade;
+                *(ch_val+1) = 0;
+                *(ch_val+2) = prog_fade;
+                *(ch_val+3) = 0;
+                prog_fade++;
+            }
+            else
+            {
+                prog_state++;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P7_COLOR4_ON:		//PURPLE
-			if (!prog_timer)
-			{
-				RED_PWM(255);
-				GREEN_PWM(0);
-				BLUE_PWM(255);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+    case P8_DECREASE_COLOR4:
+        if (!prog_timer)
+        {
+            if (prog_fade)
+            {
+                *(ch_val+0) = prog_fade;
+                *(ch_val+1) = 0;
+                *(ch_val+2) = prog_fade;
+                *(ch_val+3) = 0;
+                prog_fade--;
+            }
+            else
+            {
+                prog_state++;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P7_COLOR4_OFF:
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+    case P8_INCREASE_COLOR5:	//YELLOW
+        if (!prog_timer)
+        {
+            if (prog_fade < MAX_FADE)
+            {
+                *(ch_val+0) = prog_fade;
+                *(ch_val+1) = prog_fade;
+                *(ch_val+2) = 0;
+                *(ch_val+3) = 0;
+                prog_fade++;
+            }
+            else
+            {
+                prog_state++;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P7_COLOR5_ON:		//YELLOW
-			if (!prog_timer)
-			{
-				RED_PWM(255);
-				GREEN_PWM(255);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+    case P8_DECREASE_COLOR5:
+        if (!prog_timer)
+        {
+            if (prog_fade)
+            {
+                *(ch_val+0) = prog_fade;
+                *(ch_val+1) = prog_fade;
+                *(ch_val+2) = 0;
+                *(ch_val+3) = 0;
+                prog_fade--;
+            }
+            else
+            {
+                prog_state++;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P7_COLOR5_OFF:
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+    case P8_INCREASE_COLOR6:	//CYAN
+        if (!prog_timer)
+        {
+            if (prog_fade < MAX_FADE)
+            {
+                *(ch_val+0) = 0;
+                *(ch_val+1) = prog_fade;
+                *(ch_val+2) = prog_fade;
+                *(ch_val+3) = 0;
+                prog_fade++;
+            }
+            else
+            {
+                prog_state++;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P7_COLOR6_ON:		//CYAN
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(255);
-				BLUE_PWM(255);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+    case P8_DECREASE_COLOR6:
+        if (!prog_timer)
+        {
+            if (prog_fade)
+            {
+                *(ch_val+0) = 0;
+                *(ch_val+1) = prog_fade;
+                *(ch_val+2) = prog_fade;
+                *(ch_val+3) = 0;
+                prog_fade--;
+            }
+            else
+            {
+                prog_state++;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P7_COLOR6_OFF:
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
-
-		case P7_COLOR7_ON:		//WHITE
-			if (!prog_timer)
-			{
+    case P8_INCREASE_COLOR7:	//WHITE
+        if (!prog_timer)
+        {
+            if (prog_fade < MAX_FADE)
+            {
 #ifdef WHITE_AS_IN_RGB
-				RED_PWM(255);
-				GREEN_PWM(255);
-				BLUE_PWM(255);
-				WHITE_PWM(0);
+                *(ch_val+0) = prog_fade;
+                *(ch_val+1) = prog_fade;
+                *(ch_val+2) = prog_fade;
+                *(ch_val+3) = 0;
 #endif
 #ifdef WHITE_AS_WHITE
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM255);
+                *(ch_val+0) = 0;
+                *(ch_val+1) = 0;
+                *(ch_val+2) = 0;
+                *(ch_val+3) = prog_fade;
 #endif
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state++;
-			}
-			break;
+                prog_fade++;
+            }
+            else
+            {
+                prog_state++;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P7_COLOR7_OFF:
-			if (!prog_timer)
-			{
-				RED_PWM(0);
-				GREEN_PWM(0);
-				BLUE_PWM(0);
-				WHITE_PWM(0);
-				prog_timer = (v_speed_strobe[deep] >> 1);	//velocidad / 2
-				prog_state = P7_COLOR1_ON;
-			}
-			break;
-
-		default:
-			prog_state = P7_COLOR1_ON;
-			break;
-	}
-
-}
-*/
-void Func_P8(unsigned char deep)	//single color fading
-{
-	if (deep > 9)	//chequeo errores
-		return;
-
-	if (l_deep != deep)		//fuerzo el update
-	{
-		l_deep = deep;
-		prog_state = P8_INCREASE_COLOR1;
-		prog_timer = 0;
-	}
-
-	switch (prog_state)
-	{
-		case P8_INCREASE_COLOR1:	//RED
-			if (!prog_timer)
-			{
-				if (prog_fade < MAX_FADE)
-				{
-					RED_PWM(prog_fade);
-					GREEN_PWM(0);
-					BLUE_PWM(0);
-					WHITE_PWM(0);
-					prog_fade++;
-				}
-				else
-				{
-					prog_state++;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
-
-		case P8_DECREASE_COLOR1:
-			if (!prog_timer)
-			{
-				if (prog_fade)
-				{
-					RED_PWM(prog_fade);
-					GREEN_PWM(0);
-					BLUE_PWM(0);
-					WHITE_PWM(0);
-					prog_fade--;
-				}
-				else
-				{
-					prog_state++;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
-
-		case P8_INCREASE_COLOR2:	//GREEN
-			if (!prog_timer)
-			{
-				if (prog_fade < MAX_FADE)
-				{
-					RED_PWM(0);
-					GREEN_PWM(prog_fade);
-					BLUE_PWM(0);
-					WHITE_PWM(0);
-					prog_fade++;
-				}
-				else
-				{
-					prog_state++;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
-
-		case P8_DECREASE_COLOR2:
-			if (!prog_timer)
-			{
-				if (prog_fade)
-				{
-					RED_PWM(0);
-					GREEN_PWM(prog_fade);
-					BLUE_PWM(0);
-					WHITE_PWM(0);
-					prog_fade--;
-				}
-				else
-				{
-					prog_state++;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
-
-		case P8_INCREASE_COLOR3:	//BLUE
-			if (!prog_timer)
-			{
-				if (prog_fade < MAX_FADE)
-				{
-					RED_PWM(0);
-					GREEN_PWM(0);
-					BLUE_PWM(prog_fade);
-					WHITE_PWM(0);
-					prog_fade++;
-				}
-				else
-				{
-					prog_state++;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
-
-		case P8_DECREASE_COLOR3:
-			if (!prog_timer)
-			{
-				if (prog_fade)
-				{
-					RED_PWM(0);
-					GREEN_PWM(0);
-					BLUE_PWM(prog_fade);
-					WHITE_PWM(0);
-					prog_fade--;
-				}
-				else
-				{
-					prog_state++;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
-
-		case P8_INCREASE_COLOR4:	//PURPLE
-			if (!prog_timer)
-			{
-				if (prog_fade < MAX_FADE)
-				{
-					RED_PWM(prog_fade);
-					GREEN_PWM(0);
-					BLUE_PWM(prog_fade);
-					WHITE_PWM(0);
-					prog_fade++;
-				}
-				else
-				{
-					prog_state++;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
-
-		case P8_DECREASE_COLOR4:
-			if (!prog_timer)
-			{
-				if (prog_fade)
-				{
-					RED_PWM(prog_fade);
-					GREEN_PWM(0);
-					BLUE_PWM(prog_fade);
-					WHITE_PWM(0);
-					prog_fade--;
-				}
-				else
-				{
-					prog_state++;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
-
-		case P8_INCREASE_COLOR5:	//YELLOW
-			if (!prog_timer)
-			{
-				if (prog_fade < MAX_FADE)
-				{
-					RED_PWM(prog_fade);
-					GREEN_PWM(prog_fade);
-					BLUE_PWM(0);
-					WHITE_PWM(0);
-					prog_fade++;
-				}
-				else
-				{
-					prog_state++;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
-
-		case P8_DECREASE_COLOR5:
-			if (!prog_timer)
-			{
-				if (prog_fade)
-				{
-					RED_PWM(prog_fade);
-					GREEN_PWM(prog_fade);
-					BLUE_PWM(0);
-					WHITE_PWM(0);
-					prog_fade--;
-				}
-				else
-				{
-					prog_state++;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
-
-		case P8_INCREASE_COLOR6:	//CYAN
-			if (!prog_timer)
-			{
-				if (prog_fade < MAX_FADE)
-				{
-					RED_PWM(0);
-					GREEN_PWM(prog_fade);
-					BLUE_PWM(prog_fade);
-					WHITE_PWM(0);
-					prog_fade++;
-				}
-				else
-				{
-					prog_state++;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
-
-		case P8_DECREASE_COLOR6:
-			if (!prog_timer)
-			{
-				if (prog_fade)
-				{
-					RED_PWM(0);
-					GREEN_PWM(prog_fade);
-					BLUE_PWM(prog_fade);
-					WHITE_PWM(0);
-					prog_fade--;
-				}
-				else
-				{
-					prog_state++;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
-
-		case P8_INCREASE_COLOR7:	//WHITE
-			if (!prog_timer)
-			{
-				if (prog_fade < MAX_FADE)
-				{
+    case P8_DECREASE_COLOR7:
+        if (!prog_timer)
+        {
+            if (prog_fade)
+            {
 #ifdef WHITE_AS_IN_RGB
-					RED_PWM(prog_fade);
-					GREEN_PWM(prog_fade);
-					BLUE_PWM(prog_fade);
-					WHITE_PWM(0);
+                *(ch_val+0) = prog_fade;
+                *(ch_val+1) = prog_fade;
+                *(ch_val+2) = prog_fade;
+                *(ch_val+3) = 0;
 #endif
 #ifdef WHITE_AS_WHITE
-					RED_PWM(0);
-					GREEN_PWM(0);
-					BLUE_PWM(0);
-					WHITE_PWM(prog_fade);
+                *(ch_val+0) = 0;
+                *(ch_val+1) = 0;
+                *(ch_val+2) = 0;
+                *(ch_val+3) = prog_fade;
 #endif
-					prog_fade++;
-				}
-				else
-				{
-					prog_state++;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
+                prog_fade--;
+            }
+            else
+            {
+                prog_state = P8_INCREASE_COLOR1;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P8_DECREASE_COLOR7:
-			if (!prog_timer)
-			{
-				if (prog_fade)
-				{
-#ifdef WHITE_AS_IN_RGB
-					RED_PWM(prog_fade);
-					GREEN_PWM(prog_fade);
-					BLUE_PWM(prog_fade);
-					WHITE_PWM(0);
-#endif
-#ifdef WHITE_AS_WHITE
-					RED_PWM(0);
-					GREEN_PWM(0);
-					BLUE_PWM(0);
-					WHITE_PWM(prog_fade);
-#endif
-					prog_fade--;
-				}
-				else
-				{
-					prog_state = P8_INCREASE_COLOR1;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
-
-		default:
-			prog_state = P8_INCREASE_COLOR1;
-			break;
-	}
+    default:
+        prog_state = P8_INCREASE_COLOR1;
+        break;
+    }
 }
 
-void Func_P9(unsigned char deep)	//multicolor fading
+
+//multicolor fading
+void Func_P9(unsigned char * ch_val, unsigned char deep)
 {
-	if (deep > 9)	//chequeo errores
-		return;
+    if (deep > 9)	//chequeo errores
+        return;
 
-	if (l_deep != deep)		//fuerzo el update
-	{
-		l_deep = deep;
-		prog_state = P9_FIRST_COLOR7;
+    if (l_deep != deep)		//fuerzo el update
+    {
+        l_deep = deep;
+        prog_state = P9_FIRST_COLOR7;
 
-		//seteo en 0
-		prog_timer = 0;
-		prog_fade = 0;
-		RED_PWM(0);
-		GREEN_PWM(0);
-		BLUE_PWM(0);
-		WHITE_PWM(0);
-	}
+        //seteo en 0
+        prog_timer = 0;
+        prog_fade = 0;
+        *(ch_val+0) = 0;
+        *(ch_val+1) = 0;
+        *(ch_val+2) = 0;
+        *(ch_val+3) = 0;
+    }
 
-	switch (prog_state)
-	{
-		case P9_FIRST_COLOR7:
-			if (!prog_timer)
-			{
-				if (prog_fade < MAX_FADE)
-				{
+    switch (prog_state)
+    {
+    case P9_FIRST_COLOR7:
+        if (!prog_timer)
+        {
+            if (prog_fade < MAX_FADE)
+            {
 #ifdef WHITE_AS_IN_RGB
-					RED_PWM(prog_fade);
-					GREEN_PWM(prog_fade);
-					BLUE_PWM(prog_fade);
-					WHITE_PWM(0);
+                *(ch_val+0) = prog_fade;
+                *(ch_val+1) = prog_fade;
+                *(ch_val+2) = prog_fade;
+                *(ch_val+3) = 0;
 #endif
 
 #ifdef WHITE_AS_WHITE
-					RED_PWM(0);
-					GREEN_PWM(0);
-					BLUE_PWM(0);
-					WHITE_PWM(prog_fade);
+                *(ch_val+0) = 0;
+                *(ch_val+1) = 0;
+                *(ch_val+2) = 0;
+                *(ch_val+3) = prog_fade;
 #endif
-					prog_fade++;
-				}
-				else
-				{
-					prog_state++;
-					prog_fade = 0;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
+                prog_fade++;
+            }
+            else
+            {
+                prog_state++;
+                prog_fade = 0;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P9_INCREASE_COLOR1_DECREASE_COLOR7:
-			if (!prog_timer)
-			{
-				if (prog_fade < MAX_FADE)
-				{
+    case P9_INCREASE_COLOR1_DECREASE_COLOR7:
+        if (!prog_timer)
+        {
+            if (prog_fade < MAX_FADE)
+            {
 #ifdef WHITE_AS_IN_RGB
-					//R se comparte
-					if (prog_fade > (MAX_FADE - prog_fade))	//crece R
-						RED_PWM(prog_fade);
-					else
-						RED_PWM(MAX_FADE - prog_fade);
-					GREEN_PWM(MAX_FADE - prog_fade);	//decrece G
-					BLUE_PWM(MAX_FADE - prog_fade);		//decrece B
-					WHITE_PWM(0);
+                //R se comparte
+                if (prog_fade > (MAX_FADE - prog_fade))	//crece R
+                    *(ch_val+0) = prog_fade;
+                else
+                    *(ch_val+0) = MAX_FADE - prog_fade;
+                *(ch_val+1) = MAX_FADE - prog_fade;	//decrece G
+                *(ch_val+2) = MAX_FADE - prog_fade;		//decrece B
+                *(ch_val+3) = 0;
 #endif
 
 #ifdef WHITE_AS_WHITE
-					RED_PWM(prog_fade);		//crece R
-					GREEN_PWM(0);
-					BLUE_PWM(0);
-					WHITE_PWM(MAX_FADE - prog_fade);	//decrece W
+                *(ch_val+0) = prog_fade;		//crece R
+                *(ch_val+1) = 0;
+                *(ch_val+2) = 0;
+                *(ch_val+3) = MAX_FADE - prog_fade;	//decrece W
 #endif
 
-					prog_fade++;
-				}
-				else
-				{
-					prog_state++;
-					prog_fade = 0;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
+                prog_fade++;
+            }
+            else
+            {
+                prog_state++;
+                prog_fade = 0;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P9_INCREASE_COLOR2_DECREASE_COLOR1:
-			if (!prog_timer)
-			{
-				if (prog_fade < MAX_FADE)
-				{
-					RED_PWM(MAX_FADE - prog_fade);	//decrece R
-					GREEN_PWM(prog_fade);			//crece G
-					BLUE_PWM(0);
-					WHITE_PWM(0);
-					prog_fade++;
-				}
-				else
-				{
-					prog_state++;
-					prog_fade = 0;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
+    case P9_INCREASE_COLOR2_DECREASE_COLOR1:
+        if (!prog_timer)
+        {
+            if (prog_fade < MAX_FADE)
+            {
+                *(ch_val+0) = MAX_FADE - prog_fade;	//decrece R
+                *(ch_val+1) = prog_fade;			//crece G
+                *(ch_val+2) = 0;
+                *(ch_val+3) = 0;
+                prog_fade++;
+            }
+            else
+            {
+                prog_state++;
+                prog_fade = 0;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P9_INCREASE_COLOR3_DECREASE_COLOR2:
-			if (!prog_timer)
-			{
-				if (prog_fade < MAX_FADE)
-				{
-					RED_PWM(0);
-					GREEN_PWM(MAX_FADE - prog_fade);	//decrece G
-					BLUE_PWM(prog_fade);				//crece B
-					WHITE_PWM(0);
-					prog_fade++;
-				}
-				else
-				{
-					prog_state++;
-					prog_fade = 0;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
+    case P9_INCREASE_COLOR3_DECREASE_COLOR2:
+        if (!prog_timer)
+        {
+            if (prog_fade < MAX_FADE)
+            {
+                *(ch_val+0) = 0;
+                *(ch_val+1) = MAX_FADE - prog_fade;	//decrece G
+                *(ch_val+2) = prog_fade;				//crece B
+                *(ch_val+3) = 0;
+                prog_fade++;
+            }
+            else
+            {
+                prog_state++;
+                prog_fade = 0;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P9_INCREASE_COLOR4_DECREASE_COLOR3:
-			if (!prog_timer)
-			{
-				if (prog_fade < MAX_FADE)
-				{
-					RED_PWM(prog_fade);						//crece RB
-					GREEN_PWM(0);
-					//B se comparte
-					if (prog_fade > (MAX_FADE - prog_fade))	//crece RB
-						BLUE_PWM(prog_fade);
-					else
-						BLUE_PWM(MAX_FADE - prog_fade);
+    case P9_INCREASE_COLOR4_DECREASE_COLOR3:
+        if (!prog_timer)
+        {
+            if (prog_fade < MAX_FADE)
+            {
+                *(ch_val+0) = prog_fade;    //crece RB
+                *(ch_val+1) = 0;
+                //B se comparte
+                if (prog_fade > (MAX_FADE - prog_fade))	//crece RB
+                    *(ch_val+2) = prog_fade;
+                else
+                    *(ch_val+2) = MAX_FADE - prog_fade;
 
-					WHITE_PWM(0);
-					prog_fade++;
-				}
-				else
-				{
-					prog_state++;
-					prog_fade = 0;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
+                *(ch_val+3) = 0;
+                prog_fade++;
+            }
+            else
+            {
+                prog_state++;
+                prog_fade = 0;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P9_INCREASE_COLOR5_DECREASE_COLOR4:
-			if (!prog_timer)
-			{
-				if (prog_fade < MAX_FADE)
-				{
-					//R se comparte
-					if (prog_fade > (MAX_FADE - prog_fade))	//crece R
-						RED_PWM(prog_fade);
-					else
-						RED_PWM(MAX_FADE - prog_fade);
+    case P9_INCREASE_COLOR5_DECREASE_COLOR4:
+        if (!prog_timer)
+        {
+            if (prog_fade < MAX_FADE)
+            {
+                //R se comparte
+                if (prog_fade > (MAX_FADE - prog_fade))	//crece R
+                    *(ch_val+0) = prog_fade;
+                else
+                    *(ch_val+0) = MAX_FADE - prog_fade;
 
-					GREEN_PWM(prog_fade);							//crece G
-					BLUE_PWM(MAX_FADE - prog_fade);			//decrece B
-					WHITE_PWM(0);
-					prog_fade++;
-				}
-				else
-				{
-					prog_state++;
-					prog_fade = 0;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
+                *(ch_val+1) = prog_fade;							//crece G
+                *(ch_val+2) = MAX_FADE - prog_fade;			//decrece B
+                *(ch_val+3) = 0;
+                prog_fade++;
+            }
+            else
+            {
+                prog_state++;
+                prog_fade = 0;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P9_INCREASE_COLOR6_DECREASE_COLOR5:
-			if (!prog_timer)
-			{
-				if (prog_fade < MAX_FADE)
-				{
-					RED_PWM(MAX_FADE - prog_fade);			//decrece R
-					//G se comparte
-					if (prog_fade > (MAX_FADE - prog_fade))	//crece G
-						GREEN_PWM(prog_fade);
-					else
-						GREEN_PWM(MAX_FADE - prog_fade);
+    case P9_INCREASE_COLOR6_DECREASE_COLOR5:
+        if (!prog_timer)
+        {
+            if (prog_fade < MAX_FADE)
+            {
+                *(ch_val+0) = MAX_FADE - prog_fade;			//decrece R
+                //G se comparte
+                if (prog_fade > (MAX_FADE - prog_fade))	//crece G
+                    *(ch_val+1) = prog_fade;
+                else
+                    *(ch_val+1) = MAX_FADE - prog_fade;
 
-					BLUE_PWM(prog_fade);
-					WHITE_PWM(0);
-					prog_fade++;
-				}
-				else
-				{
-					prog_state++;
-					prog_fade = 0;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
+                *(ch_val+2) = prog_fade;
+                *(ch_val+3) = 0;
+                prog_fade++;
+            }
+            else
+            {
+                prog_state++;
+                prog_fade = 0;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		case P9_INCREASE_COLOR7_DECREASE_COLOR6:
-			if (!prog_timer)
-			{
-				if (prog_fade < MAX_FADE)
-				{
+    case P9_INCREASE_COLOR7_DECREASE_COLOR6:
+        if (!prog_timer)
+        {
+            if (prog_fade < MAX_FADE)
+            {
 #ifdef WHITE_AS_IN_RGB
-					RED_PWM(prog_fade);			//crece R
+                *(ch_val+0) = prog_fade;			//crece R
 
-					//G se comparte
-					if (prog_fade > (MAX_FADE - prog_fade))	//crece G
-						GREEN_PWM(prog_fade);
-					else
-						GREEN_PWM(MAX_FADE - prog_fade);
+                //G se comparte
+                if (prog_fade > (MAX_FADE - prog_fade))	//crece G
+                    *(ch_val+1) = prog_fade;
+                else
+                    *(ch_val+1) = MAX_FADE - prog_fade;
 
-					//B se comparte
-					if (prog_fade > (MAX_FADE - prog_fade))	//crece B
-						BLUE_PWM(prog_fade);
-					else
-						BLUE_PWM(MAX_FADE - prog_fade);
+                //B se comparte
+                if (prog_fade > (MAX_FADE - prog_fade))	//crece B
+                    *(ch_val+2) = prog_fade;
+                else
+                    *(ch_val+2) = MAX_FADE - prog_fade;
 
-					WHITE_PWM(0);
+                *(ch_val+3) = 0;
 #endif
 
 #ifdef WHITE_AS_WHITE
-					RED_PWM(0);
-					GREEN_PWM(MAX_FADE - prog_fade);	//decrece G
-					BLUE_PWM(MAX_FADE - prog_fade);		//decrece B
-					WHITE_PWM(prog_fade);
+                *(ch_val+0) = 0;
+                *(ch_val+1) = MAX_FADE - prog_fade;	//decrece G
+                *(ch_val+2) = MAX_FADE - prog_fade;		//decrece B
+                *(ch_val+3) = prog_fade;
 #endif
 
-					prog_fade++;
-				}
-				else
-				{
-					prog_state = P9_INCREASE_COLOR1_DECREASE_COLOR7;
-					prog_fade = 0;
-				}
-				prog_timer = v_speed_fading[deep];
-			}
-			break;
+                prog_fade++;
+            }
+            else
+            {
+                prog_state = P9_INCREASE_COLOR1_DECREASE_COLOR7;
+                prog_fade = 0;
+            }
+            prog_timer = v_speed_fading[deep];
+        }
+        break;
 
-		default:
-			prog_state = P9_FIRST_COLOR7;
-			//seteo en 0
-			prog_timer = 0;
-			prog_fade = 0;
-			RED_PWM(0);
-			GREEN_PWM(0);
-			BLUE_PWM(0);
-			WHITE_PWM(0);
-			break;
-	}
+    default:
+        prog_state = P9_FIRST_COLOR7;
+        //seteo en 0
+        prog_timer = 0;
+        prog_fade = 0;
+        *(ch_val+0) = 0;
+        *(ch_val+1) = 0;
+        *(ch_val+2) = 0;
+        *(ch_val+3) = 0;
+        break;
+    }
 }
+
+
+//funcion que incrementa o decrementa colores independiente del timer
+//single color fading - only white Y SOLO CON LED BLANCO
+#undef WHITE_AS_IN_RGB
+#define WHITE_AS_WHITE
+void Func_Fading_Reset(void)
+{
+    prog_state = P8_INCREASE_COLOR1;
+    prog_fade = 0;
+}
+
+//contesta:
+//resp_ok, cada vez que cambia el fade
+//resp_continue, cuando hay que seguir llamando
+//resp_error, si tiene error en el canal elegido
+//resp_finish, cuando apago la secuencia
+resp_t Func_Fading(unsigned char * ch_val, unsigned char which_ch)
+{
+    resp_t resp = resp_continue;
+
+    if (which_ch > 5)
+        return resp_error;
+        
+    switch (prog_state)
+    {
+    case P8_INCREASE_COLOR1:
+        if (prog_fade < MAX_FADE)
+        {
+            prog_fade++;
+#ifdef WHITE_AS_IN_RGB
+            if (which_ch == 3)    //seria el canal 4
+            {
+                *(ch_val+0) = prog_fade;
+                *(ch_val+1) = prog_fade;
+                *(ch_val+2) = prog_fade;
+                *(ch_val+3) = 0;
+            }
+#else
+            *(ch_val + which_ch) = prog_fade;
+#endif
+            resp = resp_ok;
+        }
+        else
+            prog_state++;
+
+        break;
+
+    case P8_DECREASE_COLOR1:
+        if (prog_fade)
+        {
+            prog_fade--;            
+#ifdef WHITE_AS_IN_RGB
+            if (which_ch == 3)    //seria el canal 4
+            {
+                *(ch_val+0) = prog_fade;
+                *(ch_val+1) = prog_fade;
+                *(ch_val+2) = prog_fade;
+                *(ch_val+3) = 0;
+            }
+#else
+            *(ch_val + which_ch) = prog_fade;            
+#endif
+            resp = resp_ok;
+        }
+        else
+        {            
+            prog_state--;
+            resp = resp_finish;
+        }
+        break;
+
+    default:
+        prog_state = P8_INCREASE_COLOR1;
+        break;
+    }
+
+    return resp;
+}
+
+//--- end of file ---//

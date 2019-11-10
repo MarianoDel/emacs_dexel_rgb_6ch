@@ -52,7 +52,22 @@
 // #define USE_PWM_DELTA_FUNCTION
 //----- End of PWM Modes ---------------------
 
+//----- Segments Modes ----------------------------
+// #define LINEAR_SEGMENT_8
+#define LINEAR_SEGMENT_16
+// #define LINEAR_SEGMENT_32
+// #define FIBONACCI_12
+// #define FIBONACCI_8    
+//----- End of Segments Modes ---------------------
+
+//----- Usart2 Modes ----------------------------
+#define USART2_DEBUG_MODE
+// #define USART2_WIFI_MODE
+//----- End of Usart2 Modes ---------------------
+
 //------ Configuration for Firmware-Channels -----
+#define WHITE_AS_IN_RGB		//el blanco lo forma con los 3 colores
+//#define WHITE_AS_WHITE	//el blanco tiene leds blancos individuales
 
 
 //---- End of Features Configuration ----------
@@ -86,6 +101,8 @@
 #define MAX_CURRENT_INT    2
 #define MAX_CURRENT_DEC    0
 
+#define MAX_CURRENT_MILLIS    1100
+
 //esto es dmx_data * MAX_CURRENT * MAX_CURRENT_IN_ADC_COMPENSATED / 512
 //255 * 2.0 * 823 / 512 = 820
 #define MAX_CURRENT_IN_ADC_COMPENSATED    (MAX_CURRENT_IN_ADC + 3)
@@ -94,6 +111,8 @@
 #define MAX_MAINS_VOLTAGE    48
 #define MIN_MAX_POWER    40
 #define MAX_MAX_POWER    100
+
+#define MAX_DUTY_CYCLE    DUTY_95_PERCENT
 
 //---- Configuration for Firmware-Programs --------
 
@@ -258,6 +277,7 @@ typedef enum
     MAIN_GET_CONF,
     MAIN_IN_MASTER_MODE,
     MAIN_IN_SLAVE_MODE,
+    MAIN_IN_WIFI_MODE,
     MAIN_IN_PROGRAMS_MODE,
     MAIN_IN_OVERTEMP,
     MAIN_IN_OVERTEMP_B,
@@ -291,6 +311,7 @@ typedef struct {
     
 } led_current_settings_t;
 
+
 /* Module Functions ------------------------------------------------------------*/
 sw_state_t CheckS1 (void);
 sw_state_t CheckS2 (void);
@@ -302,5 +323,6 @@ void HardUpdateMaxPower (void);
 void HardUpdateMaxPowerReset (void);
 unsigned short PWMChannelsOffset (unsigned char, unsigned short);
 unsigned char DMXMapping (unsigned char);
-
+resp_t HARD_Find_Current_Segments (led_current_settings_t *, unsigned short *);
+unsigned short HARD_Process_New_PWM_Data (unsigned char, unsigned char);
 #endif /* HARD_H_ */
