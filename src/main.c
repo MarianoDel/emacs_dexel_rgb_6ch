@@ -76,21 +76,13 @@ unsigned short sp3_filtered = 0;
 unsigned short sp4_filtered = 0;
 unsigned short sp5_filtered = 0;
 unsigned short sp6_filtered = 0;
-#ifdef USE_FILTER_LENGHT_8
-unsigned short v_sp1 [8];
-unsigned short v_sp2 [8];
-unsigned short v_sp3 [8];
-unsigned short v_sp4 [8];
-unsigned short v_sp5 [8];
-unsigned short v_sp6 [8];
-#endif
 #ifdef USE_FILTER_LENGHT_16
-unsigned short v_sp1 [16];
-unsigned short v_sp2 [16];
-unsigned short v_sp3 [16];
-unsigned short v_sp4 [16];
-unsigned short v_sp5 [16];
-unsigned short v_sp6 [16];
+ma16_u16_data_obj_t st_sp1
+ma16_u16_data_obj_t st_sp2
+ma16_u16_data_obj_t st_sp3
+ma16_u16_data_obj_t st_sp4
+ma16_u16_data_obj_t st_sp5
+ma16_u16_data_obj_t st_sp6
 #endif
 
 
@@ -173,7 +165,7 @@ volatile unsigned short timer_standby;
 volatile unsigned short wait_ms_var = 0;
 volatile unsigned char temp_sample_timer = 0;
 volatile unsigned short need_to_save_timer = 0;
-volatile unsigned char delta_timer = 0;
+
 
 // ------- para la memoria -------
 unsigned char need_to_save = 0;
@@ -183,7 +175,8 @@ extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
 void DMAConfig(void);
 unsigned short Distance (unsigned short, unsigned short);
-unsigned char GetProcessedSegment (unsigned short, unsigned short *, unsigned char);
+unsigned char CheckFiltersAndOffsets2 (void);
+void UpdateFiltersTest_Reset (void);
 
     
 // ------- del DMX -------
@@ -195,6 +188,13 @@ unsigned char GetProcessedSegment (unsigned short, unsigned short *, unsigned ch
 #define RCC_DMA_CLK_OFF 	RCC->AHBENR &= ~RCC_AHBENR_DMAEN
 
 const char s_blank_line [] = {"                "};
+unsigned short ch1_pwm = 0;
+unsigned short ch2_pwm = 0;
+unsigned short ch3_pwm = 0;
+unsigned short ch4_pwm = 0;
+unsigned short ch5_pwm = 0;
+unsigned short ch6_pwm = 0;
+
 //-------------------------------------------//
 // @brief  Main program.
 // @param  None
@@ -206,14 +206,8 @@ int main(void)
     char s_to_send [100];
     main_state_t main_state = MAIN_INIT;
     resp_t resp = resp_continue;
-    unsigned short ch1_pwm = 0;
-    unsigned short ch2_pwm = 0;
-    unsigned short ch3_pwm = 0;
-    unsigned short ch4_pwm = 0;
-    unsigned short ch5_pwm = 0;
-    unsigned short ch6_pwm = 0;    
 
-    unsigned char slow_segment = 0;
+    unsigned char ch_values [6] = { 0 };
     
 #ifdef USE_PWM_DELTA_FUNCTION
     unsigned short delta_ch3_pwm = 0;
@@ -748,78 +742,12 @@ int main(void)
 
     ADC1->CR |= ADC_CR_ADSTART;
 
-
-    //nuevas pruebas por segmentos de corriente para channel3
-#define MAX_CURRENT_MILLIS    1100
-// #define LINEAR_SEGMENT_8
-#define LINEAR_SEGMENT_16
-// #define LINEAR_SEGMENT_32
-// #define FIBONACCI_12
-// #define FIBONACCI_8    
-    
-#ifdef LINEAR_SEGMENT_8
-#define SEGMENTS_QTTY    8
-unsigned short const_segments[SEGMENTS_QTTY] = {31, 63, 95, 127, 159, 191, 223, 255};
-#define SEGMENTS_VALUE    32
-#endif
-#ifdef LINEAR_SEGMENT_16    
-#define SEGMENTS_QTTY    16
-unsigned short const_segments[SEGMENTS_QTTY] = {15, 31, 47, 63, 79, 95, 111, 127,
-                                                143, 159, 175, 191, 207, 223, 239, 255};
-#define SEGMENTS_VALUE    16
-#endif
-#ifdef LINEAR_SEGMENT_32
-#define SEGMENTS_QTTY    32
-unsigned short const_segments[SEGMENTS_QTTY] = {7, 15, 23, 31, 39, 47, 55, 63,
-                                                71, 79, 87, 95, 103, 111, 119, 127,
-                                                135, 143, 151, 159, 167, 175, 183, 191,
-                                                199, 207, 215, 223, 231, 239, 247, 255};
-#define SEGMENTS_VALUE    8
-#endif
-#ifdef FIBONACCI_12
-#define SEGMENTS_QTTY    12
-//numeros fibonacci ajustados a 255;  {1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233}
-unsigned short const_segments[SEGMENTS_QTTY] = {1, 2, 3, 5, 9, 14, 23, 37,
-                                                60, 97, 157, 255};
-
-#endif
-
-#ifdef FIBONACCI_8
-#define SEGMENTS_QTTY    8
-//numeros fibonacci ajustados a 255;  {1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233}
-unsigned short const_segments[SEGMENTS_QTTY] = {9, 14, 23, 37, 60, 97, 157, 255};
-
-#endif
+    memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
 
     unsigned short segments[SEGMENTS_QTTY];
     led_current_settings_t led_curr;
 
-#if (defined LINEAR_SEGMENT_8) || (defined LINEAR_SEGMENT_16) || (defined LINEAR_SEGMENT_32)
-    for (i = 0; i < SEGMENTS_QTTY; i++)
-    {
-        led_curr.channel = 3;
-        led_curr.sp_current = MAX_CURRENT_MILLIS * (i + 1);
-        led_curr.sp_current = led_curr.sp_current / SEGMENTS_QTTY;
 
-        UpdateDutyCycleReset();
-        while (UpdateDutyCycle(&led_curr) == resp_continue);
-        segments[i] = led_curr.duty_getted;
-    }
-#endif
-
-#if (defined FIBONACCI_12) || (defined FIBONACCI_8)
-    sprintf(s_to_send, "dummys[%d]: ", SEGMENTS_QTTY);
-    Usart2Send(s_to_send);
-
-    for (i = 0; i < SEGMENTS_QTTY; i++)
-    {
-        unsigned int dummy = 0;
-        led_curr.channel = 3;
-        dummy = MAX_CURRENT_MILLIS * (*(const_segments + i));
-        dummy = dummy / (*(const_segments + SEGMENTS_QTTY - 1));
-        led_curr.sp_current = dummy;
-
-        sprintf(s_to_send, "%d ", dummy);
         Usart2Send(s_to_send);
 
         UpdateDutyCycleReset();
@@ -837,79 +765,8 @@ unsigned short const_segments[SEGMENTS_QTTY] = {9, 14, 23, 37, 60, 97, 157, 255}
     Usart2Send("\n");
 #endif
     
-    //mando info al puerto
-    sprintf(s_to_send, "segments[%d]: ", SEGMENTS_QTTY);
-    Usart2Send(s_to_send);
-    for (i = 0; i < SEGMENTS_QTTY; i++)
-    {
-        sprintf(s_to_send, "%d ", segments[i]);
-        Usart2Send(s_to_send);
-        Wait_ms(10);
-    }
-    Usart2Send("\n");
-
-#define RANGES_QTTY    5
-    unsigned short ranges[RANGES_QTTY] = { 0 };
-    unsigned char freq_vect[RANGES_QTTY] = { 0 };
-    unsigned short deltas_vect[SEGMENTS_QTTY] = { 0 };
-    unsigned short last_segment = 0;
-
-    //convierto segmentos a deltas, si el segmento anterior es mas chico repito el valor
-    sprintf(s_to_send, "deltas_vect[%d]: ", SEGMENTS_QTTY);
-    Usart2Send(s_to_send);    
-    for (i = 0; i < SEGMENTS_QTTY; i++)
-    {
-        if (segments[i] <= last_segment)
-        {
-            deltas_vect[i] = 0;
-        }
-        else
-        {
-            deltas_vect[i] = segments[i] - last_segment;
-            last_segment = segments[i];
-        }
-        sprintf(s_to_send, "%d ", deltas_vect[i]);
-        Usart2Send(s_to_send);
-        Wait_ms(10);        
-    }
-    Usart2Send("\n");
     
     
-    DSP_Vector_Calcule_Frequencies(deltas_vect,
-                                   SEGMENTS_QTTY,
-                                   ranges,
-                                   RANGES_QTTY,
-                                   freq_vect);
-
-    sprintf(s_to_send, "ranges[%d]: ", RANGES_QTTY);
-    Usart2Send(s_to_send);    
-    for (i = 0; i < RANGES_QTTY; i++)
-    {
-        sprintf(s_to_send, "%d ", ranges[i]);
-        Usart2Send(s_to_send);
-        Wait_ms(10);        
-    }
-    Usart2Send("\n");
-
-    sprintf(s_to_send, "frequencies[%d]: ", RANGES_QTTY);
-    Usart2Send(s_to_send);    
-    for (i = 0; i < RANGES_QTTY; i++)
-    {
-        sprintf(s_to_send, "%d ", freq_vect[i]);
-        Usart2Send(s_to_send);
-        Wait_ms(10);        
-    }
-    Usart2Send("\n");
-
-    //seak for the mayor segment that is not appering in the most frequency
-    for (i = 0; i < SEGMENTS_QTTY; i++)
-    {
-        if (*(deltas_vect + i) > (ranges[1] - ranges[0]))
-            slow_segment = i;
-    }
-    
-    sprintf(s_to_send, "slow_segment: %d\n", slow_segment);
-    Usart2Send(s_to_send);
         
         
     while (1)
@@ -917,7 +774,7 @@ unsigned short const_segments[SEGMENTS_QTTY] = {9, 14, 23, 37, 60, 97, 157, 255}
         switch (main_state)
         {
         case MAIN_INIT:
-            memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
+            // memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
             main_state++;
             break;
 
