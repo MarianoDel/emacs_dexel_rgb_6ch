@@ -414,7 +414,7 @@ resp_t MainMenu (void)
 //------------- HARD -------------
     case MAIN_MENU_CONF_HARDWARE:
         //max current screen
-        resp = FuncShowBlink ((const char *) "Max Curr", (const char *) "Setting ", 1, BLINK_NO);
+        resp = FuncShowBlink ((const char *) "Test LED", (const char *) "Current ", 1, BLINK_NO);
 
         if (resp == resp_finish)
         {
