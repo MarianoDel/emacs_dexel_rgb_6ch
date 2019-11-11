@@ -175,7 +175,7 @@ extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
 void DMAConfig(void);
 unsigned short Distance (unsigned short, unsigned short);
-unsigned char CheckFiltersAndOffsets2 (void);
+unsigned char CheckFiltersAndOffsets2 (unsigned char *);
 void UpdateFiltersTest_Reset (void);
 
     
@@ -841,7 +841,8 @@ int main(void)
             break;
 
         case MAIN_IN_MASTER_MODE:    //por ahora programs mode
-            Func_PX(mem_conf.last_program_in_flash, mem_conf.last_program_deep_in_flash);
+            FuncsProgramsMode(ch_values);
+            CheckFiltersAndOffsets2 (ch_values);
 
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;

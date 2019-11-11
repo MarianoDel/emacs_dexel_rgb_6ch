@@ -121,9 +121,11 @@ resp_t MainMenu (void)
 {
     resp_t resp = resp_continue;
     unsigned char dummy_8 = 0;
-    unsigned char dummy_8_1 = 0;
     unsigned short dummy_16 = 0;
     unsigned int calc = 0;
+    unsigned short * p_seg;
+    led_current_settings_t led_curr;
+    
     // char s_lcd1 [10];
     // char s_lcd2 [10];
     char s_to_send[100];    //TODO: despues quitar esto de aca
@@ -422,21 +424,24 @@ resp_t MainMenu (void)
         break;
         
     case MAIN_MENU_CONF_HARDWARE_1:
-        dummy_8 = mem_conf.max_current_int;
-        dummy_8_1 = mem_conf.max_current_dec;
-        
-        resp = FuncChangeDecimals (&dummy_8, &dummy_8_1,
-                                   MIN_CURRENT_INT,
-                                   MIN_CURRENT_DEC,
-                                   MAX_CURRENT_INT,
-                                   MAX_CURRENT_DEC);
+        p_seg = &mem_conf.segments[0][0];
+        HARD_Find_Current_Segments(&led_curr, p_seg);
+        main_menu_state = MAIN_MENU_CONF_HARDWARE_10;
 
-        if (resp == resp_finish)
-        {
-            mem_conf.max_current_int = dummy_8;
-            mem_conf.max_current_dec = dummy_8_1;            
-            main_menu_state = MAIN_MENU_CONF_HARDWARE_2;
-            resp = resp_continue;            
+        //mando info al puerto
+        for (unsigned char j = 0; j < 6; j++)
+        {        
+            sprintf(s_to_send, "segments[%d]: ", j);
+            Usart2Send(s_to_send);
+            // for (unsigned char i = 0; i < SEGMENTS_QTTY; i++)
+            for (unsigned char i = 0; i < 16; i++)            
+            {
+                // sprintf(s_to_send, "%d ", segments[j][i]);
+                sprintf(s_to_send, "%d ", mem_conf.segments[j][i]);
+                Usart2Send(s_to_send);
+                Wait_ms(10);
+            }
+            Usart2Send("\n");
         }
         break;
 
