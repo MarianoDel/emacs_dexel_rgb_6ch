@@ -996,8 +996,6 @@ int main(void)
                 Usart2Send((char *) "Memory problems\n");
 
             need_to_save = 0;
-            //update de memoria RAM
-            // memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
         }
         
     }    //end of while 1
@@ -1044,12 +1042,6 @@ void TimingDelay_Decrement(void)
     if (timer_standby)
         timer_standby--;
 
-    // if (timer_signals)
-    //     timer_signals--;
-
-    // if (timer_signals_gen)
-    //     timer_signals_gen--;
-
     if (need_to_save_timer)
         need_to_save_timer--;
 
@@ -1067,9 +1059,6 @@ void TimingDelay_Decrement(void)
     else
         EXTIOn();    //dejo 20ms del paquete sin INT
 
-    if (delta_timer)
-        delta_timer--;
-    
     //para lcd_utils
     UpdateTimerLCD ();
 
@@ -1100,22 +1089,76 @@ unsigned short Distance (unsigned short a, unsigned short b)
     return (a - b);
 }
 
-unsigned char GetProcessedSegment (unsigned short check_segment_by_value,
-                                   unsigned short * s,
-                                   unsigned char seg_qtty)
+//aca filtro los offsets del pwm en vez del valor del canal
+//cada 5ms
+unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
 {
-    // char * s_to_send[100];
-    unsigned char i;
-    
-    for (i = seg_qtty; i > 0; i--)
-    {
-        if (check_segment_by_value > *(s + i - 1))
-            return i;
-    }
+    unsigned char new_outputs = 0;
 
-    return 0;
+    //filters para el dmx - generalmente 8 puntos a 200Hz -
+    //desde el sp al sp_filter
+    if (!dmx_filters_timer)
+    {
+        dmx_filters_timer = 5;
+
+        //filtro los offsets
+        if (mem_conf.pwm_chnls[0])
+        {
+            ch1_pwm = HARD_Process_New_PWM_Data (0, *(ch_val + 0));
+            ch1_pwm = MA16_U16Circular (&st_sp1, ch1_pwm);    
+            Update_PWM1(ch1_pwm);                        
+        }
+                
+        if (mem_conf.pwm_chnls[1])
+        {
+            ch2_pwm = HARD_Process_New_PWM_Data (1, *(ch_val + 1));
+            ch2_pwm = MA16_U16Circular (&st_sp2, ch2_pwm);
+            Update_PWM2(ch2_pwm);
+        }
+
+        if (mem_conf.pwm_chnls[2])
+        {
+            ch3_pwm = HARD_Process_New_PWM_Data (2, *(ch_val + 2));
+            ch3_pwm = MA16_U16Circular (&st_sp3, ch3_pwm);
+            Update_PWM3(ch3_pwm);
+        }
+                
+        if (mem_conf.pwm_chnls[3])
+        {
+            ch4_pwm = HARD_Process_New_PWM_Data (3, *(ch_val + 3));
+            ch4_pwm = MA16_U16Circular (&st_sp4, ch4_pwm);
+            Update_PWM4(ch4_pwm);
+        }
+
+        if (mem_conf.pwm_chnls[4])
+        {
+            ch5_pwm = HARD_Process_New_PWM_Data (4, *(ch_val + 4));
+            ch5_pwm = MA16_U16Circular (&st_sp5, ch5_pwm);
+            Update_PWM5(ch5_pwm);
+        }
+
+        if (mem_conf.pwm_chnls[5])
+        {
+            ch6_pwm = HARD_Process_New_PWM_Data (5, *(ch_val + 5));
+            ch6_pwm = MA16_U16Circular (&st_sp6, ch6_pwm);
+            Update_PWM6(ch6_pwm);
+        }
+
+        new_outputs = 1;
+    }    //end of filters and timer
+        
+    return new_outputs;
 }
 
+void UpdateFiltersTest_Reset (void)
+{
+    MA16_U16Circular_Reset(&st_sp1);
+    MA16_U16Circular_Reset(&st_sp2);
+    MA16_U16Circular_Reset(&st_sp3);
+    MA16_U16Circular_Reset(&st_sp4);
+    MA16_U16Circular_Reset(&st_sp5);
+    MA16_U16Circular_Reset(&st_sp6);
+}
 
 //--- end of file ---//
 
