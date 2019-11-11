@@ -744,28 +744,20 @@ int main(void)
 
     memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
 
-    unsigned short segments[SEGMENTS_QTTY];
-    led_current_settings_t led_curr;
 
-
+    //mando info al puerto
+    for (unsigned char j = 0; j < 6; j++)
+    {
+        sprintf(s_to_send, "segments[%d]: " j);
         Usart2Send(s_to_send);
-
-        UpdateDutyCycleReset();
-        while (UpdateDutyCycle(&led_curr) == resp_continue);
-        if (i)
+        for (unsigned char i = 0; i < 16; i++)
         {
-            if (led_curr.duty_getted <= segments[i - 1])
-                segments[i] = segments[i - 1] + 1;
-            else
-                segments[i] = led_curr.duty_getted;
+            sprintf(s_to_send, "%d ", mem_conf.segments[j][i]);
+            Usart2Send(s_to_send);
+            Wait_ms(10);
         }
-        else
-            segments[i] = led_curr.duty_getted;
     }
     Usart2Send("\n");
-#endif
-    
-    
     
         
         
