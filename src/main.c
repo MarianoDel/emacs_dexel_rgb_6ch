@@ -748,7 +748,7 @@ int main(void)
     //mando info al puerto
     for (unsigned char j = 0; j < 6; j++)
     {
-        sprintf(s_to_send, "segments[%d]: " j);
+        sprintf(s_to_send, "segments[%d]: ", j);
         Usart2Send(s_to_send);
         for (unsigned char i = 0; i < 16; i++)
         {
@@ -756,9 +756,8 @@ int main(void)
             Usart2Send(s_to_send);
             Wait_ms(10);
         }
+        Usart2Send("\n");
     }
-    Usart2Send("\n");
-    
         
         
     while (1)
@@ -797,6 +796,9 @@ int main(void)
             
             Usart2Send(s_to_send);
             Wait_ms(100);
+
+            //limpio filtros
+            UpdateFiltersTest_Reset();
             
             main_state++;            
             break;
@@ -853,256 +855,20 @@ int main(void)
             break;
             
         case MAIN_IN_SLAVE_MODE:
-            FuncSlaveMode();
-            if (UpdateFiltersTest ())
-            {
-#ifdef USE_LED_CTRL_MODE_MIXED
-                //calculo el PWM de cada canal, solo si tengo leds en los canales
-                if (mem_conf.pwm_chnls[0])
-                {
-                    if (sp1_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
-                    {
-                        ch1_pwm = PWMChannelsOffset(sp1_filtered, mem_conf.pwm_chnls[0]);
-                        mem_conf.pwm_base_chnls[0] = ch1_pwm;
-                        Update_PWM1(ch1_pwm);                        
-                    }
-                }
-                
-                if (mem_conf.pwm_chnls[1])
-                {
-                    if (sp2_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
-                    {
-                        ch2_pwm = PWMChannelsOffset(sp2_filtered, mem_conf.pwm_chnls[1]);
-                        mem_conf.pwm_base_chnls[1] = ch2_pwm;
-                        Update_PWM2(ch2_pwm);
-                    }
-                }
-
-                if (mem_conf.pwm_chnls[2])
-                {
-                    if (sp3_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
-                    {
-                        ch3_pwm = PWMChannelsOffset(sp3_filtered, mem_conf.pwm_chnls[2]);
-                        mem_conf.pwm_base_chnls[2] = ch3_pwm;
-                        // Update_PWM3(ch3_pwm);
-#ifdef USE_PWM_DELTA_FUNCTION
-                        if (!delta_index)
-                        {
-                            delta_index = 5;
-                            if (delta_ch3_pwm < ch3_pwm)
-                                delta_ch3_pwm++;
-                            else if (delta_ch3_pwm > ch3_pwm)
-                                delta_ch3_pwm--;
-                    
-                            Update_PWM3(delta_ch3_pwm);
-                        }
-                        else
-                            delta_index--;
-#else
-                        Update_PWM3(ch3_pwm);
-#endif                        
-                    }
-                }
-
-                if (mem_conf.pwm_chnls[3])
-                {
-                    if (sp4_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
-                    {
-                        ch4_pwm = PWMChannelsOffset(sp4_filtered, mem_conf.pwm_chnls[3]);
-                        mem_conf.pwm_base_chnls[3] = ch4_pwm;
-                        Update_PWM4(ch4_pwm);
-                    }
-                }
-
-                if (mem_conf.pwm_chnls[4])
-                {
-                    if (sp5_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
-                    {
-                        ch5_pwm = PWMChannelsOffset(sp5_filtered, mem_conf.pwm_chnls[4]);
-                        mem_conf.pwm_base_chnls[4] = ch5_pwm;
-                        Update_PWM5(ch5_pwm);
-                    }
-                }
-
-                if (mem_conf.pwm_chnls[5])
-                {
-                    if (sp6_filtered <= TIM_CNTR_FOR_DMX_MODE_CHANGE)
-                    {
-                        ch6_pwm = PWMChannelsOffset(sp6_filtered, mem_conf.pwm_chnls[5]);
-                        mem_conf.pwm_base_chnls[5] = ch6_pwm;
-                        Update_PWM6(ch6_pwm);
-                    }
-                }
-#endif
-#ifdef USE_LED_CTRL_MODE_CONTINUOS
-                //calculo el PWM de cada canal, solo si tengo leds en los canales
-                if (mem_conf.pwm_chnls[0])
-                {
-                    ch1_pwm = PWMChannelsOffset(sp1_filtered, mem_conf.pwm_chnls[0]);
-                    Update_PWM1(ch1_pwm);                        
-                }
-                
-                if (mem_conf.pwm_chnls[1])
-                {
-                    ch2_pwm = PWMChannelsOffset(sp2_filtered, mem_conf.pwm_chnls[1]);
-                    Update_PWM2(ch2_pwm);
-                }
-
-//                 if (mem_conf.pwm_chnls[2])
-//                 {
-//                     ch3_pwm = PWMChannelsOffset(sp3_filtered, mem_conf.pwm_chnls[2]);
-//                     // ch3_pwm = PWMChannelsOffset(DMXMapping(sp3_filtered), mem_conf.pwm_chnls[2]);
-// #ifdef USE_PWM_DELTA_FUNCTION
-//                     // if (!delta_index)
-//                     // {
-//                     //     delta_index = 5;
-//                         if (delta_ch3_pwm < ch3_pwm)
-//                             delta_ch3_pwm++;
-//                         else if (delta_ch3_pwm > ch3_pwm)
-//                             delta_ch3_pwm--;
-                    
-//                         Update_PWM3(delta_ch3_pwm);
-//                     // }
-//                     // else
-//                     //     delta_index--;
-// #else
-//                     Update_PWM3(ch3_pwm);
-// #endif
-//                 }
-
-                if (mem_conf.pwm_chnls[3])
-                {
-                    ch4_pwm = PWMChannelsOffset(sp4_filtered, mem_conf.pwm_chnls[3]);
-                    Update_PWM4(ch4_pwm);
-                }
-
-                if (mem_conf.pwm_chnls[4])
-                {
-                    ch5_pwm = PWMChannelsOffset(sp5_filtered, mem_conf.pwm_chnls[4]);
-                    Update_PWM5(ch5_pwm);
-                }
-
-                if (mem_conf.pwm_chnls[5])
-                {
-                    ch6_pwm = PWMChannelsOffset(sp6_filtered, mem_conf.pwm_chnls[5]);
-                    Update_PWM6(ch6_pwm);
-                }
-#endif
-            }    //end of filters
-
-            if (mem_conf.pwm_chnls[2])
-            {
-                if (!delta_timer)
-                {
-                    unsigned char new_segment = 0;
-                    unsigned short dummy = 0;
-                    // delta_timer = 5;
-
-                    //mapeo los segmentos
-                    new_segment = GetProcessedSegment(sp3_filtered, const_segments, SEGMENTS_QTTY);
-
-#if (defined LINEAR_SEGMENT_8) || (defined LINEAR_SEGMENT_16) || (defined LINEAR_SEGMENT_32)                    
-                    if (new_segment)
-                    {
-                        dummy = sp3_filtered - new_segment * SEGMENTS_VALUE;
-                        dummy = dummy * (segments[new_segment] - segments[new_segment - 1]);
-                        dummy /= SEGMENTS_VALUE;
-                        ch3_pwm = dummy + segments[new_segment - 1];
-                    }
-                    else
-                    {
-                        dummy = sp3_filtered * segments[0];
-                        dummy /= SEGMENTS_VALUE;
-                        ch3_pwm = dummy;
-                    }
-#endif
-
-#if (defined FIBONACCI_12) || (defined FIBONACCI_8)
-                    //tengo que mapear el dmx a la corriente
-                    //ch3_pwm es el valor de pwm que necesito para la corriente mapeada
-                    delta_timer = 5;
-
-                    if (new_segment)
-                    {
-                        //traslado a 0 el segmento
-                        dummy = sp3_filtered - const_segments[new_segment - 1];
-                        dummy = dummy * (segments[new_segment] - segments[new_segment - 1]);
-                        dummy /= const_segments[new_segment] - const_segments[new_segment - 1];
-                        //traslado el delta al segmento elegido
-                        ch3_pwm = dummy + segments[new_segment - 1];
-                    }
-                    else
-                    {
-                        dummy = sp3_filtered * segments[0];
-                        dummy /= const_segments[0];
-                        ch3_pwm = dummy;
-                    }
-#endif
-                    
-#ifdef USE_PWM_DELTA_FUNCTION
-
-#if (SEGMENTS_QTTY == 8)
-                    // siempre hago funcion delta, pero segun el segmento donde estoy le muevo la
-                    // velocidad                    
-                    new_segment = GetProcessedSegment(delta_ch3_pwm, segments, SEGMENTS_QTTY);
-                    if (new_segment < slow_segment)    //segmento bajo, tengo muchos puntos, voy mas rapido
-                        delta_timer = 1;
-                    else if (new_segment == slow_segment)    //segmento de cambio de modo voy bien lento
-                        delta_timer = 2;
-                    else
-                        delta_timer = 5;
-#endif
-
-#if (SEGMENTS_QTTY == 16)
-                    // siempre hago funcion delta, pero segun el segmento donde estoy le muevo la
-                    // velocidad                    
-                    new_segment = GetProcessedSegment(delta_ch3_pwm, segments, SEGMENTS_QTTY);
-                    if (new_segment < slow_segment)    //segmento bajo, tengo muchos puntos, voy mas rapido
-                        delta_timer = 1;
-                    else if (new_segment == slow_segment)    //segmento de cambio de modo voy bien lento
-                        delta_timer = 2;
-                    else
-                        delta_timer = 5;
-#endif
-
-#if (SEGMENTS_QTTY == 32)
-                    // siempre hago funcion delta, pero segun el segmento donde estoy le muevo la
-                    // velocidad                    
-                    new_segment = GetProcessedSegment(delta_ch3_pwm, segments, SEGMENTS_QTTY);
-                    if (new_segment < slow_segment)    //segmento bajo, tengo muchos puntos, voy mas rapido
-                        delta_timer = 1;
-                    else if (new_segment == slow_segment)    //segmento de cambio de modo voy bien lento
-                        delta_timer = 2;
-                    else if (new_segment == (slow_segment + 1))    //empiezo a acelerar
-                        delta_timer = 12;
-                    else
-                        delta_timer = 5;
-#endif
-                    
-                    if (ch3_pwm > delta_ch3_pwm)
-                        delta_ch3_pwm++;
-                    else if (ch3_pwm < delta_ch3_pwm)
-                        delta_ch3_pwm--;
-
-                    Update_PWM3(delta_ch3_pwm);
-#else
-                    Update_PWM3(ch3_pwm);
-#endif
-                }
-            }
-
+            FuncSlaveMode (ch_values);
+            CheckFiltersAndOffsets2 (ch_values);
 
             if (!timer_standby)
             {
                 timer_standby = 1000;
 
                 sprintf(s_to_send, "c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
-                    sp1_filtered,
-                    sp2_filtered,
-                    sp3_filtered,
-                    sp4_filtered,
-                    sp5_filtered,
-                    sp6_filtered);
+                        *(ch_values + 0),
+                        *(ch_values + 1),
+                        *(ch_values + 2),
+                        *(ch_values + 3),
+                        *(ch_values + 4),
+                        *(ch_values + 5));
                 Usart2Send(s_to_send);
                 
                 sprintf(s_to_send, "d1: %d, d2: %d, d3: %d, d4: %d, d5: %d, d6: %d\n",
@@ -1121,8 +887,8 @@ int main(void)
             break;
 
         case MAIN_IN_PROGRAMS_MODE:
-            Func_PX(mem_conf.last_program_in_flash, mem_conf.last_program_deep_in_flash);
-            // UpdateSamplesAndPID();
+            FuncsProgramsMode(ch_values);
+            CheckFiltersAndOffsets2 (ch_values);
 
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;
