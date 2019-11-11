@@ -77,12 +77,12 @@ unsigned short sp4_filtered = 0;
 unsigned short sp5_filtered = 0;
 unsigned short sp6_filtered = 0;
 #ifdef USE_FILTER_LENGHT_16
-ma16_u16_data_obj_t st_sp1
-ma16_u16_data_obj_t st_sp2
-ma16_u16_data_obj_t st_sp3
-ma16_u16_data_obj_t st_sp4
-ma16_u16_data_obj_t st_sp5
-ma16_u16_data_obj_t st_sp6
+ma16_u16_data_obj_t st_sp1;
+ma16_u16_data_obj_t st_sp2;
+ma16_u16_data_obj_t st_sp3;
+ma16_u16_data_obj_t st_sp4;
+ma16_u16_data_obj_t st_sp5;
+ma16_u16_data_obj_t st_sp6;
 #endif
 
 
