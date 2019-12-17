@@ -99,7 +99,6 @@ SRC += ./src/flash_program.c
 SRC += ./src/programs_functions.c
 SRC += ./src/menues.c
 SRC += ./src/power_control.c
-SRC += ./src/wifi_mode.c
 ## System Support
 #SRC += ./cmsis_boot/system_stm32f0xx.c
 #SRC += $(DISCOVERY)/stm32f0_discovery.c

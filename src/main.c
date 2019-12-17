@@ -27,7 +27,6 @@
 #include "modo_slave.h"
 #include "lcd_utils.h"
 #include "programs_functions.h"
-#include "wifi_mode.h"
 
 #include "flash_program.h"
 
@@ -49,7 +48,7 @@ volatile unsigned char seq_ready;
 // ------- Externals de los timers -------
 volatile unsigned char timer_1seg = 0;
 volatile unsigned char switches_timer = 0;
-volatile unsigned char wifi_timer = 0;
+
 
 // ------- Externals del USART -------
 volatile unsigned char usart1_have_data;
@@ -842,16 +841,6 @@ int main(void)
                 main_state = MAIN_IN_PROGRAMS_MODE;
             }
 
-            if (mem_conf.program_type == WIFI_MODE)
-            {
-                while (FuncShowBlink ((const char *) "WiFi    ",
-                                      (const char *) "    Mode",
-                                      1,
-                                      BLINK_NO) == resp_continue);
-
-                main_state = MAIN_IN_WIFI_MODE;
-            }
-            
             //default state no debiera estar nunca aca!
             if (main_state == MAIN_GET_CONF)
             {
@@ -896,15 +885,6 @@ int main(void)
 
         case MAIN_IN_PROGRAMS_MODE:
             FuncsProgramsMode(ch_values);
-            CheckFiltersAndOffsets2 (ch_values);
-
-            if (CheckS2() > S_HALF)
-                main_state = MAIN_ENTERING_MAIN_MENU;
-
-            break;
-
-        case MAIN_IN_WIFI_MODE:
-            FuncsWifiMode(ch_values);
             CheckFiltersAndOffsets2 (ch_values);
 
             if (CheckS2() > S_HALF)
@@ -1060,9 +1040,6 @@ void TimingDelay_Decrement(void)
 
     if (timer_standby)
         timer_standby--;
-
-    if (wifi_timer)
-        wifi_timer--;
 
     if (need_to_save_timer)
         need_to_save_timer--;

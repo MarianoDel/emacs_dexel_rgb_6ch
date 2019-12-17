@@ -62,7 +62,7 @@
 
 //----- Usart2 Modes ----------------------------
 #define USART2_DEBUG_MODE
-// #define USART2_WIFI_MODE
+
 //----- End of Usart2 Modes ---------------------
 
 //------ Configuration for Firmware-Channels -----
@@ -277,7 +277,6 @@ typedef enum
     MAIN_GET_CONF,
     MAIN_IN_MASTER_MODE,
     MAIN_IN_SLAVE_MODE,
-    MAIN_IN_WIFI_MODE,
     MAIN_IN_PROGRAMS_MODE,
     MAIN_IN_OVERTEMP,
     MAIN_IN_OVERTEMP_B,

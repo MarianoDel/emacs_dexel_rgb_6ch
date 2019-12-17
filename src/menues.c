@@ -51,7 +51,6 @@ typedef enum {
     MAIN_MENU_SHOW_MASTER,
     MAIN_MENU_SHOW_SLAVE,
     MAIN_MENU_SHOW_PROGRAMS,
-    MAIN_MENU_SHOW_WIFI,
     MAIN_MENU_SHOW_HARDWARE,
     MAIN_MENU_SHOW_END_CONFIG,
 
@@ -74,8 +73,6 @@ typedef enum {
     MAIN_MENU_CONF_PROGRAMS_3,
     MAIN_MENU_CONF_PROGRAMS_4,
 
-    MAIN_MENU_CONF_WIFI,
-    
     MAIN_MENU_CONF_HARDWARE,
     MAIN_MENU_CONF_HARDWARE_1,
     MAIN_MENU_CONF_HARDWARE_2,
@@ -178,24 +175,10 @@ resp_t MainMenu (void)
         resp = FuncShowSelectv2 ((const char * ) "Prgrm cf");
 
         if (resp == resp_change)	//cambio de menu
-            main_menu_state = MAIN_MENU_SHOW_WIFI;
-
-        if (resp == resp_selected)	//se eligio el menu
-            main_menu_state = MAIN_MENU_CONF_PROGRAMS;
-
-        if (resp != resp_continue)    //TODO: ver si sale por timeout
-            resp = resp_working;
-        
-        break;
-
-    case MAIN_MENU_SHOW_WIFI:
-        resp = FuncShowSelectv2 ((const char * ) "WiFi  cf");
-
-        if (resp == resp_change)	//cambio de menu
             main_menu_state = MAIN_MENU_SHOW_HARDWARE;
 
         if (resp == resp_selected)	//se eligio el menu
-            main_menu_state = MAIN_MENU_CONF_WIFI;
+            main_menu_state = MAIN_MENU_CONF_PROGRAMS;
 
         if (resp != resp_continue)    //TODO: ver si sale por timeout
             resp = resp_working;
@@ -295,17 +278,6 @@ resp_t MainMenu (void)
         break;
 
 //------------- PROGRAMS -------------        
-    case MAIN_MENU_CONF_WIFI:
-        resp = FuncShowBlink ((const char *) "WiFi sel", (const char *) "Done!   ", 1, BLINK_NO);
-
-        if (resp == resp_finish)
-        {
-            mem_conf.program_type = WIFI_MODE;
-            main_menu_state = MAIN_MENU_SHOW_WIFI;
-            conf_changed = 1;
-            resp = resp_continue;
-        }
-        break;
                 
 //------------- SLAVE -------------        
     case MAIN_MENU_CONF_SLAVE:
@@ -459,6 +431,7 @@ resp_t MainMenu (void)
         main_menu_state = MAIN_MENU_CONF_HARDWARE_10;
 
         //mando info al puerto
+#ifdef USART2_DEBUG_MODE
         for (unsigned char j = 0; j < 6; j++)
         {        
             sprintf(s_to_send, "segments[%d]: ", j);
@@ -473,6 +446,7 @@ resp_t MainMenu (void)
             }
             Usart2Send("\n");
         }
+#endif
 
         break;
 
