@@ -299,7 +299,7 @@ int main(void)
     // LCD_2DO_RENGLON;
     // LCDTransmitStr("Lighting");
     while (FuncShowBlink ((const char *) "Kirno 6C", (const char *) "Smrt Drv", 1, BLINK_NO) == resp_continue);
-    while (FuncShowBlink ((const char *) " -LUIS- ", (const char *) "Lighting", 1, BLINK_NO) == resp_continue);
+    while (FuncShowBlink ((const char *) " Dexel  ", (const char *) "Lighting", 1, BLINK_NO) == resp_continue);
 
 
     // while (1);
@@ -308,8 +308,8 @@ int main(void)
     //--- Mensaje Bienvenida ---//
     //---- Defines from hard.h -----//
 #ifdef USART2_DEBUG_MODE
-    // Usart2Send("\nDexel RGB 6CH Bidireccional\n -- powered by: Kirno Technology --\n");
-    Usart2Send("\nLUIS Casino RGB 6CH Bidireccional\n -- powered by: Kirno Technology --\n");    
+    Usart2Send("\nDexel RGB 6CH Bidireccional\n -- powered by: Kirno Technology --\n");
+    // Usart2Send("\nLUIS Casino RGB 6CH Bidireccional\n -- powered by: Kirno Technology --\n");    
     Wait_ms(100);
 #ifdef HARD
     Usart2Send(HARD);
