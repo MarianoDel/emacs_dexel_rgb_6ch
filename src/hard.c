@@ -306,6 +306,10 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
 {
     resp_t resp = resp_continue;
     unsigned short max_current_in_channel_millis = 0;
+
+#ifdef USE_LED_CTRL_MODE_PWM
+    TIM1DisableInterrupt;
+#endif
     
     //espero tres tipos de respuesta resp_ok, resp_finish, resp_error
     //estas respuestas las traslado
@@ -319,19 +323,19 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
         switch (j)
         {
         case 0:
-            max_current_in_channel_millis = 1400;
+            max_current_in_channel_millis = 1300;
             break;
         case 1:
-            max_current_in_channel_millis = 1800;
+            max_current_in_channel_millis = 1300;
             break;
         case 2:
-            max_current_in_channel_millis = 2000;
+            max_current_in_channel_millis = 1300;
             break;
         case 3:
-            max_current_in_channel_millis = 2000;
+            max_current_in_channel_millis = 1300;
             break;
         case 4:
-            max_current_in_channel_millis = 1200;
+            max_current_in_channel_millis = 1300;
             break;
         case 5:
             max_current_in_channel_millis = 1000;
@@ -381,6 +385,9 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
             }
         }
     }
+#ifdef USE_LED_CTRL_MODE_PWM
+    TIM1EnableInterrupt;
+#endif
 
     return resp;
 }

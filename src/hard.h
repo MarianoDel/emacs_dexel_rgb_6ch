@@ -37,11 +37,11 @@
 
 //----- PWM Modes ----------------------------
 // lo que llega por dmx se escala y se manda al pwm (funciona mas parejo en DCM)
-#define USE_LED_CTRL_MODE_CONTINUOS
+// #define USE_LED_CTRL_MODE_CONTINUOS
 
 // utiliza el pwm fijo para la maxima corriente ciclo a ciclo, luego arma un
 // soft-pwm con el que regula la intensidad por medio de TIM1
-// #define USE_LED_CTRL_MODE_PWM
+#define USE_LED_CTRL_MODE_PWM
 
 // debajo del valor TIM_CNTR_FOR_DMX_MODE_CHANGE usa pwm directo (continuo)
 // arriba de este valor usa soft pwm con el ultimo valor de pwm directo

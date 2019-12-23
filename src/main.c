@@ -1102,6 +1102,7 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
         dmx_filters_timer = 5;
 
         //filtro los offsets
+#ifdef USE_LED_CTRL_MODE_CONTINUOS
         if (mem_conf.pwm_chnls[0])
         {
             ch1_pwm = HARD_Process_New_PWM_Data (0, *(ch_val + 0));
@@ -1142,7 +1143,40 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
             ch6_pwm = HARD_Process_New_PWM_Data (5, *(ch_val + 5));
             ch6_pwm = MA16_U16Circular (&st_sp6, ch6_pwm);
             Update_PWM6(ch6_pwm);
+        }      
+#endif
+#ifdef USE_LED_CTRL_MODE_PWM
+        //TIM1 levanta los valores chx_pwm por interrupcion
+        if (mem_conf.pwm_chnls[0])
+        {
+            sp1_filtered = MA16_U16Circular (&st_sp1, *(ch_val + 0));    
         }
+                
+        if (mem_conf.pwm_chnls[1])
+        {
+            sp2_filtered = MA16_U16Circular (&st_sp2, *(ch_val + 1));
+        }
+
+        if (mem_conf.pwm_chnls[2])
+        {
+            sp3_filtered = MA16_U16Circular (&st_sp3, *(ch_val + 2));            
+        }
+                
+        if (mem_conf.pwm_chnls[3])
+        {
+            sp4_filtered = MA16_U16Circular (&st_sp4, *(ch_val + 3));            
+        }
+
+        if (mem_conf.pwm_chnls[4])
+        {
+            sp5_filtered = MA16_U16Circular (&st_sp5, *(ch_val + 4));            
+        }
+
+        if (mem_conf.pwm_chnls[5])
+        {
+            sp6_filtered = MA16_U16Circular (&st_sp6, *(ch_val + 5));            
+        }              
+#endif
 
         new_outputs = 1;
     }    //end of filters and timer
