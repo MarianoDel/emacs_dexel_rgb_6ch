@@ -5,17 +5,15 @@
 // ##
 // #### DSP.H #################################
 //---------------------------------------------
+
 #ifndef _DSP_H_
 #define _DSP_H_
 
 //--- Defines for configuration -----------------
-// #define USE_PID_CONTROLLERS
-// #define USE_PID_FIXED_CONSTANTS
-// #define USE_PID_UPDATED_CONSTANTS
-
-// #define USE_MA8_CIRCULAR
+#define USE_PID_CONTROLLERS
+// #define USE_MA32_U8_CIRCULAR
 #define USE_MA16_U16_CIRCULAR
-#define USE_MA32_U8_CIRCULAR
+
 
 //--- Exported constants ------------------------
 
@@ -32,27 +30,27 @@ typedef struct {
     unsigned int total_ma;
 } ma32_u8_data_obj_t;
 
-// #define MAFilter32Pote(X)  MAFilter32Circular(X, v_pote_samples, &v_pote_index, &pote_sumation)
+typedef struct {
+    short setpoint;
+    short sample;
+    short last_d;
+    short error_z1;
+    short error_z2;
+    short ki_accumulator;    
+    unsigned short kp;
+    unsigned short ki;
+    unsigned short kd;
+} pid_data_obj_t;
 
 //--- Module Functions --------------------------
 unsigned short RandomGen (unsigned int);
-unsigned char MAFilter (unsigned char, unsigned char *);
-unsigned short MAFilterFast (unsigned short ,unsigned short *);
-unsigned short MAFilterFast16 (unsigned short, unsigned short *);
-unsigned short MAFilter8 (unsigned short *);
-unsigned short MAFilter32 (unsigned short, unsigned short *);
-void SetNewValueInVector (unsigned short, unsigned short *);
-unsigned short MAFilter32Circular (unsigned short, unsigned short *, unsigned char *, unsigned int *);
 
-short PID (short, short);
-short PID_roof (short, short, short, short *, short *);
-void DSP_Vector_Calcule_Frequencies (unsigned short *,
-                                     unsigned char,
-                                     unsigned short *,
-                                     unsigned char,
-                                     unsigned char *);
-unsigned short DSP_Vector_Get_Max_Value (unsigned short *, unsigned char);
-unsigned short DSP_Vector_Get_Min_Value (unsigned short *, unsigned char);
+#ifdef USE_PID_CONTROLLERS
+short PID (pid_data_obj_t *);
+void PID_Flush_Errors (pid_data_obj_t *);
+short PID_Small_Ki (pid_data_obj_t *);
+void PID_Small_Ki_Flush_Errors (pid_data_obj_t *);
+#endif
 
 #ifdef USE_MA16_U16_CIRCULAR
 void MA16_U16Circular_Reset (ma16_u16_data_obj_t *);
@@ -66,6 +64,12 @@ unsigned char MA32_U8Circular (ma32_u8_data_obj_t *, unsigned char);
 unsigned char MA32_U8Circular_Only_Calc (ma32_u8_data_obj_t *);
 #endif
 
-
+unsigned short DSP_Vector_Get_Max_Value (unsigned short *, unsigned char);
+unsigned short DSP_Vector_Get_Min_Value (unsigned short *, unsigned char);
+void DSP_Vector_Calcule_Frequencies (unsigned short *,
+                                     unsigned char ,
+                                     unsigned short *,
+                                     unsigned char ,
+                                     unsigned char *);
 
 #endif /* _DSP_H_ */
