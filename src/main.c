@@ -48,7 +48,7 @@ volatile unsigned char seq_ready;
 // ------- Externals de los timers -------
 volatile unsigned char timer_1seg = 0;
 volatile unsigned char switches_timer = 0;
-
+volatile unsigned char tim17_new_output = 0;
 
 // ------- Externals del USART -------
 volatile unsigned char usart1_have_data;
@@ -77,6 +77,10 @@ unsigned short sp3_filtered = 0;
 unsigned short sp4_filtered = 0;
 unsigned short sp5_filtered = 0;
 unsigned short sp6_filtered = 0;
+
+unsigned short sp1_last = 0;
+volatile unsigned short sp1_filtered_40 = 0;
+
 #ifdef USE_FILTER_LENGHT_16
 ma16_u16_data_obj_t st_sp1;
 ma16_u16_data_obj_t st_sp2;
@@ -86,6 +90,9 @@ ma16_u16_data_obj_t st_sp5;
 ma16_u16_data_obj_t st_sp6;
 #endif
 
+#ifdef USE_LED_CTRL_MODE_PID_MA32
+pid_data_obj_t pid_ch1;
+#endif
 
 //--- VARIABLES GLOBALES ---//
 //para pruebas mantener esto en memoria
@@ -116,7 +123,7 @@ parameters_typedef __attribute__ ((section("memParams1"))) const parameters_type
         .volts_ch[4] = 35,
         .volts_ch[5] = 35,
 
-        .pwm_chnls[0] = DUTY_60_PERCENT,
+        .pwm_chnls[0] = DUTY_70_PERCENT,
         .pwm_chnls[1] = DUTY_60_PERCENT,
         .pwm_chnls[2] = DUTY_60_PERCENT,        
         .pwm_chnls[3] = DUTY_60_PERCENT,
@@ -210,13 +217,6 @@ int main(void)
 
     unsigned char ch_values [6] = { 0 };
 
-
-    // unsigned char slow_segment = 0;
-    
-#ifdef USE_PWM_DELTA_FUNCTION
-    unsigned short delta_ch3_pwm = 0;
-#endif
-    
     //GPIO Configuration.
     GPIO_Config();
 
@@ -243,14 +243,12 @@ int main(void)
     //pruebas hard//
     USART2Config();
 
-#if (defined USE_LED_CTRL_MODE_PWM) || (defined USE_LED_CTRL_MODE_MIXED)
-    TIM_1_Init_Irq();
-#elif defined USE_LED_CTRL_MODE_CONTINUOS
     TIM_1_Init_Only_PWM();
-#else    
-#error "set Led control mode on hard.h"
-#endif
     TIM_3_Init();
+
+#ifdef USE_LED_CTRL_MODE_PWM
+    TIM_17_Init();
+#endif    
 
     PWMChannelsReset();
 
@@ -299,7 +297,7 @@ int main(void)
     // LCD_2DO_RENGLON;
     // LCDTransmitStr("Lighting");
     while (FuncShowBlink ((const char *) "Kirno 6C", (const char *) "Smrt Drv", 1, BLINK_NO) == resp_continue);
-    while (FuncShowBlink ((const char *) " Dexel  ", (const char *) "Lighting", 1, BLINK_NO) == resp_continue);
+    while (FuncShowBlink ((const char *) "Dexel   ", (const char *) "Lighting", 1, BLINK_NO) == resp_continue);
 
 
     // while (1);
@@ -775,8 +773,6 @@ int main(void)
     }
 #endif
 
-    // while (1);
-    
     while (1)
     {
         switch (main_state)
@@ -818,6 +814,12 @@ int main(void)
 
             //limpio los filtros
             UpdateFiltersTest_Reset();
+
+#ifdef USE_LED_CTRL_MODE_PID_MA32
+            //limpio PIDs
+            pid_ch1.ki = 10;
+            PID_Small_Ki_Flush_Errors (&pid_ch1);
+#endif
             
             main_state++;            
             break;
@@ -896,12 +898,12 @@ int main(void)
             CTRL_FAN_ON;
             PWMChannelsReset();
             
-            Change_PWM1(0);
-            Change_PWM2(0);
-            Change_PWM3(0);
-            Change_PWM4(0);
-            Change_PWM5(0);
-            Change_PWM6(0);
+            Update_PWM1(0);
+            Update_PWM2(0);
+            Update_PWM3(0);
+            Update_PWM4(0);
+            Update_PWM5(0);
+            Update_PWM6(0);
 
             LCD_1ER_RENGLON;
             LCDTransmitStr("OVERTEMP");
@@ -1094,6 +1096,9 @@ unsigned short Distance (unsigned short a, unsigned short b)
 unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
 {
     unsigned char new_outputs = 0;
+#ifdef USE_LED_CTRL_MODE_PID_MA32
+    short d = 0;
+#endif
 
     //filters para el dmx - generalmente 8 puntos a 200Hz -
     //desde el sp al sp_filter
@@ -1145,11 +1150,81 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
             Update_PWM6(ch6_pwm);
         }      
 #endif
-#ifdef USE_LED_CTRL_MODE_PWM
-        //TIM1 levanta los valores chx_pwm por interrupcion
+
+#ifdef USE_LED_CTRL_MODE_PID_MA32
         if (mem_conf.pwm_chnls[0])
         {
-            sp1_filtered = MA16_U16Circular (&st_sp1, *(ch_val + 0));    
+            unsigned int a = 0;
+            
+            //pwm_chnls[x] es el valor del pwm de la maxima corriente
+            a = *(ch_val + 0) * mem_conf.pwm_chnls[0];
+            a >>= 8;
+            
+            sp1_filtered = MA16_U16Circular (&st_sp1, a);
+            pid_ch1.setpoint = sp1_filtered;
+            pid_ch1.sample = I_Channel_1;
+            d = PID_Small_Ki (&pid_ch1);
+
+            if (d > 0)
+            {
+                if (d > DUTY_90_PERCENT)
+                    d = DUTY_90_PERCENT;
+            }
+            else
+                d = 0;
+            
+            Update_PWM1(d);
+        }
+                
+        // if (mem_conf.pwm_chnls[1])
+        // {
+        //     ch2_pwm = HARD_Process_New_PWM_Data (1, *(ch_val + 1));
+        //     ch2_pwm = MA16_U16Circular (&st_sp2, ch2_pwm);
+        //     Update_PWM2(ch2_pwm);
+        // }
+
+        // if (mem_conf.pwm_chnls[2])
+        // {
+        //     ch3_pwm = HARD_Process_New_PWM_Data (2, *(ch_val + 2));
+        //     ch3_pwm = MA16_U16Circular (&st_sp3, ch3_pwm);
+        //     Update_PWM3(ch3_pwm);
+        // }
+                
+        // if (mem_conf.pwm_chnls[3])
+        // {
+        //     ch4_pwm = HARD_Process_New_PWM_Data (3, *(ch_val + 3));
+        //     ch4_pwm = MA16_U16Circular (&st_sp4, ch4_pwm);
+        //     Update_PWM4(ch4_pwm);
+        // }
+
+        // if (mem_conf.pwm_chnls[4])
+        // {
+        //     ch5_pwm = HARD_Process_New_PWM_Data (4, *(ch_val + 4));
+        //     ch5_pwm = MA16_U16Circular (&st_sp5, ch5_pwm);
+        //     Update_PWM5(ch5_pwm);
+        // }
+
+        // if (mem_conf.pwm_chnls[5])
+        // {
+        //     ch6_pwm = HARD_Process_New_PWM_Data (5, *(ch_val + 5));
+        //     ch6_pwm = MA16_U16Circular (&st_sp6, ch6_pwm);
+        //     Update_PWM6(ch6_pwm);
+        // }      
+#endif
+
+#ifdef USE_LED_CTRL_MODE_PWM
+        //TIM17 inicializa los pwm por interrupcion
+        if (mem_conf.pwm_chnls[0])
+        {
+            sp1_filtered = MA16_U16Circular (&st_sp1, *(ch_val + 0));
+            if (sp1_filtered != sp1_last)
+            {
+                sp1_last = sp1_filtered;
+                TIM17DisableInterrupt;
+                tim17_new_output |= TIM17_NEW_CH1;
+                sp1_filtered_40 = sp1_filtered * 40;
+                TIM17EnableInterrupt;
+            }
         }
                 
         if (mem_conf.pwm_chnls[1])
@@ -1175,24 +1250,26 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
         if (mem_conf.pwm_chnls[5])
         {
             sp6_filtered = MA16_U16Circular (&st_sp6, *(ch_val + 5));            
-        }              
-#endif
+        }
 
+#endif
+        
         new_outputs = 1;
     }    //end of filters and timer
 
     return new_outputs;
-
 }
 
 void UpdateFiltersTest_Reset (void)
 {
+#ifdef USE_FILTER_LENGHT_16
     MA16_U16Circular_Reset(&st_sp1);
     MA16_U16Circular_Reset(&st_sp2);
     MA16_U16Circular_Reset(&st_sp3);
     MA16_U16Circular_Reset(&st_sp4);
     MA16_U16Circular_Reset(&st_sp5);
     MA16_U16Circular_Reset(&st_sp6);
+#endif
 }
 
 //--- end of file ---//

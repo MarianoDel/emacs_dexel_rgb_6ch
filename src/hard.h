@@ -26,6 +26,7 @@
 #define WITH_BIDIRECTIONAL
 // #define USE_FILTER_LENGHT_8
 #define USE_FILTER_LENGHT_16
+
 #define USE_OVERTEMP_PROT
 // #define USE_INDUCTOR_IN_DCM
 #define USE_INDUCTOR_IN_CCM
@@ -50,6 +51,9 @@
 //para los modos MIXED y CONTINUOS se puede acercar al valor con funcion delta
 //TODO: mixed tiene un problema con delta, se mezcla en algun lado (ver int por ejemplo)
 // #define USE_PWM_DELTA_FUNCTION
+
+// #define USE_LED_CTRL_MODE_PID_MA32
+
 //----- End of PWM Modes ---------------------
 
 //----- Segments Modes ----------------------------

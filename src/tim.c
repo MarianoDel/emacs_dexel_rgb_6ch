@@ -26,6 +26,9 @@ extern unsigned short sp4_filtered;
 extern unsigned short sp5_filtered;
 extern unsigned short sp6_filtered;
 
+extern volatile unsigned char tim17_new_output;
+extern volatile unsigned short sp1_filtered_40;
+
 //--- VARIABLES GLOBALES ---//
 
 volatile unsigned short timer_1000 = 0;
@@ -87,136 +90,96 @@ void Wait_ms (unsigned short wait)
     while (wait_ms_var);
 }
 
-void Change_PWM1 (unsigned char a)
-{
-    TIM1->DIER &= ~TIM_DIER_UIE;
-    pwm_ch1 = a;
-    TIM1->DIER |= TIM_DIER_UIE;
-}
-
-void Change_PWM2 (unsigned char a)
-{
-    TIM1->DIER &= ~TIM_DIER_UIE;
-    pwm_ch2 = a;
-    TIM1->DIER |= TIM_DIER_UIE;
-}
-
-void Change_PWM3 (unsigned char a)
-{
-    TIM1->DIER &= ~TIM_DIER_UIE;
-    pwm_ch3 = a;
-    TIM1->DIER |= TIM_DIER_UIE;
-}
-
-void Change_PWM4 (unsigned char a)
-{
-    TIM1->DIER &= ~TIM_DIER_UIE;
-    pwm_ch4 = a;
-    TIM1->DIER |= TIM_DIER_UIE;
-}
-
-void Change_PWM5 (unsigned char a)
-{
-    TIM1->DIER &= ~TIM_DIER_UIE;
-    pwm_ch5 = a;
-    TIM1->DIER |= TIM_DIER_UIE;
-}
-
-void Change_PWM6 (unsigned char a)
-{
-    TIM1->DIER &= ~TIM_DIER_UIE;
-    pwm_ch6 = a;
-    TIM1->DIER |= TIM_DIER_UIE;
-}
 
 //-------------------------------------------//
 // @brief  TIM configure.
 // @param  None
 // @retval None
 //------------------------------------------//
-void TIM1_BRK_UP_TRG_COM_IRQHandler (void)	//48Khz
-{
-#ifdef USE_LED_CTRL_MODE_MIXED
-    if (tim_soft_pwm_counter < TIM_CNTR_FOR_DMX_DELTA)
-    {        
-        tim_soft_pwm_counter++;
+// void TIM1_BRK_UP_TRG_COM_IRQHandler (void)	//48Khz
+// {
+// #ifdef USE_LED_CTRL_MODE_MIXED
+//     if (tim_soft_pwm_counter < TIM_CNTR_FOR_DMX_DELTA)
+//     {        
+//         tim_soft_pwm_counter++;
 
-        if (tim_soft_pwm_counter != TIM_CNTR_FOR_DMX_DELTA)
-        {
-            if (tim_soft_pwm_counter >= (sp1_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
-                Update_PWM1(mem_conf.pwm_base_chnls[0]);
-            if (tim_soft_pwm_counter >= (sp2_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
-                Update_PWM2(mem_conf.pwm_base_chnls[1]);
-            if (tim_soft_pwm_counter >= (sp3_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
-                Update_PWM3(mem_conf.pwm_base_chnls[2]);
-            if (tim_soft_pwm_counter >= (sp4_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
-                Update_PWM4(mem_conf.pwm_base_chnls[3]);
-            if (tim_soft_pwm_counter >= (sp5_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
-                Update_PWM5(mem_conf.pwm_base_chnls[4]);
-            if (tim_soft_pwm_counter >= (sp6_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
-                Update_PWM6(mem_conf.pwm_base_chnls[5]);
-        }
-    }
-    else
-    {
-        tim_soft_pwm_counter = 0;
-        if (sp1_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
-            Update_PWM1(mem_conf.pwm_chnls[0]);
-        if (sp2_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
-            Update_PWM2(mem_conf.pwm_chnls[1]);
-        if (sp3_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
-            Update_PWM3(mem_conf.pwm_chnls[2]);
-        if (sp4_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
-            Update_PWM4(mem_conf.pwm_chnls[3]);
-        if (sp5_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
-            Update_PWM5(mem_conf.pwm_chnls[4]);
-        if (sp6_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
-            Update_PWM6(mem_conf.pwm_chnls[5]);
-    }
-#endif
-#ifdef USE_LED_CTRL_MODE_PWM
-    if (tim_soft_pwm_counter < 255)
-    {        
-        tim_soft_pwm_counter++;
+//         if (tim_soft_pwm_counter != TIM_CNTR_FOR_DMX_DELTA)
+//         {
+//             if (tim_soft_pwm_counter >= (sp1_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
+//                 Update_PWM1(mem_conf.pwm_base_chnls[0]);
+//             if (tim_soft_pwm_counter >= (sp2_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
+//                 Update_PWM2(mem_conf.pwm_base_chnls[1]);
+//             if (tim_soft_pwm_counter >= (sp3_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
+//                 Update_PWM3(mem_conf.pwm_base_chnls[2]);
+//             if (tim_soft_pwm_counter >= (sp4_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
+//                 Update_PWM4(mem_conf.pwm_base_chnls[3]);
+//             if (tim_soft_pwm_counter >= (sp5_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
+//                 Update_PWM5(mem_conf.pwm_base_chnls[4]);
+//             if (tim_soft_pwm_counter >= (sp6_filtered - TIM_CNTR_FOR_DMX_MODE_CHANGE))
+//                 Update_PWM6(mem_conf.pwm_base_chnls[5]);
+//         }
+//     }
+//     else
+//     {
+//         tim_soft_pwm_counter = 0;
+//         if (sp1_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
+//             Update_PWM1(mem_conf.pwm_chnls[0]);
+//         if (sp2_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
+//             Update_PWM2(mem_conf.pwm_chnls[1]);
+//         if (sp3_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
+//             Update_PWM3(mem_conf.pwm_chnls[2]);
+//         if (sp4_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
+//             Update_PWM4(mem_conf.pwm_chnls[3]);
+//         if (sp5_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
+//             Update_PWM5(mem_conf.pwm_chnls[4]);
+//         if (sp6_filtered > TIM_CNTR_FOR_DMX_MODE_CHANGE)
+//             Update_PWM6(mem_conf.pwm_chnls[5]);
+//     }
+// #endif
+// #ifdef USE_LED_CTRL_MODE_PWM
+//     if (tim_soft_pwm_counter < 255)
+//     {        
+//         tim_soft_pwm_counter++;
 
-        if (tim_soft_pwm_counter != 255)
-        {
-            if (tim_soft_pwm_counter >= sp1_filtered)
-                Update_PWM1(0);
-            if (tim_soft_pwm_counter >= sp2_filtered)
-                Update_PWM2(0);
-            if (tim_soft_pwm_counter >= sp3_filtered)
-                Update_PWM3(0);
-            if (tim_soft_pwm_counter >= sp4_filtered)
-                Update_PWM4(0);
-            if (tim_soft_pwm_counter >= sp5_filtered)
-                Update_PWM5(0);
-            if (tim_soft_pwm_counter >= sp6_filtered)
-                Update_PWM6(0);
-        }
-    }
-    else
-    {
-        tim_soft_pwm_counter = 0;
-        if (sp1_filtered)
-            Update_PWM1(mem_conf.pwm_chnls[0]);
-        if (sp2_filtered)
-            Update_PWM2(mem_conf.pwm_chnls[1]);
-        if (sp3_filtered)
-            Update_PWM3(mem_conf.pwm_chnls[2]);
-        if (sp4_filtered)
-            Update_PWM4(mem_conf.pwm_chnls[3]);
-        if (sp5_filtered)
-            Update_PWM5(mem_conf.pwm_chnls[4]);
-        if (sp6_filtered)
-            Update_PWM6(mem_conf.pwm_chnls[5]);
-    }
-#endif
+//         if (tim_soft_pwm_counter != 255)
+//         {
+//             if (tim_soft_pwm_counter >= sp1_filtered)
+//                 Update_PWM1(0);
+//             if (tim_soft_pwm_counter >= sp2_filtered)
+//                 Update_PWM2(0);
+//             if (tim_soft_pwm_counter >= sp3_filtered)
+//                 Update_PWM3(0);
+//             if (tim_soft_pwm_counter >= sp4_filtered)
+//                 Update_PWM4(0);
+//             if (tim_soft_pwm_counter >= sp5_filtered)
+//                 Update_PWM5(0);
+//             if (tim_soft_pwm_counter >= sp6_filtered)
+//                 Update_PWM6(0);
+//         }
+//     }
+//     else
+//     {
+//         tim_soft_pwm_counter = 0;
+//         if (sp1_filtered)
+//             Update_PWM1(mem_conf.pwm_chnls[0]);
+//         if (sp2_filtered)
+//             Update_PWM2(mem_conf.pwm_chnls[1]);
+//         if (sp3_filtered)
+//             Update_PWM3(mem_conf.pwm_chnls[2]);
+//         if (sp4_filtered)
+//             Update_PWM4(mem_conf.pwm_chnls[3]);
+//         if (sp5_filtered)
+//             Update_PWM5(mem_conf.pwm_chnls[4]);
+//         if (sp6_filtered)
+//             Update_PWM6(mem_conf.pwm_chnls[5]);
+//     }
+// #endif
     
-    //bajar flag
-    if (TIM1->SR & 0x01)	//bajo el flag
-        TIM1->SR = 0x00;
-}
+//     //bajar flag
+//     if (TIM1->SR & 0x01)	//bajo el flag
+//         TIM1->SR = 0x00;
+// }
+
 
 void TIM3_IRQHandler (void)	//1 ms
 {
@@ -244,7 +207,6 @@ void TIM3_IRQHandler (void)	//1 ms
     if (TIM3->SR & 0x01)	//bajo el flag
         TIM3->SR = 0x00;
 }
-
 
 
 void TIM_1_Init_Irq (void)
@@ -295,6 +257,7 @@ void TIM_1_Init_Irq (void)
     TIM1->CR1 |= TIM_CR1_CEN;
 }
 
+
 void TIM_1_Init_Only_PWM (void)
 {
     unsigned long temp;
@@ -343,6 +306,7 @@ void TIM_1_Init_Only_PWM (void)
     
     TIM1->CR1 |= TIM_CR1_CEN;
 }
+
 
 void TIM_3_Init (void)
 {
@@ -398,45 +362,6 @@ void TIM_3_Init (void)
 }
 
 
-
-// void TIM14_IRQHandler (void)	//20us
-// {
-//     if (TIM14->SR & 0x01)
-//         TIM14->SR = 0x00;    //bajar flag
-
-//     if (tim14_counter < 255)
-//     {
-//         tim14_counter++;
-
-//         if (tim14_counter > set_laser_ch1)
-//             LASER_CH1_OFF;
-
-//         if (tim14_counter > set_laser_ch2)
-//             LASER_CH2_OFF;
-
-//         if (tim14_counter > set_laser_ch3)
-//             LASER_CH3_OFF;
-
-//         if (tim14_counter > set_laser_ch4)
-//             LASER_CH4_OFF;
-//     }
-//     else
-//     {
-//         tim14_counter = 0;    //Overflow
-//         if (set_laser_ch1)
-//             LASER_CH1_ON;
-
-//         if (set_laser_ch2)
-//             LASER_CH2_ON;
-
-//         if (set_laser_ch3)
-//             LASER_CH3_ON;
-
-//         if (set_laser_ch4)
-//             LASER_CH4_ON;
-//     }
-// }
-
 void TIM_14_Init (void)
 {
     if (!RCC_TIM14_CLK)
@@ -448,6 +373,7 @@ void TIM_14_Init (void)
     TIM14->ARR = 0xFFFF;			//para que arranque
     TIM14->EGR |= 0x0001;
 }
+
 
 void TIM_16_Init (void)
 {
@@ -467,6 +393,7 @@ void TIM_16_Init (void)
     NVIC_SetPriority(TIM16_IRQn, 7);
 }
 
+
 void TIM16_IRQHandler (void)	//es one shoot
 {
     SendDMXPacket(PCKT_UPDATE);
@@ -475,96 +402,70 @@ void TIM16_IRQHandler (void)	//es one shoot
         TIM16->SR = 0x00;    //bajar flag
 }
 
+
 void OneShootTIM16 (unsigned short a)
 {
     TIM16->ARR = a;
     TIM16->CR1 |= TIM_CR1_CEN;
 }
 
-// void TIM_14_Init (void)
-// {
-//     if (!RCC_TIM14_CLK)
-//         RCC_TIM14_CLK_ON;
 
-//     //Configuracion del timer.
-//     TIM14->CR1 = 0x00;		//clk int / 1; upcounting; uev
-//     TIM14->PSC = 47;		//tick cada 1us
-//     // TIM14->ARR = 20;	//int cada 20us
-//     TIM14->ARR = 20;	//int cada 10us para pruebas
-//     TIM14->EGR |= 0x0001;
-
-//     // Enable timer interrupt ver UDIS
-//     TIM14->DIER |= TIM_DIER_UIE;
-//     TIM14->CR1 |= TIM_CR1_URS | TIM_CR1_CEN;	//solo int cuando hay overflow y one shot
-
-//     NVIC_EnableIRQ(TIM14_IRQn);
-//     NVIC_SetPriority(TIM14_IRQn, 8);
-    
-// }
-
-void TIM17_IRQHandler (void)	//100uS
+void TIM17_IRQHandler (void)	
 {
-    //bajar flag
-    if (TIM17->SR & 0x01)
-        TIM17->SR = 0x00;
+    if (TIM17->SR & TIM_SR_CC1IF)
+    {
+        Update_PWM1(0);
+        TIM17->SR &= ~TIM_SR_CC1IF;
+    }
+    else if (TIM17->SR & TIM_SR_UIF)
+    {
+        if (tim17_new_output & TIM17_NEW_CH1)
+        {
+            TIM17->CCR1 = sp1_filtered_40;
+            tim17_new_output &= ~TIM17_NEW_CH1;
+        }
+
+        if (sp1_filtered_40)
+            Update_PWM1(mem_conf.pwm_chnls[0]);
+
+        // if (sp2_filtered)
+        //     Update_PWM2(mem_conf.pwm_chnls[1]);
+        // if (sp3_filtered)
+        //     Update_PWM3(mem_conf.pwm_chnls[2]);
+        // if (sp4_filtered)
+        //     Update_PWM4(mem_conf.pwm_chnls[3]);
+        // if (sp5_filtered)
+        //     Update_PWM5(mem_conf.pwm_chnls[4]);
+        // if (sp6_filtered)
+        //     Update_PWM6(mem_conf.pwm_chnls[5]);
+            
+        TIM17->SR &= ~TIM_SR_UIF;
+        // TIM17->SR = 0x00;
+    }
 }
 
 
+//con 10200 me da 4.7KHz y 10200 es 255 * 40
 void TIM_17_Init (void)
 {
     if (!RCC_TIM17_CLK)
         RCC_TIM17_CLK_ON;
 
     //Configuracion del timer.
-    TIM17->ARR = 100; //100us
+    TIM17->ARR = 10200;
     TIM17->CNT = 0;
-    TIM17->PSC = 47;
-    TIM17->EGR = TIM_EGR_UG;
+    TIM17->PSC = 3;
+
+    //Configuracion canal PWM
+    TIM17->CCMR1 = 0x0060;      //CH1 output PWM mode 1 (channel active TIM->CNT < TIM->CCR1)
 
     // Enable timer ver UDIS
-    TIM17->DIER |= TIM_DIER_UIE;
+    TIM17->DIER |= TIM_DIER_CC1IE | TIM_DIER_UIE;
     TIM17->CR1 |= TIM_CR1_CEN;
 
     NVIC_EnableIRQ(TIM17_IRQn);
-    NVIC_SetPriority(TIM17_IRQn, 8);
+    NVIC_SetPriority(TIM17_IRQn, 4);
 }
 
-// void TIM17_IRQHandler (void)	//100uS
-// {
-//
-// 	//if (GPIOA_PIN0_OUT)
-// 	//	GPIOA_PIN0_OFF;
-// 	//else
-// 	//	GPIOA_PIN0_ON;
-//
-// 	if (TIM17->SR & 0x01)
-// 		//bajar flag
-// 		TIM17->SR = 0x00;
-// }
-//
-//
-// void TIM_17_Init (void)
-// {
-//
-// 	NVIC_InitTypeDef NVIC_InitStructure;
-//
-// 	if (!RCC_TIM17_CLK)
-// 		RCC_TIM17_CLK_ON;
-//
-// 	//Configuracion del timer.
-// 	TIM17->ARR = 2000; //10m
-// 	TIM17->CNT = 0;
-// 	TIM17->PSC = 479;
-// 	TIM17->EGR = TIM_EGR_UG;
-//
-// 	// Enable timer ver UDIS
-// 	TIM17->DIER |= TIM_DIER_UIE;
-// 	TIM17->CR1 |= TIM_CR1_CEN;
-//
-// 	NVIC_InitStructure.NVIC_IRQChannel = TIM17_IRQn;
-// 	NVIC_InitStructure.NVIC_IRQChannelPriority = 5;
-// 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-// 	NVIC_Init(&NVIC_InitStructure);
-// }
 
 //--- end of file ---//

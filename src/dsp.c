@@ -311,6 +311,7 @@ unsigned short DSP_Vector_Get_Max_Value (unsigned short *vect, unsigned char vec
     {
         if (max_value < *(vect + i))
             max_value = *(vect + i);
+    }
     return max_value;
 }
 
