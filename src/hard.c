@@ -121,105 +121,105 @@ unsigned char filter_cnt = 0;
 resp_t UpdateDutyCycle (led_current_settings_t * settings)
 {
     resp_t resp = resp_continue;    
-    unsigned int I_real = 0;
-    unsigned short I_Sampled_Channel = 0;
-    unsigned short I_filtered = 0;
+//     unsigned int I_real = 0;
+//     unsigned short I_Sampled_Channel = 0;
+//     unsigned short I_filtered = 0;
     
-    if (sequence_ready)    //16KHz
-    {
-        sequence_ready_reset;
+//     if (sequence_ready)    //16KHz
+//     {
+//         sequence_ready_reset;
 
-        switch (settings->channel)
-        {
-        case 1:
-            I_Sampled_Channel = I_Channel_1;
-            break;
-        case 2:
-            I_Sampled_Channel = I_Channel_2;
-            break;
-        case 3:
-            I_Sampled_Channel = I_Channel_3;
-            break;
-        case 4:
-            I_Sampled_Channel = I_Channel_4;
-            break;
-        case 5:
-            I_Sampled_Channel = I_Channel_5;
-            break;
-        case 6:
-            I_Sampled_Channel = I_Channel_6;
-            break;
-        }
+//         switch (settings->channel)
+//         {
+//         case 1:
+//             I_Sampled_Channel = I_Channel_1;
+//             break;
+//         case 2:
+//             I_Sampled_Channel = I_Channel_2;
+//             break;
+//         case 3:
+//             I_Sampled_Channel = I_Channel_3;
+//             break;
+//         case 4:
+//             I_Sampled_Channel = I_Channel_4;
+//             break;
+//         case 5:
+//             I_Sampled_Channel = I_Channel_5;
+//             break;
+//         case 6:
+//             I_Sampled_Channel = I_Channel_6;
+//             break;
+//         }
 
-        //uso st_sp1 para determinar corrientes
-        I_filtered = MA16_U16Circular (&st_sp1, I_Sampled_Channel);
-        // I_filtered = MAFilterFast16 (I_Sampled_Channel, v_sp1);
-#ifdef USE_FILTER_LENGHT_8
-        if (filter_cnt < 32)    //2ms
-        {
-            filter_cnt++;
-        }
-#endif
-#ifdef USE_FILTER_LENGHT_16
-        if (filter_cnt < 64)    //4ms
-        {
-            filter_cnt++;
-        }
-#endif
-        else
-        {
-            filter_cnt = 0;
-#ifdef USE_INDUCTOR_IN_CCM                
-            I_real = I_filtered * K_current;
-            I_real = I_real / duty_cycle;
-#endif
-#ifdef USE_INDUCTOR_IN_DCM                
-            I_real = I_filtered * K_current;
-            I_real = I_real / 100;
-#endif
+//         //uso st_sp1 para determinar corrientes
+//         I_filtered = MA16_U16Circular (&st_sp1, I_Sampled_Channel);
+//         // I_filtered = MAFilterFast16 (I_Sampled_Channel, v_sp1);
+// #ifdef USE_FILTER_LENGHT_8
+//         if (filter_cnt < 32)    //2ms
+//         {
+//             filter_cnt++;
+//         }
+// #endif
+// #ifdef USE_FILTER_LENGHT_16
+//         if (filter_cnt < 64)    //4ms
+//         {
+//             filter_cnt++;
+//         }
+// #endif
+//         else
+//         {
+//             filter_cnt = 0;
+// #ifdef USE_INDUCTOR_IN_CCM                
+//             I_real = I_filtered * K_current;
+//             I_real = I_real / duty_cycle;
+// #endif
+// #ifdef USE_INDUCTOR_IN_DCM                
+//             I_real = I_filtered * K_current;
+//             I_real = I_real / 100;
+// #endif
 
-            if (I_real < settings->sp_current)
-            {
-                if (duty_cycle < DUTY_95_PERCENT)
-                    duty_cycle++;
-                else
-                    resp = resp_finish;
+//             if (I_real < settings->sp_current)
+//             {
+//                 if (duty_cycle < DUTY_95_PERCENT)
+//                     duty_cycle++;
+//                 else
+//                     resp = resp_finish;
 
-                switch (settings->channel)
-                {
-                case 1:
-                    Update_PWM1(duty_cycle);
-                    break;
-                case 2:
-                    Update_PWM2(duty_cycle);                    
-                    break;
-                case 3:
-                    Update_PWM3(duty_cycle);                    
-                    break;
-                case 4:
-                    Update_PWM4(duty_cycle);                    
-                    break;
-                case 5:
-                    Update_PWM5(duty_cycle);                    
-                    break;
-                case 6:
-                    Update_PWM6(duty_cycle);                    
-                    break;
-                }
+//                 switch (settings->channel)
+//                 {
+//                 case 1:
+//                     Update_PWM1(duty_cycle);
+//                     break;
+//                 case 2:
+//                     Update_PWM2(duty_cycle);                    
+//                     break;
+//                 case 3:
+//                     Update_PWM3(duty_cycle);                    
+//                     break;
+//                 case 4:
+//                     Update_PWM4(duty_cycle);                    
+//                     break;
+//                 case 5:
+//                     Update_PWM5(duty_cycle);                    
+//                     break;
+//                 case 6:
+//                     Update_PWM6(duty_cycle);                    
+//                     break;
+//                 }
 
-                //error en corriente
-                if ((duty_cycle > 900) && (I_real < 25))
-                    resp = resp_error;
-            }
-            else
-            {
-                settings->duty_getted = duty_cycle;
-                settings->real_current_getted = I_real;
-                settings->filtered_current_getted = I_filtered;
-                resp = resp_ok;
-            }
-        }
-    }
+//                 //error en corriente
+//                 if ((duty_cycle > 900) && (I_real < 25))
+//                     resp = resp_error;
+//             }
+//             else
+//             {
+//                 settings->duty_getted = duty_cycle;
+//                 settings->real_current_getted = I_real;
+//                 settings->filtered_current_getted = I_filtered;
+//                 resp = resp_ok;
+//             }
+//         }
+//     }
     
     return resp;
 }
@@ -237,12 +237,10 @@ void UpdateDutyCycleReset (void)
 
 void PWMChannelsReset (void)
 {
-    Update_PWM1(0);
-    Update_PWM2(0);
-    Update_PWM3(0);
-    Update_PWM4(0);
-    Update_PWM5(0);
-    Update_PWM6(0);    
+    Update_PWM1_LOW(0);
+    Update_PWM2_LOW(0);
+    Update_PWM1_FAST(0);
+    Update_PWM2_FAST(0);
 }
 
 

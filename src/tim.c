@@ -308,6 +308,108 @@ void TIM_1_Init_Only_PWM (void)
 }
 
 
+void TIM_1_Init_Edge_Align (void)
+{
+    unsigned long temp;
+
+    if (!RCC_TIM1_CLK)
+        RCC_TIM1_CLK_ON;
+
+    //Configuracion del timer.
+    TIM1->CR1 = 0x00;		//clk int / 1; upcounting
+    TIM1->CR2 |= TIM_CR2_MMS_1;		//UEV -> TRG0
+
+    TIM1->SMCR = 0x0000;
+    TIM1->CCMR1 = 0x6060;			//CH2 y CH1 output PWM mode 1
+    TIM1->CCMR2 = 0x0000;
+    TIM1->CCMR1 |= TIM_CCMR1_OC1PE | TIM_CCMR1_OC2PE;
+    
+    TIM1->CCER |= TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC1E | TIM_CCER_CC1P;	//CH2 y CH1 enable on pin
+
+    TIM1->BDTR |= TIM_BDTR_MOE;
+    
+    TIM1->ARR = DUTY_100_PERCENT;
+    TIM1->CNT = 0;
+
+#if defined USE_FREQ_48KHZ
+    TIM1->PSC = 0;
+#elif defined USE_FREQ_24KHZ
+    TIM1->PSC = 1;
+#elif defined USE_FREQ_16KHZ
+    TIM1->PSC = 2;
+#else
+#error "set freq on hard.h"
+#endif
+
+
+    //Configuracion Pines
+    //Alternate Fuction
+    temp = GPIOA->AFR[1];
+    temp &= 0xFFFFFF00;    
+    temp |= 0x00000022;			//PA9 -> AF2; PA8 -> AF2
+    GPIOA->AFR[1] = temp;
+
+    TIM1->CR1 |= TIM_CR1_CEN;
+}
+
+
+void TIM_3_Init_Edge_Align (void)
+{
+    unsigned long temp;
+
+    if (!RCC_TIM3_CLK)
+        RCC_TIM3_CLK_ON;
+
+    //Configuracion del timer.
+    TIM3->CR1 = 0x00;		//clk int / 1; upcounting
+    TIM3->CR2 = 0x00;		//igual al reset
+
+    // TIM3->SMCR |= TIM_SMCR_SMS_2;			//trigger: reset mode; link timer 1
+    // TIM3->SMCR |= TIM_SMCR_SMS_2 | TIM_SMCR_SMS_1;	//trigger: trigger mode; link timer 1
+    TIM3->CCMR1 = 0x6060;      //CH1, CH2 output PWM mode 1 (channel active TIM3->CNT < TIM3->CCR1)
+    // TIM3->CCMR2 = 0x6060;      //CH3, CH4 output PWM mode 1 (channel active TIM3->CNT < TIM3->CCR1)
+    TIM3->CCMR1 |= TIM_CCMR1_OC1PE | TIM_CCMR1_OC2PE;
+    // TIM3->CCMR2 |= TIM_CCMR2_OC3PE | TIM_CCMR2_OC4PE;
+
+    // TIM3->CCER |= TIM_CCER_CC4E | TIM_CCER_CC4P | TIM_CCER_CC3E | TIM_CCER_CC3P | TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC1E | TIM_CCER_CC1P;	//CH4 CH3 CH2 y CH1 enable on pin & polarity reversal
+
+    //CH2 y CH1 enable on pin & polarity reversal    
+    TIM3->CCER |= TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC1E | TIM_CCER_CC1P;
+
+
+    TIM3->ARR = DUTY_LOW_100_PERCENT;        //tick cada 20.83us --> 48KHz
+    TIM3->CNT = 0;
+
+#if defined USE_FREQ_48KHZ
+    TIM3->PSC = 0;
+#elif defined USE_FREQ_24KHZ
+    TIM3->PSC = 1;
+#elif defined USE_FREQ_16KHZ
+    TIM3->PSC = 2;
+#else
+#error "set freq on hard.h"
+#endif
+
+
+    //Configuracion Pines
+    //Alternate Fuction
+    // temp = GPIOA->AFR[0];
+    // temp &= 0x00FFFFFF;
+    // temp |= 0x11000000;			//PA7 -> AF1; PA6 -> AF1
+    // GPIOA->AFR[0] = temp;
+
+    temp = GPIOB->AFR[0];
+    temp &= 0xFF00FF00;                 //PB5 -> AF1; PB4 -> AF1
+    temp |= 0x00110011;			//PB1 -> AF1; PB0 -> AF1
+    GPIOB->AFR[0] = temp;
+
+    // Enable timer ver UDIS
+    //TIM3->DIER |= TIM_DIER_UIE;
+    TIM3->CR1 |= TIM_CR1_CEN;
+
+}
+
+
 void TIM_3_Init (void)
 {
     unsigned long temp;
@@ -410,39 +512,39 @@ void OneShootTIM16 (unsigned short a)
 }
 
 
-void TIM17_IRQHandler (void)	
-{
-    if (TIM17->SR & TIM_SR_CC1IF)
-    {
-        Update_PWM1(0);
-        TIM17->SR &= ~TIM_SR_CC1IF;
-    }
-    else if (TIM17->SR & TIM_SR_UIF)
-    {
-        if (tim17_new_output & TIM17_NEW_CH1)
-        {
-            TIM17->CCR1 = sp1_filtered_40;
-            tim17_new_output &= ~TIM17_NEW_CH1;
-        }
+// void TIM17_IRQHandler (void)	
+// {
+//     if (TIM17->SR & TIM_SR_CC1IF)
+//     {
+//         Update_PWM1(0);
+//         TIM17->SR &= ~TIM_SR_CC1IF;
+//     }
+//     else if (TIM17->SR & TIM_SR_UIF)
+//     {
+//         if (tim17_new_output & TIM17_NEW_CH1)
+//         {
+//             TIM17->CCR1 = sp1_filtered_40;
+//             tim17_new_output &= ~TIM17_NEW_CH1;
+//         }
 
-        if (sp1_filtered_40)
-            Update_PWM1(mem_conf.pwm_chnls[0]);
+//         if (sp1_filtered_40)
+//             Update_PWM1(mem_conf.pwm_chnls[0]);
 
-        // if (sp2_filtered)
-        //     Update_PWM2(mem_conf.pwm_chnls[1]);
-        // if (sp3_filtered)
-        //     Update_PWM3(mem_conf.pwm_chnls[2]);
-        // if (sp4_filtered)
-        //     Update_PWM4(mem_conf.pwm_chnls[3]);
-        // if (sp5_filtered)
-        //     Update_PWM5(mem_conf.pwm_chnls[4]);
-        // if (sp6_filtered)
-        //     Update_PWM6(mem_conf.pwm_chnls[5]);
+//         // if (sp2_filtered)
+//         //     Update_PWM2(mem_conf.pwm_chnls[1]);
+//         // if (sp3_filtered)
+//         //     Update_PWM3(mem_conf.pwm_chnls[2]);
+//         // if (sp4_filtered)
+//         //     Update_PWM4(mem_conf.pwm_chnls[3]);
+//         // if (sp5_filtered)
+//         //     Update_PWM5(mem_conf.pwm_chnls[4]);
+//         // if (sp6_filtered)
+//         //     Update_PWM6(mem_conf.pwm_chnls[5]);
             
-        TIM17->SR &= ~TIM_SR_UIF;
-        // TIM17->SR = 0x00;
-    }
-}
+//         TIM17->SR &= ~TIM_SR_UIF;
+//         // TIM17->SR = 0x00;
+//     }
+// }
 
 
 //con 10200 me da 4.7KHz y 10200 es 255 * 40

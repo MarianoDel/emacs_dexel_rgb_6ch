@@ -24,6 +24,8 @@
 #define DUTY_100_PERCENT	1000
 #define DUTY_ALWAYS			(DUTY_100_PERCENT + 1)
 
+#define DUTY_LOW_100_PERCENT    10009
+
 #define TIM_CNTR_FOR_DMX_MAX    255
 #define TIM_CNTR_FOR_DMX_DELTA    (TIM_CNTR_FOR_DMX_MAX - TIM_CNTR_FOR_DMX_MODE_CHANGE)
 #define TIM_CNTR_FOR_DMX_MODE_CHANGE    155
@@ -71,10 +73,10 @@
 #define TIM17_NEW_CH5    0x10
 #define TIM17_NEW_CH6    0x20
 
-#define Update_PWM1(X)    Update_TIM1_CH1(X)
-#define Update_PWM2(X)    Update_TIM1_CH2(X)
-#define Update_PWM3(X)    Update_TIM3_CH1(X)
-#define Update_PWM4(X)    Update_TIM3_CH2(X)
+#define Update_PWM1_FAST(X)    Update_TIM1_CH1(X)
+#define Update_PWM2_FAST(X)    Update_TIM1_CH2(X)
+#define Update_PWM1_LOW(X)    Update_TIM3_CH1(X)
+#define Update_PWM2_LOW(X)    Update_TIM3_CH2(X)
 #define Update_PWM5(X)    Update_TIM3_CH3(X)
 #define Update_PWM6(X)    Update_TIM3_CH4(X)
 
@@ -82,8 +84,10 @@
 void TIM1_BRK_UP_TRG_COM_IRQHandler (void);
 void TIM3_IRQHandler (void);
 void TIM_3_Init(void);
+void TIM_3_Init_Edge_Align (void);
 void TIM_1_Init_Irq (void);
 void TIM_1_Init_Only_PWM (void);
+void TIM_1_Init_Edge_Align (void);
 void TIM_6_Init (void);
 void TIM14_IRQHandler (void);
 void TIM_14_Init(void);
