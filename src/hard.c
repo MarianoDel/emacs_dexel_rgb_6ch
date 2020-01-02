@@ -306,10 +306,6 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
 {
     resp_t resp = resp_continue;
     unsigned short max_current_in_channel_millis = 0;
-
-#ifdef USE_LED_CTRL_MODE_PWM
-    TIM17DisableInterrupt;
-#endif
     
     //espero tres tipos de respuesta resp_ok, resp_finish, resp_error
     //estas respuestas las traslado
@@ -385,9 +381,6 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
             }
         }
     }
-#ifdef USE_LED_CTRL_MODE_PWM
-    TIM17EnableInterrupt;
-#endif
 
     return resp;
 }

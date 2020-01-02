@@ -126,7 +126,8 @@ parameters_typedef __attribute__ ((section("memParams1"))) const parameters_type
         .pwm_chnls[0] = DUTY_70_PERCENT,
         .pwm_chnls[1] = DUTY_60_PERCENT,
         .pwm_chnls[2] = DUTY_60_PERCENT,        
-        .pwm_chnls[3] = DUTY_60_PERCENT,
+        .pwm_chnls[3] = DUTY_87_PERCENT,    //Green
+        // .pwm_chnls[3] = DUTY_75_PERCENT,    //Red        
         .pwm_chnls[4] = DUTY_60_PERCENT,
         .pwm_chnls[5] = DUTY_60_PERCENT,
         
@@ -245,10 +246,6 @@ int main(void)
 
     TIM_1_Init_Only_PWM();
     TIM_3_Init();
-
-#ifdef USE_LED_CTRL_MODE_PWM
-    TIM_17_Init();
-#endif    
 
     PWMChannelsReset();
 
@@ -1131,8 +1128,14 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
                 
         if (mem_conf.pwm_chnls[3])
         {
-            ch4_pwm = HARD_Process_New_PWM_Data (3, *(ch_val + 3));
-            ch4_pwm = MA16_U16Circular (&st_sp4, ch4_pwm);
+            unsigned int a = 0;
+            // ch4_pwm = HARD_Process_New_PWM_Data (3, *(ch_val + 3));
+            a = *(ch_val + 3) * mem_conf.pwm_chnls[3];
+            a >>= 8;
+            ch4_pwm = MA16_U16Circular (&st_sp4, (unsigned short) a);
+            if (ch4_pwm > DUTY_90_PERCENT)
+                ch4_pwm = DUTY_90_PERCENT;
+            
             Update_PWM4(ch4_pwm);
         }
 
@@ -1189,14 +1192,32 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
         //     ch3_pwm = MA16_U16Circular (&st_sp3, ch3_pwm);
         //     Update_PWM3(ch3_pwm);
         // }
-                
-        // if (mem_conf.pwm_chnls[3])
-        // {
-        //     ch4_pwm = HARD_Process_New_PWM_Data (3, *(ch_val + 3));
-        //     ch4_pwm = MA16_U16Circular (&st_sp4, ch4_pwm);
-        //     Update_PWM4(ch4_pwm);
-        // }
 
+        if (mem_conf.pwm_chnls[3])
+        {
+            unsigned int a = 0;
+
+            //si es buck directo el valor de la maxima corriente es
+            //1.3A * 0.33ohms = 0.429V en 12b del ADC = 533
+            a = *(ch_val + 3) * 533;
+            a >>= 8;
+            
+            sp1_filtered = MA16_U16Circular (&st_sp1, a);
+            pid_ch1.setpoint = sp1_filtered;
+            pid_ch1.sample = I_Channel_4;
+            d = PID_Small_Ki (&pid_ch4);
+
+            if (d > 0)
+            {
+                if (d > DUTY_95_PERCENT)
+                    d = DUTY_95_PERCENT;
+            }
+            else
+                d = 0;
+            
+            Update_PWM4(d);
+        }
+        
         // if (mem_conf.pwm_chnls[4])
         // {
         //     ch5_pwm = HARD_Process_New_PWM_Data (4, *(ch_val + 4));
@@ -1212,47 +1233,6 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
         // }      
 #endif
 
-#ifdef USE_LED_CTRL_MODE_PWM
-        //TIM17 inicializa los pwm por interrupcion
-        if (mem_conf.pwm_chnls[0])
-        {
-            sp1_filtered = MA16_U16Circular (&st_sp1, *(ch_val + 0));
-            if (sp1_filtered != sp1_last)
-            {
-                sp1_last = sp1_filtered;
-                TIM17DisableInterrupt;
-                tim17_new_output |= TIM17_NEW_CH1;
-                sp1_filtered_40 = sp1_filtered * 40;
-                TIM17EnableInterrupt;
-            }
-        }
-                
-        if (mem_conf.pwm_chnls[1])
-        {
-            sp2_filtered = MA16_U16Circular (&st_sp2, *(ch_val + 1));
-        }
-
-        if (mem_conf.pwm_chnls[2])
-        {
-            sp3_filtered = MA16_U16Circular (&st_sp3, *(ch_val + 2));            
-        }
-                
-        if (mem_conf.pwm_chnls[3])
-        {
-            sp4_filtered = MA16_U16Circular (&st_sp4, *(ch_val + 3));            
-        }
-
-        if (mem_conf.pwm_chnls[4])
-        {
-            sp5_filtered = MA16_U16Circular (&st_sp5, *(ch_val + 4));            
-        }
-
-        if (mem_conf.pwm_chnls[5])
-        {
-            sp6_filtered = MA16_U16Circular (&st_sp6, *(ch_val + 5));            
-        }
-
-#endif
         
         new_outputs = 1;
     }    //end of filters and timer

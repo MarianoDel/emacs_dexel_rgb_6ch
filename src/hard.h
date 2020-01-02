@@ -42,7 +42,7 @@
 
 // utiliza el pwm fijo para la maxima corriente ciclo a ciclo, luego arma un
 // soft-pwm con el que regula la intensidad por medio de TIM1
-#define USE_LED_CTRL_MODE_PWM
+// #define USE_LED_CTRL_MODE_PWM
 
 // debajo del valor TIM_CNTR_FOR_DMX_MODE_CHANGE usa pwm directo (continuo)
 // arriba de este valor usa soft pwm con el ultimo valor de pwm directo
@@ -52,7 +52,7 @@
 //TODO: mixed tiene un problema con delta, se mezcla en algun lado (ver int por ejemplo)
 // #define USE_PWM_DELTA_FUNCTION
 
-// #define USE_LED_CTRL_MODE_PID_MA32
+#define USE_LED_CTRL_MODE_PID_MA32
 
 //----- End of PWM Modes ---------------------
 
