@@ -120,7 +120,7 @@ parameters_typedef __attribute__ ((section("memParams1"))) const parameters_type
         .volts_ch[4] = 35,
         .volts_ch[5] = 35,
 
-        .pwm_chnls[0] = DUTY_70_PERCENT,
+        .pwm_chnls[0] = DUTY_90_PERCENT,
         .pwm_chnls[1] = DUTY_60_PERCENT,
         .pwm_chnls[2] = DUTY_60_PERCENT,        
         .pwm_chnls[3] = DUTY_60_PERCENT,
@@ -183,6 +183,7 @@ unsigned short Distance (unsigned short, unsigned short);
 // unsigned char CheckFiltersAndOffsets (void);
 unsigned char CheckFiltersAndOffsets2 ();
 void UpdateFiltersTest_Reset (void);
+void Start_PWM_Fast (void);
     
 // ------- del DMX -------
 // extern void EXTI4_15_IRQHandler(void);
@@ -240,8 +241,8 @@ int main(void)
     //pruebas hard//
     USART2Config();
 
-    TIM_1_Init_Edge_Align();
-    TIM_3_Init_Edge_Align();
+    TIM_1_Init_Edge_Align(); 
+    TIM_3_Init_Edge_Align(); 
 
     PWMChannelsReset();
 
@@ -398,6 +399,8 @@ int main(void)
                 SW_RX_TX_RE_NEG;
                 DMX_Ena();    
                 main_state = MAIN_IN_SLAVE_MODE;
+
+                Start_PWM_Fast();
                 //prueba de drift entre timers, lo tiene
                 // Update_PWM1_FAST(mem_conf.pwm_chnls[0]);
                 // Update_PWM1_LOW(5000);
@@ -649,6 +652,17 @@ unsigned short Distance (unsigned short a, unsigned short b)
 }
 
 
+//Prendo todos los PWM fast
+void Start_PWM_Fast (void)
+{
+    if (mem_conf.pwm_chnls[0])
+        Update_PWM1_FAST(mem_conf.pwm_chnls[0]);
+
+    if (mem_conf.pwm_chnls[1])
+        Update_PWM2_FAST(mem_conf.pwm_chnls[1]);
+
+}
+
 //aca filtro los offsets del pwm en vez del valor del canal
 //cada 5ms
 unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
@@ -665,12 +679,12 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
         if (mem_conf.pwm_chnls[0])
         {
             unsigned int a = 0;
-            //me aseguro de haber prendido el pwm_fast
-            Update_PWM1_FAST(mem_conf.pwm_chnls[0]);
 
             //duty_low_max * dmx / 256
-            a = *(ch_val + 0) * DUTY_LOW_100_PERCENT;
+            // a = *(ch_val + 0) * DUTY_LOW_100_PERCENT;
+            a = *(ch_val + 0) * (DUTY_LOW_100_PERCENT - DUTY_100_PERCENT / 2);            
             a >>= 8;
+            a += 127;
             sp1_filtered = MA16_U16Circular (&st_sp1, (unsigned short) a);
             Update_PWM1_LOW(sp1_filtered);
         }
@@ -678,8 +692,6 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
         if (mem_conf.pwm_chnls[1])
         {
             unsigned int a = 0;
-            //me aseguro de haber prendido el pwm_fast
-            Update_PWM2_FAST(mem_conf.pwm_chnls[1]);
 
             //duty_low_max * dmx / 256
             a = *(ch_val + 1) * DUTY_LOW_100_PERCENT;

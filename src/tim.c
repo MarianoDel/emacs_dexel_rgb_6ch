@@ -231,7 +231,10 @@ void TIM_1_Init_Irq (void)
     
     TIM1->ARR = DUTY_100_PERCENT;
     TIM1->CNT = 0;
-#if defined USE_FREQ_48KHZ
+
+#if defined USE_FREQ_72KHZ
+    TIM1->PSC = 0;
+#elif defined USE_FREQ_48KHZ
     TIM1->PSC = 0;
 #elif defined USE_FREQ_24KHZ
     TIM1->PSC = 1;
@@ -281,7 +284,9 @@ void TIM_1_Init_Only_PWM (void)
     TIM1->ARR = DUTY_100_PERCENT;
     TIM1->CNT = 0;
 
-#if defined USE_FREQ_48KHZ
+#if defined USE_FREQ_72KHZ
+    TIM1->PSC = 0;
+#elif defined USE_FREQ_48KHZ
     TIM1->PSC = 0;
 #elif defined USE_FREQ_24KHZ
     TIM1->PSC = 1;
@@ -324,14 +329,16 @@ void TIM_1_Init_Edge_Align (void)
     TIM1->CCMR2 = 0x0000;
     TIM1->CCMR1 |= TIM_CCMR1_OC1PE | TIM_CCMR1_OC2PE;
     
-    TIM1->CCER |= TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC1E | TIM_CCER_CC1P;	//CH2 y CH1 enable on pin
+    TIM1->CCER |= TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC1E;	//CH2 y CH1 enable on pin
 
     TIM1->BDTR |= TIM_BDTR_MOE;
     
     TIM1->ARR = DUTY_100_PERCENT;
     TIM1->CNT = 0;
 
-#if defined USE_FREQ_48KHZ
+#if defined USE_FREQ_72KHZ
+    TIM1->PSC = 0;
+#elif defined USE_FREQ_48KHZ
     TIM1->PSC = 0;
 #elif defined USE_FREQ_24KHZ
     TIM1->PSC = 1;
@@ -374,13 +381,15 @@ void TIM_3_Init_Edge_Align (void)
     // TIM3->CCER |= TIM_CCER_CC4E | TIM_CCER_CC4P | TIM_CCER_CC3E | TIM_CCER_CC3P | TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC1E | TIM_CCER_CC1P;	//CH4 CH3 CH2 y CH1 enable on pin & polarity reversal
 
     //CH2 y CH1 enable on pin & polarity reversal    
-    TIM3->CCER |= TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC1E | TIM_CCER_CC1P;
+    TIM3->CCER |= TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC1E;
 
 
     TIM3->ARR = DUTY_LOW_100_PERCENT;        //tick cada 20.83us --> 48KHz
     TIM3->CNT = 0;
 
-#if defined USE_FREQ_48KHZ
+#if defined USE_FREQ_72KHZ
+    TIM1->PSC = 0;
+#elif defined USE_FREQ_48KHZ
     TIM3->PSC = 0;
 #elif defined USE_FREQ_24KHZ
     TIM3->PSC = 1;
@@ -434,7 +443,9 @@ void TIM_3_Init (void)
     TIM3->ARR = DUTY_100_PERCENT;        //tick cada 20.83us --> 48KHz
     TIM3->CNT = 0;
 
-#if defined USE_FREQ_48KHZ
+#if defined USE_FREQ_72KHZ
+    TIM3->PSC = 0;
+#elif defined USE_FREQ_48KHZ
     TIM3->PSC = 0;
 #elif defined USE_FREQ_24KHZ
     TIM3->PSC = 1;

@@ -11,20 +11,34 @@
 #ifndef _TIM_H_
 #define _TIM_H_
 
+#include "hard.h"
+
 //--- Exported types ---//
 //--- Exported constants ---//
+#ifdef USE_FREQ_48KHZ
 #define DUTY_TRANSISTORS_ON	10
 #define DUTY_50_PERCENT		500
 #define DUTY_60_PERCENT		600
 #define DUTY_65_PERCENT		650
 #define DUTY_70_PERCENT		700
 #define DUTY_80_PERCENT		800
+#define DUTY_85_PERCENT		850
 #define DUTY_90_PERCENT		900
 #define DUTY_95_PERCENT		950
-#define DUTY_100_PERCENT	1000
+#define DUTY_100_PERCENT	999
+#endif
+#ifdef USE_FREQ_72KHZ
+#define DUTY_TRANSISTORS_ON	10
+#define DUTY_50_PERCENT		333
+#define DUTY_60_PERCENT		400
+#define DUTY_90_PERCENT		600
+#define DUTY_95_PERCENT		633
+#define DUTY_100_PERCENT	666
+#endif
 #define DUTY_ALWAYS			(DUTY_100_PERCENT + 1)
 
-#define DUTY_LOW_100_PERCENT    10009
+#define DUTY_LOW_TO_DUTY_FAST    10
+#define DUTY_LOW_100_PERCENT    (DUTY_100_PERCENT * DUTY_LOW_TO_DUTY_FAST + DUTY_LOW_TO_DUTY_FAST - 1)
 
 #define TIM_CNTR_FOR_DMX_MAX    255
 #define TIM_CNTR_FOR_DMX_DELTA    (TIM_CNTR_FOR_DMX_MAX - TIM_CNTR_FOR_DMX_MODE_CHANGE)

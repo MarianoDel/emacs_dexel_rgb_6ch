@@ -68,8 +68,10 @@ void GPIO_Config (void)
     GPIOA->MODER = temp;
 
     temp = GPIOA->OTYPER;	//1 bit por pin
-    temp &= 0xFFFFFCFF;         //PA8 PA9 open drain
-    temp |= 0x00000300;
+    // temp &= 0xFFFFFCFF;         //PA8 PA9 open drain
+    // temp |= 0x00000300;
+    temp &= 0xFFFFFDFF;         //PA9 open drain
+    temp |= 0x00000200;
     GPIOA->OTYPER = temp;
 
     temp = GPIOA->OSPEEDR;	//2 bits por pin
@@ -96,8 +98,10 @@ void GPIO_Config (void)
     GPIOB->MODER = temp;
 
     temp = GPIOB->OTYPER;	//1 bit por pin
-    temp &= 0xFFFFFFCC;        //PB1 PB0 open drain; PB4 - PB5 open drain
-    temp |= 0x00000033;
+    // temp &= 0xFFFFFFCC;        //PB1 PB0 open drain; PB4 - PB5 open drain
+    // temp |= 0x00000033;
+    temp &= 0xFFFFFFDC;        //PB1 PB0 open drain; PB5 open drain
+    temp |= 0x00000023;
     GPIOB->OTYPER = temp;
 
     temp = GPIOB->OSPEEDR;	//2 bits por pin

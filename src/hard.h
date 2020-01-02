@@ -32,7 +32,8 @@
 #define USE_INDUCTOR_IN_CCM
 
 //----- PWM Frequency ------------------------
-#define USE_FREQ_48KHZ
+#define USE_FREQ_72KHZ
+// #define USE_FREQ_48KHZ
 // #define USE_FREQ_24KHZ
 // #define USE_FREQ_16KHZ
 
