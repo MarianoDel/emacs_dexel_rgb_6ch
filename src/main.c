@@ -1128,14 +1128,8 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
                 
         if (mem_conf.pwm_chnls[3])
         {
-            unsigned int a = 0;
-            // ch4_pwm = HARD_Process_New_PWM_Data (3, *(ch_val + 3));
-            a = *(ch_val + 3) * mem_conf.pwm_chnls[3];
-            a >>= 8;
-            ch4_pwm = MA16_U16Circular (&st_sp4, (unsigned short) a);
-            if (ch4_pwm > DUTY_90_PERCENT)
-                ch4_pwm = DUTY_90_PERCENT;
-            
+            ch4_pwm = HARD_Process_New_PWM_Data (3, *(ch_val + 3));
+            ch4_pwm = MA16_U16Circular (&st_sp4, ch4_pwm);
             Update_PWM4(ch4_pwm);
         }
 

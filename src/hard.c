@@ -39,7 +39,7 @@ unsigned short s2 = 0;
 #define sequence_ready_reset   (DMA1->IFCR = DMA_ISR_TCIF1)
 
 /* Module Private Function Declarations ---------------------------------------*/ 
-unsigned char GetProcessedSegment (unsigned short, unsigned short *, unsigned char);
+unsigned char GetProcessedSegment (unsigned char);
 
 
 /* Module Functions Definitions -----------------------------------------------*/
@@ -113,6 +113,10 @@ void UpdateSwitches (void)
 //2A mide 2V/3.67 = 545mV
 //545mV -> 676 adc; 2000[mA] / 676 = 2.96
 #define K_current    296
+#elif defined USE_INDUCTOR_REAL_MEAS
+//mide bien la corriente, multiplico por Rsense
+//el valor es 2.44 multiplico por 244 y /100
+#define K_current    244
 #else
 #message "Select current mode in hard.h"
 #endif
@@ -177,10 +181,14 @@ resp_t UpdateDutyCycle (led_current_settings_t * settings)
             I_real = I_filtered * K_current;
             I_real = I_real / 100;
 #endif
+#ifdef USE_INDUCTOR_REAL_MEAS
+            I_real = I_filtered * K_current;
+            I_real = I_real / 100;
+#endif
 
             if (I_real < settings->sp_current)
             {
-                if (duty_cycle < DUTY_95_PERCENT)
+                if (duty_cycle < DUTY_MAX_ALLOWED)
                     duty_cycle++;
                 else
                     resp = resp_finish;
@@ -207,8 +215,8 @@ resp_t UpdateDutyCycle (led_current_settings_t * settings)
                     break;
                 }
 
-                //error en corriente
-                if ((duty_cycle > 900) && (I_real < 25))
+                //error en corriente, duty grande sin corriente
+                if ((duty_cycle > DUTY_90_PERCENT) && (I_real < 25))
                     resp = resp_error;
             }
             else
@@ -283,18 +291,18 @@ unsigned char DMXMapping (unsigned char to_map)
 
 #ifdef LINEAR_SEGMENT_8
 #define SEGMENTS_QTTY    8
-unsigned short const_segments[SEGMENTS_QTTY] = {31, 63, 95, 127, 159, 191, 223, 255};
+unsigned char const_segments[SEGMENTS_QTTY] = {31, 63, 95, 127, 159, 191, 223, 255};
 #define SEGMENTS_VALUE    32
 #endif
 #ifdef LINEAR_SEGMENT_16    
 #define SEGMENTS_QTTY    16
-unsigned short const_segments[SEGMENTS_QTTY] = {15, 31, 47, 63, 79, 95, 111, 127,
+unsigned char const_segments[SEGMENTS_QTTY] = {15, 31, 47, 63, 79, 95, 111, 127,
                                                 143, 159, 175, 191, 207, 223, 239, 255};
 #define SEGMENTS_VALUE    16
 #endif
 #ifdef LINEAR_SEGMENT_32
 #define SEGMENTS_QTTY    32
-unsigned short const_segments[SEGMENTS_QTTY] = {7, 15, 23, 31, 39, 47, 55, 63,
+unsigned char const_segments[SEGMENTS_QTTY] = {7, 15, 23, 31, 39, 47, 55, 63,
                                                 71, 79, 87, 95, 103, 111, 119, 127,
                                                 135, 143, 151, 159, 167, 175, 183, 191,
                                                 199, 207, 215, 223, 231, 239, 247, 255};
@@ -386,47 +394,46 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
 }
 
 //recibe canales del 0 al 5
-unsigned short HARD_Process_New_PWM_Data (unsigned char ch, unsigned char data_filtered)
+unsigned short HARD_Process_New_PWM_Data (unsigned char ch, unsigned char dmx_data)
 {
     unsigned char segment_number = 0;
-    unsigned short dummy = 0;
+    unsigned int dummy = 0;
     unsigned short pwm_output = 0;
     unsigned short * pseg;
 
                     
     //mapeo los segmentos
-    segment_number = GetProcessedSegment(data_filtered, const_segments, SEGMENTS_QTTY);
+    segment_number = GetProcessedSegment(dmx_data);
 
     //apunto a los valores medidos y guardados en memoria
     pseg = &mem_conf.segments[ch][0];
                     
     if (segment_number)    //todos los segmentos mayores a 0 tienen offset
     {
-        dummy = data_filtered - segment_number * SEGMENTS_VALUE;
+        dummy = dmx_data - segment_number * SEGMENTS_VALUE;
         dummy = dummy * (*(pseg + segment_number) - *(pseg + segment_number - 1));
         dummy /= SEGMENTS_VALUE;
         pwm_output = dummy + *(pseg + segment_number - 1);
     }
     else    //el segmento 0 va sin offset
     {
-        dummy = data_filtered * *pseg;
+        dummy = dmx_data * *pseg;
         dummy /= SEGMENTS_VALUE;
-        pwm_output = dummy;
+        pwm_output = (unsigned short) dummy;
     }
 
-    if (pwm_output > MAX_DUTY_CYCLE)
-        pwm_output = MAX_DUTY_CYCLE;
+    if (pwm_output > DUTY_MAX_ALLOWED)
+        pwm_output = DUTY_MAX_ALLOWED;
     
     return pwm_output;
 }
 
-unsigned char GetProcessedSegment (unsigned short check_segment_by_value,
-                                   unsigned short * s,
-                                   unsigned char seg_qtty)
+unsigned char GetProcessedSegment (unsigned char check_segment_by_value)
 {
-    unsigned char i;
+    unsigned char * s;
+    s = const_segments;
     
-    for (i = seg_qtty; i > 0; i--)
+    for (unsigned char i = SEGMENTS_QTTY; i > 0; i--)
     {
         if (check_segment_by_value > *(s + i - 1))
             return i;

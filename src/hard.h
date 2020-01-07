@@ -29,7 +29,8 @@
 
 #define USE_OVERTEMP_PROT
 // #define USE_INDUCTOR_IN_DCM
-#define USE_INDUCTOR_IN_CCM
+// #define USE_INDUCTOR_IN_CCM
+#define USE_INDUCTOR_REAL_MEAS
 
 //----- PWM Frequency ------------------------
 #define USE_FREQ_48KHZ
@@ -38,7 +39,7 @@
 
 //----- PWM Modes ----------------------------
 // lo que llega por dmx se escala y se manda al pwm (funciona mas parejo en DCM)
-// #define USE_LED_CTRL_MODE_CONTINUOS
+#define USE_LED_CTRL_MODE_CONTINUOS
 
 // utiliza el pwm fijo para la maxima corriente ciclo a ciclo, luego arma un
 // soft-pwm con el que regula la intensidad por medio de TIM1
@@ -52,7 +53,7 @@
 //TODO: mixed tiene un problema con delta, se mezcla en algun lado (ver int por ejemplo)
 // #define USE_PWM_DELTA_FUNCTION
 
-#define USE_LED_CTRL_MODE_PID_MA32
+// #define USE_LED_CTRL_MODE_PID_MA32
 
 //----- End of PWM Modes ---------------------
 
@@ -116,7 +117,6 @@
 #define MIN_MAX_POWER    40
 #define MAX_MAX_POWER    100
 
-#define MAX_DUTY_CYCLE    DUTY_95_PERCENT
 
 //---- Configuration for Firmware-Programs --------
 

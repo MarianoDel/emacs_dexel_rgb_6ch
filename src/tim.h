@@ -13,6 +13,7 @@
 
 //--- Exported types ---//
 //--- Exported constants ---//
+#define DUTY_MAX_ALLOWED    DUTY_95_PERCENT
 #define DUTY_TRANSISTORS_ON	10
 #define DUTY_50_PERCENT		500
 #define DUTY_60_PERCENT		600
