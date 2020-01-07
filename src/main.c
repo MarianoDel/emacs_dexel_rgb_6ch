@@ -16,6 +16,7 @@
 
 #include "core_cm0.h"
 #include "adc.h"
+#include "dma.h"
 #include "tim.h"
 
 #include "comm.h"
@@ -182,7 +183,6 @@ unsigned char need_to_save = 0;
 //--- FUNCIONES DEL MODULO ---//
 extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
-void DMAConfig(void);
 unsigned short Distance (unsigned short, unsigned short);
 // unsigned char CheckFiltersAndOffsets (void);
 unsigned char CheckFiltersAndOffsets2 ();
@@ -1002,35 +1002,6 @@ int main(void)
 }
 //--- End of Main ---//
 
-void DMAConfig(void)
-{
-    /* DMA1 clock enable */
-    if (!RCC_DMA_CLK)
-        RCC_DMA_CLK_ON;
-
-    //Configuro el control del DMA CH1
-    DMA1_Channel1->CCR = 0;
-    //priority very high
-    //memory halfword
-    //peripheral halfword
-    //increment memory
-    DMA1_Channel1->CCR |= DMA_CCR_PL | DMA_CCR_MSIZE_0 | DMA_CCR_PSIZE_0 | DMA_CCR_MINC;
-    //DMA1_Channel1->CCR |= DMA_Mode_Circular | DMA_CCR_TCIE;
-    //cicular mode
-    DMA1_Channel1->CCR |= DMA_CCR_CIRC;
-
-    //Tamaño del buffer a transmitir
-    DMA1_Channel1->CNDTR = ADC_CHANNEL_QUANTITY;
-
-    //Address del periferico
-    DMA1_Channel1->CPAR = (uint32_t) &ADC1->DR;
-
-    //Address en memoria
-    DMA1_Channel1->CMAR = (uint32_t) &adc_ch[0];
-
-    //Enable
-    //DMA1_Channel1->CCR |= DMA_CCR_EN;
-}
 
 void TimingDelay_Decrement(void)
 {
