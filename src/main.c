@@ -30,6 +30,8 @@
 #include "programs_functions.h"
 
 #include "flash_program.h"
+#include "i2c.h"
+#include "mainmenu.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -218,6 +220,9 @@ int main(void)
 
     unsigned char ch_values [6] = { 0 };
 
+#ifdef HARD_TEST_MODE_DO_NOTHING
+    while (1);
+#endif
     //GPIO Configuration.
     GPIO_Config();
 
@@ -248,6 +253,45 @@ int main(void)
     TIM_3_Init();
 
     PWMChannelsReset();
+
+#ifdef HARD_TEST_MODE_FAN
+    while (1)
+    {
+        CTRL_FAN_ON;
+        Wait_ms(1000);
+        CTRL_FAN_OFF;
+        Wait_ms(2000);
+    }
+#endif
+
+#ifdef HARD_TEST_MODE_ONLY_OLED
+    resp = resp_ok;
+    I2C1_Init();
+    Wait_ms(100);
+    MainMenu_Init();
+
+    mm_action_t action = do_nothing;
+    while (1)
+    {
+        action = do_nothing;
+
+        // Check switches first
+        if ((S1_PIN) && (!timer_standby))
+        {
+            timer_standby = 200;
+            action = selection_up;
+        }
+
+        resp = MainMenu_Update(action);
+                
+
+        if (resp == resp_save)
+        {
+            
+        }
+    }
+
+#endif
 
 
     //-- Prueba con ADC INT ----------
@@ -746,10 +790,12 @@ int main(void)
     memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
 
     //-- Para Debug Test inicial de corriente
-    // unsigned short * p_seg = &mem_conf.segments[0][0];
-    // led_current_settings_t led_curr;
+#ifdef ALWAYS_CHECK_CURRENT_ON_INIT
+    unsigned short * p_seg = &mem_conf.segments[0][0];
+    led_current_settings_t led_curr;
 
-    // HARD_Find_Current_Segments(&led_curr, p_seg);
+    HARD_Find_Current_Segments(&led_curr, p_seg);
+#endif
     //-- FIN Para Debug Test inicial de corriente    
 
     //mando info al puerto

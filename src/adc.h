@@ -31,8 +31,10 @@
 #define I_Channel_4	      	adc_ch[3]
 #define I_Channel_5	      	adc_ch[4]
 #define I_Channel_6	      	adc_ch[5]
-#define Temp_Channel	      	adc_ch[6]
-#define ADC_CHANNEL_QUANTITY         7
+#define V_Sense_48V	      	adc_ch[6]
+#define Temp_Channel	      	adc_ch[7]
+
+#define ADC_CHANNEL_QUANTITY         8
 #define ADC_LAST_CHANNEL_QUANTITY    (ADC_CHANNEL_QUANTITY - 1)
 //----------- End of ADC Defines --------------//
 

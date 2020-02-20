@@ -92,6 +92,7 @@ SRC += ./src/dsp.c
 SRC += ./src/hard.c
 SRC += ./src/utils.c
 SRC += ./src/lcd.c
+SRC += ./src/i2c.c
 SRC += ./src/dmx_transceiver.c
 SRC += ./src/modo_slave.c
 SRC += ./src/lcd_utils.c
@@ -99,6 +100,9 @@ SRC += ./src/flash_program.c
 SRC += ./src/programs_functions.c
 SRC += ./src/menues.c
 SRC += ./src/power_control.c
+SRC += ./src/ssd1306.c
+SRC += ./src/mainmenu.c
+
 ## System Support
 #SRC += ./cmsis_boot/system_stm32f0xx.c
 #SRC += $(DISCOVERY)/stm32f0_discovery.c

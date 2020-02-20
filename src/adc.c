@@ -88,8 +88,8 @@ void AdcConfig (void)
     //ADC1->SMPR |= ADC_SampleTime_1_5Cycles;			//20.7 de salida son SP 420 (regula mal)
 
     //set channel selection
-    ADC1->CHSELR |= ADC_Channel_0 | ADC_Channel_1 | ADC_Channel_4 | ADC_Channel_5;
-    ADC1->CHSELR |= ADC_Channel_6 | ADC_Channel_7 | ADC_Channel_14;
+    ADC1->CHSELR |= ADC_Channel_0 | ADC_Channel_1 | ADC_Channel_4 |
+        ADC_Channel_6 | ADC_Channel_10 | ADC_Channel_11 | ADC_Channel_12 | ADC_Channel_14;
     
 #ifdef ADC_WITH_INT
     //set interrupts

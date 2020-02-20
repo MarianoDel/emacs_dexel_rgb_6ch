@@ -1,0 +1,249 @@
+//---------------------------------------------
+// ## @Author: Med
+// ## @Editor: Emacs - ggtags
+// ## @TAGS:   Global
+// ## @CPU:    STM32F303
+// ##
+// #### I2C.C #################################
+//---------------------------------------------
+
+// Includes --------------------------------------------------------------------
+#include "i2c.h"
+#include "stm32f0xx.h"
+#include "hard.h"
+
+
+// Externals -------------------------------------------------------------------
+
+// Globals ---------------------------------------------------------------------
+
+// Module Private Functions ----------------------------------------------------
+void I2C1_ChangeNBytes (unsigned char);
+void I2C1_ChangeSlaveAddr (unsigned char);
+void I2C1_SendLastChunk (unsigned char *, unsigned char);
+void I2C1_SendMiddleChunk (unsigned char *, unsigned char);
+
+
+#define I2C1_AUTOEND    do { I2C1->CR2 &= ~(I2C_CR2_RELOAD);\
+                             I2C1->CR2 |= I2C_CR2_AUTOEND;\
+                           } while (0)
+      
+#define I2C1_RELOAD    do { I2C1->CR2 &= ~(I2C_CR2_AUTOEND);\
+                            I2C1->CR2 |= I2C_CR2_RELOAD;\
+                          } while (0)
+       
+
+// Module Funtions -------------------------------------------------------------
+void I2C1_Init (void)
+{
+    // Clock for Peripheral
+    if (!RCC_I2C1_CLK)
+        RCC_I2C1_CLKEN;
+
+    // Clock switch HSI to SYSCLK
+    // RCC->CFGR3 |= RCC_CFGR3_I2C1SW;
+
+    // //---- Acomodo punteros ----
+    // ptx1 = tx1buff;
+    // ptx1_pckt_index = tx1buff;
+    // prx1 = rx1buff;
+
+    // Speed and Port options
+    I2C1->TIMINGR = 0x00201D2B;    //for HSI
+    I2C1->CR1 = I2C_CR1_PE;
+    I2C1->CR2 = I2C_CR2_AUTOEND |
+        (2 << I2C_CR2_NBYTES_Pos) |
+        (I2C_ADDRESS_SLV << 1);    //el addr + 1 byte
+    // I2C1->CR2 = I2C_CR2_AUTOEND | (I2C_ADDRESS_SLV << 1);    //pruebo solo address
+
+    // Output current for Fast mode + (Fm+)
+    //SYSCFG_CFGR1
+
+    // Override Gpios Alternative functions
+    // PB8 SCL/D15; PB9 SDA/D14 -> AF4
+    unsigned int temp = 0;
+    temp = GPIOB->AFR[1];
+    temp &= 0xFFFFFF00;
+    temp |= 0x00000044;    //PB9 -> AF4 PA8 -> AF4
+    GPIOB->AFR[1] = temp;
+
+#ifdef I2C_WITH_INTS
+    // Int and priority
+    NVIC_EnableIRQ(I2C1_EV_IRQn);
+    NVIC_SetPriority(I2C1_EV_IRQn, 8);
+    NVIC_EnableIRQ(I2C1_ER_IRQn);
+    NVIC_SetPriority(I2C1_ER_IRQn, 8);
+#endif
+}
+
+
+void I2C1_SendByteTest (unsigned char data)
+{
+    //check empty
+    if (!(I2C1->CR2 & I2C_CR2_START))
+    {
+        I2C1_ChangeSlaveAddr(0x3C);
+        I2C1_ChangeNBytes(1);
+        if ((I2C1->ISR & I2C_ISR_TXE) == I2C_ISR_TXE)
+        {
+            I2C1->TXDR = data;
+            I2C1->CR2 |= I2C_CR2_START;
+        }
+    }
+}
+
+
+void I2C1_SendByteTest2 (unsigned char data)
+{
+    //check empty
+    if ((I2C1->ISR & I2C_ISR_TXE) == I2C_ISR_TXE)
+    {
+        I2C1->TXDR = data;
+        I2C1->CR2 |= I2C_CR2_START;
+    }
+
+    while (!(I2C1->ISR & I2C_ISR_TXE));
+    I2C1->TXDR = data - 1;
+}
+
+
+void I2C1_SendByte (unsigned char addr, unsigned char data)
+{
+    //check empty
+    if (!(I2C1->CR2 & I2C_CR2_START))
+    {
+        I2C1_ChangeNBytes(1);
+        I2C1_ChangeSlaveAddr(addr);
+        if ((I2C1->ISR & I2C_ISR_TXE) == I2C_ISR_TXE)
+        {
+            I2C1->TXDR = data;
+            I2C1->CR2 |= I2C_CR2_START;
+        }
+    }
+}
+
+
+void I2C1_ChangeSlaveAddr (unsigned char addr)
+{
+    unsigned int temp;
+    temp = I2C1->CR2;
+    temp &= ~(I2C_CR2_SADD_Msk);
+    temp |= (addr << 1);
+    I2C1->CR2 = temp;
+}
+
+
+void I2C1_ChangeNBytes (unsigned char size)
+{
+    unsigned int temp;
+    temp = I2C1->CR2;
+    temp &= ~(I2C_CR2_NBYTES_Msk);
+    temp |= (size << I2C_CR2_NBYTES_Pos);
+    I2C1->CR2 = temp;
+}
+
+
+void I2C1_SendAddr (unsigned char addr)
+{    
+    //check START ready
+    if (!(I2C1->CR2 & I2C_CR2_START))
+    {
+        I2C1_ChangeNBytes(0);
+        I2C1_ChangeSlaveAddr(addr);
+
+        I2C1->CR2 |= I2C_CR2_START;
+    }
+}
+
+
+// Send multiple bytes to a slave address
+void I2C1_SendMultiByte (unsigned char *pdata, unsigned char addr, unsigned short size)
+{
+    //check START ready
+    if (!(I2C1->CR2 & I2C_CR2_START))
+    {
+        if (size > 255)
+        {
+            unsigned short offset = 0;
+            
+            I2C1_ChangeNBytes(255);
+            I2C1_RELOAD;
+            I2C1_ChangeSlaveAddr(addr);
+            I2C1->CR2 |= I2C_CR2_START;
+
+            while (size > (offset + 255))
+            {
+                I2C1_SendMiddleChunk((pdata + offset), 255);
+                offset += 255;
+                if (size > (offset + 255))
+                {
+                    I2C1_ChangeNBytes(255);
+                    I2C1_RELOAD;
+                }
+            }
+
+            //envio ultimo chunk fig 310 pag 843
+            unsigned char bytes_left = size - offset;
+            I2C1_ChangeNBytes(bytes_left);
+            I2C1_AUTOEND;
+            I2C1_SendLastChunk((pdata + offset), bytes_left);
+            // I2C1_SendLastChunk_e((pdata + offset), bytes_left);            
+        }
+        else
+        {
+            //fig 309 pag 842
+            I2C1_ChangeNBytes(size);
+            I2C1_AUTOEND;
+            I2C1_ChangeSlaveAddr(addr);
+            I2C1->CR2 |= I2C_CR2_START;
+            I2C1_SendLastChunk(pdata, (unsigned char) size);
+        }
+    }
+}
+
+
+void I2C1_SendMiddleChunk (unsigned char *pdata, unsigned char size)
+{
+    unsigned char i = 0;
+
+    while (i < size)
+    {
+        if (I2C1->ISR & I2C_ISR_TXIS)
+        {
+            I2C1->TXDR = *(pdata + i);
+            i++;
+        }
+    }
+
+    while (!(I2C1->ISR & I2C_ISR_TCR));
+}
+
+
+//TODO: chequear tambien NACK
+void I2C1_SendLastChunk (unsigned char *pdata, unsigned char size)
+{
+    unsigned char i = 0;
+
+    //clear the stop
+    I2C1->ICR |= I2C_ICR_STOPCF;
+    while (i < size)
+    {
+        if (I2C1->ISR & I2C_ISR_TXIS)
+        {
+            I2C1->TXDR = *(pdata + i);
+            i++;
+        }
+    }
+
+    //espero final de transmision
+    while (!(I2C1->ISR & I2C_ISR_STOPF));
+    
+    // si termino con AUTOEND no recibo TC
+    // while (!(I2C1->ISR & I2C_ISR_TC));
+    // i2 = I2C1->CR2;
+    // i2 += 1;
+}
+
+
+
+//--- end of file ---//
