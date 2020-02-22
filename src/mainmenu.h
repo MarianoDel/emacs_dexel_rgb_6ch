@@ -15,18 +15,10 @@
 
 
 // Common Defines --------------------------------------------------------------
-typedef enum {
-    do_nothing = 0,
-    selection_up,
-    selection_dwn,
-    selection_enter,
-    selection_back
-
-} mm_action_t;
     
 
 // Module Exported Functions ---------------------------------------------------
-resp_t MainMenu_Update (mm_action_t);
+resp_t MainMenu_Update (sw_actions_t);
 void MainMenu_Init (void);
 
 

@@ -34,6 +34,9 @@ extern unsigned char data512[];
 //para los switches
 unsigned short s1 = 0;
 unsigned short s2 = 0;
+unsigned short s3 = 0;
+unsigned short s4 = 0;
+unsigned char s_wait_end = 0;
 
 #define sequence_ready         (DMA1->ISR & DMA_ISR_TCIF1)
 #define sequence_ready_reset   (DMA1->IFCR = DMA_ISR_TCIF1)
@@ -43,6 +46,44 @@ unsigned char GetProcessedSegment (unsigned char);
 
 
 /* Module Functions Definitions -----------------------------------------------*/
+sw_actions_t CheckSW (void)
+{
+    sw_actions_t action = do_nothing;
+    
+    if (CheckS1() && (!s_wait_end))
+    {
+        action = selection_back;
+        s_wait_end = 1;
+    }
+
+    if (CheckS2() && (!s_wait_end))
+    {
+        action = selection_enter;
+        s_wait_end = 1;
+    }
+
+    if (CheckS3() && (!s_wait_end))    //ok
+    {
+        action = selection_up;
+        s_wait_end = 1;
+    }
+
+    if (CheckS4() && (!s_wait_end))    //ok
+    {
+        action = selection_dwn;
+        s_wait_end = 1;
+    }
+
+    if (!CheckS1() &&
+        !CheckS2() &&
+        !CheckS3() &&
+        !CheckS4())
+        s_wait_end = 0;
+
+    return action;    
+}
+
+
 unsigned char CheckS1 (void)	//cada check tiene 10ms
 {
     if (s1 > SWITCHES_THRESHOLD_FULL)
@@ -71,6 +112,37 @@ unsigned char CheckS2 (void)
     return S_NO;
 }
 
+
+unsigned char CheckS3 (void)
+{
+    if (s3 > SWITCHES_THRESHOLD_FULL)
+        return S_FULL;
+
+    if (s3 > SWITCHES_THRESHOLD_HALF)
+        return S_HALF;
+
+    if (s3 > SWITCHES_THRESHOLD_MIN)
+        return S_MIN;
+
+    return S_NO;
+}
+
+
+unsigned char CheckS4 (void)
+{
+    if (s4 > SWITCHES_THRESHOLD_FULL)
+        return S_FULL;
+
+    if (s4 > SWITCHES_THRESHOLD_HALF)
+        return S_HALF;
+
+    if (s4 > SWITCHES_THRESHOLD_MIN)
+        return S_MIN;
+
+    return S_NO;
+}
+
+
 void UpdateSwitches (void)
 {
     //revisa los switches cada 10ms
@@ -94,6 +166,24 @@ void UpdateSwitches (void)
         else if (s2)
             s2--;
 
+        if (S3_PIN)
+            s3++;
+        else if (s3 > 50)
+            s3 -= 50;
+        else if (s3 > 10)
+            s3 -= 5;
+        else if (s3)
+            s3--;
+
+        if (S4_PIN)
+            s4++;
+        else if (s4 > 50)
+            s4 -= 50;
+        else if (s4 > 10)
+            s4 -= 5;
+        else if (s4)
+            s4--;
+        
         switches_timer = SWITCHES_TIMER_RELOAD;
     }
 }

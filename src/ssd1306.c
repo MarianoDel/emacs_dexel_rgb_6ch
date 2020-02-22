@@ -85,7 +85,13 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 // static uint32 display_write_buf( uint8_t* buf, uint16_t size );
+#if defined I2C_USE_I2C1
 #define display_write_buf(X,Y)    I2C1_SendMultiByte((X), I2C_ADDRESS_SLV, (Y))
+#elif defined I2C_USE_I2C2
+#define display_write_buf(X,Y)    I2C2_SendMultiByte((X), I2C_ADDRESS_SLV, (Y))
+#else
+#error "Select what I2C to use on i2c.h"
+#endif
 
 void gfx_init( int16_t width, int16_t height );
 

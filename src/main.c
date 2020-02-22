@@ -226,6 +226,10 @@ int main(void)
     //GPIO Configuration.
     GPIO_Config();
 
+#ifdef HARD_TEST_MODE_DO_NOTHING_AFTER_GPIOS
+    while (1);
+#endif
+    
     //ACTIVAR SYSTICK TIMER
     if (SysTick_Config(48000))
     {
@@ -266,29 +270,27 @@ int main(void)
 
 #ifdef HARD_TEST_MODE_ONLY_OLED
     resp = resp_ok;
-    I2C1_Init();
+    I2C2_Init();
     Wait_ms(100);
     MainMenu_Init();
 
-    mm_action_t action = do_nothing;
+    sw_actions_t action = do_nothing;
     while (1)
     {
         action = do_nothing;
 
         // Check switches first
-        if ((S1_PIN) && (!timer_standby))
-        {
-            timer_standby = 200;
-            action = selection_up;
-        }
-
+        action = CheckSW();        
         resp = MainMenu_Update(action);
-                
+
+        
 
         if (resp == resp_save)
         {
             
         }
+
+        UpdateSwitches();
     }
 
 #endif

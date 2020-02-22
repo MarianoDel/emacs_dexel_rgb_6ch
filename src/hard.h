@@ -23,7 +23,8 @@
 // #define SOFTWARE_VERSION_1_1
 
 // #define HARD_TEST_MODE_FAN
-// #define HARD_TEST_MODE_DO_NOTHING    //no hace nada todos los pines HiZ
+// #define HARD_TEST_MODE_DO_NOTHING    //no hace nada, todos los pines HiZ
+// #define HARD_TEST_MODE_DO_NOTHING_AFTER_GPIOS    //no hace nada, todos los pines configurados
 #define HARD_TEST_MODE_ONLY_OLED
 
 //---- Features Configuration ----------------
@@ -191,8 +192,11 @@
 //GPIOB pin11    NC
 //GPIOB pin12    NC
 //GPIOB pin13    NC
-//GPIOB pin14    NC
-//GPIOB pin15    NC
+//GPIOB pin14
+#define S4_PIN ((GPIOB->IDR & 0x8000) == 0)
+
+//GPIOB pin15
+#define S3_PIN ((GPIOB->IDR & 0x4000) == 0)
 
 //GPIOC pin6    NC
 //GPIOC pin7    NC
@@ -376,7 +380,7 @@
 #define DMX_DISPLAY_SHOW_TIMEOUT		30000	//30 segundos
 
 
-//ESTADOS DE LOS SWITCHES
+// Switches filter states
 typedef enum
 {    
     S_NO = 0,
@@ -384,6 +388,16 @@ typedef enum
     S_HALF,
     S_FULL
 } sw_state_t;
+
+// Switches actions
+typedef enum {
+    do_nothing = 0,
+    selection_up,
+    selection_dwn,
+    selection_enter,
+    selection_back
+
+} sw_actions_t;
 
 //ESTADOS DEL MAIN
 typedef enum
@@ -432,6 +446,9 @@ typedef struct {
 /* Module Functions ------------------------------------------------------------*/
 sw_state_t CheckS1 (void);
 sw_state_t CheckS2 (void);
+sw_state_t CheckS3 (void);
+sw_state_t CheckS4 (void);
+sw_actions_t CheckSW (void);
 void UpdateSwitches (void);
 resp_t UpdateDutyCycle (led_current_settings_t *);
 void UpdateDutyCycleReset (void);
