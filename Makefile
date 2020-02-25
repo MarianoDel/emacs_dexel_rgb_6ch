@@ -102,6 +102,7 @@ SRC += ./src/menues.c
 SRC += ./src/power_control.c
 SRC += ./src/ssd1306.c
 SRC += ./src/mainmenu.c
+SRC += ./src/screen.c
 
 ## System Support
 #SRC += ./cmsis_boot/system_stm32f0xx.c

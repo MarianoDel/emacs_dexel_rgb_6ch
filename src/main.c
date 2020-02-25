@@ -32,6 +32,7 @@
 #include "flash_program.h"
 #include "i2c.h"
 #include "mainmenu.h"
+#include "screen.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -113,8 +114,9 @@ parameters_typedef __attribute__ ((section("memParams1"))) const parameters_type
         .dmx_channel_quantity = 6,
         .dmx_grandmaster = 0,        
         
-        .max_current_int = 2,
-        .max_current_dec = 0,
+        // .max_current_int = 2,
+        // .max_current_dec = 0,
+        .max_current_ma = 2000,
 
         .volts_in_mains = 35,
         .max_power = 40,
@@ -150,8 +152,9 @@ parameters_typedef __attribute__ ((section("memParams2"))) const parameters_type
         .dmx_channel_quantity = 2,
         .dmx_grandmaster = 0,        
         
-        .max_current_int = 2,
-        .max_current_dec = 0,
+        // .max_current_int = 2,
+        // .max_current_dec = 0,
+        .max_current_ma = 2000,
 
         .volts_in_mains = 2,
         .volts_ch[0] = 2,
@@ -272,6 +275,14 @@ int main(void)
     resp = resp_ok;
     I2C2_Init();
     Wait_ms(100);
+
+    //primer pantalla
+    SCREEN_ShowFirst();
+    Wait_ms(2000);
+
+    SCREEN_ShowSecond();
+    Wait_ms(2000);
+    
     MainMenu_Init();
 
     sw_actions_t action = do_nothing;
@@ -294,31 +305,6 @@ int main(void)
     }
 
 #endif
-
-
-    //-- Prueba con ADC INT ----------
-    //-- ADC configuration.
-    // AdcConfig();
-    // ADC1->CR |= ADC_CR_ADSTART;
-
-    // while (1)
-    // {
-    //     if (!timer_standby)
-    //     {
-    //         timer_standby = 1000;
-    //         sprintf(s_to_send, "i1: %d, i2: %d, i3: %d, i4: %d, i5: %d, i6: %d, t: %d\n",
-    //                 I_Channel_1,
-    //                 I_Channel_2,
-    //                 I_Channel_3,
-    //                 I_Channel_4,
-    //                 I_Channel_5,
-    //                 I_Channel_6,
-    //                 Temp_Channel);
-
-    //         Usart2Send(s_to_send);
-    //     }
-    // }
-    //-- Fin Prueba con ADC INT ----------    
 
     //-- Prueba con LCD ----------
     LCDInit();

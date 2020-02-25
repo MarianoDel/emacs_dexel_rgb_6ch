@@ -485,9 +485,10 @@ resp_t MainMenu (void)
         if (led_curr.channel < 6)
         {
             led_curr.channel++;
-            led_curr.sp_current = mem_conf.max_current_dec * 100;
-            led_curr.sp_current += mem_conf.max_current_int * 1000;
-
+            // led_curr.sp_current = mem_conf.max_current_dec * 100;
+            // led_curr.sp_current += mem_conf.max_current_int * 1000;
+            led_curr.sp_current = mem_conf.max_current_ma;
+                        
             sprintf(s_lcd1, "set ch%d ", led_curr.channel);
             sprintf(s_lcd2, "%4dmA  ", led_curr.sp_current);
         
