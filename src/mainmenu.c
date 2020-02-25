@@ -67,10 +67,6 @@ char s_opt [6][18] = { 0 };
 char s_blankl [] = {"                "}; 
 
 // Module Private Functions ----------------------------------------------------
-void MainMenu_SetTitle (char *);
-void MainMenu_BlankOptions (void);
-void MainMenu_SetOptions (unsigned char);
-
 #define set_option_string1(X)    strcpy(&s_opt[0][0], X)
 #define set_option_string2(X)    strcpy(&s_opt[1][0], X)
 #define set_option_string3(X)    strcpy(&s_opt[2][0], X)
@@ -967,14 +963,80 @@ void MainMenu_SetOptions (unsigned char sel)
             p_s_options = &s_opt[i - 1][0];
             sprintf(displaced, "%s ", p_s_options);
             gfx_println(displaced);
-            // p_s_options = &s_opt[i - 1][0];
-            // if (*p_s_options != '\0')
-            //     sprintf(displaced, "%s ", p_s_options);
-            // else
-            //     strcpy(displaced, s_blankl);
-            // gfx_println(displaced);
         }
     }
+}
+
+
+void MainMenu_BlankLine1 (void)
+{
+    blank_option_string1();
+}
+
+
+void MainMenu_BlankLine2 (void)
+{
+    blank_option_string2();
+}
+
+
+void MainMenu_BlankLine3 (void)
+{
+    blank_option_string3();
+}
+
+
+void MainMenu_BlankLine4 (void)
+{
+    blank_option_string4();
+}
+
+
+void MainMenu_BlankLine5 (void)
+{
+    blank_option_string5();
+}
+
+
+void MainMenu_BlankLine6 (void)
+{
+    blank_option_string6();
+}
+
+
+void MainMenu_SetLine1 (char * s)
+{
+    set_option_string1(s);
+}
+
+
+void MainMenu_SetLine2 (char * s)
+{
+    set_option_string2(s);
+}
+
+
+void MainMenu_SetLine3 (char * s)
+{
+    set_option_string3(s);
+}
+
+
+void MainMenu_SetLine4 (char * s)
+{
+    set_option_string4(s);
+}
+
+
+void MainMenu_SetLine5 (char * s)
+{
+    set_option_string5(s);
+}
+
+
+void MainMenu_SetLine6 (char * s)
+{
+    set_option_string6(s);
 }
 
 

@@ -22,11 +22,8 @@
 #include "comm.h"
 #include "dsp.h"
 
-#include "lcd.h"
 #include "dmx_transceiver.h"
-#include "menues.h"
 #include "modo_slave.h"
-#include "lcd_utils.h"
 #include "programs_functions.h"
 
 #include "flash_program.h"
@@ -283,7 +280,8 @@ int main(void)
     SCREEN_ShowSecond();
     Wait_ms(2000);
     
-    MainMenu_Init();
+    FuncSlaveModeReset();
+    // MainMenu_Init();
 
     sw_actions_t action = do_nothing;
     while (1)
@@ -292,8 +290,15 @@ int main(void)
 
         // Check switches first
         action = CheckSW();        
-        resp = MainMenu_Update(action);
+        // resp = MainMenu_Update(action);
+        
+        FuncSlaveMode(ch_values);
 
+        if (!timer_standby)
+        {
+            timer_standby = 100;
+            Packet_Detected_Flag = 1;
+        }
         
 
         if (resp == resp_save)
@@ -306,27 +311,6 @@ int main(void)
 
 #endif
 
-    //-- Prueba con LCD ----------
-    LCDInit();
-
-
-    //--- Welcome code ---//
-    Lcd_Command(CLEAR);
-    Wait_ms(100);
-    Lcd_Command(CURSOR_OFF);
-    Wait_ms(100);
-    Lcd_Command(BLINK_OFF);
-    Wait_ms(100);
-    CTRL_BKL_ON;
-
-    LCDTransmitStr(s_blank_line);
-
-    // LCD_1ER_RENGLON;
-    // LCDTransmitStr("Dexel   ");
-    // LCD_2DO_RENGLON;
-    // LCDTransmitStr("Lighting");
-    while (FuncShowBlink ((const char *) "Kirno 6C", (const char *) "Smrt Drv", 1, BLINK_NO) == resp_continue);
-    while (FuncShowBlink ((const char *) "Dexel   ", (const char *) "Lighting", 1, BLINK_NO) == resp_continue);
 
 
     // while (1);
@@ -936,10 +920,11 @@ int main(void)
             Update_PWM5(0);
             Update_PWM6(0);
 
-            LCD_1ER_RENGLON;
-            LCDTransmitStr("OVERTEMP");
-            LCD_2DO_RENGLON;
-            LCDTransmitStr(s_blank_line);
+            //TODO: armar pantalla oled
+            // LCD_1ER_RENGLON;
+            // LCDTransmitStr("OVERTEMP");
+            // LCD_2DO_RENGLON;
+            // LCDTransmitStr(s_blank_line);
 
 #ifdef USART2_DEBUG_MODE
             sprintf(s_to_send, "overtemp: %d\n", Temp_Channel);
@@ -1062,9 +1047,6 @@ void TimingDelay_Decrement(void)
     else
         EXTIOn();    //dejo 20ms del paquete sin INT
 
-    //para lcd_utils
-    UpdateTimerLCD ();
-
     //para modo_slave
     UpdateTimerSlaveMode();
 
@@ -1072,7 +1054,7 @@ void TimingDelay_Decrement(void)
     UpdateProgTimers ();
 
     //para main menu
-    UpdateTimerModeMenu ();
+    // UpdateTimerModeMenu ();
 }
 
 void EXTI4_15_IRQHandler (void)    //nueva detecta el primer 0 en usart Consola PHILIPS
