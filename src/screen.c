@@ -39,6 +39,7 @@ void SCREEN_ShowSecond (void)
 {
     display_clear();
     gfx_setCursor(0,0);
+    gfx_println("");
     gfx_println("Dexel");
     gfx_println("Lighting");
     display_update();
