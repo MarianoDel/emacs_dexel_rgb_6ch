@@ -45,8 +45,7 @@ void PwrCtrl_CalculatePwrInChnls (unsigned short duty)
     unsigned short power;
     //para ch1
     //corriente en 100 mA
-    current =  mem_conf.max_current_int * 10;
-    current += mem_conf.max_current_dec;
+    current =  mem_conf.max_current_ma;
     
     voltage = mem_conf.volts_ch[0] * mem_conf.pwm_chnls[0];
     voltage = voltage / duty;

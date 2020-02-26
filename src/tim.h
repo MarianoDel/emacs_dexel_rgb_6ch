@@ -13,12 +13,16 @@
 
 //--- Exported types ---//
 //--- Exported constants ---//
+#define DUTY_MAX_ALLOWED    DUTY_95_PERCENT
 #define DUTY_TRANSISTORS_ON	10
 #define DUTY_50_PERCENT		500
 #define DUTY_60_PERCENT		600
 #define DUTY_65_PERCENT		650
 #define DUTY_70_PERCENT		700
+#define DUTY_75_PERCENT		750
 #define DUTY_80_PERCENT		800
+#define DUTY_85_PERCENT		850
+#define DUTY_87_PERCENT		875
 #define DUTY_90_PERCENT		900
 #define DUTY_95_PERCENT		950
 #define DUTY_100_PERCENT	1000
@@ -58,8 +62,18 @@
 #define RCC_TIM17_CLK_ON 	RCC->APB2ENR |= 0x00040000
 #define RCC_TIM17_CLK_OFF 	RCC->APB2ENR &= ~0x00040000
 
-#define TIM1DisableInterrupt      TIM1->DIER &= ~TIM_DIER_UIE;
-#define TIM1EnableInterrupt      TIM1->DIER |= TIM_DIER_UIE;
+#define TIM1DisableInterrupt     (TIM1->DIER &= ~TIM_DIER_UIE)
+#define TIM1EnableInterrupt      (TIM1->DIER |= TIM_DIER_UIE)
+
+#define TIM17DisableInterrupt    (TIM17->DIER &= ~(TIM_DIER_CC1IE | TIM_DIER_UIE))
+#define TIM17EnableInterrupt     (TIM17->DIER |= TIM_DIER_CC1IE | TIM_DIER_UIE)
+
+#define TIM17_NEW_CH1    0x01
+#define TIM17_NEW_CH2    0x02
+#define TIM17_NEW_CH3    0x04
+#define TIM17_NEW_CH4    0x08
+#define TIM17_NEW_CH5    0x10
+#define TIM17_NEW_CH6    0x20
 
 #define Update_PWM1(X)    Update_TIM1_CH1(X)
 #define Update_PWM2(X)    Update_TIM1_CH2(X)
@@ -88,13 +102,6 @@ void Update_TIM3_CH1 (unsigned short);
 void Update_TIM3_CH2 (unsigned short);
 void Update_TIM3_CH3 (unsigned short);
 void Update_TIM3_CH4 (unsigned short);
-
-void Change_PWM1 (unsigned char);
-void Change_PWM2 (unsigned char);
-void Change_PWM3 (unsigned char);
-void Change_PWM4 (unsigned char);
-void Change_PWM5 (unsigned char);
-void Change_PWM6 (unsigned char);
 
 void Wait_ms (unsigned short wait);
 #endif

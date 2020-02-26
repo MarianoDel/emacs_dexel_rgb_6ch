@@ -20,7 +20,7 @@
 #define GPIOB_ENABLE
 #define GPIOC_ENABLE
 //#define GPIOD_ENABLE
-//#define GPIOF_ENABLE
+#define GPIOF_ENABLE
 
 #define WITH_EXTI
 

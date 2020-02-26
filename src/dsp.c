@@ -68,6 +68,7 @@ unsigned short MA16_U16Circular (ma16_u16_data_obj_t *p_data, unsigned short new
     return (unsigned short) (p_data->total_ma >> 4);    
 }
 
+
 unsigned short MA16_U16Circular_Only_Calc (ma16_u16_data_obj_t *p_data)
 {
     return (unsigned short) (p_data->total_ma >> 4);
@@ -234,6 +235,7 @@ void PID_Small_Ki_Flush_Errors (pid_data_obj_t * p)
 
 #endif    //USE_PID_CONTROLLERS
 
+
 //calculate the samples fequencies from a samples vector
 //the size of the vector ranges must be at least one more of the 
 //size of the selected classes (ranges_size)
@@ -309,8 +311,9 @@ unsigned short DSP_Vector_Get_Max_Value (unsigned short *vect, unsigned char vec
     {
         if (max_value < *(vect + i))
             max_value = *(vect + i);
+    }
+
     return max_value;
 }
-
 
 //--- end of file ---//

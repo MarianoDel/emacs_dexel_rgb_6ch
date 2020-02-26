@@ -243,7 +243,8 @@ void USART2Config(void)
         USART2_CLK_ON;
 
     // lo paso a 115200 por errores del esp
-    USART2->BRR = USART_115200;
+    // USART2->BRR = USART_115200;
+    USART2->BRR = USART_9600;
     USART2->CR1 = USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_TE | USART_CR1_UE;
 
     temp = GPIOA->AFR[0];

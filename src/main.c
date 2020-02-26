@@ -16,19 +16,20 @@
 
 #include "core_cm0.h"
 #include "adc.h"
+#include "dma.h"
 #include "tim.h"
 
 #include "comm.h"
 #include "dsp.h"
 
-#include "lcd.h"
 #include "dmx_transceiver.h"
-#include "menues.h"
 #include "modo_slave.h"
-#include "lcd_utils.h"
 #include "programs_functions.h"
 
 #include "flash_program.h"
+#include "i2c.h"
+#include "mainmenu.h"
+#include "screen.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -48,6 +49,7 @@ volatile unsigned char seq_ready;
 // ------- Externals de los timers -------
 volatile unsigned char timer_1seg = 0;
 volatile unsigned char switches_timer = 0;
+// volatile unsigned char tim17_new_output = 0;
 
 // ------- Externals del USART -------
 volatile unsigned char usart1_have_data;
@@ -76,6 +78,7 @@ unsigned short sp3_filtered = 0;
 unsigned short sp4_filtered = 0;
 unsigned short sp5_filtered = 0;
 unsigned short sp6_filtered = 0;
+
 #ifdef USE_FILTER_LENGHT_16
 ma16_u16_data_obj_t st_sp1;
 ma16_u16_data_obj_t st_sp2;
@@ -85,6 +88,9 @@ ma16_u16_data_obj_t st_sp5;
 ma16_u16_data_obj_t st_sp6;
 #endif
 
+#ifdef USE_LED_CTRL_MODE_PID_MA32
+pid_data_obj_t pid_ch1;
+#endif
 
 //--- VARIABLES GLOBALES ---//
 //para pruebas mantener esto en memoria
@@ -102,8 +108,9 @@ parameters_typedef __attribute__ ((section("memParams1"))) const parameters_type
         .dmx_channel_quantity = 6,
         .dmx_grandmaster = 0,        
         
-        .max_current_int = 2,
-        .max_current_dec = 0,
+        // .max_current_int = 2,
+        // .max_current_dec = 0,
+        .max_current_ma = 2000,
 
         .volts_in_mains = 35,
         .max_power = 40,
@@ -115,10 +122,11 @@ parameters_typedef __attribute__ ((section("memParams1"))) const parameters_type
         .volts_ch[4] = 35,
         .volts_ch[5] = 35,
 
-        .pwm_chnls[0] = DUTY_60_PERCENT,
+        .pwm_chnls[0] = DUTY_70_PERCENT,
         .pwm_chnls[1] = DUTY_60_PERCENT,
         .pwm_chnls[2] = DUTY_60_PERCENT,        
-        .pwm_chnls[3] = DUTY_60_PERCENT,
+        .pwm_chnls[3] = DUTY_87_PERCENT,    //Green
+        // .pwm_chnls[3] = DUTY_75_PERCENT,    //Red        
         .pwm_chnls[4] = DUTY_60_PERCENT,
         .pwm_chnls[5] = DUTY_60_PERCENT,
         
@@ -138,8 +146,9 @@ parameters_typedef __attribute__ ((section("memParams2"))) const parameters_type
         .dmx_channel_quantity = 2,
         .dmx_grandmaster = 0,        
         
-        .max_current_int = 2,
-        .max_current_dec = 0,
+        // .max_current_int = 2,
+        // .max_current_dec = 0,
+        .max_current_ma = 2000,
 
         .volts_in_mains = 2,
         .volts_ch[0] = 2,
@@ -173,11 +182,9 @@ unsigned char need_to_save = 0;
 //--- FUNCIONES DEL MODULO ---//
 extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
-void DMAConfig(void);
 unsigned short Distance (unsigned short, unsigned short);
 unsigned char CheckFiltersAndOffsets2 (unsigned char *);
 void UpdateFiltersTest_Reset (void);
-
     
 // ------- del DMX -------
 // extern void EXTI4_15_IRQHandler(void);
@@ -208,14 +215,18 @@ int main(void)
     resp_t resp = resp_continue;
 
     unsigned char ch_values [6] = { 0 };
-    
-#ifdef USE_PWM_DELTA_FUNCTION
-    unsigned short delta_ch3_pwm = 0;
+
+#ifdef HARD_TEST_MODE_DO_NOTHING
+    while (1);
 #endif
-    
+
     //GPIO Configuration.
     GPIO_Config();
 
+#ifdef HARD_TEST_MODE_DO_NOTHING_AFTER_GPIOS
+    while (1);
+#endif
+    
     //ACTIVAR SYSTICK TIMER
     if (SysTick_Config(48000))
     {
@@ -239,63 +250,64 @@ int main(void)
     //pruebas hard//
     USART2Config();
 
-#if (defined USE_LED_CTRL_MODE_PWM) || (defined USE_LED_CTRL_MODE_MIXED)
-    TIM_1_Init_Irq();
-#elif defined USE_LED_CTRL_MODE_CONTINUOS
     TIM_1_Init_Only_PWM();
-#else    
-#error "set Led control mode on hard.h"
-#endif
     TIM_3_Init();
 
     PWMChannelsReset();
 
+#ifdef HARD_TEST_MODE_FAN
+    while (1)
+    {
+        CTRL_FAN_ON;
+        Wait_ms(1000);
+        CTRL_FAN_OFF;
+        Wait_ms(2000);
+    }
+#endif
 
-    //-- Prueba con ADC INT ----------
-    //-- ADC configuration.
-    // AdcConfig();
-    // ADC1->CR |= ADC_CR_ADSTART;
-
-    // while (1)
-    // {
-    //     if (!timer_standby)
-    //     {
-    //         timer_standby = 1000;
-    //         sprintf(s_to_send, "i1: %d, i2: %d, i3: %d, i4: %d, i5: %d, i6: %d, t: %d\n",
-    //                 I_Channel_1,
-    //                 I_Channel_2,
-    //                 I_Channel_3,
-    //                 I_Channel_4,
-    //                 I_Channel_5,
-    //                 I_Channel_6,
-    //                 Temp_Channel);
-
-    //         Usart2Send(s_to_send);
-    //     }
-    // }
-    //-- Fin Prueba con ADC INT ----------    
-
-    //-- Prueba con LCD ----------
-    LCDInit();
-
-
-    //--- Welcome code ---//
-    Lcd_Command(CLEAR);
+#ifdef HARD_TEST_MODE_ONLY_OLED
+    resp = resp_ok;
+    I2C2_Init();
     Wait_ms(100);
-    Lcd_Command(CURSOR_OFF);
-    Wait_ms(100);
-    Lcd_Command(BLINK_OFF);
-    Wait_ms(100);
-    CTRL_BKL_ON;
 
-    LCDTransmitStr(s_blank_line);
+    //primer pantalla
+    SCREEN_ShowFirst();
+    Wait_ms(2000);
 
-    // LCD_1ER_RENGLON;
-    // LCDTransmitStr("Dexel   ");
-    // LCD_2DO_RENGLON;
-    // LCDTransmitStr("Lighting");
-    while (FuncShowBlink ((const char *) "Kirno 6C", (const char *) "Smrt Drv", 1, BLINK_NO) == resp_continue);
-    while (FuncShowBlink ((const char *) "Dexel   ", (const char *) "Lighting", 1, BLINK_NO) == resp_continue);
+    SCREEN_ShowSecond();
+    Wait_ms(2000);
+    
+    FuncSlaveModeReset();
+    // MainMenu_Init();
+
+    sw_actions_t action = do_nothing;
+    while (1)
+    {
+        action = do_nothing;
+
+        // Check switches first
+        action = CheckSW();        
+        // resp = MainMenu_Update(action);
+        
+        FuncSlaveMode(ch_values);
+
+        if (!timer_standby)
+        {
+            timer_standby = 100;
+            Packet_Detected_Flag = 1;
+        }
+        
+
+        if (resp == resp_save)
+        {
+            
+        }
+
+        UpdateSwitches();
+    }
+
+#endif
+
 
 
     // while (1);
@@ -303,7 +315,9 @@ int main(void)
 
     //--- Mensaje Bienvenida ---//
     //---- Defines from hard.h -----//
+#ifdef USART2_DEBUG_MODE
     Usart2Send("\nDexel RGB 6CH Bidireccional\n -- powered by: Kirno Technology --\n");
+    // Usart2Send("\nLUIS Casino RGB 6CH Bidireccional\n -- powered by: Kirno Technology --\n");    
     Wait_ms(100);
 #ifdef HARD
     Usart2Send(HARD);
@@ -318,7 +332,7 @@ int main(void)
 #else
 #error	"No Soft Version defined in hard.h file"
 #endif
-
+#endif    //USART2_DEBUG_MODE
 
     //---- End of Defines from hard.h -----//
 
@@ -744,22 +758,33 @@ int main(void)
 
     memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
 
+    //-- Para Debug Test inicial de corriente
+#ifdef ALWAYS_CHECK_CURRENT_ON_INIT
+    unsigned short * p_seg = &mem_conf.segments[0][0];
+    led_current_settings_t led_curr;
+
+    HARD_Find_Current_Segments(&led_curr, p_seg);
+#endif
+    //-- FIN Para Debug Test inicial de corriente    
 
     //mando info al puerto
+#ifdef USART2_DEBUG_MODE
     for (unsigned char j = 0; j < 6; j++)
-    {
+    {        
         sprintf(s_to_send, "segments[%d]: ", j);
         Usart2Send(s_to_send);
-        for (unsigned char i = 0; i < 16; i++)
+        // for (unsigned char i = 0; i < SEGMENTS_QTTY; i++)
+        for (unsigned char i = 0; i < 16; i++)            
         {
+            // sprintf(s_to_send, "%d ", segments[j][i]);
             sprintf(s_to_send, "%d ", mem_conf.segments[j][i]);
             Usart2Send(s_to_send);
             Wait_ms(10);
         }
         Usart2Send("\n");
     }
-        
-        
+#endif
+
     while (1)
     {
         switch (main_state)
@@ -783,6 +808,7 @@ int main(void)
             MasterModeMenuReset();
             FuncSlaveModeReset();
 
+#ifdef USART2_DEBUG_MODE            
             sprintf(s_to_send, "prog type: %d\n", mem_conf.program_type);
             Usart2Send(s_to_send);
             Wait_ms(100);
@@ -796,22 +822,20 @@ int main(void)
             
             Usart2Send(s_to_send);
             Wait_ms(100);
+#endif
 
-            //limpio filtros
+            //limpio los filtros
             UpdateFiltersTest_Reset();
-            
+
+#ifdef USE_LED_CTRL_MODE_PID_MA32
+            //limpio PIDs
+            pid_ch1.ki = 10;
+            PID_Small_Ki_Flush_Errors (&pid_ch1);
+#endif
             main_state++;            
             break;
 
         case MAIN_GET_CONF:
-            if (mem_conf.program_type == MASTER_MODE)
-            {
-                //habilito transmisiones
-                SW_RX_TX_DE;
-                DMX_Ena();                    
-                main_state = MAIN_IN_MASTER_MODE;             
-            }                
-
             if (mem_conf.program_type == SLAVE_MODE)
             {
                 //variables de recepcion
@@ -827,8 +851,6 @@ int main(void)
 
             if (mem_conf.program_type == PROGRAMS_MODE)
             {
-                //me aseguro no cargar la linea
-                SW_RX_TX_RE_NEG;
                 main_state = MAIN_IN_PROGRAMS_MODE;
             }
 
@@ -859,6 +881,7 @@ int main(void)
             FuncSlaveMode (ch_values);
             CheckFiltersAndOffsets2 (ch_values);
 
+#ifdef USART2_DEBUG_MODE
             if (!timer_standby)
             {
                 timer_standby = 1000;
@@ -881,6 +904,7 @@ int main(void)
                     ch6_pwm);
                 Usart2Send(s_to_send);                
             }
+#endif
 
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;
@@ -894,28 +918,29 @@ int main(void)
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;
 
-            ProgramsModeMenu();
-            
             break;
 
         case MAIN_IN_OVERTEMP:
             CTRL_FAN_ON;
             PWMChannelsReset();
             
-            Change_PWM1(0);
-            Change_PWM2(0);
-            Change_PWM3(0);
-            Change_PWM4(0);
-            Change_PWM5(0);
-            Change_PWM6(0);
+            Update_PWM1(0);
+            Update_PWM2(0);
+            Update_PWM3(0);
+            Update_PWM4(0);
+            Update_PWM5(0);
+            Update_PWM6(0);
 
-            LCD_1ER_RENGLON;
-            LCDTransmitStr("OVERTEMP");
-            LCD_2DO_RENGLON;
-            LCDTransmitStr(s_blank_line);
+            //TODO: armar pantalla oled
+            // LCD_1ER_RENGLON;
+            // LCDTransmitStr("OVERTEMP");
+            // LCD_2DO_RENGLON;
+            // LCDTransmitStr(s_blank_line);
 
+#ifdef USART2_DEBUG_MODE
             sprintf(s_to_send, "overtemp: %d\n", Temp_Channel);
             Usart2Send(s_to_send);
+#endif
 
             main_state = MAIN_IN_OVERTEMP_B;
             break;
@@ -991,10 +1016,12 @@ int main(void)
             
             need_to_save = WriteConfigurations();
 
+#ifdef USART2_DEBUG_MODE
             if (need_to_save)
                 Usart2Send((char *) "Memory Saved OK!\n");
             else
                 Usart2Send((char *) "Memory problems\n");
+#endif
 
             need_to_save = 0;
         }
@@ -1005,35 +1032,6 @@ int main(void)
 }
 //--- End of Main ---//
 
-void DMAConfig(void)
-{
-    /* DMA1 clock enable */
-    if (!RCC_DMA_CLK)
-        RCC_DMA_CLK_ON;
-
-    //Configuro el control del DMA CH1
-    DMA1_Channel1->CCR = 0;
-    //priority very high
-    //memory halfword
-    //peripheral halfword
-    //increment memory
-    DMA1_Channel1->CCR |= DMA_CCR_PL | DMA_CCR_MSIZE_0 | DMA_CCR_PSIZE_0 | DMA_CCR_MINC;
-    //DMA1_Channel1->CCR |= DMA_Mode_Circular | DMA_CCR_TCIE;
-    //cicular mode
-    DMA1_Channel1->CCR |= DMA_CCR_CIRC;
-
-    //Tamaño del buffer a transmitir
-    DMA1_Channel1->CNDTR = ADC_CHANNEL_QUANTITY;
-
-    //Address del periferico
-    DMA1_Channel1->CPAR = (uint32_t) &ADC1->DR;
-
-    //Address en memoria
-    DMA1_Channel1->CMAR = (uint32_t) &adc_ch[0];
-
-    //Enable
-    //DMA1_Channel1->CCR |= DMA_CCR_EN;
-}
 
 void TimingDelay_Decrement(void)
 {
@@ -1060,9 +1058,6 @@ void TimingDelay_Decrement(void)
     else
         EXTIOn();    //dejo 20ms del paquete sin INT
 
-    //para lcd_utils
-    UpdateTimerLCD ();
-
     //para modo_slave
     UpdateTimerSlaveMode();
 
@@ -1070,8 +1065,9 @@ void TimingDelay_Decrement(void)
     UpdateProgTimers ();
 
     //para main menu
-    UpdateTimerModeMenu ();
+    // UpdateTimerModeMenu ();
 }
+
 
 void EXTI4_15_IRQHandler (void)    //nueva detecta el primer 0 en usart Consola PHILIPS
 {
@@ -1082,6 +1078,7 @@ void EXTI4_15_IRQHandler (void)    //nueva detecta el primer 0 en usart Consola 
     }
 }
 
+
 unsigned short Distance (unsigned short a, unsigned short b)
 {
     if (a < b)
@@ -1090,11 +1087,15 @@ unsigned short Distance (unsigned short a, unsigned short b)
     return (a - b);
 }
 
+
 //aca filtro los offsets del pwm en vez del valor del canal
 //cada 5ms
 unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
 {
     unsigned char new_outputs = 0;
+#ifdef USE_LED_CTRL_MODE_PID_MA32
+    short d = 0;
+#endif
 
     //filters para el dmx - generalmente 8 puntos a 200Hz -
     //desde el sp al sp_filter
@@ -1103,6 +1104,7 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
         dmx_filters_timer = 5;
 
         //filtro los offsets
+#ifdef USE_LED_CTRL_MODE_CONTINUOS
         if (mem_conf.pwm_chnls[0])
         {
             ch1_pwm = HARD_Process_New_PWM_Data (0, *(ch_val + 0));
@@ -1143,23 +1145,108 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
             ch6_pwm = HARD_Process_New_PWM_Data (5, *(ch_val + 5));
             ch6_pwm = MA16_U16Circular (&st_sp6, ch6_pwm);
             Update_PWM6(ch6_pwm);
-        }
+        }      
+#endif
 
+#ifdef USE_LED_CTRL_MODE_PID_MA32
+        if (mem_conf.pwm_chnls[0])
+        {
+            unsigned int a = 0;
+            
+            //pwm_chnls[x] es el valor del pwm de la maxima corriente
+            a = *(ch_val + 0) * mem_conf.pwm_chnls[0];
+            a >>= 8;
+            
+            sp1_filtered = MA16_U16Circular (&st_sp1, a);
+            pid_ch1.setpoint = sp1_filtered;
+            pid_ch1.sample = I_Channel_1;
+            d = PID_Small_Ki (&pid_ch1);
+
+            if (d > 0)
+            {
+                if (d > DUTY_90_PERCENT)
+                    d = DUTY_90_PERCENT;
+            }
+            else
+                d = 0;
+            
+            Update_PWM1(d);
+        }
+                
+        // if (mem_conf.pwm_chnls[1])
+        // {
+        //     ch2_pwm = HARD_Process_New_PWM_Data (1, *(ch_val + 1));
+        //     ch2_pwm = MA16_U16Circular (&st_sp2, ch2_pwm);
+        //     Update_PWM2(ch2_pwm);
+        // }
+
+        // if (mem_conf.pwm_chnls[2])
+        // {
+        //     ch3_pwm = HARD_Process_New_PWM_Data (2, *(ch_val + 2));
+        //     ch3_pwm = MA16_U16Circular (&st_sp3, ch3_pwm);
+        //     Update_PWM3(ch3_pwm);
+        // }
+
+        if (mem_conf.pwm_chnls[3])
+        {
+            unsigned int a = 0;
+
+            //si es buck directo el valor de la maxima corriente es
+            //1.3A * 0.33ohms = 0.429V en 12b del ADC = 533
+            a = *(ch_val + 3) * 533;
+            a >>= 8;
+            
+            sp1_filtered = MA16_U16Circular (&st_sp1, a);
+            pid_ch1.setpoint = sp1_filtered;
+            pid_ch1.sample = I_Channel_4;
+            d = PID_Small_Ki (&pid_ch4);
+
+            if (d > 0)
+            {
+                if (d > DUTY_95_PERCENT)
+                    d = DUTY_95_PERCENT;
+            }
+            else
+                d = 0;
+            
+            Update_PWM4(d);
+        }
+        
+        // if (mem_conf.pwm_chnls[4])
+        // {
+        //     ch5_pwm = HARD_Process_New_PWM_Data (4, *(ch_val + 4));
+        //     ch5_pwm = MA16_U16Circular (&st_sp5, ch5_pwm);
+        //     Update_PWM5(ch5_pwm);
+        // }
+
+        // if (mem_conf.pwm_chnls[5])
+        // {
+        //     ch6_pwm = HARD_Process_New_PWM_Data (5, *(ch_val + 5));
+        //     ch6_pwm = MA16_U16Circular (&st_sp6, ch6_pwm);
+        //     Update_PWM6(ch6_pwm);
+        // }      
+#endif
+
+        
         new_outputs = 1;
     }    //end of filters and timer
-        
+
     return new_outputs;
 }
 
+
 void UpdateFiltersTest_Reset (void)
 {
+#ifdef USE_FILTER_LENGHT_16
     MA16_U16Circular_Reset(&st_sp1);
     MA16_U16Circular_Reset(&st_sp2);
     MA16_U16Circular_Reset(&st_sp3);
     MA16_U16Circular_Reset(&st_sp4);
     MA16_U16Circular_Reset(&st_sp5);
     MA16_U16Circular_Reset(&st_sp6);
+#endif
 }
+
 
 //--- end of file ---//
 

@@ -11,12 +11,11 @@
 
 //--- Defines for configuration -----------------
 #define USE_PID_CONTROLLERS
-// #define USE_MA32_U8_CIRCULAR
+#define USE_MA32_U8_CIRCULAR
 #define USE_MA16_U16_CIRCULAR
 
 
 //--- Exported constants ------------------------
-
 //--- Exported types ----------------------------
 typedef struct {
     unsigned short v_ma[16];
@@ -63,5 +62,13 @@ void MA32_U8Circular_Reset (ma32_u8_data_obj_t *);
 unsigned char MA32_U8Circular (ma32_u8_data_obj_t *, unsigned char);
 unsigned char MA32_U8Circular_Only_Calc (ma32_u8_data_obj_t *);
 #endif
+
+unsigned short DSP_Vector_Get_Max_Value (unsigned short *, unsigned char);
+unsigned short DSP_Vector_Get_Min_Value (unsigned short *, unsigned char);
+void DSP_Vector_Calcule_Frequencies (unsigned short *,
+                                     unsigned char ,
+                                     unsigned short *,
+                                     unsigned char ,
+                                     unsigned char *);
 
 #endif /* _DSP_H_ */

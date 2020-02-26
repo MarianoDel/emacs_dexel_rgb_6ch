@@ -42,8 +42,9 @@ typedef struct parameters {
     unsigned char dmx_grandmaster;	
 
     //-- Para Configuracion de Hardware ----   //8
-    unsigned char max_current_int;
-    unsigned char max_current_dec;
+    // unsigned char max_current_int;
+    // unsigned char max_current_dec;
+    unsigned short max_current_ma;
 
     unsigned char volts_in_mains;
     unsigned char max_power;          //12
