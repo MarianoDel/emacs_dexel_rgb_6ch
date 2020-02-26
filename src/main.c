@@ -214,6 +214,7 @@ int main(void)
     char s_to_send [100];
     main_state_t main_state = MAIN_INIT;
     resp_t resp = resp_continue;
+    sw_actions_t action = do_nothing;
 
     unsigned char ch_values [6] = { 0 };
 
@@ -266,6 +267,31 @@ int main(void)
     }
 #endif
 
+#ifdef HARD_TEST_MODE_ONLY_OLED_MAIN_MENU
+    resp = resp_ok;
+    I2C2_Init();
+    Wait_ms(100);
+
+    MainMenu_Init();
+
+    while (1)
+    {
+        action = do_nothing;
+
+        // Check switches first
+        action = CheckSW();        
+        resp = MainMenu_Update(action);
+        
+        if (resp == resp_save)
+        {
+            
+        }
+
+        UpdateSwitches();
+    }
+
+#endif
+
 #ifdef HARD_TEST_MODE_ONLY_OLED_SLAVE_MODE
     resp = resp_ok;
     I2C2_Init();
@@ -281,7 +307,6 @@ int main(void)
     FuncSlaveModeReset();
     // MainMenu_Init();
 
-    sw_actions_t action = do_nothing;
     while (1)
     {
         action = do_nothing;
@@ -308,7 +333,7 @@ int main(void)
     }
 
 #endif
-
+    
 #ifdef HARD_TEST_MODE_ONLY_OLED_PROGRAMS_MODE
     resp = resp_ok;
     I2C2_Init();
@@ -323,7 +348,6 @@ int main(void)
     
     ProgramsModeMenuReset();
 
-    sw_actions_t action = do_nothing;
     while (1)
     {
         action = do_nothing;
@@ -357,7 +381,6 @@ int main(void)
     
     MasterModeMenuReset();
 
-    sw_actions_t action = do_nothing;
     while (1)
     {
         action = do_nothing;
@@ -376,10 +399,16 @@ int main(void)
 
 #endif
 
+    // OLED Init
+    I2C2_Init();
+    Wait_ms(10);
 
+    //primer pantalla
+    SCREEN_ShowFirst();
+    Wait_ms(1300);
 
-    // while (1);
-    //-- Fin Prueba con LCD ----------
+    SCREEN_ShowSecond();
+    Wait_ms(1300);
 
     //--- Mensaje Bienvenida ---//
     //---- Defines from hard.h -----//
@@ -1037,12 +1066,16 @@ int main(void)
             //reseteo canales
             PWMChannelsReset();
 
-            MainMenuReset();
+            MainMenu_Init();
             main_state++;
             break;
 
         case MAIN_IN_MAIN_MENU:
-            resp = MainMenu();
+            action = do_nothing;
+
+            // Check switches first
+            action = CheckSW();        
+            resp = MainMenu_Update(action);
 
             if (resp == resp_need_to_save)
             {

@@ -261,14 +261,13 @@ inline resp_t MenuSlaveModeRunning (void)
     case SLAVE_MODE_MENU_RUNNING_INIT:
         //empiezo con las selecciones
 
-        //fuerzo cambio en ch1
+        //fuerzo cambio
         last_ch1 = ~data7[1];
-
-        last_ch2 = data7[2];
-        last_ch3 = data7[3];
-        last_ch4 = data7[4];
-        last_ch5 = data7[5];
-        last_ch6 = data7[6];
+        last_ch2 = ~data7[2];
+        last_ch3 = ~data7[3];
+        last_ch4 = ~data7[4];
+        last_ch5 = ~data7[5];
+        last_ch6 = ~data7[6];
 
         slave_mode_menu_state++;
         break;
@@ -306,7 +305,7 @@ inline resp_t MenuSlaveModeRunning (void)
 
             Percentage(last_ch2, &one_int, &one_dec);
             sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                    mem_conf.dmx_channel,
+                    mem_conf.dmx_channel + 1,
                     one_int,
                     one_dec);
 
@@ -324,7 +323,7 @@ inline resp_t MenuSlaveModeRunning (void)
 
             Percentage(last_ch3, &one_int, &one_dec);
             sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                    mem_conf.dmx_channel,
+                    mem_conf.dmx_channel + 2,
                     one_int,
                     one_dec);
 
@@ -342,7 +341,7 @@ inline resp_t MenuSlaveModeRunning (void)
 
             Percentage(last_ch4, &one_int, &one_dec);
             sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                    mem_conf.dmx_channel,
+                    mem_conf.dmx_channel + 3,
                     one_int,
                     one_dec);
 
@@ -360,7 +359,7 @@ inline resp_t MenuSlaveModeRunning (void)
 
             Percentage(last_ch5, &one_int, &one_dec);
             sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                    mem_conf.dmx_channel,
+                    mem_conf.dmx_channel + 4,
                     one_int,
                     one_dec);
 
@@ -378,7 +377,7 @@ inline resp_t MenuSlaveModeRunning (void)
 
             Percentage(last_ch6, &one_int, &one_dec);
             sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                    mem_conf.dmx_channel,
+                    mem_conf.dmx_channel + 5,
                     one_int,
                     one_dec);
 
@@ -393,6 +392,7 @@ inline resp_t MenuSlaveModeRunning (void)
         if (change_values)
         {
             change_values = 0;
+            MainMenu_BlankOptions();
             MainMenu_SetOptions(0);
             display_update();
         }
