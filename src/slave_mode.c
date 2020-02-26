@@ -9,7 +9,7 @@
 //---------------------------------------------
 
 /* Includes ------------------------------------------------------------------*/
-#include "modo_slave.h"
+#include "slave_mode.h"
 #include "hard.h"
 #include "stm32f0xx.h"
 #include "dsp.h"

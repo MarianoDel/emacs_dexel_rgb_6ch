@@ -25,7 +25,10 @@
 // #define HARD_TEST_MODE_FAN
 // #define HARD_TEST_MODE_DO_NOTHING    //no hace nada, todos los pines HiZ
 // #define HARD_TEST_MODE_DO_NOTHING_AFTER_GPIOS    //no hace nada, todos los pines configurados
-#define HARD_TEST_MODE_ONLY_OLED
+// #define HARD_TEST_MODE_ONLY_OLED
+// #define HARD_TEST_MODE_ONLY_OLED_SLAVE_MODE
+// #define HARD_TEST_MODE_ONLY_OLED_PROGRAMS_MODE
+#define HARD_TEST_MODE_ONLY_OLED_MASTER_MODE
 
 //---- Features Configuration ----------------
 // #define WITH_GRANDMASTER

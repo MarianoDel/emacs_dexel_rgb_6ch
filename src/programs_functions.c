@@ -93,16 +93,6 @@ void UpdateProgTimers (void)
 }
 
 
-void FuncsProgramsMode (unsigned char * ch_val)
-{
-    Func_PX(ch_val,
-            mem_conf.last_program_in_flash,
-            mem_conf.last_program_deep_in_flash);
-
-    ProgramsModeMenu();
-}
-
-
 //funcion general la llamo para determinar las funciones individuales, la llamo con programa y profundidad
 //es un wrapper de Func_PX_Ds()
 //

@@ -23,8 +23,9 @@
 #include "dsp.h"
 
 #include "dmx_transceiver.h"
-#include "modo_slave.h"
-#include "programs_functions.h"
+#include "slave_mode.h"
+#include "master_mode.h"
+#include "programs_mode.h"
 
 #include "flash_program.h"
 #include "i2c.h"
@@ -265,7 +266,7 @@ int main(void)
     }
 #endif
 
-#ifdef HARD_TEST_MODE_ONLY_OLED
+#ifdef HARD_TEST_MODE_ONLY_OLED_SLAVE_MODE
     resp = resp_ok;
     I2C2_Init();
     Wait_ms(100);
@@ -297,6 +298,73 @@ int main(void)
             Packet_Detected_Flag = 1;
         }
         
+
+        if (resp == resp_save)
+        {
+            
+        }
+
+        UpdateSwitches();
+    }
+
+#endif
+
+#ifdef HARD_TEST_MODE_ONLY_OLED_PROGRAMS_MODE
+    resp = resp_ok;
+    I2C2_Init();
+    Wait_ms(100);
+
+    //primer pantalla
+    SCREEN_ShowFirst();
+    Wait_ms(2000);
+
+    SCREEN_ShowSecond();
+    Wait_ms(2000);
+    
+    ProgramsModeMenuReset();
+
+    sw_actions_t action = do_nothing;
+    while (1)
+    {
+        action = do_nothing;
+
+        // Check switches first
+        action = CheckSW();        
+        FuncsProgramsMode(ch_values);
+
+        if (resp == resp_save)
+        {
+            
+        }
+
+        UpdateSwitches();
+    }
+
+#endif
+
+
+#ifdef HARD_TEST_MODE_ONLY_OLED_MASTER_MODE
+    resp = resp_ok;
+    I2C2_Init();
+    Wait_ms(100);
+
+    //primer pantalla
+    SCREEN_ShowFirst();
+    Wait_ms(2000);
+
+    SCREEN_ShowSecond();
+    Wait_ms(2000);
+    
+    MasterModeMenuReset();
+
+    sw_actions_t action = do_nothing;
+    while (1)
+    {
+        action = do_nothing;
+
+        // Check switches first
+        action = CheckSW();        
+        FuncsMasterMode(ch_values);
 
         if (resp == resp_save)
         {
@@ -804,10 +872,6 @@ int main(void)
             //reseteo canales
             PWMChannelsReset();
                         
-            //reseteo menues
-            MasterModeMenuReset();
-            FuncSlaveModeReset();
-
 #ifdef USART2_DEBUG_MODE            
             sprintf(s_to_send, "prog type: %d\n", mem_conf.program_type);
             Usart2Send(s_to_send);
@@ -836,6 +900,16 @@ int main(void)
             break;
 
         case MAIN_GET_CONF:
+            if (mem_conf.program_type == MASTER_MODE)
+            {
+                //habilito transmisiones
+                SW_RX_TX_DE;
+                DMX_Ena();
+                
+                MasterModeMenuReset();
+                main_state = MAIN_IN_MASTER_MODE;             
+            }                
+                        
             if (mem_conf.program_type == SLAVE_MODE)
             {
                 //variables de recepcion
@@ -845,7 +919,9 @@ int main(void)
 
                 //habilito recepcion
                 SW_RX_TX_RE_NEG;
-                DMX_Ena();    
+                DMX_Ena();
+                
+                FuncSlaveModeReset();
                 main_state = MAIN_IN_SLAVE_MODE;
             }
 
@@ -863,13 +939,12 @@ int main(void)
             break;
 
         case MAIN_IN_MASTER_MODE:    //por ahora programs mode
-            FuncsProgramsMode(ch_values);
+            FuncsMasterMode(ch_values);
             CheckFiltersAndOffsets2 (ch_values);
 
             if (CheckS2() > S_HALF)
                 main_state = MAIN_ENTERING_MAIN_MENU;
 
-            MasterModeMenu();
             if (!timer_standby)
             {
                 timer_standby = 40;
