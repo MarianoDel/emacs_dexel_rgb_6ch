@@ -448,7 +448,10 @@ typedef struct {
     
 } led_current_settings_t;
 
-
+#define SW_BACK()    CheckS1()
+#define SW_ENTER()    CheckS2()
+#define SW_UP()    CheckS3()
+#define SW_DWN()    CheckS4()
 /* Module Functions ------------------------------------------------------------*/
 sw_state_t CheckS1 (void);
 sw_state_t CheckS2 (void);

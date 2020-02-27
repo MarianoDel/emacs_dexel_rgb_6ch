@@ -17,6 +17,7 @@
     
 
 // Module Exported Functions ---------------------------------------------------
-void SCREEN_ShowFirst (void);
-void SCREEN_ShowSecond (void);
+void SCREEN_Init (void);
+void SCREEN_ShowText2 (char *, char *, char *, char *);
+
 #endif    /* _SCREEN_H_ */

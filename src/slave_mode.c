@@ -88,7 +88,7 @@ static slave_mode_menu_running_t slave_mode_menu_state = SLAVE_MODE_MENU_RUNNING
 // Module Private Functions ----------------------------------------------------
 void SlaveModeMenuManagerReset (void);
 void UpdateSlaveModeMenuManager (void);
-resp_t MenuSlaveModeRunning (void);
+void MenuSlaveModeRunning (void);
 void Percentage (unsigned char, unsigned char *, unsigned char *);
 
 
@@ -110,7 +110,6 @@ void FuncSlaveModeReset (void)
 
 void FuncSlaveMode (unsigned char * ch_val)
 {
-    resp_t resp = resp_continue;
     unsigned short dummy_16;
     
     switch (slave_mode_state)
@@ -192,8 +191,6 @@ void SlaveModeMenuManagerReset (void)
 
 inline void UpdateSlaveModeMenuManager (void)
 {
-    resp_t resp = resp_continue;
-    
     //veo el menu solo si alguien toca los botones / timeout o DMX enchufado
     switch (slave_mode_menu_manager)
     {
@@ -202,22 +199,14 @@ inline void UpdateSlaveModeMenuManager (void)
         gfx_setTextBg(0);
         gfx_setTextColor(1);
         display_clear();
+
+        MainMenu_SetTitle("   Slave/DMX Mode");
         slave_mode_menu_manager++;
         break;
         
     case MENU_ON:
         //estado normal
-
-        resp = MenuSlaveModeRunning();
-
-        if (resp == resp_working)	//alguien esta tratando de seleccionar algo, le doy tiempo
-            slave_mode_enable_menu_timer = TT_MENU_TIMEOUT;
-
-        if (resp == resp_selected)	//se selecciono algo
-        {
-            slave_mode_enable_menu_timer = TT_MENU_TIMEOUT;
-            slave_mode_menu_manager++;
-        }
+        MenuSlaveModeRunning();
 
         //ya mostre el menu mucho tiempo, lo apago, si no estoy con dmx
         if ((!slave_mode_dmx_receiving_timer) && (!slave_mode_enable_menu_timer))
@@ -229,7 +218,11 @@ inline void UpdateSlaveModeMenuManager (void)
 
     case MENU_OFF:
         //estado menu apagado
-        if ((CheckS1() > S_NO) || (CheckS2() > S_NO) || (slave_mode_dmx_receiving_timer))
+        if ((SW_UP() > S_NO) ||
+            (SW_DWN() > S_NO) ||
+            (SW_ENTER() > S_NO) ||
+            (SW_BACK() > S_NO) ||
+            (slave_mode_dmx_receiving_timer))
         {
             slave_mode_enable_menu_timer = TT_MENU_TIMEOUT;    //vuelvo a mostrar
             slave_mode_menu_manager = MENU_ON;
@@ -241,17 +234,12 @@ inline void UpdateSlaveModeMenuManager (void)
         slave_mode_menu_manager = 0;
         break;
     }
-
-    if (CheckS1() > S_HALF)
-        resp = resp_change_all_up;
-
 }
 
 
 unsigned char change_values = 0;
-inline resp_t MenuSlaveModeRunning (void)
+inline void MenuSlaveModeRunning (void)
 {
-    resp_t resp = resp_continue;
     char s_temp[18];
     unsigned char one_int = 0;
     unsigned char one_dec = 0;
@@ -404,8 +392,6 @@ inline resp_t MenuSlaveModeRunning (void)
         slave_mode_menu_state = SLAVE_MODE_MENU_RUNNING_INIT;
         break;
     }
-    
-    return resp;
 }
 
 

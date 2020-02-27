@@ -20,28 +20,26 @@
 // Module Private Functions ----------------------------------------------------
 
 // Module Funtions -------------------------------------------------------------
-void SCREEN_ShowFirst (void)
+void SCREEN_Init (void)
 {
     display_init(I2C_ADDRESS_SLV);
+}
+
+
+// recibe los 4 renglones a mostrar 9 caracteres maximo
+void SCREEN_ShowText2 (char * line1, char * line2, char * line3, char * line4)
+{
     gfx_setTextSize(2);
     gfx_setTextBg(0);
     gfx_setTextColor(1);
+    display_clear();
     gfx_setCursor(0,0);
-    gfx_println("Kirno    ");
-    gfx_println("     Tech");
-    gfx_println("Smart    ");
-    gfx_println("   Driver");
+    gfx_println(line1);
+    gfx_println(line2);
+    gfx_println(line3);
+    gfx_println(line4);
     display_update();    
 }
 
 
-void SCREEN_ShowSecond (void)
-{
-    display_clear();
-    gfx_setCursor(0,0);
-    gfx_println("");
-    gfx_println("Dexel");
-    gfx_println("Lighting");
-    display_update();
-}
 //--- end of file ---//
