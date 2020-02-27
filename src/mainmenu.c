@@ -56,7 +56,9 @@ typedef enum {
     MAIN_MENU_PAGE_HARDWARE_POWER_A,
     MAIN_MENU_PAGE_HARDWARE_POWER_B,
     MAIN_MENU_PAGE_HARDWARE_TEST_LED_A,
-    MAIN_MENU_PAGE_HARDWARE_TEST_LED_B
+    MAIN_MENU_PAGE_HARDWARE_TEST_LED_B,
+
+    MAIN_MENU_PAGE_SAVE_AND_EXIT
     
 } mmenu_state_t;
 
@@ -117,7 +119,7 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
         set_option_string2("Slave/DMX config.");
         set_option_string3("Programs config.");
         set_option_string4("Hardware config.");
-        blank_option_string5();
+        set_option_string5("Save & Exit");
         blank_option_string6();
         
         mm_selected = 1;
@@ -167,11 +169,14 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
             case 4:
                 mmenu_state = MAIN_MENU_PAGE_HARDWARE_A;
                 break;
+            case 5:
+                mmenu_state = MAIN_MENU_PAGE_SAVE_AND_EXIT;
+                break;
             }            
         }
 
-        // if (mm_action == selection_back)
-        //     resp = resp_finish;
+        if (mm_action == selection_back)
+            resp = resp_finish;
         
         break;
 
@@ -180,7 +185,7 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
         //////////////////////////
     case MAIN_MENU_PAGE_MASTER_A:
         // Menu Title
-        MainMenu_SetTitle("    Master Mode");
+        MainMenu_SetTitle("Master Mode Config");
 
         // Menu options
         MainMenu_BlankOptions();
@@ -903,10 +908,16 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
         {
             mmenu_state = MAIN_MENU_PAGE_HARDWARE_A;
         }
-
         break;
         
-
+        /////////////////
+        // SAVE & EXIT //
+        /////////////////
+    case MAIN_MENU_PAGE_SAVE_AND_EXIT:
+        mmenu_state = MAIN_MENU_INIT;
+        resp = resp_need_to_save;
+        break;
+        
     default:
         mmenu_state = MAIN_MENU_INIT;
         break;
@@ -965,6 +976,17 @@ void MainMenu_SetOptions (unsigned char sel)
             gfx_println(displaced);
         }
     }
+}
+
+
+void MainMenu_BlankAllLines (void)
+{
+    blank_option_string1();
+    blank_option_string2();
+    blank_option_string3();
+    blank_option_string4();
+    blank_option_string5();
+    blank_option_string6();
 }
 
 

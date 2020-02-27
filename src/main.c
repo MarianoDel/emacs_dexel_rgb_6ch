@@ -603,11 +603,12 @@ int main(void)
             Update_PWM5(0);
             Update_PWM6(0);
 
-            //TODO: armar pantalla oled
-            // LCD_1ER_RENGLON;
-            // LCDTransmitStr("OVERTEMP");
-            // LCD_2DO_RENGLON;
-            // LCDTransmitStr(s_blank_line);
+            SCREEN_ShowText2(
+                "LEDs     ",
+                "Overtemp ",
+                "         ",
+                "         "
+                );
 
 #ifdef USART2_DEBUG_MODE
             sprintf(s_to_send, "overtemp: %d\n", Temp_Channel);
@@ -647,8 +648,13 @@ int main(void)
 
             if (resp == resp_need_to_save)
             {
-                need_to_save = 1;
+#ifdef SAVE_FLASH_IMMEDIATE
+                need_to_save_timer = 0;
+#endif
+#ifdef SAVE_FLASH_WITH_TIMEOUT
                 need_to_save_timer = 10000;
+#endif
+                need_to_save = 1;
                 main_state = MAIN_HARDWARE_INIT;
             }
             

@@ -25,6 +25,7 @@ void MainMenu_SetTitle (char *);
 void MainMenu_BlankOptions (void);
 void MainMenu_SetOptions (unsigned char);
 
+void MainMenu_BlankAllLines (void);
 void MainMenu_BlankLine1 (void);
 void MainMenu_BlankLine2 (void);
 void MainMenu_BlankLine3 (void);

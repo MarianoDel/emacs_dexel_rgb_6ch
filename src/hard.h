@@ -43,6 +43,9 @@
 
 #define ALWAYS_CHECK_CURRENT_ON_INIT
 
+#define SAVE_FLASH_IMMEDIATE
+// #define SAVE_FLASH_WITH_TIMEOUT
+
 //----- PWM Frequency ------------------------
 #define USE_FREQ_48KHZ
 // #define USE_FREQ_24KHZ

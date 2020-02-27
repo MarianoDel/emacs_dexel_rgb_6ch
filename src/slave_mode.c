@@ -200,7 +200,9 @@ inline void UpdateSlaveModeMenuManager (void)
         gfx_setTextColor(1);
         display_clear();
 
+        MainMenu_BlankAllLines();
         MainMenu_SetTitle("   Slave/DMX Mode");
+        
         slave_mode_menu_manager++;
         break;
         
