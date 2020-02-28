@@ -31,6 +31,7 @@
 #include "i2c.h"
 #include "mainmenu.h"
 #include "screen.h"
+#include "ssd1306.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -267,6 +268,46 @@ int main(void)
     }
 #endif
 
+#ifdef HARD_TEST_MODE_ONLY_OLED_SCREENS
+    resp = resp_ok;
+    I2C2_Init();
+    Wait_ms(100);
+
+    //primer pantalla
+    SCREEN_Init();
+
+    unsigned char a = 0;
+    while (1)
+    {
+        if (!timer_standby)
+        {
+            timer_standby = 1000;
+            if (a)
+            {
+                SCREEN_ShowText2(
+                    "Primera  ",
+                    " Pantalla",
+                    "         ",
+                    "         "
+                    );
+                a = 0;
+            }
+            else
+            {
+                SCREEN_ShowText2(
+                    "         ",
+                    "         ",
+                    "Segunda  ",
+                    " Pantalla"
+                    );
+                a = 1;
+            }
+        }
+        display_update_int_state_machine();
+    }
+#endif
+
+    
 #ifdef HARD_TEST_MODE_ONLY_OLED_MAIN_MENU
     resp = resp_ok;
     I2C2_Init();
@@ -286,6 +327,7 @@ int main(void)
     }
 #endif
 
+    
 #ifdef HARD_TEST_MODE_ONLY_OLED_SLAVE_MODE
     resp = resp_ok;
     I2C2_Init();
@@ -367,13 +409,18 @@ int main(void)
 
     //first screen
     SCREEN_Init();
+
     SCREEN_ShowText2(
         "Kirno    ",
         "   Tech  ",
         "Smart    ",
         "   Driver"
         );
-    Wait_ms(1300);
+    timer_standby = 1300;
+    
+    while (timer_standby)
+        display_update_int_state_machine();
+        
 
     //second screen
     SCREEN_ShowText2(
@@ -382,7 +429,11 @@ int main(void)
         "Lighting ",
         "         "
         );
-    Wait_ms(1300);
+    timer_standby = 1300;
+    
+    while (timer_standby)
+        display_update_int_state_machine();
+
 
     //--- Mensaje Bienvenida ---//
     //---- Defines from hard.h -----//
@@ -670,6 +721,9 @@ int main(void)
 
         //cuestiones generales        
         UpdateSwitches();
+
+        display_update_int_state_machine();
+        
 
         //sensado de temperatura
 #ifdef USE_OVERTEMP_PROT

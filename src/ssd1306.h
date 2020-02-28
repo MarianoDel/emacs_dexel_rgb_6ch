@@ -37,6 +37,9 @@ typedef enum{
 void display_init( uint8_t i2caddr );
 void display_off( uint8_t i2caddr );
 void display_update(void);
+
+void display_update_int_state_machine (void);
+
 void display_clear(void);
 void display_stopscroll(void);
 void display_scroll( SCROLL_AREA start, SCROLL_AREA end, SCROLL_DIR dir, SCROLL_SPEED speed );

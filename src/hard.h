@@ -25,7 +25,7 @@
 // #define HARD_TEST_MODE_FAN
 // #define HARD_TEST_MODE_DO_NOTHING    //no hace nada, todos los pines HiZ
 // #define HARD_TEST_MODE_DO_NOTHING_AFTER_GPIOS    //no hace nada, todos los pines configurados
-// #define HARD_TEST_MODE_ONLY_OLED
+// #define HARD_TEST_MODE_ONLY_OLED_SCREENS
 // #define HARD_TEST_MODE_ONLY_OLED_SLAVE_MODE
 // #define HARD_TEST_MODE_ONLY_OLED_PROGRAMS_MODE
 // #define HARD_TEST_MODE_ONLY_OLED_MASTER_MODE
@@ -41,7 +41,7 @@
 // #define USE_INDUCTOR_IN_CCM
 #define USE_INDUCTOR_REAL_MEAS
 
-#define ALWAYS_CHECK_CURRENT_ON_INIT
+// #define ALWAYS_CHECK_CURRENT_ON_INIT
 
 #define SAVE_FLASH_IMMEDIATE
 // #define SAVE_FLASH_WITH_TIMEOUT
@@ -156,24 +156,17 @@
 
 #ifdef HARDWARE_VERSION_2_0
 //GPIOC pin13
-#define LCD_E ((GPIOC->ODR & 0x2000) != 0)
-#define LCD_E_ON GPIOC->BSRR = 0x00002000
-#define LCD_E_OFF GPIOC->BSRR = 0x20000000
-
 //GPIOC pin14
-#define LCD_RS ((GPIOC->ODR & 0x4000) != 0)
-#define LCD_RS_ON GPIOC->BSRR = 0x00004000
-#define LCD_RS_OFF GPIOC->BSRR = 0x40000000
+//GPIOC pin15    NC
 
-//GPIOC pin15
-#define CTRL_BKL ((GPIOC->ODR & 0x8000) != 0)
-#define CTRL_BKL_ON GPIOC->BSRR = 0x00008000
-#define CTRL_BKL_OFF GPIOC->BSRR = 0x80000000
+//GPIOF pin0    
+//GPIOF pin1    NC
 
 //GPIOC pin0
 //GPIOC pin1
-//GPIOC pin2
-//GPIOC pin3    LCD D4-D7
+//GPIOC pin2    ADC inputs
+
+//GPIOC pin3    NC
 
 //GPIOA pin0
 //GPIOA pin1    2 ADC channels
@@ -184,13 +177,17 @@
 //GPIOF pin4    NC
 //GPIOF pin5    NC
 
-//GPIOA pin4
-//GPIOA pin5
-//GPIOA pin6
-//GPIOA pin7    
-//GPIOC pin4    5 ADC channels
+//GPIOA pin4    ADC
 
-//GPIOC pin5
+//GPIOA pin5    NC
+
+//GPIOA pin6    ADC
+
+//GPIOA pin7    NC
+
+//GPIOC pin4    ADC
+
+//GPIOC pin5    NC
 
 //GPIOB pin0
 //GPIOB pin1    TIM3 CH1 - CH4
@@ -224,8 +221,8 @@
 
 //GPIOA pin13    NC
 
-//GPIOF pin6    NC
-//GPIOF pin7    NC
+//GPIOF pin6    
+//GPIOF pin7    I2C2
 
 //GPIOA pin14    NC
 //GPIOA pin15    NC

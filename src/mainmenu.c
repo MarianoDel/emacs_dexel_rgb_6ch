@@ -133,7 +133,7 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
     case MAIN_MENU_PAGE_MM_B:
         if (mm_action == selection_dwn)
         {
-            if (mm_selected < 4)
+            if (mm_selected < 5)
                 mm_selected++;
             else
                 mm_selected = 1;
@@ -147,7 +147,7 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
             if (mm_selected > 1)
                 mm_selected--;
             else
-                mm_selected = 4;
+                mm_selected = 5;
 
             MainMenu_SetOptions(mm_selected);
             mm_changed = 1;
@@ -189,14 +189,15 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
 
         // Menu options
         MainMenu_BlankOptions();
-        set_option_string1("Master Enabled");
+        set_option_string1("DMX send Enable");
         mem_conf.master_enable = 1;
-        blank_option_string2();
+        set_option_string2("Mstr Mode selected");
+        mem_conf.program_type = MASTER_MODE;
+        blank_option_string3();
         sprintf(s_temp, "Curr. prog: %2d", last_program);
-        set_option_string3(s_temp);
+        set_option_string4(s_temp);
         sprintf(s_temp, "Curr. pseq: %2d", last_seq);
-        set_option_string4(s_temp);        
-        blank_option_string5();
+        set_option_string5(s_temp);        
         blank_option_string6();
 
         mm_selected = 1;
@@ -208,46 +209,24 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
         break;
 
     case MAIN_MENU_PAGE_MASTER_B:
-        if (mm_action == selection_dwn)
+        if ((mm_action == selection_dwn) ||
+            (mm_action == selection_up) ||
+            (mm_action == selection_enter))
         {
-            if (mm_selected < 3)
-                mm_selected++;
+            if (mem_conf.master_enable)
+            {
+                set_option_string1("DMX send Disable");
+                mem_conf.master_enable = 0;
+            }
             else
-                mm_selected = 1;
+            {
+                set_option_string1("DMX send Enable");
+                mem_conf.master_enable = 1;
+            }
 
-            MainMenu_SetOptions(mm_selected);
+            MainMenu_SetOptions(1);
             mm_changed = 1;
         }
-
-        if (mm_action == selection_up)
-        {
-            if (mm_selected > 1)
-                mm_selected--;
-            else
-                mm_selected = 3;
-
-            MainMenu_SetOptions(mm_selected);
-            mm_changed = 1;
-        }
-
-        // if (mm_action == selection_enter)
-        // {
-        //     switch (mm_selected)
-        //     {
-        //     case 1:
-        //         mmenu_state = MAIN_MENU_PAGE_MASTER_A;
-        //         break;
-        //     case 2:
-        //         mmenu_state = MAIN_MENU_PAGE_SLAVE_A;
-        //         break;
-        //     case 3:
-        //         mmenu_state = MAIN_MENU_PAGE_PROGRAMS_A;
-        //         break;
-        //     case 4:
-        //         mmenu_state = MAIN_MENU_PAGE_HARDWARE_A;
-        //         break;
-        //     }            
-        // }
 
         if (mm_action == selection_back)
             mmenu_state = MAIN_MENU_PAGE_MM_A;

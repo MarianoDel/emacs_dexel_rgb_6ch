@@ -187,6 +187,7 @@ void FuncSlaveMode (unsigned char * ch_val)
 void SlaveModeMenuManagerReset (void)
 {
     slave_mode_menu_manager = MENU_INIT;
+    slave_mode_menu_state = SLAVE_MODE_MENU_RUNNING_INIT;
 }
 
 inline void UpdateSlaveModeMenuManager (void)
@@ -202,6 +203,7 @@ inline void UpdateSlaveModeMenuManager (void)
 
         MainMenu_BlankAllLines();
         MainMenu_SetTitle("   Slave/DMX Mode");
+        display_update();
         
         slave_mode_menu_manager++;
         break;

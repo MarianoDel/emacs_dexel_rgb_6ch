@@ -89,6 +89,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #define display_write_buf(X,Y)    I2C1_SendMultiByte((X), I2C_ADDRESS_SLV, (Y))
 #elif defined I2C_USE_I2C2
 #define display_write_buf(X,Y)    I2C2_SendMultiByte((X), I2C_ADDRESS_SLV, (Y))
+#define display_write_buf_int(X,Y)    I2C2_Int_SendMultiByte((X), I2C_ADDRESS_SLV, (Y))
+#define display_wait_end()    while (!I2C2_Int_CheckEnded())
 #else
 #error "Select what I2C to use on i2c.h"
 #endif
@@ -96,6 +98,7 @@ POSSIBILITY OF SUCH DAMAGE.
 void gfx_init( int16_t width, int16_t height );
 
 static uint8_t _i2caddr;
+static unsigned char cmdbuf[129] = { 0 };
 
 // display memory buffer ( === MUST INCLUDE === the preceding I2C 0x40 control byte for the display)
 static uint8_t SSD1306_buffer[DISPLAYHEIGHT * DISPLAYWIDTH / 8 + 1] = { 0x40 };
@@ -118,13 +121,50 @@ static uint16_t _displaybuf_size = sizeof(SSD1306_buffer) - 1;
 #define PIXEL_TOGGLE(X,Y) (*GDDRAM_ADDRESS(x,y) ^= GDDRAM_PIXMASK(y)) 
 
 
+///////////////////////////////////////////////////////
+// DISPLAY FUNCTIONS THAT SEND COMMANDS THROUGHT I2C //
+///////////////////////////////////////////////////////
 
 // call before first use of other functions
-void display_init( uint8_t i2caddr ){
+void display_init( uint8_t i2caddr )
+{
     
     gfx_init( DISPLAYWIDTH, DISPLAYHEIGHT );
     
-    uint8_t cmdbuf[] = {
+#ifdef I2C_WITH_INTS    
+    cmdbuf[0] = 0x00;
+    cmdbuf[1] = SSD1306_DISPLAYOFF;
+    cmdbuf[2] = SSD1306_SETDISPLAYCLOCKDIV;
+    cmdbuf[3] = 0x80;
+    cmdbuf[4] = SSD1306_SETMULTIPLEX;
+    cmdbuf[5] = 0x3f;
+    cmdbuf[6] = SSD1306_SETDISPLAYOFFSET;
+    cmdbuf[7] = 0x00;
+    cmdbuf[8] = SSD1306_SETSTARTLINE | 0x0;
+    cmdbuf[9] = SSD1306_CHARGEPUMP;
+    cmdbuf[10] = 0x14;
+    cmdbuf[11] = SSD1306_MEMORYMODE;
+    cmdbuf[12] = 0x02;    //cmbio a page de 0x00 a 0x0
+    cmdbuf[13] = SSD1306_SEGREMAP | 0x1;
+    // cmdbuf[13] = SSD1306_SEGREMAP | 0x0       
+    cmdbuf[14] = SSD1306_COMSCANDEC;
+    cmdbuf[15] = SSD1306_SETCOMPINS;
+    cmdbuf[16] = 0x12;
+    cmdbuf[17] = SSD1306_SETCONTRAST;
+    cmdbuf[18] = 0xcf;
+    cmdbuf[19] = SSD1306_SETPRECHARGE;
+    cmdbuf[20] = 0xf1;
+    cmdbuf[21] = SSD1306_SETVCOMDETECT;
+    cmdbuf[22] = 0x40;
+    cmdbuf[23] = SSD1306_DISPLAYALLON_RESUME;
+    cmdbuf[24] = SSD1306_NORMALDISPLAY;
+    cmdbuf[25] = SSD1306_DISPLAYON;
+    
+    display_write_buf_int(cmdbuf, 26);
+    display_wait_end();
+#else
+    
+    uint8_t cmd[] = {
         0x00,
         SSD1306_DISPLAYOFF,
         SSD1306_SETDISPLAYCLOCKDIV,
@@ -154,74 +194,281 @@ void display_init( uint8_t i2caddr ){
         SSD1306_DISPLAYON,
     };
     
-    display_write_buf( cmdbuf, sizeof(cmdbuf) ); 
+    display_write_buf( cmd, sizeof(cmd) ); 
+#endif
+  
 }
 
-
-// void SSD1306_Fill( char color )
-// {
-// char x, y;
-//    for( y = 0; y < 8; y++ )
-//    {
-//       SSD1306_Set_Cursor( y, 0 );
-//       Soft_I2C_Start();
-//       Soft_I2C_Write( 0x78 );
-//       Soft_I2C_Write( 0b1100000 );
-//       for( x = 0; x < 128; x++ )
-//          Soft_I2C_Write( color );
-//       Soft_I2C_Stop();  
-//    }
-// }
 
 // useful to turn off display if not used by application
 // w/o going through the init process
-void display_off( uint8_t i2caddr ){
-
+void display_off( uint8_t i2caddr )
+{
     _i2caddr = i2caddr;
-	uint8_t cmdbuf[] = {
+
+#ifdef I2C_WITH_INTS        
+
+    cmdbuf[0] = 0x00;
+    cmdbuf[1] = SSD1306_DISPLAYOFF;
+    display_write_buf_int( cmdbuf, 2 );
+    display_wait_end();
+    
+#else
+    uint8_t cmd[] = {
         0x00,
         SSD1306_DISPLAYOFF
-	};
-	display_write_buf( cmdbuf, sizeof(cmdbuf) ); 
-    //SSD1306_command(SSD1306_DISPLAYOFF); // 0xAE    
+    };
+    display_write_buf( cmd, sizeof(cmd) );        
+#endif
+
 }
 
 
-// for submitting command sequences:
-//  buf[0] must be 0x00
-// for submitting bulk data (writing to display RAM):
-//  buf[0] must be 0x40
-// static uint32 display_write_buf( uint8_t* buf, uint16_t size ){
+// contrast: 0 ...255
+void display_contrast( uint8_t contrast )
+{
+#ifdef I2C_WITH_INTS        
 
-//     uint8_t ack;
+    cmdbuf[0] = 0x00;
+    cmdbuf[1] = SSD1306_SETCONTRAST;
+    cmdbuf[2] = contrast;
 
-//     i2c_master_start();
-//     i2c_master_writeByte(_i2caddr<<1);
-//     ack = i2c_master_getAck();
-
-//     if (ack) {
-//         LOG_MSG("i2c address not acknowledged, display_write_buf\n" );
-//         i2c_master_stop();
-//         return TRANSFER_ERROR;
-//     }
- 
-//  	//uint16_t txlen = sizeof(_buffer);
-// 	uint16_t i = 0;
-	
-// 	for( i = 0 ; i < size ; i++ ){
-// 		i2c_master_writeByte( buf[i] );
-// 		ack = i2c_master_getAck();
-// 		if (ack) {
-// 			LOG_MSG("i2c data byte not acknowledged, display_write_buf\n" );
-// 			i2c_master_stop();
-// 			return TRANSFER_ERROR;
-// 		}
-// 	}
+    display_write_buf_int( cmdbuf, 3 );
+    display_wait_end();
     
-//     i2c_master_stop();
-//     return TRANSFER_CMPLT;   
+#else
+    uint8_t cmd[] = {
+        0x00,  
+        SSD1306_SETCONTRAST,
+        contrast
+    };
+    display_write_buf( cmd, sizeof(cmd) );
+#endif
+}
+
+
+// invert <> 0 for inverse display, invert == 0 for normal display
+void display_invert ( uint8_t invert )
+{
+#ifdef I2C_WITH_INTS
+
+    cmdbuf[0] = 0x00;
+    cmdbuf[1] = invert ? SSD1306_INVERTDISPLAY : SSD1306_NORMALDISPLAY;
+    display_write_buf_int( cmdbuf, 2);
+    display_wait_end();
+#else
+    uint8_t cmd[] = {
+        0x00,  
+        0
+    };
+    cmd[1] = invert ? SSD1306_INVERTDISPLAY : SSD1306_NORMALDISPLAY;
+    display_write_buf( cmd, sizeof(cmd) );
+#endif
+}
+
+
+void display_stopscroll(void)
+{
+#ifdef I2C_WITH_INTS
+    cmdbuf[0] = 0x00;
+    cmdbuf[1] = SSD1306_DEACTIVATE_SCROLL;
+
+    display_write_buf_int( cmdbuf, 2 );
+    display_wait_end();
+
+#else
+    uint8_t cmd[] = {
+        0x00,
+        SSD1306_DEACTIVATE_SCROLL
+    };
+    display_write_buf( cmd, sizeof(cmd) );
+#endif
+}
+
+
+void display_scroll( SCROLL_AREA start, SCROLL_AREA end, SCROLL_DIR dir, SCROLL_SPEED speed )
+{
+#ifdef I2C_WITH_INTS
+
+    cmdbuf[0] = 0x00;
+    cmdbuf[1] = dir;                    // 0x26 or 0x2
+    cmdbuf[2] = 0x00;                   // dummy byt
+    cmdbuf[3] = start;                  // start pag
+    cmdbuf[4] = speed;                  // scroll step interval in terms of frame frequency
+    cmdbuf[5] = end;                    // end pag
+    cmdbuf[6] = 0x00;                   // dummy byt
+    cmdbuf[7] = 0xFF;                   // dummy byt
+    cmdbuf[8] = SSD1306_ACTIVATE_SCROLL; // 0x2
+
+    display_write_buf_int( cmdbuf, 9);
+    display_wait_end();
+
+#else
+    uint8_t cmd[] = {
+        0x00,
+        dir,                    // 0x26 or 0x2a
+        0x00,                   // dummy byte
+        start,                  // start page
+        speed,                  // scroll step interval in terms of frame frequency 
+        end,                    // end page
+        0x00,                   // dummy byte
+        0xFF,                   // dummy byte
+        SSD1306_ACTIVATE_SCROLL // 0x2F
+    };
+    display_write_buf( cmd, sizeof(cmd) );
+#endif
+}
+
+
+typedef enum {
+    DISPLAY_UPDATE_INIT = 0,
+    DISPLAY_UPDATE_SET_PAGE_CMD_0,
+    DISPLAY_UPDATE_SET_PAGE_CMD_0_END,
+    DISPLAY_UPDATE_SET_PAGE_CMD_1,
+    DISPLAY_UPDATE_SET_PAGE_CMD_1_END,
+    DISPLAY_UPDATE_SET_PAGE_CMD_2,
+    DISPLAY_UPDATE_SET_PAGE_CMD_2_END,
+    DISPLAY_UPDATE_SEND_PAGE,
+    DISPLAY_UPDATE_SEND_PAGE_END,
+    DISPLAY_UPDATE_ENDED
+
+} d_update_st_t;
+
+unsigned char d_update_page = 0;
+d_update_st_t d_update_st = DISPLAY_UPDATE_ENDED;
+void display_update_int_state_machine (void)
+{
+#ifdef I2C_WITH_INTS
+    switch (d_update_st)
+    {
+    case DISPLAY_UPDATE_INIT:
+        d_update_page = 0;
+        d_update_st++;
+        break;
+
+    case DISPLAY_UPDATE_SET_PAGE_CMD_0:
+        //seteo el 0 de cada pagina
+        cmdbuf[0] = 0x00;
+        cmdbuf[1] = 0x02;    //page addr 0
+
+        display_write_buf_int( cmdbuf, 2);
+        d_update_st++;
+        break;
+
+    case DISPLAY_UPDATE_SET_PAGE_CMD_0_END:
+        if (I2C2_Int_CheckEnded())
+            d_update_st++;
+
+        break;
+
+    case DISPLAY_UPDATE_SET_PAGE_CMD_1:
+        //seteo el 0 de cada pagina
+        cmdbuf[0] = 0x00;
+        cmdbuf[1] = 0x10;    //page addr 0
+
+        display_write_buf_int( cmdbuf, 2);
+        d_update_st++;
+        break;
+
+    case DISPLAY_UPDATE_SET_PAGE_CMD_1_END:
+        if (I2C2_Int_CheckEnded())
+            d_update_st++;
+
+        break;
+
+    case DISPLAY_UPDATE_SET_PAGE_CMD_2:
+        //seteo el 0 de cada pagina
+        cmdbuf[0] = 0x00;
+        cmdbuf[1] = 0xB0 | d_update_page;    //seteo la pagina
+
+        display_write_buf_int( cmdbuf, 2);
+        d_update_st++;
+        break;
+
+    case DISPLAY_UPDATE_SET_PAGE_CMD_2_END:
+        if (I2C2_Int_CheckEnded())
+            d_update_st++;
+
+        break;
+        
+    case DISPLAY_UPDATE_SEND_PAGE:
+        cmdbuf[0] = 0x40;
+        memcpy(cmdbuf + 1, SSD1306_buffer + 1 + d_update_page * 128, 128);
+
+        display_write_buf_int( cmdbuf, sizeof(cmdbuf) );    //size cmdbuf = 129
+        d_update_st++;
+        break;
+
+    case DISPLAY_UPDATE_SEND_PAGE_END:
+        if (I2C2_Int_CheckEnded())
+        {
+            if (d_update_page < 7)
+            {
+                d_update_page++;
+                d_update_st = DISPLAY_UPDATE_SET_PAGE_CMD_0;
+            }
+            else
+                d_update_st = DISPLAY_UPDATE_ENDED;
+        }
+        break;
+        
+    case DISPLAY_UPDATE_ENDED:
+    default:
+        break;
+    }
+#endif
+}
+
+
+void display_update (void)
+{
+#ifdef I2C_WITH_INTS
+
+    //check if can send it, else do nothing
+    if (d_update_st == DISPLAY_UPDATE_ENDED)
+        d_update_st = DISPLAY_UPDATE_INIT;
     
-// }
+#else
+    uint8_t cmd[2] = { 0 };
+    uint8_t datab[129];
+
+    // en page mode escribo a las 8 paginas
+    for (unsigned char page = 0; page < 8; page++)
+    {
+        //seteo el 0 de cada pagina
+        cmd[0] = 0x00;
+        cmd[1] = 0x02;    //page addr 0
+        display_write_buf( cmd, sizeof(cmd) ); 
+        
+        cmd[0] = 0x00;
+        cmd[1] = 0x10;    //page addr 0
+        display_write_buf( cmd, sizeof(cmd) ); 
+
+        //seteo la pagina
+        cmd[1] = 0xB0 | page;
+
+        display_write_buf( cmd, sizeof(cmd) ); 
+
+        datab[0] = 0x40;
+        memcpy(datab + 1, SSD1306_buffer + 1 + page * 128, 128);
+        display_write_buf( datab, sizeof(datab) ); 
+    }
+#endif    
+}
+
+
+
+
+
+////////////////////////////////////////////////
+// DISPLAY FUNCTIONS THAT ONLY UPDATES MEMORY //
+////////////////////////////////////////////////
+void display_clear(void)
+{
+    memset( _displaybuf, 0x00, _displaybuf_size );
+    SSD1306_buffer[0] = 0x40; // to be sure its there
+}
+
 
 // used by gfx_ functions. Needs to be implemented by display_
 static void display_setPixel( int16_t x, int16_t y, uint16_t color ){
@@ -241,84 +488,6 @@ static void display_setPixel( int16_t x, int16_t y, uint16_t color ){
             break;
     }
 }
-
-
-void display_clear(void){
-    memset( _displaybuf, 0x00, _displaybuf_size );
-    SSD1306_buffer[0] = 0x40; // to be sure its there
-}
-
-
-// contrast: 0 ...255
-void display_contrast( uint8_t contrast ){
-        
-    uint8_t cmdbuf[] = {
-        0x00,  
-        SSD1306_SETCONTRAST,
-        contrast
-    };
-    display_write_buf( cmdbuf, sizeof(cmdbuf) ); 
-}
-
-
-// invert <> 0 for inverse display, invert == 0 for normal display
-void display_invert( uint8_t invert ){
-
-    uint8_t cmdbuf[] = {
-        0x00,  
-        0
-    };
-    cmdbuf[1] = invert ? SSD1306_INVERTDISPLAY : SSD1306_NORMALDISPLAY;
-    display_write_buf( cmdbuf, sizeof(cmdbuf) ); 
-}
-
-
-void display_update (void)
-{
-    uint8_t cmd[2] = { 0 };
-    uint8_t datab[129];
-
-    // en page mode escribo a las 8 paginas
-    for (unsigned char page = 0; page < 8; page++)
-    {
-        //seteo el 0 de cada pagina
-        cmd[0] = 0x00;
-        cmd[1] = 0x02;    //page addr 0
-        display_write_buf( cmd, sizeof(cmd) );
-
-        cmd[0] = 0x00;
-        cmd[1] = 0x10;    //page addr 0
-        display_write_buf( cmd, sizeof(cmd) );
-
-        //seteo la pagina
-        cmd[1] = 0xB0 | page;
-        display_write_buf( cmd, sizeof(cmd) );
-
-        datab[0] = 0x40;
-        memcpy(datab + 1, SSD1306_buffer + 1 + page * 128, 128);
-        display_write_buf( datab, sizeof(datab));
-    }
-}
-
-//version original mas el timer de fin de comando
-// void display_update(void)
-// {
-//     uint8_t cmdbuf[] = {
-//         0x00,
-//         SSD1306_COLUMNADDR,
-//         0,                      // start
-//         DISPLAYWIDTH-1, // end
-//         SSD1306_PAGEADDR,
-//         0,                      // start
-//         7                       // end
-//     };
-//     display_write_buf( cmdbuf, sizeof(cmdbuf) );
-//     Wait_ms(1);    //doy tiempo a que salga el ultimo byte
-//     memset(SSD1306_buffer, 0xFF, sizeof(SSD1306_buffer));
-//     SSD1306_buffer[0] = 0x40;
-//     display_write_buf( SSD1306_buffer, sizeof(SSD1306_buffer) );
-//     Wait_ms(1);    //doy tiempo a que salga el ultimo byte
-// }
 
 
 // draws horizontal or vertical line
@@ -382,43 +551,6 @@ static void display_line( int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16
         }
     }
 }
-
-
-
-void display_stopscroll(void){
-
-    uint8_t cmdbuf[] = {
-        0x00,
-        SSD1306_DEACTIVATE_SCROLL
-    };
-    display_write_buf( cmdbuf, sizeof(cmdbuf) ); 
-}
-
-void display_scroll( SCROLL_AREA start, SCROLL_AREA end, SCROLL_DIR dir, SCROLL_SPEED speed ){
-   
-    uint8_t cmdbuf[] = {
-        0x00,
-        dir,                    // 0x26 or 0x2a
-        0x00,                   // dummy byte
-        start,                  // start page
-        speed,                  // scroll step interval in terms of frame frequency 
-        end,                    // end page
-        0x00,                   // dummy byte
-        0xFF,                   // dummy byte
-        SSD1306_ACTIVATE_SCROLL // 0x2F
-    };
-    display_write_buf( cmdbuf, sizeof(cmdbuf) ); 
-}
-
-
-// void display_horizontal (void)
-// {
-//     for (unsigned short i = 1; i < sizeof(SSD1306_buffer); i++)
-//         SSD1306_buffer[i] = 0x10;
-//     //para algo vertical
-//     for (unsigned short i = 64; i < sizeof(SSD1306_buffer); i+=128)
-//         SSD1306_buffer[i] = 0xFF;    
-// }
 
 
 

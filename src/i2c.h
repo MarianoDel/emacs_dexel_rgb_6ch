@@ -18,7 +18,7 @@
 #define I2C_ADDRESS_MSK    0x7F
 
 
-// #define I2C_WITH_INTS
+#define I2C_WITH_INTS
 
 // Common Defines --------------------------------------------------------------
 #define RCC_I2C1_CLK (RCC->APB1ENR & 0x00200000)
@@ -50,5 +50,9 @@ void I2C2_SendByteTest (unsigned char);
 void I2C2_SendByte (unsigned char, unsigned char);
 void I2C2_SendAddr (unsigned char);
 void I2C2_SendMultiByte (unsigned char *, unsigned char, unsigned short);
+void I2C2_IRQHandler (void);
+
+unsigned char I2C2_Int_CheckEnded (void);
+void I2C2_Int_SendMultiByte (unsigned char *, unsigned char, unsigned short);
 
 #endif    /* _I2C_H_ */
