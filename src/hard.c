@@ -418,25 +418,45 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
         //TODO: mejorar esto; hardcodeo la corriente segun el canal; y el for de abajo
         switch (j)
         {
+#ifdef USE_HARCODED_CURRENT
         case 0:
-            max_current_in_channel_millis = 1000;
+            max_current_in_channel_millis = HARCODED_CURRENT_CH1;
             break;
         case 1:
-            max_current_in_channel_millis = 1000;
+            max_current_in_channel_millis = HARCODED_CURRENT_CH2;
             break;
         case 2:
-            max_current_in_channel_millis = 1000;
+            max_current_in_channel_millis = HARCODED_CURRENT_CH3;
             break;
         case 3:
-            max_current_in_channel_millis = 1000;
+            max_current_in_channel_millis = HARCODED_CURRENT_CH4;
             break;
         case 4:
-            max_current_in_channel_millis = 1000;
+            max_current_in_channel_millis = HARCODED_CURRENT_CH5;
             break;
         case 5:
-            max_current_in_channel_millis = 1000;
-
+            max_current_in_channel_millis = HARCODED_CURRENT_CH6;
             break;
+#else
+        case 0:
+            max_current_in_channel_millis = mem_conf.max_current_ma;
+            break;
+        case 1:
+            max_current_in_channel_millis = mem_conf.max_current_ma;
+            break;
+        case 2:
+            max_current_in_channel_millis = mem_conf.max_current_ma;
+            break;
+        case 3:
+            max_current_in_channel_millis = mem_conf.max_current_ma;
+            break;
+        case 4:
+            max_current_in_channel_millis = mem_conf.max_current_ma;
+            break;
+        case 5:
+            max_current_in_channel_millis = mem_conf.max_current_ma;
+            break;            
+#endif
         }
         
         for (unsigned char i = 0; i < SEGMENTS_QTTY; i++)

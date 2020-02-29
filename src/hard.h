@@ -42,6 +42,7 @@
 #define USE_INDUCTOR_REAL_MEAS
 
 // #define ALWAYS_CHECK_CURRENT_ON_INIT
+// #define USE_HARCODED_CURRENT
 
 #define SAVE_FLASH_IMMEDIATE
 // #define SAVE_FLASH_WITH_TIMEOUT
@@ -89,6 +90,14 @@
 #define WHITE_AS_IN_RGB		//el blanco lo forma con los 3 colores
 //#define WHITE_AS_WHITE	//el blanco tiene leds blancos individuales
 
+#ifdef USE_HARCODED_CURRENT
+#define HARCODED_CURRENT_CH1    1500
+#define HARCODED_CURRENT_CH2    1500
+#define HARCODED_CURRENT_CH3    1500
+#define HARCODED_CURRENT_CH4    1500
+#define HARCODED_CURRENT_CH5    1500
+#define HARCODED_CURRENT_CH6    1500
+#endif
 
 //---- End of Features Configuration ----------
 
