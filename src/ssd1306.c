@@ -334,6 +334,7 @@ typedef enum {
 
 } d_update_st_t;
 
+unsigned char d_update_post_update = 0;
 unsigned char d_update_page = 0;
 d_update_st_t d_update_st = DISPLAY_UPDATE_ENDED;
 void display_update_int_state_machine (void)
@@ -408,7 +409,15 @@ void display_update_int_state_machine (void)
                 d_update_st = DISPLAY_UPDATE_SET_PAGE_CMD_0;
             }
             else
-                d_update_st = DISPLAY_UPDATE_ENDED;
+            {
+                if (d_update_post_update)
+                {
+                    d_update_post_update--;
+                    d_update_st = DISPLAY_UPDATE_INIT;
+                }
+                else
+                    d_update_st = DISPLAY_UPDATE_ENDED;
+            }
         }
         break;
         
@@ -424,9 +433,14 @@ void display_update (void)
 {
 #ifdef I2C_WITH_INTS
 
-    //check if can send it, else do nothing
+    //check if can send it, else ask for postupdate
     if (d_update_st == DISPLAY_UPDATE_ENDED)
         d_update_st = DISPLAY_UPDATE_INIT;
+    else
+    {
+        if (d_update_post_update < 2)
+            d_update_post_update++;
+    }
     
 #else
     uint8_t cmd[2] = { 0 };
