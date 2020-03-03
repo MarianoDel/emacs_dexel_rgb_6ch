@@ -26,6 +26,7 @@
 #include "slave_mode.h"
 #include "master_mode.h"
 #include "programs_mode.h"
+#include "programs_functions.h"
 
 #include "flash_program.h"
 #include "i2c.h"
@@ -39,7 +40,7 @@
 
 
 
-//--- VARIABLES EXTERNAS ---//
+// Externals -------------------------------------------------------------------
 // ------- Externals de la Memoria y los modos -------
 parameters_typedef * pmem = (parameters_typedef *) (unsigned int *) FLASH_PAGE_FOR_BKP;	//en flash
 parameters_typedef mem_conf;
@@ -51,7 +52,15 @@ volatile unsigned char seq_ready;
 // ------- Externals de los timers -------
 volatile unsigned char timer_1seg = 0;
 volatile unsigned char switches_timer = 0;
-// volatile unsigned char tim17_new_output = 0;
+
+#ifdef USE_DMX_TIMER_FAST
+volatile unsigned short dmx_timer_hundreds_us_ch1 = 0;
+volatile unsigned short dmx_timer_hundreds_us_ch2 = 0;
+volatile unsigned short dmx_timer_hundreds_us_ch3 = 0;
+volatile unsigned short dmx_timer_hundreds_us_ch4 = 0;
+volatile unsigned short dmx_timer_hundreds_us_ch5 = 0;
+volatile unsigned short dmx_timer_hundreds_us_ch6 = 0;
+#endif
 
 // ------- Externals del USART -------
 volatile unsigned char usart1_have_data;
@@ -89,6 +98,7 @@ ma16_u16_data_obj_t st_sp4;
 ma16_u16_data_obj_t st_sp5;
 ma16_u16_data_obj_t st_sp6;
 #endif
+
 
 #ifdef USE_LED_CTRL_MODE_PID_MA32
 pid_data_obj_t pid_ch1;
@@ -187,6 +197,7 @@ void TimingDelay_Decrement(void);
 unsigned short Distance (unsigned short, unsigned short);
 unsigned char CheckFiltersAndOffsets2 (unsigned char *);
 void UpdateFiltersTest_Reset (void);
+unsigned short CalcNewDelta (unsigned short, unsigned short);
     
 // ------- del DMX -------
 // extern void EXTI4_15_IRQHandler(void);
@@ -203,7 +214,14 @@ unsigned short ch3_pwm = 0;
 unsigned short ch4_pwm = 0;
 unsigned short ch5_pwm = 0;
 unsigned short ch6_pwm = 0;
-
+#ifdef USE_PWM_WITH_DELTA
+unsigned short last_ch1_pwm = 0;
+unsigned short last_ch2_pwm = 0;
+unsigned short last_ch3_pwm = 0;
+unsigned short last_ch4_pwm = 0;
+unsigned short last_ch5_pwm = 0;
+unsigned short last_ch6_pwm = 0;
+#endif
 //-------------------------------------------//
 // @brief  Main program.
 // @param  None
@@ -253,8 +271,25 @@ int main(void)
     //pruebas hard//
     USART2Config();
 
-    TIM_1_Init_Only_PWM();
+    TIM_1_Init();
     TIM_3_Init();
+#ifdef USE_DMX_TIMER_FAST
+    TIM_17_Init();
+#endif
+
+    // EnablePreload_CH1;
+    // EnablePreload_CH2;
+    // EnablePreload_CH3;
+    // EnablePreload_CH4;
+    // EnablePreload_CH5;
+    // EnablePreload_CH6;
+
+    // DisablePreload_CH1;
+    // DisablePreload_CH2;
+    // DisablePreload_CH3;
+    // DisablePreload_CH4;
+    // DisablePreload_CH5;
+    // DisablePreload_CH6;
 
     PWMChannelsReset();
 
@@ -647,13 +682,6 @@ int main(void)
             CTRL_FAN_ON;
             PWMChannelsReset();
             
-            Update_PWM1(0);
-            Update_PWM2(0);
-            Update_PWM3(0);
-            Update_PWM4(0);
-            Update_PWM5(0);
-            Update_PWM6(0);
-
             SCREEN_ShowText2(
                 "LEDs     ",
                 "Overtemp ",
@@ -749,8 +777,9 @@ int main(void)
         //grabado de memoria luego de configuracion
         if ((need_to_save) && (!need_to_save_timer))
         {
-            
+            DisableDitherInterrupt;
             need_to_save = WriteConfigurations();
+            EnableDitherInterrupt;
 
 #ifdef USART2_DEBUG_MODE
             if (need_to_save)
@@ -818,9 +847,9 @@ void EXTI4_15_IRQHandler (void)    //nueva detecta el primer 0 en usart Consola 
 unsigned short Distance (unsigned short a, unsigned short b)
 {
     if (a < b)
-        return 0;
-
-    return (a - b);
+        return (b - a);
+    else
+        return (a - b);
 }
 
 
@@ -835,54 +864,284 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
 
     //filters para el dmx - generalmente 8 puntos a 200Hz -
     //desde el sp al sp_filter
-    if (!dmx_filters_timer)
+#ifdef USE_DMX_TIMER_FAST
+    //esta prueba es sin dither y siempre con DELTA
+    //TODO: estoy harcodeando el segmento bajo hacerlo por soft
+    if (mem_conf.pwm_chnls[0])
     {
-        dmx_filters_timer = 5;
-
-        //filtro los offsets
-#ifdef USE_LED_CTRL_MODE_CONTINUOS
-        if (mem_conf.pwm_chnls[0])
+        if (!dmx_timer_hundreds_us_ch1)
         {
             ch1_pwm = HARD_Process_New_PWM_Data (0, *(ch_val + 0));
             ch1_pwm = MA16_U16Circular (&st_sp1, ch1_pwm);    
-            Update_PWM1(ch1_pwm);                        
+            last_ch1_pwm = CalcNewDelta (last_ch1_pwm, ch1_pwm);
+            if (last_ch1_pwm > 731)
+                dmx_timer_hundreds_us_ch1 = (DMX_UPDATE_TIMER_FAST << 3);
+            else
+                dmx_timer_hundreds_us_ch1 = DMX_UPDATE_TIMER_FAST;
+
+            Update_PWM1(last_ch1_pwm);
+        }
+    }
+                
+    if (mem_conf.pwm_chnls[1])
+    {
+        if (!dmx_timer_hundreds_us_ch2)
+        {
+            ch2_pwm = HARD_Process_New_PWM_Data (1, *(ch_val + 1));
+            ch2_pwm = MA16_U16Circular (&st_sp2, ch2_pwm);
+            last_ch2_pwm = CalcNewDelta (last_ch2_pwm, ch2_pwm);                        
+            if (last_ch2_pwm > 588)
+                dmx_timer_hundreds_us_ch2 = (DMX_UPDATE_TIMER_FAST << 3);
+            else
+                dmx_timer_hundreds_us_ch2 = DMX_UPDATE_TIMER_FAST;
+
+            Update_PWM2(last_ch2_pwm);
+        }
+    }
+
+    if (mem_conf.pwm_chnls[2])
+    {
+        if (!dmx_timer_hundreds_us_ch3)
+        {
+            ch3_pwm = HARD_Process_New_PWM_Data (2, *(ch_val + 2));
+            ch3_pwm = MA16_U16Circular (&st_sp3, ch3_pwm);
+            last_ch3_pwm = CalcNewDelta (last_ch3_pwm, ch3_pwm);
+            if (last_ch3_pwm > 737)
+                dmx_timer_hundreds_us_ch3 = (DMX_UPDATE_TIMER_FAST << 3);
+            else
+                dmx_timer_hundreds_us_ch3 = DMX_UPDATE_TIMER_FAST;
+
+            Update_PWM3(last_ch3_pwm);
+        }
+    }
+                
+    if (mem_conf.pwm_chnls[3])
+    {
+        if (!dmx_timer_hundreds_us_ch4)
+        {
+            ch4_pwm = HARD_Process_New_PWM_Data (3, *(ch_val + 3));
+            ch4_pwm = MA16_U16Circular (&st_sp4, ch4_pwm);
+            last_ch4_pwm = CalcNewDelta (last_ch4_pwm, ch4_pwm);
+            if (last_ch4_pwm > 754)
+                dmx_timer_hundreds_us_ch4 = (DMX_UPDATE_TIMER_FAST << 3);
+            else
+                dmx_timer_hundreds_us_ch4 = DMX_UPDATE_TIMER_FAST;
+
+            Update_PWM4(last_ch4_pwm);
+        }
+    }
+
+    if (mem_conf.pwm_chnls[4])
+    {
+        if (!dmx_timer_hundreds_us_ch5)
+        {
+            ch5_pwm = HARD_Process_New_PWM_Data (4, *(ch_val + 4));
+            ch5_pwm = MA16_U16Circular (&st_sp5, ch5_pwm);
+            last_ch5_pwm = CalcNewDelta (last_ch5_pwm, ch5_pwm);
+            if (last_ch5_pwm > 737)
+                dmx_timer_hundreds_us_ch5 = (DMX_UPDATE_TIMER_FAST << 3);
+            else
+                dmx_timer_hundreds_us_ch5 = DMX_UPDATE_TIMER_FAST;
+
+            Update_PWM5(last_ch5_pwm);
+        }
+    }
+
+    if (mem_conf.pwm_chnls[5])
+    {
+        if (!dmx_timer_hundreds_us_ch6)
+        {
+            ch6_pwm = HARD_Process_New_PWM_Data (5, *(ch_val + 5));
+            ch6_pwm = MA16_U16Circular (&st_sp6, ch6_pwm);
+            last_ch6_pwm = CalcNewDelta (last_ch6_pwm, ch6_pwm);
+            if (last_ch6_pwm > 754)
+                dmx_timer_hundreds_us_ch6 = (DMX_UPDATE_TIMER_FAST << 3);
+            else
+                dmx_timer_hundreds_us_ch6 = DMX_UPDATE_TIMER_FAST;
+
+            Update_PWM6(last_ch6_pwm);
+        }
+    }
+    
+#else    //USE_DMX_TIMER_FAST
+    if (!dmx_filters_timer)
+    {
+#ifdef USE_PWM_WITH_DITHER
+        dmx_filters_timer = DMX_UPDATE_TIMER_WITH_DITHER;
+#else
+        dmx_filters_timer = DMX_UPDATE_TIMER;
+#endif
+        
+        //filtro los offsets
+#ifdef USE_LED_CTRL_MODE_CONTINUOS
+#ifdef USE_PWM_WITH_DITHER
+        if (mem_conf.pwm_chnls[0])
+        {
+            ch1_pwm = HARD_Process_New_PWM_Data (0, *(ch_val + 0));
+            ch1_pwm = MA16_U16Circular (&st_sp1, ch1_pwm);
+#ifdef USE_PWM_WITH_DELTA
+            last_ch1_pwm = CalcNewDelta (last_ch1_pwm, ch1_pwm);
+            TIM_LoadDitherSequences(0, last_ch1_pwm);
+#else            
+            TIM_LoadDitherSequences(0, ch1_pwm);
+#endif
         }
                 
         if (mem_conf.pwm_chnls[1])
         {
             ch2_pwm = HARD_Process_New_PWM_Data (1, *(ch_val + 1));
             ch2_pwm = MA16_U16Circular (&st_sp2, ch2_pwm);
-            Update_PWM2(ch2_pwm);
+#ifdef USE_PWM_WITH_DELTA
+            last_ch2_pwm = CalcNewDelta (last_ch2_pwm, ch2_pwm);
+            TIM_LoadDitherSequences(1, last_ch2_pwm);
+#else
+            TIM_LoadDitherSequences(1, ch2_pwm);
+#endif
         }
 
         if (mem_conf.pwm_chnls[2])
         {
             ch3_pwm = HARD_Process_New_PWM_Data (2, *(ch_val + 2));
             ch3_pwm = MA16_U16Circular (&st_sp3, ch3_pwm);
-            Update_PWM3(ch3_pwm);
+#ifdef USE_PWM_WITH_DELTA
+            last_ch3_pwm = CalcNewDelta (last_ch3_pwm, ch3_pwm);
+            TIM_LoadDitherSequences(2, last_ch3_pwm);
+#else            
+            TIM_LoadDitherSequences(2, ch3_pwm);
+#endif
         }
                 
         if (mem_conf.pwm_chnls[3])
         {
             ch4_pwm = HARD_Process_New_PWM_Data (3, *(ch_val + 3));
             ch4_pwm = MA16_U16Circular (&st_sp4, ch4_pwm);
-            Update_PWM4(ch4_pwm);
+#ifdef USE_PWM_WITH_DELTA
+            last_ch4_pwm = CalcNewDelta (last_ch4_pwm, ch4_pwm);
+            TIM_LoadDitherSequences(3, last_ch4_pwm);
+#else
+            TIM_LoadDitherSequences(3, ch4_pwm);
+#endif
         }
 
         if (mem_conf.pwm_chnls[4])
         {
             ch5_pwm = HARD_Process_New_PWM_Data (4, *(ch_val + 4));
             ch5_pwm = MA16_U16Circular (&st_sp5, ch5_pwm);
-            Update_PWM5(ch5_pwm);
+#ifdef USE_PWM_WITH_DELTA
+            last_ch5_pwm = CalcNewDelta (last_ch5_pwm, ch5_pwm);
+            TIM_LoadDitherSequences(4, last_ch5_pwm);
+#else            
+            TIM_LoadDitherSequences(4, ch5_pwm);
+#endif
         }
 
         if (mem_conf.pwm_chnls[5])
         {
             ch6_pwm = HARD_Process_New_PWM_Data (5, *(ch_val + 5));
             ch6_pwm = MA16_U16Circular (&st_sp6, ch6_pwm);
-            Update_PWM6(ch6_pwm);
-        }      
+#ifdef USE_PWM_WITH_DELTA
+            last_ch6_pwm = CalcNewDelta (last_ch6_pwm, ch6_pwm);
+            TIM_LoadDitherSequences(5, last_ch6_pwm);
+#else            
+            TIM_LoadDitherSequences(5, ch6_pwm);
 #endif
+        }
+#else    //USE_PWM_WITH_DITHER      
+        if (mem_conf.pwm_chnls[0])
+        {
+            ch1_pwm = HARD_Process_New_PWM_Data (0, *(ch_val + 0));
+            ch1_pwm = MA16_U16Circular (&st_sp1, ch1_pwm);    
+#ifdef USE_PWM_WITH_DELTA
+            last_ch1_pwm = CalcNewDelta (last_ch1_pwm, ch1_pwm);
+            // if (Distance(last_ch1_pwm, ch1_pwm) < 10)
+            //     dmx_filters_timer += 21;
+            
+            Update_PWM1(last_ch1_pwm);
+#else
+            Update_PWM1(ch1_pwm);
+#endif
+        }
+                
+        if (mem_conf.pwm_chnls[1])
+        {
+            ch2_pwm = HARD_Process_New_PWM_Data (1, *(ch_val + 1));
+            ch2_pwm = MA16_U16Circular (&st_sp2, ch2_pwm);
+#ifdef USE_PWM_WITH_DELTA
+            last_ch2_pwm = CalcNewDelta (last_ch2_pwm, ch2_pwm);
+            // if (Distance(last_ch2_pwm, ch2_pwm) < 100)
+            //     dmx_filters_timer += 21;
+                        
+            Update_PWM2(last_ch2_pwm);
+#else
+            Update_PWM2(ch2_pwm);
+#endif
+        }
+
+        if (mem_conf.pwm_chnls[2])
+        {
+            ch3_pwm = HARD_Process_New_PWM_Data (2, *(ch_val + 2));
+            ch3_pwm = MA16_U16Circular (&st_sp3, ch3_pwm);
+#ifdef USE_PWM_WITH_DELTA
+            last_ch3_pwm = CalcNewDelta (last_ch3_pwm, ch3_pwm);
+            // if (Distance(last_ch3_pwm, ch3_pwm) < 100)
+            //     dmx_filters_timer += 21;
+            
+            Update_PWM3(last_ch3_pwm);
+#else
+            Update_PWM3(ch3_pwm);
+#endif
+        }
+                
+        if (mem_conf.pwm_chnls[3])
+        {
+            ch4_pwm = HARD_Process_New_PWM_Data (3, *(ch_val + 3));
+            ch4_pwm = MA16_U16Circular (&st_sp4, ch4_pwm);
+#ifdef USE_PWM_WITH_DELTA
+            last_ch4_pwm = CalcNewDelta (last_ch4_pwm, ch4_pwm);
+            if (last_ch4_pwm > 754)
+                dmx_filters_timer = 24;
+            // if (Distance(last_ch4_pwm, ch4_pwm) < 100)
+            //     dmx_filters_timer += 21;
+            
+            Update_PWM4(last_ch4_pwm);
+#else
+            Update_PWM4(ch4_pwm);
+#endif
+        }
+
+        if (mem_conf.pwm_chnls[4])
+        {
+            ch5_pwm = HARD_Process_New_PWM_Data (4, *(ch_val + 4));
+            ch5_pwm = MA16_U16Circular (&st_sp5, ch5_pwm);
+            // ch4_pwm = MA16_U16Circular (&st_sp5, ch4_pwm);            
+            // ch4_pwm = MA16_U16Circular (&st_sp6, ch4_pwm);
+#ifdef USE_PWM_WITH_DELTA
+            last_ch5_pwm = CalcNewDelta (last_ch5_pwm, ch5_pwm);
+            // if (Distance(last_ch5_pwm, ch5_pwm) < 100)
+            //     dmx_filters_timer += 21;
+            
+            Update_PWM5(last_ch5_pwm);
+#else
+            Update_PWM5(ch5_pwm);
+#endif
+        }
+
+        if (mem_conf.pwm_chnls[5])
+        {
+            ch6_pwm = HARD_Process_New_PWM_Data (5, *(ch_val + 5));
+            ch6_pwm = MA16_U16Circular (&st_sp6, ch6_pwm);
+#ifdef USE_PWM_WITH_DELTA
+            last_ch6_pwm = CalcNewDelta (last_ch6_pwm, ch6_pwm);
+            // if (Distance(last_ch6_pwm, ch6_pwm) < 100)
+            //     dmx_filters_timer += 21;
+            
+            Update_PWM6(last_ch6_pwm);
+#else
+            Update_PWM6(ch6_pwm);
+#endif
+        }
+#endif    //USE_PWM_WITH_DITHER
+#endif    //USE_LED_CTRL_MODE_CONTINUOS
 
 #ifdef USE_LED_CTRL_MODE_PID_MA32
         if (mem_conf.pwm_chnls[0])
@@ -966,10 +1225,61 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
         
         new_outputs = 1;
     }    //end of filters and timer
-
+#endif    //USE_DMX_TIMER_FAST
     return new_outputs;
 }
 
+
+unsigned short CalcNewDelta (unsigned short last_ch_delta, unsigned short ch_value)
+{
+#ifdef DELTA_MULTIPLE_STEPS_100
+    if ((last_ch_delta + 100) < ch_value)
+        last_ch_delta += 10;
+    else if ((last_ch_delta + 50) < ch_value)
+        last_ch_delta += 5;
+    else if ((last_ch_delta + 20) < ch_value)
+        last_ch_delta += 2;
+    else if (last_ch_delta < ch_value)
+        last_ch_delta += 1;
+
+
+    if (last_ch_delta > (ch_value + 100))
+        last_ch_delta -= 10;
+    else if (last_ch_delta > (ch_value + 50))
+        last_ch_delta -= 5;
+    else if (last_ch_delta > (ch_value + 20))
+        last_ch_delta -= 2;
+    else if (last_ch_delta > ch_value)
+        last_ch_delta -= 1;
+#endif
+
+#ifdef DELTA_MULTIPLE_STEPS_50
+    if ((last_ch_delta + 50) < ch_value)
+        last_ch_delta += 3;
+    else if ((last_ch_delta + 25) < ch_value)
+        last_ch_delta += 2;
+    else if (last_ch_delta < ch_value)
+        last_ch_delta += 1;
+
+
+    if (last_ch_delta > (ch_value + 50))
+        last_ch_delta -= 3;
+    else if (last_ch_delta > (ch_value + 25))
+        last_ch_delta -= 2;
+    else if (last_ch_delta > ch_value)
+        last_ch_delta -= 1;
+#endif
+    
+#ifdef DELTA_SINGLE_STEP
+    if (last_ch_delta < ch_value)
+        last_ch_delta++;
+
+    if (last_ch_delta > ch_value)
+        last_ch_delta--;
+#endif
+    
+    return last_ch_delta;
+}
 
 void UpdateFiltersTest_Reset (void)
 {

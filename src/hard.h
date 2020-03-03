@@ -41,8 +41,29 @@
 // #define USE_INDUCTOR_IN_CCM
 #define USE_INDUCTOR_REAL_MEAS
 
-// #define ALWAYS_CHECK_CURRENT_ON_INIT
+#define ALWAYS_CHECK_CURRENT_ON_INIT
 // #define USE_HARCODED_CURRENT
+
+// #define USE_PWM_WITH_DITHER
+#define USE_PWM_WITH_DELTA
+#define USE_DMX_TIMER_FAST
+
+#define DMX_UPDATE_TIMER_FAST    7    //30 un poco-- 700us
+#define DMX_UPDATE_TIMER    3    //si pongo esto en 2 se ven saltos en el blanco incluso con delta-single-step
+#define DMX_UPDATE_TIMER_WITH_DITHER    2
+
+#ifdef USE_PWM_WITH_DELTA
+// #define DELTA_MULTIPLE_STEPS_100
+// #define DELTA_MULTIPLE_STEPS_50
+#define DELTA_SINGLE_STEP
+#endif
+
+#ifdef USE_DMX_TIMER_FAST
+#ifndef USE_PWM_WITH_DELTA
+#error "Must have PWM WITH DELTA"
+#endif
+#endif
+
 
 #define SAVE_FLASH_IMMEDIATE
 // #define SAVE_FLASH_WITH_TIMEOUT
@@ -55,19 +76,6 @@
 //----- PWM Modes ----------------------------
 // lo que llega por dmx se escala y se manda al pwm (funciona mas parejo en DCM)
 #define USE_LED_CTRL_MODE_CONTINUOS
-
-// utiliza el pwm fijo para la maxima corriente ciclo a ciclo, luego arma un
-// soft-pwm con el que regula la intensidad por medio de TIM1
-// #define USE_LED_CTRL_MODE_PWM
-
-// debajo del valor TIM_CNTR_FOR_DMX_MODE_CHANGE usa pwm directo (continuo)
-// arriba de este valor usa soft pwm con el ultimo valor de pwm directo
-// #define USE_LED_CTRL_MODE_MIXED    
-
-//para los modos MIXED y CONTINUOS se puede acercar al valor con funcion delta
-//TODO: mixed tiene un problema con delta, se mezcla en algun lado (ver int por ejemplo)
-// #define USE_PWM_DELTA_FUNCTION
-
 // #define USE_LED_CTRL_MODE_PID_MA32
 
 //----- End of PWM Modes ---------------------
@@ -387,11 +395,6 @@
 #define SWITCHES_THRESHOLD_FULL	300		//3 segundos
 #define SWITCHES_THRESHOLD_HALF	100		//1 segundo
 #define SWITCHES_THRESHOLD_MIN	5		//50 ms
-
-#define TTIMER_FOR_CAT_DISPLAY			2000	//tiempo entre que dice canal y el numero
-#define TIMER_STANDBY_TIMEOUT_REDUCED	2000	//reduced 2 segs
-#define TIMER_STANDBY_TIMEOUT			6000	//6 segundos
-#define DMX_DISPLAY_SHOW_TIMEOUT		30000	//30 segundos
 
 
 // Switches filter states

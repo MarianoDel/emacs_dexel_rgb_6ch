@@ -336,12 +336,29 @@ void UpdateDutyCycleReset (void)
 
 void PWMChannelsReset (void)
 {
+#ifdef USE_PWM_WITH_DITHER
+    DisableDitherInterrupt;
     Update_PWM1(0);
     Update_PWM2(0);
     Update_PWM3(0);
     Update_PWM4(0);
     Update_PWM5(0);
-    Update_PWM6(0);    
+    Update_PWM6(0);
+    TIM_LoadDitherSequences(0, 0);
+    TIM_LoadDitherSequences(1, 0);
+    TIM_LoadDitherSequences(2, 0);
+    TIM_LoadDitherSequences(3, 0);
+    TIM_LoadDitherSequences(4, 0);
+    TIM_LoadDitherSequences(5, 0);
+    EnableDitherInterrupt;
+#else
+    Update_PWM1(0);
+    Update_PWM2(0);
+    Update_PWM3(0);
+    Update_PWM4(0);
+    Update_PWM5(0);
+    Update_PWM6(0);
+#endif
 }
 
 
@@ -406,7 +423,7 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
 {
     resp_t resp = resp_continue;
     unsigned short max_current_in_channel_millis = 0;
-    
+
     //espero tres tipos de respuesta resp_ok, resp_finish, resp_error
     //estas respuestas las traslado
     for (unsigned char j = 0; j < 6; j++)
@@ -458,7 +475,10 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
             break;            
 #endif
         }
-        
+
+#ifdef USE_PWM_WITH_DITHER
+        DisableDitherInterrupt;
+#endif
         for (unsigned char i = 0; i < SEGMENTS_QTTY; i++)
         {
             //voy pidiendo los pwm de la corriente segmento a segmento
@@ -479,19 +499,35 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
                 i = SEGMENTS_QTTY;
             }
 
+            //max duty sin llegar a la corriente requerida
             if (resp == resp_finish)
             {
-                settings->duty_getted = DUTY_95_PERCENT;
+                settings->duty_getted = DUTY_MAX_ALLOWED;
                 resp = resp_ok;
             }
 
             if (resp == resp_ok)
             {
                 //si es el ultimo segmento guardo info adicional
+#ifdef USE_PWM_WITH_DITHER
                 if (i == (SEGMENTS_QTTY - 1))
                 {
                     unsigned int calc = 0;
-                    
+
+                    //TODO: cambiar esto por la medicion efectiva de tension
+                    calc = mem_conf.volts_in_mains * settings->duty_getted;
+                    calc = calc / 1000;
+                    mem_conf.volts_ch[settings->channel - 1] = calc;
+                    mem_conf.pwm_chnls[settings->channel - 1] = (settings->duty_getted << 3);
+                }
+
+                *(segments + j * SEGMENTS_QTTY + i) = (settings->duty_getted << 3);
+#else
+                if (i == (SEGMENTS_QTTY - 1))
+                {
+                    unsigned int calc = 0;
+
+                    //TODO: cambiar esto por la medicion efectiva de tension
                     calc = mem_conf.volts_in_mains * settings->duty_getted;
                     calc = calc / 1000;
                     mem_conf.volts_ch[settings->channel - 1] = calc;
@@ -499,9 +535,13 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
                 }
 
                 *(segments + j * SEGMENTS_QTTY + i) = settings->duty_getted;
+#endif
             }
         }
     }
+#ifdef USE_PWM_WITH_DITHER
+    EnableDitherInterrupt;
+#endif
 
     return resp;
 }
@@ -535,8 +575,13 @@ unsigned short HARD_Process_New_PWM_Data (unsigned char ch, unsigned char dmx_da
         pwm_output = (unsigned short) dummy;
     }
 
+#ifdef USE_PWM_WITH_DITHER
+    if (pwm_output > DUTY_MAX_ALLOWED_WITH_DITHER)
+        pwm_output = DUTY_MAX_ALLOWED_WITH_DITHER;
+#else
     if (pwm_output > DUTY_MAX_ALLOWED)
         pwm_output = DUTY_MAX_ALLOWED;
+#endif
     
     return pwm_output;
 }

@@ -14,6 +14,8 @@
 //--- Exported types ---//
 //--- Exported constants ---//
 #define DUTY_MAX_ALLOWED    DUTY_95_PERCENT
+#define DUTY_MAX_ALLOWED_WITH_DITHER    (DUTY_MAX_ALLOWED << 3)
+
 #define DUTY_TRANSISTORS_ON	10
 #define DUTY_50_PERCENT		500
 #define DUTY_60_PERCENT		600
@@ -64,16 +66,26 @@
 
 #define TIM1DisableInterrupt     (TIM1->DIER &= ~TIM_DIER_UIE)
 #define TIM1EnableInterrupt      (TIM1->DIER |= TIM_DIER_UIE)
+#define EnableDitherInterrupt    (TIM1->DIER |= TIM_DIER_UIE)
+#define DisableDitherInterrupt    (TIM1->DIER &= ~TIM_DIER_UIE)    
 
 #define TIM17DisableInterrupt    (TIM17->DIER &= ~(TIM_DIER_CC1IE | TIM_DIER_UIE))
 #define TIM17EnableInterrupt     (TIM17->DIER |= TIM_DIER_CC1IE | TIM_DIER_UIE)
 
-#define TIM17_NEW_CH1    0x01
-#define TIM17_NEW_CH2    0x02
-#define TIM17_NEW_CH3    0x04
-#define TIM17_NEW_CH4    0x08
-#define TIM17_NEW_CH5    0x10
-#define TIM17_NEW_CH6    0x20
+
+#define EnablePreload_CH1    (TIM1->CCMR1 |= TIM_CCMR1_OC1PE)
+#define EnablePreload_CH2    (TIM1->CCMR1 |= TIM_CCMR1_OC2PE)
+#define EnablePreload_CH3    (TIM3->CCMR1 |= TIM_CCMR1_OC1PE)
+#define EnablePreload_CH4    (TIM3->CCMR1 |= TIM_CCMR1_OC2PE)
+#define EnablePreload_CH5    (TIM3->CCMR2 |= TIM_CCMR2_OC3PE)
+#define EnablePreload_CH6    (TIM3->CCMR2 |= TIM_CCMR2_OC4PE)
+
+#define DisablePreload_CH1    (TIM1->CCMR1 &= ~TIM_CCMR1_OC1PE)
+#define DisablePreload_CH2    (TIM1->CCMR1 &= ~TIM_CCMR1_OC2PE)
+#define DisablePreload_CH3    (TIM3->CCMR1 &= ~TIM_CCMR1_OC1PE)
+#define DisablePreload_CH4    (TIM3->CCMR1 &= ~TIM_CCMR1_OC2PE)
+#define DisablePreload_CH5    (TIM3->CCMR2 &= ~TIM_CCMR2_OC3PE)
+#define DisablePreload_CH6    (TIM3->CCMR2 &= ~TIM_CCMR2_OC4PE)
 
 #define Update_PWM1(X)    Update_TIM1_CH1(X)
 #define Update_PWM2(X)    Update_TIM1_CH2(X)
@@ -86,8 +98,7 @@
 void TIM1_BRK_UP_TRG_COM_IRQHandler (void);
 void TIM3_IRQHandler (void);
 void TIM_3_Init(void);
-void TIM_1_Init_Irq (void);
-void TIM_1_Init_Only_PWM (void);
+void TIM_1_Init (void);
 void TIM_6_Init (void);
 void TIM14_IRQHandler (void);
 void TIM_14_Init(void);
@@ -103,6 +114,7 @@ void Update_TIM3_CH2 (unsigned short);
 void Update_TIM3_CH3 (unsigned short);
 void Update_TIM3_CH4 (unsigned short);
 
+void TIM_LoadDitherSequences (unsigned char, unsigned short);
 void Wait_ms (unsigned short wait);
 #endif
 //--- End ---//

@@ -173,7 +173,7 @@ void FuncSlaveMode (unsigned char * ch_val)
             dmx_end_of_packet_update = 1;
         }
 
-        UpdateSlaveModeMenuManager();
+        // UpdateSlaveModeMenuManager();
         
         break;
 
