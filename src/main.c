@@ -256,6 +256,7 @@ int main(void)
     sw_actions_t action = do_nothing;
 
     unsigned char ch_values [6] = { 0 };
+    unsigned char ch_slow_segment [6] = { 0 };    
 
 #ifdef HARD_TEST_MODE_DO_NOTHING
     while (1);
@@ -568,27 +569,86 @@ int main(void)
         Usart2Send("\n");
     }
 
-    //Calculate named segments
+
+#define RANGES_QTTY    5
+#define SEGMENTS_QTTY    16
+    unsigned short ranges[RANGES_QTTY] = { 0 };
+    unsigned char freq_vect[RANGES_QTTY] = { 0 };
+    unsigned short deltas_vect[SEGMENTS_QTTY] = { 0 };
+    unsigned short last_segment = 0;
+
+    unsigned char slow_segment = 0;
+    unsigned short * segments;
+
     for (unsigned char j = 0; j < 6; j++)
-    {        
-        sprintf(s_to_send, "segments[%d]: ", j);
-        Usart2Send(s_to_send);
-        // for (unsigned char i = 0; i < SEGMENTS_QTTY; i++)
-        for (unsigned char i = 0; i < 16; i++)            
+    {
+        //seteo inicial
+        segments = &mem_conf.segments[j][0];
+        last_segment = 0;
+        memset(deltas_vect, '\0', SEGMENTS_QTTY);
+        memset(freq_vect, '\0', SEGMENTS_QTTY);
+
+        //convierto segmentos a deltas
+        sprintf(s_to_send, "deltas_vect[%d]: ", j);
+        Usart2Send(s_to_send);    
+        for (i = 0; i < SEGMENTS_QTTY; i++)
         {
-            // sprintf(s_to_send, "%d ", segments[j][i]);
-            sprintf(s_to_send, "%d ", mem_conf.segments[j][i]);
+            deltas_vect[i] = segments[i] - last_segment;
+            last_segment = segments[i];
+            sprintf(s_to_send, "%d ", deltas_vect[i]);
             Usart2Send(s_to_send);
-            Wait_ms(10);
+            Wait_ms(10);        
         }
         Usart2Send("\n");
-    }
     
-    // void DSP_Vector_Calcule_Frequencies (unsigned short *samples,
-    //                                  unsigned char samples_size,
-    //                                  unsigned short *ranges,
-    //                                  unsigned char ranges_size,
-    //                                  unsigned char *frequencies)
+    
+        DSP_Vector_Calcule_Frequencies(deltas_vect,
+                                       SEGMENTS_QTTY,
+                                       ranges,
+                                       RANGES_QTTY,
+                                       freq_vect);
+
+        sprintf(s_to_send, "ranges[%d][%d]: ", j, RANGES_QTTY);
+        Usart2Send(s_to_send);    
+        for (i = 0; i < RANGES_QTTY; i++)
+        {
+            sprintf(s_to_send, "%d ", ranges[i]);
+            Usart2Send(s_to_send);
+            Wait_ms(10);        
+        }
+        Usart2Send("\n");
+
+        sprintf(s_to_send, "frequencies[%d][%d]: ", j, RANGES_QTTY);
+        Usart2Send(s_to_send);    
+        for (i = 0; i < RANGES_QTTY; i++)
+        {
+            sprintf(s_to_send, "%d ", freq_vect[i]);
+            Usart2Send(s_to_send);
+            Wait_ms(10);        
+        }
+        Usart2Send("\n");
+
+        //seak for the mayor segment that is not appering in the most frequency
+        for (i = 0; i < SEGMENTS_QTTY; i++)
+        {
+            if (*(deltas_vect + i) > (ranges[1] - ranges[0]))
+            {
+                slow_segment = i;
+                ch_slow_segment[j] = slow_segment;
+            }
+        }
+    }
+
+    for (unsigned char j = 0; j < 6; j++)
+    {
+        sprintf(s_to_send, "slow_segment[%d]: %d value: %d\n",
+                j,
+                ch_slow_segment[j],
+                mem_conf.segments[j][ch_slow_segment[j]]);
+        Usart2Send(s_to_send);
+        Wait_ms(10);
+    }
+
 
 #endif
 
