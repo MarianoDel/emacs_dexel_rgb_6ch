@@ -41,15 +41,15 @@
 // #define USE_INDUCTOR_IN_CCM
 #define USE_INDUCTOR_REAL_MEAS
 
-#define ALWAYS_CHECK_CURRENT_ON_INIT
+// #define ALWAYS_CHECK_CURRENT_ON_INIT
 // #define USE_HARCODED_CURRENT
 
 // #define USE_PWM_WITH_DITHER
-#define USE_PWM_WITH_DELTA
-#define USE_DMX_TIMER_FAST
+// #define USE_PWM_WITH_DELTA
+// #define USE_DMX_TIMER_FAST
 
 #define DMX_UPDATE_TIMER_FAST    7    //30 un poco-- 700us
-#define DMX_UPDATE_TIMER    3    //si pongo esto en 2 se ven saltos en el blanco incluso con delta-single-step
+#define DMX_UPDATE_TIMER    5    //si pongo esto en 2 se ven saltos en el blanco incluso con delta-single-step
 #define DMX_UPDATE_TIMER_WITH_DITHER    2
 
 #ifdef USE_PWM_WITH_DELTA
@@ -75,8 +75,8 @@
 
 //----- PWM Modes ----------------------------
 // lo que llega por dmx se escala y se manda al pwm (funciona mas parejo en DCM)
-#define USE_LED_CTRL_MODE_CONTINUOS
-// #define USE_LED_CTRL_MODE_PID_MA32
+// #define USE_LED_CTRL_MODE_CONTINUOS
+#define USE_LED_CTRL_MODE_PID_MA32
 
 //----- End of PWM Modes ---------------------
 
@@ -150,6 +150,12 @@
 #define MAX_MAX_POWER    100
 
 #define MAX_DUTY_CYCLE    DUTY_95_PERCENT
+
+
+#define CH1_VAL_OFFSET    0
+#define CH2_VAL_OFFSET    1
+#define CH3_VAL_OFFSET    2
+#define CH4_VAL_OFFSET    3
 
 //---- Configuration for Firmware-Programs --------
 
