@@ -41,12 +41,12 @@
 // #define USE_INDUCTOR_IN_CCM
 #define USE_INDUCTOR_REAL_MEAS
 
-// #define ALWAYS_CHECK_CURRENT_ON_INIT
-// #define USE_HARCODED_CURRENT
+#define ALWAYS_CHECK_CURRENT_ON_INIT
+#define USE_HARCODED_CURRENT
 
 // #define USE_PWM_WITH_DITHER
-// #define USE_PWM_WITH_DELTA
-// #define USE_DMX_TIMER_FAST
+#define USE_PWM_WITH_DELTA
+#define USE_DMX_TIMER_FAST
 
 #define DMX_UPDATE_TIMER_FAST    7    //30 un poco-- 700us
 #define DMX_UPDATE_TIMER    5    //si pongo esto en 2 se ven saltos en el blanco incluso con delta-single-step
@@ -75,8 +75,8 @@
 
 //----- PWM Modes ----------------------------
 // lo que llega por dmx se escala y se manda al pwm (funciona mas parejo en DCM)
-// #define USE_LED_CTRL_MODE_CONTINUOS
-#define USE_LED_CTRL_MODE_PID_MA32
+#define USE_LED_CTRL_MODE_CONTINUOS
+// #define USE_LED_CTRL_MODE_PID_MA32
 
 //----- End of PWM Modes ---------------------
 
@@ -99,12 +99,12 @@
 //#define WHITE_AS_WHITE	//el blanco tiene leds blancos individuales
 
 #ifdef USE_HARCODED_CURRENT
-#define HARCODED_CURRENT_CH1    1500
-#define HARCODED_CURRENT_CH2    1500
-#define HARCODED_CURRENT_CH3    1500
-#define HARCODED_CURRENT_CH4    1500
-#define HARCODED_CURRENT_CH5    1500
-#define HARCODED_CURRENT_CH6    1500
+#define HARCODED_CURRENT_CH1    1300
+#define HARCODED_CURRENT_CH2    1300
+#define HARCODED_CURRENT_CH3    1300
+#define HARCODED_CURRENT_CH4    1300
+#define HARCODED_CURRENT_CH5    1300
+#define HARCODED_CURRENT_CH6    1300
 #endif
 
 //---- End of Features Configuration ----------

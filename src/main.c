@@ -336,6 +336,7 @@ int main(void)
     {
         if (!timer_standby)
         {
+            CTRL_FAN_ON;
             timer_standby = 1000;
             if (a)
             {
@@ -357,8 +358,20 @@ int main(void)
                     );
                 a = 1;
             }
+            CTRL_FAN_OFF;
         }
         display_update_int_state_machine();
+
+        //chequeo de jitter
+        // if (!dmx_timeout_timer)
+        // {
+        //     dmx_timeout_timer = 5;
+        //     if (CTRL_FAN)
+        //         CTRL_FAN_OFF;
+        //     else
+        //         CTRL_FAN_ON;
+            
+        // }
     }
 #endif
 
@@ -554,6 +567,29 @@ int main(void)
         }
         Usart2Send("\n");
     }
+
+    //Calculate named segments
+    for (unsigned char j = 0; j < 6; j++)
+    {        
+        sprintf(s_to_send, "segments[%d]: ", j);
+        Usart2Send(s_to_send);
+        // for (unsigned char i = 0; i < SEGMENTS_QTTY; i++)
+        for (unsigned char i = 0; i < 16; i++)            
+        {
+            // sprintf(s_to_send, "%d ", segments[j][i]);
+            sprintf(s_to_send, "%d ", mem_conf.segments[j][i]);
+            Usart2Send(s_to_send);
+            Wait_ms(10);
+        }
+        Usart2Send("\n");
+    }
+    
+    // void DSP_Vector_Calcule_Frequencies (unsigned short *samples,
+    //                                  unsigned char samples_size,
+    //                                  unsigned short *ranges,
+    //                                  unsigned char ranges_size,
+    //                                  unsigned char *frequencies)
+
 #endif
 
     while (1)
@@ -944,7 +980,7 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val)
             ch3_pwm = HARD_Process_New_PWM_Data (2, *(ch_val + 2));
             ch3_pwm = MA16_U16Circular (&st_sp3, ch3_pwm);
             last_ch3_pwm = CalcNewDelta (last_ch3_pwm, ch3_pwm);
-            if (last_ch3_pwm > 737)
+            if (last_ch3_pwm > 680)
                 dmx_timer_hundreds_us_ch3 = (DMX_UPDATE_TIMER_FAST << 3);
             else
                 dmx_timer_hundreds_us_ch3 = DMX_UPDATE_TIMER_FAST;

@@ -316,4 +316,5 @@ unsigned short DSP_Vector_Get_Max_Value (unsigned short *vect, unsigned char vec
     return max_value;
 }
 
+
 //--- end of file ---//

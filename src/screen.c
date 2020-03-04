@@ -13,6 +13,7 @@
 
 #include "i2c.h"    //TODO: MEJORAR ESTO PARA ADDR SLV
 
+
 // Externals -------------------------------------------------------------------
 
 // Globals ---------------------------------------------------------------------
@@ -32,12 +33,14 @@ void SCREEN_ShowText2 (char * line1, char * line2, char * line3, char * line4)
     gfx_setTextSize(2);
     gfx_setTextBg(0);
     gfx_setTextColor(1);
-    display_clear();
+    display_clear();    //200us aprox.
     gfx_setCursor(0,0);
+
     gfx_println(line1);
     gfx_println(line2);
     gfx_println(line3);
     gfx_println(line4);
+
     display_update();    
 }
 
