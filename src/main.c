@@ -571,6 +571,21 @@ int main(void)
 
     HARD_Find_Slow_Segments (ch_slow_segment);
 
+#ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE
+    Wait_ms(100);
+    sprintf(s_to_send, "slow_segment_last_but_one: ");
+    Usart2Send(s_to_send);
+
+    for (unsigned char j = 0; j < 6; j++)
+    {
+        sprintf(s_to_send, "%d ",
+                mem_conf.segments[j][(ch_slow_segment[j] - 1)]);
+        Usart2Send(s_to_send);
+        Wait_ms(10);
+    }
+    Usart2Send("\n");
+    
+#endif
 
 #endif
 
@@ -927,7 +942,13 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * s
     {
         if (!dmx_timer_hundreds_us_ch1)
         {
-            unsigned short slow_value = mem_conf.segments[CH1_VAL_OFFSET][slow_segment[CH1_VAL_OFFSET]];
+#ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE
+            unsigned short slow_value = mem_conf.segments[CH1_VAL_OFFSET]
+                [(slow_segment[CH1_VAL_OFFSET] - 1)];
+#else
+            // unsigned short slow_value = mem_conf.segments[CH1_VAL_OFFSET][slow_segment[CH1_VAL_OFFSET]];
+            unsigned short slow_value = 731;
+#endif
             
             ch1_pwm = HARD_Process_New_PWM_Data (0, *(ch_val + 0));
             ch1_pwm = MA16_U16Circular (&st_sp1, ch1_pwm);    
@@ -945,7 +966,13 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * s
     {
         if (!dmx_timer_hundreds_us_ch2)
         {
-            unsigned short slow_value = mem_conf.segments[CH2_VAL_OFFSET][slow_segment[CH2_VAL_OFFSET]];
+#ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE            
+            unsigned short slow_value = mem_conf.segments[CH2_VAL_OFFSET]
+                [(slow_segment[CH2_VAL_OFFSET] - 1)];
+#else
+            // unsigned short slow_value = mem_conf.segments[CH2_VAL_OFFSET][slow_segment[CH2_VAL_OFFSET]];
+            unsigned short slow_value = 588;
+#endif
             
             ch2_pwm = HARD_Process_New_PWM_Data (1, *(ch_val + 1));
             ch2_pwm = MA16_U16Circular (&st_sp2, ch2_pwm);
@@ -963,7 +990,13 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * s
     {
         if (!dmx_timer_hundreds_us_ch3)
         {
-            unsigned short slow_value = mem_conf.segments[CH3_VAL_OFFSET][slow_segment[CH3_VAL_OFFSET]];
+#ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE            
+            unsigned short slow_value = mem_conf.segments[CH3_VAL_OFFSET]
+                [(slow_segment[CH3_VAL_OFFSET] - 1)];
+#else
+            // unsigned short slow_value = mem_conf.segments[CH3_VAL_OFFSET][slow_segment[CH3_VAL_OFFSET]];
+            unsigned short slow_value = 680;
+#endif
             
             ch3_pwm = HARD_Process_New_PWM_Data (2, *(ch_val + 2));
             ch3_pwm = MA16_U16Circular (&st_sp3, ch3_pwm);
@@ -981,7 +1014,13 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * s
     {
         if (!dmx_timer_hundreds_us_ch4)
         {
-            unsigned short slow_value = mem_conf.segments[CH4_VAL_OFFSET][slow_segment[CH4_VAL_OFFSET]];
+#ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE            
+            unsigned short slow_value = mem_conf.segments[CH4_VAL_OFFSET]
+                [(slow_segment[CH4_VAL_OFFSET] - 1)];
+#else
+            // unsigned short slow_value = mem_conf.segments[CH4_VAL_OFFSET][slow_segment[CH4_VAL_OFFSET]];
+            unsigned short slow_value = 754;
+#endif
             
             ch4_pwm = HARD_Process_New_PWM_Data (3, *(ch_val + 3));
             ch4_pwm = MA16_U16Circular (&st_sp4, ch4_pwm);
@@ -999,7 +1038,12 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * s
     {
         if (!dmx_timer_hundreds_us_ch5)
         {
+#ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE            
+            unsigned short slow_value = mem_conf.segments[CH5_VAL_OFFSET]
+                [(slow_segment[CH5_VAL_OFFSET] - 1)];
+#else
             unsigned short slow_value = mem_conf.segments[CH5_VAL_OFFSET][slow_segment[CH5_VAL_OFFSET]];
+#endif
             
             ch5_pwm = HARD_Process_New_PWM_Data (4, *(ch_val + 4));
             ch5_pwm = MA16_U16Circular (&st_sp5, ch5_pwm);
@@ -1017,7 +1061,12 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * s
     {
         if (!dmx_timer_hundreds_us_ch6)
         {
+#ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE            
+            unsigned short slow_value = mem_conf.segments[CH6_VAL_OFFSET]
+                [(slow_segment[CH6_VAL_OFFSET] - 1)];
+#else
             unsigned short slow_value = mem_conf.segments[CH6_VAL_OFFSET][slow_segment[CH6_VAL_OFFSET]];
+#endif
             
             ch6_pwm = HARD_Process_New_PWM_Data (5, *(ch_val + 5));
             ch6_pwm = MA16_U16Circular (&st_sp6, ch6_pwm);

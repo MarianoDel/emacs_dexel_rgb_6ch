@@ -47,6 +47,7 @@
 // #define USE_PWM_WITH_DITHER
 #define USE_PWM_WITH_DELTA
 #define USE_DMX_TIMER_FAST
+// #define USE_SLOW_SEGMENT_LAST_BUT_ONE
 
 #define DMX_UPDATE_TIMER_FAST    7    //30 un poco-- 700us
 #define DMX_UPDATE_TIMER    5    //si pongo esto en 2 se ven saltos en el blanco incluso con delta-single-step
