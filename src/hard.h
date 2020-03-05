@@ -156,6 +156,8 @@
 #define CH2_VAL_OFFSET    1
 #define CH3_VAL_OFFSET    2
 #define CH4_VAL_OFFSET    3
+#define CH5_VAL_OFFSET    4
+#define CH6_VAL_OFFSET    5
 
 //---- Configuration for Firmware-Programs --------
 
