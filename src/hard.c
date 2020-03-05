@@ -30,6 +30,7 @@ extern volatile unsigned short timer_standby;
 extern volatile unsigned short adc_ch [];
 
 extern ma16_u16_data_obj_t st_sp1;
+extern ma16_u16_data_obj_t st_sp2;
 
 extern parameters_typedef mem_conf;
 extern unsigned char data7[];
@@ -253,6 +254,7 @@ resp_t UpdateDutyCycle (led_current_settings_t * settings)
 
         //uso st_sp1 para determinar corrientes
         I_filtered = MA16_U16Circular (&st_sp1, I_Sampled_Channel);
+        I_filtered = MA16_U16Circular (&st_sp2, I_filtered);
         // I_filtered = MAFilterFast16 (I_Sampled_Channel, v_sp1);
 #ifdef USE_FILTER_LENGHT_8
         if (filter_cnt < 32)    //2ms
@@ -336,6 +338,7 @@ void UpdateDutyCycleReset (void)
 
     //uso st_sp1 para determinar corrientes
     MA16_U16Circular_Reset(&st_sp1);
+    MA16_U16Circular_Reset(&st_sp2);
 }
 
 
@@ -494,6 +497,7 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
                 resp = UpdateDutyCycle(settings);
             }
             while (resp == resp_continue);
+            // Wait_ms(3000);
 
             //reviso errores tipo (menues.c line: 509)
             //no current
@@ -591,17 +595,60 @@ unsigned short HARD_Process_New_PWM_Data (unsigned char ch, unsigned char dmx_da
     return pwm_output;
 }
 
+
+//recibe puntero a segmentos del canal
+//nuevo valor dmx
+//segmento lento de ese canal
+unsigned short HARD_Map_New_DMX_Data (unsigned short * p_seg, unsigned char dmx_data, unsigned char slow_seg)
+{
+    unsigned char segment_number = 0;
+    unsigned int dummy = 0;
+                    
+    //mapeo los segmentos
+    segment_number = GetProcessedSegment(dmx_data);
+
+    if (segment_number < slow_seg)
+    {
+        //the segment is less or equal to (ch_slow_segment - 1)
+
+        dummy = dmx_data * (p_seg[slow_seg - 1]);
+        dummy /= const_segments[slow_seg - 1];        
+    }
+    else if (segment_number == slow_seg)
+    {
+        //segment is equal to ch_slow_segment
+
+        dummy = p_seg[slow_seg] - p_seg[slow_seg - 1];
+        dummy = dummy * (dmx_data - const_segments[slow_seg - 1]);
+        dummy /= const_segments[slow_seg] - const_segments[slow_seg - 1];
+        dummy += p_seg[slow_seg - 1];
+    }
+    else
+    {
+        //segment is at the end on CCM mode
+
+        dummy = p_seg[SEGMENTS_QTTY - 1] - p_seg[slow_seg];
+        dummy = dummy * (dmx_data - const_segments[slow_seg]);
+        dummy /= const_segments[SEGMENTS_QTTY - 1] - const_segments[slow_seg];
+        dummy += p_seg[slow_seg];
+    }
+
+    return (unsigned short) dummy;
+}
+
+
+//answers between 0 and 15 for a 16 quantity
 unsigned char GetProcessedSegment (unsigned char check_segment_by_value)
 {
     unsigned char * s;
     s = const_segments;
     
-    for (unsigned char i = SEGMENTS_QTTY; i > 0; i--)
+    for (unsigned char i = 0; i < SEGMENTS_QTTY; i++)
     {
-        if (check_segment_by_value > *(s + i - 1))
+        if (check_segment_by_value <= *(s + i))
             return i;
     }
-
+    
     return 0;
 }
 

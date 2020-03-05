@@ -943,22 +943,32 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * s
         if (!dmx_timer_hundreds_us_ch1)
         {
 #ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE
-            unsigned short slow_value = mem_conf.segments[CH1_VAL_OFFSET]
-                [(slow_segment[CH1_VAL_OFFSET] - 1)];
+            unsigned char slow_sgm = slow_segment[CH1_VAL_OFFSET];
+            unsigned short slow_value = mem_conf.segments[CH1_VAL_OFFSET][slow_sgm - 1];
 #else
-            // unsigned short slow_value = mem_conf.segments[CH1_VAL_OFFSET][slow_segment[CH1_VAL_OFFSET]];
-            unsigned short slow_value = 731;
+            unsigned char slow_sgm = slow_segment[CH1_VAL_OFFSET];            
+            unsigned short slow_value = mem_conf.segments[CH1_VAL_OFFSET][slow_sgm];
+            // unsigned short slow_value = 731;
 #endif
             
-            ch1_pwm = HARD_Process_New_PWM_Data (0, *(ch_val + 0));
-            ch1_pwm = MA16_U16Circular (&st_sp1, ch1_pwm);    
+            // ch1_pwm = HARD_Process_New_PWM_Data (0, *(ch_val + 0));
+            ch1_pwm = HARD_Map_New_DMX_Data(
+                mem_conf.segments[CH1_VAL_OFFSET],
+                *(ch_val + CH1_VAL_OFFSET),
+                slow_sgm);
+            
+            // ch1_pwm = MA16_U16Circular (&st_sp1, ch1_pwm);    
             last_ch1_pwm = CalcNewDelta (last_ch1_pwm, ch1_pwm);
             if (last_ch1_pwm > slow_value)
-                dmx_timer_hundreds_us_ch1 = (DMX_UPDATE_TIMER_FAST << 3);
+                dmx_timer_hundreds_us_ch1 = (DMX_UPDATE_TIMER_FAST << 2);
             else
                 dmx_timer_hundreds_us_ch1 = DMX_UPDATE_TIMER_FAST;
 
             Update_PWM1(last_ch1_pwm);
+            if (CTRL_FAN)
+                CTRL_FAN_OFF;
+            else
+                CTRL_FAN_ON;
         }
     }
                 
@@ -966,19 +976,25 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * s
     {
         if (!dmx_timer_hundreds_us_ch2)
         {
-#ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE            
-            unsigned short slow_value = mem_conf.segments[CH2_VAL_OFFSET]
-                [(slow_segment[CH2_VAL_OFFSET] - 1)];
+#ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE
+            unsigned char slow_sgm = slow_segment[CH2_VAL_OFFSET];
+            unsigned short slow_value = mem_conf.segments[CH2_VAL_OFFSET][slow_sgm - 1];
 #else
-            // unsigned short slow_value = mem_conf.segments[CH2_VAL_OFFSET][slow_segment[CH2_VAL_OFFSET]];
-            unsigned short slow_value = 588;
+            unsigned char slow_sgm = slow_segment[CH2_VAL_OFFSET];
+            unsigned short slow_value = mem_conf.segments[CH2_VAL_OFFSET][slow_sgm];
+            // unsigned short slow_value = 588;
 #endif
+
+            // ch2_pwm = HARD_Process_New_PWM_Data (1, *(ch_val + 1));
+            ch2_pwm = HARD_Map_New_DMX_Data(
+                mem_conf.segments[CH2_VAL_OFFSET],
+                *(ch_val + CH2_VAL_OFFSET),
+                slow_sgm);
             
-            ch2_pwm = HARD_Process_New_PWM_Data (1, *(ch_val + 1));
             ch2_pwm = MA16_U16Circular (&st_sp2, ch2_pwm);
             last_ch2_pwm = CalcNewDelta (last_ch2_pwm, ch2_pwm);                        
             if (last_ch2_pwm > slow_value)
-                dmx_timer_hundreds_us_ch2 = (DMX_UPDATE_TIMER_FAST << 3);
+                dmx_timer_hundreds_us_ch2 = (DMX_UPDATE_TIMER_FAST << 2);
             else
                 dmx_timer_hundreds_us_ch2 = DMX_UPDATE_TIMER_FAST;
 
@@ -991,18 +1007,24 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * s
         if (!dmx_timer_hundreds_us_ch3)
         {
 #ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE            
-            unsigned short slow_value = mem_conf.segments[CH3_VAL_OFFSET]
-                [(slow_segment[CH3_VAL_OFFSET] - 1)];
+            unsigned char slow_sgm = slow_segment[CH3_VAL_OFFSET];
+            unsigned short slow_value = mem_conf.segments[CH3_VAL_OFFSET][slow_sgm];
 #else
-            // unsigned short slow_value = mem_conf.segments[CH3_VAL_OFFSET][slow_segment[CH3_VAL_OFFSET]];
-            unsigned short slow_value = 680;
+            unsigned char slow_sgm = slow_segment[CH3_VAL_OFFSET];
+            unsigned short slow_value = mem_conf.segments[CH3_VAL_OFFSET][slow_sgm];
+            // unsigned short slow_value = 680;
 #endif
             
-            ch3_pwm = HARD_Process_New_PWM_Data (2, *(ch_val + 2));
-            ch3_pwm = MA16_U16Circular (&st_sp3, ch3_pwm);
+            // ch3_pwm = HARD_Process_New_PWM_Data (2, *(ch_val + 2));
+            ch3_pwm = HARD_Map_New_DMX_Data(
+                mem_conf.segments[CH3_VAL_OFFSET],
+                *(ch_val + CH3_VAL_OFFSET),
+                slow_sgm);
+            
+            // ch3_pwm = MA16_U16Circular (&st_sp3, ch3_pwm);
             last_ch3_pwm = CalcNewDelta (last_ch3_pwm, ch3_pwm);
             if (last_ch3_pwm > slow_value)
-                dmx_timer_hundreds_us_ch3 = (DMX_UPDATE_TIMER_FAST << 3);
+                dmx_timer_hundreds_us_ch3 = (DMX_UPDATE_TIMER_FAST << 2);
             else
                 dmx_timer_hundreds_us_ch3 = DMX_UPDATE_TIMER_FAST;
 
@@ -1014,19 +1036,26 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * s
     {
         if (!dmx_timer_hundreds_us_ch4)
         {
-#ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE            
-            unsigned short slow_value = mem_conf.segments[CH4_VAL_OFFSET]
-                [(slow_segment[CH4_VAL_OFFSET] - 1)];
+#ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE
+            unsigned char slow_sgm = slow_segment[CH4_VAL_OFFSET];
+            unsigned short slow_value = mem_conf.segments[CH4_VAL_OFFSET][slow_sgm];
 #else
-            // unsigned short slow_value = mem_conf.segments[CH4_VAL_OFFSET][slow_segment[CH4_VAL_OFFSET]];
-            unsigned short slow_value = 754;
+            unsigned char slow_sgm = slow_segment[CH4_VAL_OFFSET];
+            unsigned short slow_value = mem_conf.segments[CH4_VAL_OFFSET][slow_sgm];
+            // unsigned short slow_value = 754;
 #endif
             
-            ch4_pwm = HARD_Process_New_PWM_Data (3, *(ch_val + 3));
+            // ch4_pwm = HARD_Process_New_PWM_Data (3, *(ch_val + 3));
+            ch4_pwm = HARD_Map_New_DMX_Data(
+                mem_conf.segments[CH4_VAL_OFFSET],
+                *(ch_val + CH4_VAL_OFFSET),
+                slow_sgm);
+            
             ch4_pwm = MA16_U16Circular (&st_sp4, ch4_pwm);
             last_ch4_pwm = CalcNewDelta (last_ch4_pwm, ch4_pwm);
             if (last_ch4_pwm > slow_value)
-                dmx_timer_hundreds_us_ch4 = (DMX_UPDATE_TIMER_FAST * 10);
+                // dmx_timer_hundreds_us_ch4 = (DMX_UPDATE_TIMER_FAST * 10);
+                dmx_timer_hundreds_us_ch4 = DMX_UPDATE_TIMER_FAST << 2;            
             else
                 dmx_timer_hundreds_us_ch4 = DMX_UPDATE_TIMER_FAST;
 
@@ -1039,13 +1068,19 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * s
         if (!dmx_timer_hundreds_us_ch5)
         {
 #ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE            
-            unsigned short slow_value = mem_conf.segments[CH5_VAL_OFFSET]
-                [(slow_segment[CH5_VAL_OFFSET] - 1)];
+            unsigned char slow_sgm = slow_segment[CH5_VAL_OFFSET];
+            unsigned short slow_value = mem_conf.segments[CH5_VAL_OFFSET][slow_sgm];
 #else
-            unsigned short slow_value = mem_conf.segments[CH5_VAL_OFFSET][slow_segment[CH5_VAL_OFFSET]];
+            unsigned char slow_sgm = slow_segment[CH5_VAL_OFFSET];
+            unsigned short slow_value = mem_conf.segments[CH5_VAL_OFFSET][slow_sgm];
 #endif
             
-            ch5_pwm = HARD_Process_New_PWM_Data (4, *(ch_val + 4));
+            // ch5_pwm = HARD_Process_New_PWM_Data (4, *(ch_val + 4));
+            ch5_pwm = HARD_Map_New_DMX_Data(
+                mem_conf.segments[CH5_VAL_OFFSET],
+                *(ch_val + CH5_VAL_OFFSET),
+                slow_sgm);
+            
             ch5_pwm = MA16_U16Circular (&st_sp5, ch5_pwm);
             last_ch5_pwm = CalcNewDelta (last_ch5_pwm, ch5_pwm);
             if (last_ch5_pwm > slow_value)
@@ -1062,13 +1097,19 @@ unsigned char CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * s
         if (!dmx_timer_hundreds_us_ch6)
         {
 #ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE            
-            unsigned short slow_value = mem_conf.segments[CH6_VAL_OFFSET]
-                [(slow_segment[CH6_VAL_OFFSET] - 1)];
+            unsigned char slow_sgm = slow_segment[CH6_VAL_OFFSET];
+            unsigned short slow_value = mem_conf.segments[CH6_VAL_OFFSET][slow_sgm];
 #else
-            unsigned short slow_value = mem_conf.segments[CH6_VAL_OFFSET][slow_segment[CH6_VAL_OFFSET]];
+            unsigned char slow_sgm = slow_segment[CH6_VAL_OFFSET];
+            unsigned short slow_value = mem_conf.segments[CH6_VAL_OFFSET][slow_sgm];
 #endif
             
-            ch6_pwm = HARD_Process_New_PWM_Data (5, *(ch_val + 5));
+            // ch6_pwm = HARD_Process_New_PWM_Data (5, *(ch_val + 5));
+            ch6_pwm = HARD_Map_New_DMX_Data(
+                mem_conf.segments[CH6_VAL_OFFSET],
+                *(ch_val + CH6_VAL_OFFSET),
+                slow_sgm);
+            
             ch6_pwm = MA16_U16Circular (&st_sp6, ch6_pwm);
             last_ch6_pwm = CalcNewDelta (last_ch6_pwm, ch6_pwm);
             if (last_ch6_pwm > slow_value)

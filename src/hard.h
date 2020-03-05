@@ -47,7 +47,7 @@
 // #define USE_PWM_WITH_DITHER
 #define USE_PWM_WITH_DELTA
 #define USE_DMX_TIMER_FAST
-// #define USE_SLOW_SEGMENT_LAST_BUT_ONE
+#define USE_SLOW_SEGMENT_LAST_BUT_ONE
 
 #define DMX_UPDATE_TIMER_FAST    7    //30 un poco-- 700us
 #define DMX_UPDATE_TIMER    5    //si pongo esto en 2 se ven saltos en el blanco incluso con delta-single-step
@@ -489,6 +489,7 @@ unsigned short PWMChannelsOffset (unsigned char, unsigned short);
 unsigned char DMXMapping (unsigned char);
 resp_t HARD_Find_Current_Segments (led_current_settings_t *, unsigned short *);
 unsigned short HARD_Process_New_PWM_Data (unsigned char, unsigned char);
+unsigned short HARD_Map_New_DMX_Data (unsigned short *, unsigned char, unsigned char);
 void HARD_Find_Slow_Segments (unsigned char *);
 
 #endif /* HARD_H_ */
