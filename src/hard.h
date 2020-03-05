@@ -486,4 +486,6 @@ unsigned short PWMChannelsOffset (unsigned char, unsigned short);
 unsigned char DMXMapping (unsigned char);
 resp_t HARD_Find_Current_Segments (led_current_settings_t *, unsigned short *);
 unsigned short HARD_Process_New_PWM_Data (unsigned char, unsigned char);
+void HARD_Find_Slow_Segments (unsigned char *);
+
 #endif /* HARD_H_ */

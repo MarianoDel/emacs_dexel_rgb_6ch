@@ -16,7 +16,12 @@
 
 #include "flash_program.h"
 
+#include <string.h>
 
+#ifdef USART2_DEBUG_MODE
+#include <stdio.h>
+#include "uart.h"
+#endif
 
 /* Externals variables --------------------------------------------------------*/
 extern volatile unsigned char switches_timer;
@@ -601,4 +606,97 @@ unsigned char GetProcessedSegment (unsigned char check_segment_by_value)
 }
 
 
+#define RANGES_QTTY    5
+void HARD_Find_Slow_Segments (unsigned char * ch_slow)
+{
+    unsigned char i = 0;
+    unsigned short ranges[RANGES_QTTY] = { 0 };
+    unsigned char freq_vect[RANGES_QTTY] = { 0 };
+    unsigned short deltas_vect[SEGMENTS_QTTY] = { 0 };
+    unsigned short last_segment = 0;
+
+    unsigned char slow_segment = 0;
+    unsigned short * segments;
+
+#ifdef USART2_DEBUG_MODE
+    char s_to_send [100] = { 0 };
+#endif
+        
+    for (unsigned char j = 0; j < 6; j++)
+    {
+        //seteo inicial
+        segments = &mem_conf.segments[j][0];
+        last_segment = 0;
+        memset(deltas_vect, '\0', SEGMENTS_QTTY);
+        memset(freq_vect, '\0', SEGMENTS_QTTY);
+
+        //convierto segmentos a deltas
+        for (i = 0; i < SEGMENTS_QTTY; i++)
+        {
+            deltas_vect[i] = segments[i] - last_segment;
+            last_segment = segments[i];
+        }
+
+        DSP_Vector_Calcule_Frequencies(deltas_vect,
+                                       SEGMENTS_QTTY,
+                                       ranges,
+                                       RANGES_QTTY,
+                                       freq_vect);
+
+        //seak for the mayor segment that is not appering in the most frequency
+        for (i = 0; i < SEGMENTS_QTTY; i++)
+        {
+            if (*(deltas_vect + i) > (ranges[1] - ranges[0]))
+            {
+                slow_segment = i;
+                ch_slow[j] = slow_segment;
+            }
+        }
+        
+#ifdef USART2_DEBUG_MODE
+        sprintf(s_to_send, "deltas_vect[%d]: ", j);
+        Usart2Send(s_to_send);    
+        for (i = 0; i < SEGMENTS_QTTY; i++)
+        {
+            sprintf(s_to_send, "%d ", deltas_vect[i]);
+            Usart2Send(s_to_send);
+            Wait_ms(10);        
+        }
+        Usart2Send("\n");
+        
+        sprintf(s_to_send, "ranges[%d][%d]: ", j, RANGES_QTTY);
+        Usart2Send(s_to_send);    
+        for (i = 0; i < RANGES_QTTY; i++)
+        {
+            sprintf(s_to_send, "%d ", ranges[i]);
+            Usart2Send(s_to_send);
+            Wait_ms(10);        
+        }
+        Usart2Send("\n");
+
+        sprintf(s_to_send, "frequencies[%d][%d]: ", j, RANGES_QTTY);
+        Usart2Send(s_to_send);    
+        for (i = 0; i < RANGES_QTTY; i++)
+        {
+            sprintf(s_to_send, "%d ", freq_vect[i]);
+            Usart2Send(s_to_send);
+            Wait_ms(10);        
+        }
+        Usart2Send("\n");
+#endif        
+    }
+
+#ifdef USART2_DEBUG_MODE
+    for (unsigned char j = 0; j < 6; j++)
+    {
+        sprintf(s_to_send, "slow_segment[%d]: %d value: %d\n",
+                j,
+                ch_slow[j],
+                mem_conf.segments[j][ch_slow[j]]);
+        Usart2Send(s_to_send);
+        Wait_ms(10);
+    }
+#endif
+    
+}
 //--- end of file ---//
