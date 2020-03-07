@@ -36,7 +36,7 @@
 // #define USE_FILTER_LENGHT_8
 #define USE_FILTER_LENGHT_16
 
-#define USE_OVERTEMP_PROT
+// #define USE_OVERTEMP_PROT
 // #define USE_INDUCTOR_IN_DCM
 // #define USE_INDUCTOR_IN_CCM
 #define USE_INDUCTOR_REAL_MEAS
@@ -44,25 +44,19 @@
 #define ALWAYS_CHECK_CURRENT_ON_INIT
 #define USE_HARCODED_CURRENT
 
-// #define USE_PWM_WITH_DITHER
-#define USE_PWM_WITH_DELTA
-#define USE_DMX_TIMER_FAST
+// #define USE_PWM_CTRL_PID_MA32
+#define USE_PWM_DIRECT_OR_DELTA
+// #define USE_PWM_DELTA_INT_TIMER_FAST
 #define USE_SLOW_SEGMENT_LAST_BUT_ONE
 
-#define DMX_UPDATE_TIMER_FAST    7    //30 un poco-- 700us
+#define DMX_UPDATE_TIMER_FAST    4    //tick en 200us
 #define DMX_UPDATE_TIMER    5    //si pongo esto en 2 se ven saltos en el blanco incluso con delta-single-step
 #define DMX_UPDATE_TIMER_WITH_DITHER    2
 
-#ifdef USE_PWM_WITH_DELTA
+#if (defined USE_PWM_WITH_DELTA) || (defined USE_PWM_DELTA_INT_TIMER_FAST)
 // #define DELTA_MULTIPLE_STEPS_100
 // #define DELTA_MULTIPLE_STEPS_50
 #define DELTA_SINGLE_STEP
-#endif
-
-#ifdef USE_DMX_TIMER_FAST
-#ifndef USE_PWM_WITH_DELTA
-#error "Must have PWM WITH DELTA"
-#endif
 #endif
 
 
@@ -73,13 +67,6 @@
 #define USE_FREQ_48KHZ
 // #define USE_FREQ_24KHZ
 // #define USE_FREQ_16KHZ
-
-//----- PWM Modes ----------------------------
-// lo que llega por dmx se escala y se manda al pwm (funciona mas parejo en DCM)
-#define USE_LED_CTRL_MODE_CONTINUOS
-// #define USE_LED_CTRL_MODE_PID_MA32
-
-//----- End of PWM Modes ---------------------
 
 //----- Segments Modes ----------------------------
 // #define LINEAR_SEGMENT_8

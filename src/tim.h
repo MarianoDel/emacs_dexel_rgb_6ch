@@ -69,8 +69,8 @@
 #define EnableDitherInterrupt    (TIM1->DIER |= TIM_DIER_UIE)
 #define DisableDitherInterrupt    (TIM1->DIER &= ~TIM_DIER_UIE)    
 
-#define TIM17DisableInterrupt    (TIM17->DIER &= ~(TIM_DIER_CC1IE | TIM_DIER_UIE))
-#define TIM17EnableInterrupt     (TIM17->DIER |= TIM_DIER_CC1IE | TIM_DIER_UIE)
+#define TIM17DisableInterrupt    (TIM17->DIER &= ~TIM_DIER_UIE)
+#define TIM17EnableInterrupt     (TIM17->DIER |= TIM_DIER_UIE)
 
 
 #define EnablePreload_CH1    (TIM1->CCMR1 |= TIM_CCMR1_OC1PE)

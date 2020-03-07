@@ -16,13 +16,23 @@
 // Externals -------------------------------------------------------------------
 extern volatile unsigned short wait_ms_var;
 
-#ifdef USE_DMX_TIMER_FAST
+#ifdef USE_PWM_DELTA_INT_TIMER_FAST
 extern volatile unsigned short dmx_timer_hundreds_us_ch1;
 extern volatile unsigned short dmx_timer_hundreds_us_ch2;
 extern volatile unsigned short dmx_timer_hundreds_us_ch3;
 extern volatile unsigned short dmx_timer_hundreds_us_ch4;
 extern volatile unsigned short dmx_timer_hundreds_us_ch5;
 extern volatile unsigned short dmx_timer_hundreds_us_ch6;
+
+extern unsigned short ch1_pwm;
+extern unsigned short ch2_pwm;
+extern unsigned short ch3_pwm;
+extern unsigned short ch4_pwm;
+extern unsigned short ch5_pwm;
+extern unsigned short ch6_pwm;
+
+extern parameters_typedef mem_conf;
+extern unsigned char ch_slow_segment [];    
 #endif
 
 
@@ -41,7 +51,17 @@ volatile unsigned char dither_sequence_cnt = 0;
 unsigned char v_sequence[SIZEOF_DITHER_VECT] = {0x00, 0x80, 0x88, 0xA8, 0xAA, 0xBA, 0xBB, 0xFB };
 #endif
 
+#ifdef USE_PWM_DELTA_INT_TIMER_FAST
+volatile unsigned short last_ch1_pwm = 0;
+volatile unsigned short last_ch2_pwm = 0;
+volatile unsigned short last_ch3_pwm = 0;
+volatile unsigned short last_ch4_pwm = 0;
+volatile unsigned short last_ch5_pwm = 0;
+volatile unsigned short last_ch6_pwm = 0;
+#endif
 
+// Module Private Functions ----------------------------------------------------
+unsigned short CalcNewDelta (unsigned short, unsigned short);
 
 
 // Module Functions ------------------------------------------------------------
@@ -342,27 +362,145 @@ void OneShootTIM16 (unsigned short a)
 
 void TIM17_IRQHandler (void)	
 {
-#ifdef USE_DMX_TIMER_FAST
+#ifdef USE_PWM_DELTA_INT_TIMER_FAST
+
+    // CTRL_FAN_ON;
     if (dmx_timer_hundreds_us_ch1)
         dmx_timer_hundreds_us_ch1--;
+    else
+    {
+#ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE
+        unsigned char slow_sgm = ch_slow_segment[CH1_VAL_OFFSET];
+        unsigned short slow_value = mem_conf.segments[CH1_VAL_OFFSET][slow_sgm - 1];
+#else
+        unsigned char slow_sgm = ch_slow_segment[CH1_VAL_OFFSET];        
+        unsigned short slow_value = mem_conf.segments[CH1_VAL_OFFSET][slow_sgm];
+#endif
+        
+        last_ch1_pwm = CalcNewDelta (last_ch1_pwm, ch1_pwm);
+        if (last_ch1_pwm > slow_value)
+            dmx_timer_hundreds_us_ch1 = (DMX_UPDATE_TIMER_FAST << 2);
+        else
+            dmx_timer_hundreds_us_ch1 = DMX_UPDATE_TIMER_FAST;
 
+        Update_PWM1(last_ch1_pwm);
+        if (CTRL_FAN)
+            CTRL_FAN_OFF;
+        else
+            CTRL_FAN_ON;
+    }
+
+    
     if (dmx_timer_hundreds_us_ch2)
         dmx_timer_hundreds_us_ch2--;
+    else
+    {
+#ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE
+        unsigned char slow_sgm = ch_slow_segment[CH2_VAL_OFFSET];        
+        unsigned short slow_value = mem_conf.segments[CH2_VAL_OFFSET][slow_sgm - 1];
+#else
+        unsigned char slow_sgm = ch_slow_segment[CH2_VAL_OFFSET];        
+        unsigned short slow_value = mem_conf.segments[CH2_VAL_OFFSET][slow_sgm];
+#endif
+        
+        last_ch2_pwm = CalcNewDelta (last_ch2_pwm, ch2_pwm);                        
+        if (last_ch2_pwm > slow_value)
+            dmx_timer_hundreds_us_ch2 = (DMX_UPDATE_TIMER_FAST << 2);
+        else
+            dmx_timer_hundreds_us_ch2 = DMX_UPDATE_TIMER_FAST;
+        
+        Update_PWM2(last_ch2_pwm);
+    }
 
+    
     if (dmx_timer_hundreds_us_ch3)
         dmx_timer_hundreds_us_ch3--;
+    else
+    {
+#ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE            
+        unsigned char slow_sgm = ch_slow_segment[CH3_VAL_OFFSET];
+        unsigned short slow_value = mem_conf.segments[CH3_VAL_OFFSET][slow_sgm - 1];
+#else
+        unsigned char slow_sgm = ch_slow_segment[CH3_VAL_OFFSET];
+        unsigned short slow_value = mem_conf.segments[CH3_VAL_OFFSET][slow_sgm];
+#endif
+            
+        last_ch3_pwm = CalcNewDelta (last_ch3_pwm, ch3_pwm);
+        if (last_ch3_pwm > slow_value)
+            dmx_timer_hundreds_us_ch3 = (DMX_UPDATE_TIMER_FAST << 2);
+        else
+            dmx_timer_hundreds_us_ch3 = DMX_UPDATE_TIMER_FAST;
+        
+        Update_PWM3(last_ch3_pwm);
+    }
 
     if (dmx_timer_hundreds_us_ch4)
         dmx_timer_hundreds_us_ch4--;
+    else
+    {
+#ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE
+        unsigned char slow_sgm = ch_slow_segment[CH4_VAL_OFFSET];
+        unsigned short slow_value = mem_conf.segments[CH4_VAL_OFFSET][slow_sgm - 1];
+#else
+        unsigned char slow_sgm = ch_slow_segment[CH4_VAL_OFFSET];
+        unsigned short slow_value = mem_conf.segments[CH4_VAL_OFFSET][slow_sgm];
+#endif
+
+        last_ch4_pwm = CalcNewDelta (last_ch4_pwm, ch4_pwm);
+        if (last_ch4_pwm > slow_value)
+            dmx_timer_hundreds_us_ch4 = DMX_UPDATE_TIMER_FAST << 2;            
+        else
+            dmx_timer_hundreds_us_ch4 = DMX_UPDATE_TIMER_FAST;
+
+        Update_PWM4(last_ch4_pwm);
+    }
 
     if (dmx_timer_hundreds_us_ch5)
         dmx_timer_hundreds_us_ch5--;
+    else
+    {
+#ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE            
+        unsigned char slow_sgm = ch_slow_segment[CH5_VAL_OFFSET];
+        unsigned short slow_value = mem_conf.segments[CH5_VAL_OFFSET][slow_sgm - 1];
+#else
+        unsigned char slow_sgm = ch_slow_segment[CH5_VAL_OFFSET];
+        unsigned short slow_value = mem_conf.segments[CH5_VAL_OFFSET][slow_sgm];
+#endif
+
+        last_ch5_pwm = CalcNewDelta (last_ch5_pwm, ch5_pwm);
+        if (last_ch5_pwm > slow_value)
+            dmx_timer_hundreds_us_ch5 = (DMX_UPDATE_TIMER_FAST << 2);
+        else
+            dmx_timer_hundreds_us_ch5 = DMX_UPDATE_TIMER_FAST;
+
+        Update_PWM5(last_ch5_pwm);
+    }
 
     if (dmx_timer_hundreds_us_ch6)
         dmx_timer_hundreds_us_ch6--;
+    else
+    {
+#ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE            
+        unsigned char slow_sgm = ch_slow_segment[CH6_VAL_OFFSET];
+        unsigned short slow_value = mem_conf.segments[CH6_VAL_OFFSET][slow_sgm - 1];
+#else
+        unsigned char slow_sgm = ch_slow_segment[CH6_VAL_OFFSET];
+        unsigned short slow_value = mem_conf.segments[CH6_VAL_OFFSET][slow_sgm];
+#endif
+
+        last_ch6_pwm = CalcNewDelta (last_ch6_pwm, ch6_pwm);
+        if (last_ch6_pwm > slow_value)
+            dmx_timer_hundreds_us_ch6 = (DMX_UPDATE_TIMER_FAST << 2);
+        else
+            dmx_timer_hundreds_us_ch6 = DMX_UPDATE_TIMER_FAST;
+
+        Update_PWM6(last_ch6_pwm);
+    }
+    
 #endif
     if (TIM17->SR & TIM_SR_UIF)
-        TIM17->SR &= ~TIM_SR_UIF;    
+        TIM17->SR &= ~TIM_SR_UIF;
+    // CTRL_FAN_OFF;
 }
 
 
@@ -373,7 +511,7 @@ void TIM_17_Init (void)    //en centanas de microsegundos
         RCC_TIM17_CLK_ON;
 
     //Configuracion del timer.
-    TIM17->ARR = 100;
+    TIM17->ARR = 200;
     TIM17->CNT = 0;
     TIM17->PSC = 47;
 
@@ -389,5 +527,56 @@ void TIM_17_Init (void)    //en centanas de microsegundos
     NVIC_SetPriority(TIM17_IRQn, 4);
 }
 
+
+unsigned short CalcNewDelta (unsigned short last_ch_delta, unsigned short ch_value)
+{
+#ifdef DELTA_MULTIPLE_STEPS_100
+    if ((last_ch_delta + 100) < ch_value)
+        last_ch_delta += 10;
+    else if ((last_ch_delta + 50) < ch_value)
+        last_ch_delta += 5;
+    else if ((last_ch_delta + 20) < ch_value)
+        last_ch_delta += 2;
+    else if (last_ch_delta < ch_value)
+        last_ch_delta += 1;
+
+
+    if (last_ch_delta > (ch_value + 100))
+        last_ch_delta -= 10;
+    else if (last_ch_delta > (ch_value + 50))
+        last_ch_delta -= 5;
+    else if (last_ch_delta > (ch_value + 20))
+        last_ch_delta -= 2;
+    else if (last_ch_delta > ch_value)
+        last_ch_delta -= 1;
+#endif
+
+#ifdef DELTA_MULTIPLE_STEPS_50
+    if ((last_ch_delta + 50) < ch_value)
+        last_ch_delta += 3;
+    else if ((last_ch_delta + 25) < ch_value)
+        last_ch_delta += 2;
+    else if (last_ch_delta < ch_value)
+        last_ch_delta += 1;
+
+
+    if (last_ch_delta > (ch_value + 50))
+        last_ch_delta -= 3;
+    else if (last_ch_delta > (ch_value + 25))
+        last_ch_delta -= 2;
+    else if (last_ch_delta > ch_value)
+        last_ch_delta -= 1;
+#endif
+    
+#ifdef DELTA_SINGLE_STEP
+    if (last_ch_delta < ch_value)
+        last_ch_delta++;
+
+    if (last_ch_delta > ch_value)
+        last_ch_delta--;
+#endif
+    
+    return last_ch_delta;
+}
 
 //--- end of file ---//

@@ -440,7 +440,6 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
         UpdateDutyCycleReset();
         settings->channel = j + 1;
 
-        //TODO: mejorar esto; hardcodeo la corriente segun el canal; y el for de abajo
         switch (j)
         {
 #ifdef USE_HARCODED_CURRENT
@@ -486,6 +485,9 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
 
 #ifdef USE_PWM_WITH_DITHER
         DisableDitherInterrupt;
+#endif
+#ifdef USE_PWM_DELTA_INT_TIMER_FAST
+        TIM17DisableInterrupt;
 #endif
         for (unsigned char i = 0; i < SEGMENTS_QTTY; i++)
         {
@@ -550,6 +552,9 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
     }
 #ifdef USE_PWM_WITH_DITHER
     EnableDitherInterrupt;
+#endif
+#ifdef USE_PWM_DELTA_INT_TIMER_FAST
+    TIM17EnableInterrupt;
 #endif
 
     return resp;
