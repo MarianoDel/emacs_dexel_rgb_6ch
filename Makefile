@@ -52,29 +52,12 @@ DLIBS =
 #
 
 #
-# Define project name and Ram = 0/Flash = 1 mode here
+# Define project name here
 PROJECT        = Template_F030
 
-# List all user C define here, like -D_DEBUG=1
-UDEFS =
-
-# Define ASM defines here
-UADEFS =
-
 # List C source files here
-# LIBSDIR    = ../STM32F0xx_StdPeriph_Lib_V1.3.1/Libraries/STM32F0xx_StdPeriph_Driver
-# LIBSDIR    = 
 CORELIBDIR = ./cmsis_core
 BOOTDIR = ./cmsis_boot
-
-
-# STMSPDDIR    = ./stm_lib
-# STMSPSRCDDIR = $(LIBSDIR)/src
-# STMSPINCDDIR = $(LIBSDIR)/inc
-# STMSPSRCDDIR = $(STMSPDDIR)/src
-# STMSPINCDDIR = $(STMSPDDIR)/inc
-
-#DISCOVERY    = ../STM32F0-Discovery_FW_V1.0.0/Utilities/STM32F0-Discovery
 
 LINKER = ./cmsis_boot/startup
 
@@ -103,10 +86,7 @@ SRC += ./src/ssd1306.c
 SRC += ./src/mainmenu.c
 SRC += ./src/screen.c
 
-## System Support
-#SRC += ./cmsis_boot/system_stm32f0xx.c
-#SRC += $(DISCOVERY)/stm32f0_discovery.c
-#SRC += ./src/Sim900.c
+
 ## Core Support
 SRC += $(CORELIBDIR)/core_cm0.c
 
@@ -118,7 +98,7 @@ ASRC = ./cmsis_boot/startup/startup_stm32f0xx.s
 
 # List all user directories here
 UINCDIR = $(BOOTDIR) \
-          $(CORELIBDIR) \
+          $(CORELIBDIR)
 			 #../paho.mqtt.embedded-c/MQTTPacket/src
 
 # List the user directory to look for the libraries here
@@ -168,15 +148,6 @@ LDFLAGS = $(MCFLAGS) -mthumb -lm --specs=nano.specs -Wl,--gc-sections -nostartfi
 # CON DEAD CODE
 #LDFLAGS = $(MCFLAGS) -mthumb --specs=nano.specs -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).map,--cref,--no-warn-mismatch $(LIBDIR)
 #LDFLAGS = $(MCFLAGS) -mthumb -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).map,--cref,--no-warn-mismatch $(LIBDIR)
-
-#
-# OPENOCD Command Options
-#
-OCDCMN = -c "program $(FULL_PRJ).bin verify reset exit"
-#OCDCMN = -c "flash probe 0"
-# OCDCMN += -c "stm32f1x mass_erase 0"
-# OCDCMN += -c "flash write_bank 0 $(FULL_PRJ).bin 0"
-# OCDCMN += -c "reset run"
 
 #
 # makefile rules

@@ -4,7 +4,7 @@
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### FLASH_PROGRAM.H #################################
+// #### FLASH_PROGRAM.H #######################
 //---------------------------------------------
 
 #ifndef _FLASH_PROGRAM_H_
@@ -116,4 +116,7 @@ typedef enum
 unsigned char WriteConfigurations (void);
 unsigned char WriteFlash(unsigned int * p, uint32_t p_addr, unsigned char with_lock, unsigned char len_in_4);
 
-#endif
+#endif    /* _FLASH_PROGRAM_H_ */
+
+//--- end of file ---//
+

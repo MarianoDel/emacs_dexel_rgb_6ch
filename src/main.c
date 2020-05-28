@@ -845,9 +845,9 @@ int main(void)
         //grabado de memoria luego de configuracion
         if ((need_to_save) && (!need_to_save_timer))
         {
-            DisableDitherInterrupt;
+            __disable_irq();
             need_to_save = WriteConfigurations();
-            EnableDitherInterrupt;
+            __enable_irq();
 
 #ifdef USART2_DEBUG_MODE
             if (need_to_save)

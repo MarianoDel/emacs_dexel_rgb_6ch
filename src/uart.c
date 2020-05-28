@@ -61,7 +61,6 @@ unsigned char ReadUsart1Buffer (unsigned char * bout, unsigned short max_len)
     {
         //el prx1 siempre llega adelantado desde la int, lo corto con un 0
         *prx1 = '\0';
-        prx1++;
         len += 1;
         memcpy(bout, (unsigned char *) rx1buff, len);
     }
@@ -86,7 +85,6 @@ unsigned char ReadUsart2Buffer (unsigned char * bout, unsigned short max_len)
     {
         //el prx2 siempre llega adelantado desde la int, lo corto con un 0
         *prx2 = '\0';
-        prx2++;
         len += 1;
         memcpy(bout, (unsigned char *) rx2buff, len);
     }

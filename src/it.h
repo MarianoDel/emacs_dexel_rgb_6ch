@@ -33,6 +33,6 @@ void SysTick_Handler(void);
 }
 #endif
 
-#endif /* __STM32F0XX_IT_H */
+#endif /* __IT_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
