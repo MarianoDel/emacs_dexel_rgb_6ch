@@ -458,6 +458,9 @@ int main(void)
     }
 #endif
 
+    ///////////////////////////////////
+    // Inicio del Programa Principal //
+    ///////////////////////////////////
     // OLED Init
     I2C2_Init();
     Wait_ms(10);
@@ -535,12 +538,7 @@ int main(void)
     led_current_settings_t led_curr;
 
     HARD_Find_Current_Segments(&led_curr, p_seg);
-#endif
-    HARD_Find_Slow_Segments (ch_slow_segment);
-    //-- FIN Para Debug Test inicial de corriente    
 
-    //mando info al puerto
-#ifdef USART2_DEBUG_MODE
     for (unsigned char j = 0; j < 6; j++)
     {        
         sprintf(s_to_send, "segments[%d]: ", j);
@@ -555,6 +553,14 @@ int main(void)
         }
         Usart2Send("\n");
     }
+    
+#endif
+    
+    HARD_Find_Slow_Segments (ch_slow_segment);    //muestra las cuentas del vector de corriente
+    //-- FIN Para Debug Test inicial de corriente    
+
+    //mando info al puerto
+#ifdef USART2_DEBUG_MODE
 
 #ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE
     Wait_ms(100);
@@ -818,7 +824,8 @@ int main(void)
         //cuestiones generales        
         UpdateSwitches();
 
-        display_update_int_state_machine();
+        // update de LCD
+        // display_update_int_state_machine();
         
 
         //sensado de temperatura
@@ -921,6 +928,14 @@ unsigned short Distance (unsigned short a, unsigned short b)
 }
 
 
+#ifdef USE_PWM_WITH_DELTA
+unsigned short last_ch1_pwm = 0;
+unsigned short last_ch2_pwm = 0;
+unsigned short last_ch3_pwm = 0;
+unsigned short last_ch4_pwm = 0;
+unsigned short last_ch5_pwm = 0;
+unsigned short last_ch6_pwm = 0;
+#endif
 //aca filtro los offsets del pwm en vez del valor del canal
 //cada 5ms
 void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segment)
@@ -1016,12 +1031,16 @@ void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segme
                 *(ch_val + CH1_VAL_OFFSET),
                 slow_sgm);
 
-            ch1_pwm = MA16_U16Circular (&st_sp1, ch1_pwm);
 #ifdef USE_PWM_WITH_DELTA
             last_ch1_pwm = CalcNewDelta (last_ch1_pwm, ch1_pwm);
             Update_PWM1(last_ch1_pwm);
 #else
+            ch1_pwm = MA16_U16Circular (&st_sp1, ch1_pwm);
+#ifdef USE_PWM_WITH_DITHER
+            TIM_LoadDitherSequences(0, ch1_pwm);
+#else
             Update_PWM1(ch1_pwm);
+#endif
 #endif
         }
         
@@ -1034,12 +1053,16 @@ void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segme
                 *(ch_val + CH2_VAL_OFFSET),
                 slow_sgm);
 
-            ch2_pwm = MA16_U16Circular (&st_sp2, ch2_pwm);
 #ifdef USE_PWM_WITH_DELTA
             last_ch2_pwm = CalcNewDelta (last_ch2_pwm, ch2_pwm);
             Update_PWM2(last_ch2_pwm);
 #else
+            ch2_pwm = MA16_U16Circular (&st_sp2, ch2_pwm);
+#ifdef USE_PWM_WITH_DITHER
+            TIM_LoadDitherSequences(1, ch2_pwm);
+#else
             Update_PWM2(ch2_pwm);
+#endif
 #endif
         }
         
@@ -1052,12 +1075,16 @@ void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segme
                 *(ch_val + CH3_VAL_OFFSET),
                 slow_sgm);
 
-            ch3_pwm = MA16_U16Circular (&st_sp3, ch3_pwm);
 #ifdef USE_PWM_WITH_DELTA
             last_ch3_pwm = CalcNewDelta (last_ch3_pwm, ch3_pwm);
             Update_PWM3(last_ch3_pwm);
 #else
+            ch3_pwm = MA16_U16Circular (&st_sp3, ch3_pwm);
+#ifdef USE_PWM_WITH_DITHER
+            TIM_LoadDitherSequences(2, ch3_pwm);
+#else
             Update_PWM3(ch3_pwm);
+#endif
 #endif
         }
         
@@ -1070,12 +1097,16 @@ void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segme
                 *(ch_val + CH4_VAL_OFFSET),
                 slow_sgm);
 
-            ch4_pwm = MA16_U16Circular (&st_sp4, ch4_pwm);
 #ifdef USE_PWM_WITH_DELTA
             last_ch4_pwm = CalcNewDelta (last_ch4_pwm, ch4_pwm);
             Update_PWM4(last_ch4_pwm);
 #else
+            ch4_pwm = MA16_U16Circular (&st_sp4, ch4_pwm);
+#ifdef USE_PWM_WITH_DITHER
+            TIM_LoadDitherSequences(3, ch4_pwm);
+#else
             Update_PWM4(ch4_pwm);
+#endif
 #endif
         }
         
@@ -1088,12 +1119,16 @@ void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segme
                 *(ch_val + CH5_VAL_OFFSET),
                 slow_sgm);
 
-            ch5_pwm = MA16_U16Circular (&st_sp5, ch5_pwm);
 #ifdef USE_PWM_WITH_DELTA
             last_ch5_pwm = CalcNewDelta (last_ch5_pwm, ch5_pwm);
             Update_PWM5(last_ch5_pwm);
 #else
+            ch5_pwm = MA16_U16Circular (&st_sp5, ch5_pwm);
+#ifdef USE_PWM_WITH_DITHER
+            TIM_LoadDitherSequences(4, ch5_pwm);
+#else
             Update_PWM5(ch5_pwm);
+#endif
 #endif
         }
         
@@ -1106,12 +1141,16 @@ void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segme
                 *(ch_val + CH6_VAL_OFFSET),
                 slow_sgm);
 
-            ch6_pwm = MA16_U16Circular (&st_sp6, ch6_pwm);
 #ifdef USE_PWM_WITH_DELTA
             last_ch6_pwm = CalcNewDelta (last_ch6_pwm, ch6_pwm);
             Update_PWM6(last_ch6_pwm);
 #else
+            ch6_pwm = MA16_U16Circular (&st_sp6, ch6_pwm);
+#ifdef USE_PWM_WITH_DITHER
+            TIM_LoadDitherSequences(5, ch6_pwm);
+#else
             Update_PWM6(ch6_pwm);
+#endif
 #endif
         }
         

@@ -36,65 +36,94 @@
 // #define USE_FILTER_LENGHT_8
 #define USE_FILTER_LENGHT_16
 
-// #define USE_OVERTEMP_PROT
-// #define USE_INDUCTOR_IN_DCM
-// #define USE_INDUCTOR_IN_CCM
-#define USE_INDUCTOR_REAL_MEAS
-
+// --- Led current configurations --- //
 #define ALWAYS_CHECK_CURRENT_ON_INIT
 #define USE_HARCODED_CURRENT
 
-// #define USE_PWM_CTRL_PID_MA32
-#define USE_PWM_DIRECT_OR_DELTA
+// --- How to control the PWM generation, select only one --- //
+#define USE_PWM_DIRECT
+// #define USE_PWM_WITH_DELTA
 // #define USE_PWM_DELTA_INT_TIMER_FAST
+// #define USE_PWM_CTRL_PID_MA32
+
+// --- If Delta mode how to go throw steps --- //
+#define DELTA_SINGLE_STEP
+// #define DELTA_MULTIPLE_STEPS_50
+// #define DELTA_MULTIPLE_STEPS_100
+
+// --- Dither Selection --- //
+#define USE_PWM_WITH_DITHER
+
+// --- Dither Deph --- //
+// #define DITHER_8
+#define DITHER_16
+
+// --- What to do with the slow segment --- //
 #define USE_SLOW_SEGMENT_LAST_BUT_ONE
 
 #define DMX_UPDATE_TIMER_FAST    4    //tick en 200us
 #define DMX_UPDATE_TIMER    5    //si pongo esto en 2 se ven saltos en el blanco incluso con delta-single-step
 #define DMX_UPDATE_TIMER_WITH_DITHER    2
 
-#if (defined USE_PWM_WITH_DELTA) || (defined USE_PWM_DELTA_INT_TIMER_FAST)
-// #define DELTA_MULTIPLE_STEPS_100
-// #define DELTA_MULTIPLE_STEPS_50
-#define DELTA_SINGLE_STEP
-#endif
+// --- How to understand the current readed --- //
+// #define USE_INDUCTOR_IN_DCM
+// #define USE_INDUCTOR_IN_CCM
+#define USE_INDUCTOR_REAL_MEAS
 
-
+// --- After configuration what to do with the flash --- //
 #define SAVE_FLASH_IMMEDIATE
 // #define SAVE_FLASH_WITH_TIMEOUT
 
-//----- PWM Frequency ------------------------
+// --- PWM Frequency --- //
 #define USE_FREQ_48KHZ
 // #define USE_FREQ_24KHZ
 // #define USE_FREQ_16KHZ
 
-//----- Segments Modes ----------------------------
+// --- Segments Modes --- //
 // #define LINEAR_SEGMENT_8
 #define LINEAR_SEGMENT_16
 // #define LINEAR_SEGMENT_32
 // #define FIBONACCI_12
 // #define FIBONACCI_8    
-//----- End of Segments Modes ---------------------
 
-//----- Usart2 Modes ----------------------------
+// --- Usart2 Modes --- //
 #define USART2_DEBUG_MODE
 // #define USART2_WIFI_MODE
 
-//----- End of Usart2 Modes ---------------------
 
 //------ Configuration for Firmware-Channels -----
 #define WHITE_AS_IN_RGB		//el blanco lo forma con los 3 colores
 //#define WHITE_AS_WHITE	//el blanco tiene leds blancos individuales
 
 #ifdef USE_HARCODED_CURRENT
-#define HARCODED_CURRENT_CH1    1300
-#define HARCODED_CURRENT_CH2    1300
-#define HARCODED_CURRENT_CH3    1300
-#define HARCODED_CURRENT_CH4    1300
-#define HARCODED_CURRENT_CH5    1300
-#define HARCODED_CURRENT_CH6    1300
+#define HARCODED_CURRENT_CH1    2000
+#define HARCODED_CURRENT_CH2    2000
+#define HARCODED_CURRENT_CH3    2000
+#define HARCODED_CURRENT_CH4    2000
+#define HARCODED_CURRENT_CH5    2000
+#define HARCODED_CURRENT_CH6    2000
 #endif
 
+// --- Sanity checks --- //
+#if ((!defined USE_PWM_DIRECT) \
+     && (!defined USE_PWM_WITH_DELTA)      \
+     && (!defined USE_PWM_DELTA_INT_TIMER_FAST) \
+     && (!defined USE_PWM_CTRL_PID_MA32))
+#error "Must select what type of PWM generation to use"
+#endif
+
+#if (defined USE_PWM_WITH_DELTA) || (defined USE_PWM_DELTA_INT_TIMER_FAST)
+#if ((!defined DELTA_MULTIPLE_STEPS_100) \
+     && (!defined DELTA_MULTIPLE_STEPS_50) \
+     && (!defined DELTA_SINGLE_STEP))
+#error "Must select the delta steps"
+#endif
+#endif
+
+#if ((defined USE_PWM_DIRECT) \
+     || (defined USE_PWM_WITH_DELTA))
+#define USE_PWM_DIRECT_OR_DELTA
+#endif
 //---- End of Features Configuration ----------
 
 

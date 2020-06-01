@@ -283,9 +283,42 @@ resp_t UpdateDutyCycle (led_current_settings_t * settings)
             I_real = I_filtered * K_current;
             I_real = I_real / 100;
 #endif
-
+            
             if (I_real < settings->sp_current)
             {
+#ifdef USE_PWM_WITH_DITHER
+                if (duty_cycle < DUTY_MAX_ALLOWED_WITH_DITHER)
+                    duty_cycle++;
+                else
+                    resp = resp_finish;
+
+                switch (settings->channel)
+                {
+                case 1:
+                    TIM_LoadDitherSequences(0, duty_cycle);
+                    break;
+                case 2:
+                    TIM_LoadDitherSequences(1, duty_cycle);                    
+                    break;
+                case 3:
+                    TIM_LoadDitherSequences(2, duty_cycle);                    
+                    break;
+                case 4:
+                    TIM_LoadDitherSequences(3, duty_cycle);                    
+                    break;
+                case 5:
+                    TIM_LoadDitherSequences(4, duty_cycle);
+                    break;
+                case 6:
+                    TIM_LoadDitherSequences(5, duty_cycle);
+                    break;
+                }
+
+                //error en corriente, duty grande sin corriente
+                if ((duty_cycle > DUTY_90_PERCENT_WITH_DITHER) && (I_real < 25))
+                    resp = resp_error;
+
+#else    // no dither
                 if (duty_cycle < DUTY_MAX_ALLOWED)
                     duty_cycle++;
                 else
@@ -314,8 +347,11 @@ resp_t UpdateDutyCycle (led_current_settings_t * settings)
                 }
 
                 //error en corriente, duty grande sin corriente
+                //TODO: corregir esto tomando en cuenta la carga de 4k7 en los canales vacios
                 if ((duty_cycle > DUTY_90_PERCENT) && (I_real < 25))
                     resp = resp_error;
+                
+#endif    // end no dither
             }
             else
             {
@@ -483,9 +519,6 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
 #endif
         }
 
-#ifdef USE_PWM_WITH_DITHER
-        DisableDitherInterrupt;
-#endif
 #ifdef USE_PWM_DELTA_INT_TIMER_FAST
         TIM17DisableInterrupt;
 #endif
@@ -520,20 +553,6 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
             if (resp == resp_ok)
             {
                 //si es el ultimo segmento guardo info adicional
-#ifdef USE_PWM_WITH_DITHER
-                if (i == (SEGMENTS_QTTY - 1))
-                {
-                    unsigned int calc = 0;
-
-                    //TODO: cambiar esto por la medicion efectiva de tension
-                    calc = mem_conf.volts_in_mains * settings->duty_getted;
-                    calc = calc / 1000;
-                    mem_conf.volts_ch[settings->channel - 1] = calc;
-                    mem_conf.pwm_chnls[settings->channel - 1] = (settings->duty_getted << 3);
-                }
-
-                *(segments + j * SEGMENTS_QTTY + i) = (settings->duty_getted << 3);
-#else
                 if (i == (SEGMENTS_QTTY - 1))
                 {
                     unsigned int calc = 0;
@@ -546,13 +565,9 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
                 }
 
                 *(segments + j * SEGMENTS_QTTY + i) = settings->duty_getted;
-#endif
             }
         }
     }
-#ifdef USE_PWM_WITH_DITHER
-    EnableDitherInterrupt;
-#endif
 #ifdef USE_PWM_DELTA_INT_TIMER_FAST
     TIM17EnableInterrupt;
 #endif
