@@ -71,4 +71,5 @@ void DSP_Vector_Calcule_Frequencies (unsigned short *,
                                      unsigned char ,
                                      unsigned char *);
 
+unsigned short IIR_first_order (unsigned short);
 #endif /* _DSP_H_ */

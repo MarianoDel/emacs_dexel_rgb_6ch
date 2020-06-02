@@ -68,7 +68,7 @@
 
 #define DMX_UPDATE_TIMER_FAST    4    //tick en 200us
 #define DMX_UPDATE_TIMER    5    //si pongo esto en 2 se ven saltos en el blanco incluso con delta-single-step
-#define DMX_UPDATE_TIMER_WITH_DITHER    2
+// #define DMX_UPDATE_TIMER_WITH_DITHER    2
 
 // --- How to understand the current readed --- //
 // #define USE_INDUCTOR_IN_DCM

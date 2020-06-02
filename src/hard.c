@@ -608,44 +608,46 @@ unsigned short HARD_Process_New_PWM_Data (unsigned short * pseg, unsigned char d
 
 //recibe puntero a segmentos del canal
 //nuevo valor dmx
-//segmento lento de ese canal
+//segmento donde cambia el modo en ese canal
 //minimo seleccionado para ese canal
 unsigned short HARD_Map_New_DMX_Data (unsigned short * p_seg,
                                       unsigned char dmx_data,
-                                      unsigned char slow_seg,
+                                      unsigned char change_mode_seg,
                                       unsigned short ch_minimun)
 {
     unsigned char segment_number = 0;
     unsigned int dummy = 0;
                     
-    //mapeo los segmentos
+    //segments mapping from 0 to 15
     segment_number = GetProcessedSegment(dmx_data);
 
-    if (segment_number < slow_seg)
+    if (segment_number < change_mode_seg)
     {
-        //the segment is less or equal to (ch_slow_segment - 1)
+        //the segment is less or equal to (ch_change_mode_segment - 1)
 
-        dummy = dmx_data * (p_seg[slow_seg - 1]);
-        dummy /= const_segments[slow_seg - 1];        
-    }
-    else if (segment_number == slow_seg)
-    {
-        //segment is equal to ch_slow_segment
-
-        dummy = p_seg[slow_seg] - p_seg[slow_seg - 1];
-        dummy = dummy * (dmx_data - const_segments[slow_seg - 1]);
-        dummy /= const_segments[slow_seg] - const_segments[slow_seg - 1];
-        dummy += p_seg[slow_seg - 1];
+        dummy = dmx_data * (p_seg[change_mode_seg - 1]);
+        dummy /= const_segments[change_mode_seg - 1];        
     }
     else
-    {
-        //segment is at the end on CCM mode
+        dummy = p_seg[change_mode_seg - 1];
+    // else if (segment_number == change_mode_seg)
+    // {
+    //     //segment is equal to ch_change_mode_segment
 
-        dummy = p_seg[SEGMENTS_QTTY - 1] - p_seg[slow_seg];
-        dummy = dummy * (dmx_data - const_segments[slow_seg]);
-        dummy /= const_segments[SEGMENTS_QTTY - 1] - const_segments[slow_seg];
-        dummy += p_seg[slow_seg];
-    }
+    //     dummy = p_seg[change_mode_seg] - p_seg[change_mode_seg - 1];
+    //     dummy = dummy * (dmx_data - const_segments[change_mode_seg - 1]);
+    //     dummy /= const_segments[change_mode_seg] - const_segments[change_mode_seg - 1];
+    //     dummy += p_seg[change_mode_seg - 1];
+    // }
+    // else
+    // {
+    //     //segment is at the end on CCM mode
+
+    //     dummy = p_seg[SEGMENTS_QTTY - 1] - p_seg[change_mode_seg];
+    //     dummy = dummy * (dmx_data - const_segments[change_mode_seg]);
+    //     dummy /= const_segments[SEGMENTS_QTTY - 1] - const_segments[change_mode_seg];
+    //     dummy += p_seg[change_mode_seg];
+    // }
 
     //check for the minimun
     if ((dummy) && (dummy < ch_minimun))

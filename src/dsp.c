@@ -316,5 +316,24 @@ unsigned short DSP_Vector_Get_Max_Value (unsigned short *vect, unsigned char vec
     return max_value;
 }
 
+unsigned short filter_z1 = 0;
+unsigned short IIR_first_order (unsigned short sample)
+{
+    unsigned int filter_res = 0;
+    unsigned int b_term = 0;
+    unsigned int a_term = 0;
+
+    b_term =  2 * sample;
+    b_term = b_term / 1000;
+
+    a_term = 998 * filter_z1;
+    a_term = a_term / 1000;
+
+    filter_res = b_term + a_term;
+    filter_z1 = filter_res;
+
+    return (unsigned short) filter_res;
+    
+}
 
 //--- end of file ---//

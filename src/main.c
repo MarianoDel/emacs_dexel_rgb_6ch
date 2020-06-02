@@ -97,7 +97,7 @@ unsigned short sp4_filtered = 0;
 unsigned short sp5_filtered = 0;
 unsigned short sp6_filtered = 0;
 
-unsigned char ch_slow_segment [6] = { 0 };    
+unsigned char ch_mode_change_segment [6] = { 0 };    
 
 
 #ifdef USE_FILTER_LENGHT_16
@@ -556,7 +556,7 @@ int main(void)
     
 #endif
     
-    HARD_Find_Slow_Segments (ch_slow_segment);    //muestra las cuentas del vector de corriente
+    HARD_Find_Slow_Segments (ch_mode_change_segment);    //muestra las cuentas del vector de corriente
 
 #ifdef HARCODED_CURRENT_ON_INIT
 #ifdef DITHER_8
@@ -568,37 +568,34 @@ int main(void)
                                       4207, 4503, 4548, 4591, 4632, 4674, 4713, 4753};
     unsigned short v_curr_ch3 [16] = {1403, 1800, 2269, 2609, 2963, 3300, 3608, 3899,
                                       4202, 4510, 4555, 4599, 4642, 4685, 4725, 4766};
+
+    // unsigned short v_curr_ch3 [16] = {1403, 1800, 2269, 2609, 2963, 3300, 3608, 3899,
+    //                                   4202, 4202, 4202, 4202, 4202, 4202, 4202, 4202};
     
     memcpy(&mem_conf.segments[0][0], v_curr_ch0, sizeof(v_curr_ch0));
     memcpy(&mem_conf.segments[1][0], v_curr_ch1, sizeof(v_curr_ch1));
     memcpy(&mem_conf.segments[2][0], v_curr_ch2, sizeof(v_curr_ch2));
     memcpy(&mem_conf.segments[3][0], v_curr_ch3, sizeof(v_curr_ch3));
-    memset(&mem_conf.segments[4][0], '\0', sizeof(v_curr_ch0));
+    memcpy(&mem_conf.segments[4][0], v_curr_ch3, sizeof(v_curr_ch3));    
+    // memset(&mem_conf.segments[4][0], '\0', sizeof(v_curr_ch0));
     memset(&mem_conf.segments[5][0], '\0', sizeof(v_curr_ch0));
 #endif
-#ifdef DITHER_16
-    unsigned short v_curr_ch0 [16] = {1896, 2776, 3469, 4133, 4780, 5348, 5872, 6306,
-                                      6765, 7311, 7477, 7637, 7792, 7947, 8097, 8246};
-    unsigned short v_curr_ch1 [16] = {2930, 4299, 5448, 6464, 7332, 8161, 8981, 9790,
-                                      10626, 10770, 10907, 11033, 11155, 11273, 11386, 11496};
-    unsigned short v_curr_ch2 [16] = {2614, 3734, 4654, 5380, 6089, 6722, 7287, 7822,
-                                      8403, 8995, 9085, 9169, 9252, 9334, 9413, 9492};
-    unsigned short v_curr_ch3 [16] = {2820, 3610, 4537, 5214, 5920, 6595, 7209, 7788,
-                                      8392, 9008, 9099, 9186, 9271, 9356, 9436, 9517};
-    
-    memcpy(&mem_conf.segments[0][0], v_curr_ch0, sizeof(v_curr_ch0));
-    memcpy(&mem_conf.segments[1][0], v_curr_ch1, sizeof(v_curr_ch1));
-    memcpy(&mem_conf.segments[2][0], v_curr_ch2, sizeof(v_curr_ch2));
-    memcpy(&mem_conf.segments[3][0], v_curr_ch3, sizeof(v_curr_ch3));
-    memset(&mem_conf.segments[4][0], '\0', sizeof(v_curr_ch0));
-    memset(&mem_conf.segments[5][0], '\0', sizeof(v_curr_ch0));
-#endif
-    ch_slow_segment[0] = 10;
-    ch_slow_segment[1] = 8;
-    ch_slow_segment[2] = 9;
-    ch_slow_segment[3] = 9;
-    // ch_slow_segment[4] = 8;
-    // ch_slow_segment[5] = 8;
+    //segmento anterior al primero en modo CCM    
+    ch_mode_change_segment[0] = 10;
+    ch_mode_change_segment[1] = 8;
+    ch_mode_change_segment[2] = 9;
+    ch_mode_change_segment[3] = 9;
+    ch_mode_change_segment[4] = 9;    
+    // ch_mode_change_segment[3] = 15;    //para funcionar junto con el vector de que no cambie el modo
+    // ch_mode_change_segment[4] = 8;
+    // ch_mode_change_segment[5] = 8;
+
+    mem_conf.pwm_chnls[0] = 4132;
+    mem_conf.pwm_chnls[1] = 5766;
+    mem_conf.pwm_chnls[2] = 4753;
+    mem_conf.pwm_chnls[3] = 4202;
+    mem_conf.pwm_chnls[4] = 4202;
+    mem_conf.pwm_chnls[5] = 0;
 #endif
     //-- FIN Para Debug Test inicial de corriente    
 
@@ -613,7 +610,7 @@ int main(void)
     for (unsigned char j = 0; j < 6; j++)
     {
         sprintf(s_to_send, "%d ",
-                mem_conf.segments[j][(ch_slow_segment[j] - 1)]);
+                mem_conf.segments[j][(ch_mode_change_segment[j] - 1)]);
         Usart2Send(s_to_send);
         Wait_ms(10);
     }
@@ -626,7 +623,7 @@ int main(void)
     for (unsigned char j = 0; j < 6; j++)
     {
         sprintf(s_to_send, "%d ",
-                mem_conf.segments[j][ch_slow_segment[j]]);
+                mem_conf.segments[j][ch_mode_change_segment[j]]);
         Usart2Send(s_to_send);
         Wait_ms(10);
     }
@@ -740,7 +737,7 @@ int main(void)
 
         case MAIN_IN_MASTER_MODE:    //por ahora programs mode
             FuncsMasterMode(ch_values);
-            CheckFiltersAndOffsets2 (ch_values, ch_slow_segment);
+            CheckFiltersAndOffsets2 (ch_values, ch_mode_change_segment);
 
             if ((SW_ENTER() > S_HALF) || (SW_BACK() > S_HALF))
                 main_state = MAIN_ENTERING_MAIN_MENU;
@@ -754,7 +751,7 @@ int main(void)
             
         case MAIN_IN_SLAVE_MODE:
             FuncSlaveMode (ch_values);
-            CheckFiltersAndOffsets2 (ch_values, ch_slow_segment);
+            CheckFiltersAndOffsets2 (ch_values, ch_mode_change_segment);
 
 #ifdef USART2_DEBUG_MODE
             if (!timer_standby)
@@ -788,7 +785,7 @@ int main(void)
 
         case MAIN_IN_PROGRAMS_MODE:
             FuncsProgramsMode(ch_values);
-            CheckFiltersAndOffsets2 (ch_values, ch_slow_segment);
+            CheckFiltersAndOffsets2 (ch_values, ch_mode_change_segment);
 
             if ((SW_ENTER() > S_HALF) || (SW_BACK() > S_HALF))
                 main_state = MAIN_ENTERING_MAIN_MENU;
@@ -1124,7 +1121,11 @@ void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segme
             last_ch2_pwm = CalcNewDelta (last_ch2_pwm, ch2_pwm);
             Update_PWM2(last_ch2_pwm);
 #else
-            ch2_pwm = MA16_U16Circular (&st_sp2, ch2_pwm);
+            ch2_pwm = IIR_first_order(ch2_pwm);
+            // ch2_pwm = MA16_U16Circular (&st_sp2, ch2_pwm);
+            if (ch2_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
+                ch2_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
+            
 #ifdef USE_PWM_WITH_DITHER
             TIM_LoadDitherSequences(1, ch2_pwm);
 #else
@@ -1191,8 +1192,13 @@ void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segme
 
 #ifdef USE_PWM_DIRECT
             ch4_pwm = MA16_U16Circular (&st_sp4, ch4_pwm);
+            // ch4_pwm = IIR_first_order(ch4_pwm);
+            if (ch4_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
+                ch4_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
+            
 #ifdef USE_PWM_WITH_DITHER
-            TIM_LoadDitherSequences(3, ch4_pwm);
+            // TIM_LoadDitherSequences(3, ch6_pwm);
+            TIM_LoadDitherSequences(3, ch4_pwm);            
 #else
             Update_PWM4(ch4_pwm);
 #endif
