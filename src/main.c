@@ -977,6 +977,8 @@ unsigned short last_ch5_pwm = 0;
 unsigned short last_ch6_pwm = 0;
 #endif
 
+IIR_first_order_data_obj_t ch2_iir;
+
 unsigned short ch_minimun_value[6] = {46, 150, 150, 140, 140, 140};
 
 //aca filtro los offsets del pwm en vez del valor del canal
@@ -1121,7 +1123,7 @@ void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segme
             last_ch2_pwm = CalcNewDelta (last_ch2_pwm, ch2_pwm);
             Update_PWM2(last_ch2_pwm);
 #else
-            ch2_pwm = IIR_first_order(ch2_pwm);
+            ch2_pwm = IIR_first_order(&ch2_iir, ch2_pwm);
             // ch2_pwm = MA16_U16Circular (&st_sp2, ch2_pwm);
             if (ch2_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
                 ch2_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
@@ -1417,6 +1419,9 @@ void UpdateFiltersTest_Reset (void)
     MA16_U16Circular_Reset(&st_sp5);
     MA16_U16Circular_Reset(&st_sp6);
 #endif
+    ch2_iir.b_param_to_div_by_1000 = 2;
+    ch2_iir.a_param_to_div_by_1000 = 998;
+    ch2_iir.output_z1 = 0;
 }
 
 

@@ -41,6 +41,12 @@ typedef struct {
     unsigned short kd;
 } pid_data_obj_t;
 
+typedef struct {
+    unsigned short b_param_to_div_by_1000;
+    unsigned short a_param_to_div_by_1000;
+    unsigned int output_z1;
+} IIR_first_order_data_obj_t;
+
 //--- Module Functions --------------------------
 unsigned short RandomGen (unsigned int);
 
@@ -71,5 +77,5 @@ void DSP_Vector_Calcule_Frequencies (unsigned short *,
                                      unsigned char ,
                                      unsigned char *);
 
-unsigned short IIR_first_order (unsigned short);
+unsigned short IIR_first_order (IIR_first_order_data_obj_t *, unsigned short);
 #endif /* _DSP_H_ */
