@@ -575,21 +575,19 @@ resp_t HARD_Find_Current_Segments (led_current_settings_t * settings,
     return resp;
 }
 
-//recibe canales del 0 al 5
-unsigned short HARD_Process_New_PWM_Data (unsigned char ch, unsigned char dmx_data)
+
+//recibe puntero a segmentos del canal
+//nuevo valor dmx
+unsigned short HARD_Process_New_PWM_Data (unsigned short * pseg, unsigned char dmx_data)
 {
     unsigned char segment_number = 0;
     unsigned int dummy = 0;
     unsigned short pwm_output = 0;
-    unsigned short * pseg;
 
                     
     //mapeo los segmentos
     segment_number = GetProcessedSegment(dmx_data);
 
-    //apunto a los valores medidos y guardados en memoria
-    pseg = &mem_conf.segments[ch][0];
-                    
     if (segment_number)    //todos los segmentos mayores a 0 tienen offset
     {
         dummy = dmx_data - segment_number * SEGMENTS_VALUE;
@@ -604,14 +602,6 @@ unsigned short HARD_Process_New_PWM_Data (unsigned char ch, unsigned char dmx_da
         pwm_output = (unsigned short) dummy;
     }
 
-#ifdef USE_PWM_WITH_DITHER
-    if (pwm_output > DUTY_MAX_ALLOWED_WITH_DITHER)
-        pwm_output = DUTY_MAX_ALLOWED_WITH_DITHER;
-#else
-    if (pwm_output > DUTY_MAX_ALLOWED)
-        pwm_output = DUTY_MAX_ALLOWED;
-#endif
-    
     return pwm_output;
 }
 
@@ -619,7 +609,11 @@ unsigned short HARD_Process_New_PWM_Data (unsigned char ch, unsigned char dmx_da
 //recibe puntero a segmentos del canal
 //nuevo valor dmx
 //segmento lento de ese canal
-unsigned short HARD_Map_New_DMX_Data (unsigned short * p_seg, unsigned char dmx_data, unsigned char slow_seg)
+//minimo seleccionado para ese canal
+unsigned short HARD_Map_New_DMX_Data (unsigned short * p_seg,
+                                      unsigned char dmx_data,
+                                      unsigned char slow_seg,
+                                      unsigned short ch_minimun)
 {
     unsigned char segment_number = 0;
     unsigned int dummy = 0;
@@ -652,6 +646,10 @@ unsigned short HARD_Map_New_DMX_Data (unsigned short * p_seg, unsigned char dmx_
         dummy /= const_segments[SEGMENTS_QTTY - 1] - const_segments[slow_seg];
         dummy += p_seg[slow_seg];
     }
+
+    //check for the minimun
+    if ((dummy) && (dummy < ch_minimun))
+        dummy = ch_minimun;
 
     return (unsigned short) dummy;
 }

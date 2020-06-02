@@ -37,29 +37,34 @@
 #define USE_FILTER_LENGHT_16
 
 // --- Led current configurations --- //
-#define ALWAYS_CHECK_CURRENT_ON_INIT
-#define USE_HARCODED_CURRENT
+// #define ALWAYS_CHECK_CURRENT_ON_INIT
+// #define USE_HARCODED_CURRENT
+#define HARCODED_CURRENT_ON_INIT
+
+// --- Current Mapping DMX -> PWM --- //
+// #define MAP_CURRENT_DIRECT
+#define MAP_CURRENT_WITH_SLOW_SEGMENT
 
 // --- How to control the PWM generation, select only one --- //
-#define USE_PWM_DIRECT
-// #define USE_PWM_WITH_DELTA
+#define USE_PWM_DIRECT    //mapea lo que llega en el dmx a la curva de corriente
+// #define USE_PWM_WITH_DELTA    //mapea la corriente pero la busca punto a punto
 // #define USE_PWM_DELTA_INT_TIMER_FAST
 // #define USE_PWM_CTRL_PID_MA32
 
 // --- If Delta mode how to go throw steps --- //
-#define DELTA_SINGLE_STEP
-// #define DELTA_MULTIPLE_STEPS_50
+// #define DELTA_SINGLE_STEP
+#define DELTA_MULTIPLE_STEPS_50
 // #define DELTA_MULTIPLE_STEPS_100
 
 // --- Dither Selection --- //
 #define USE_PWM_WITH_DITHER
 
 // --- Dither Deph --- //
-// #define DITHER_8
-#define DITHER_16
+#define DITHER_8
+// #define DITHER_16
 
 // --- What to do with the slow segment --- //
-#define USE_SLOW_SEGMENT_LAST_BUT_ONE
+// #define USE_SLOW_SEGMENT_LAST_BUT_ONE
 
 #define DMX_UPDATE_TIMER_FAST    4    //tick en 200us
 #define DMX_UPDATE_TIMER    5    //si pongo esto en 2 se ven saltos en el blanco incluso con delta-single-step
@@ -504,8 +509,8 @@ void HardUpdateMaxPowerReset (void);
 unsigned short PWMChannelsOffset (unsigned char, unsigned short);
 unsigned char DMXMapping (unsigned char);
 resp_t HARD_Find_Current_Segments (led_current_settings_t *, unsigned short *);
-unsigned short HARD_Process_New_PWM_Data (unsigned char, unsigned char);
-unsigned short HARD_Map_New_DMX_Data (unsigned short *, unsigned char, unsigned char);
+unsigned short HARD_Process_New_PWM_Data (unsigned short *, unsigned char);
+unsigned short HARD_Map_New_DMX_Data (unsigned short *, unsigned char, unsigned char, unsigned short);
 void HARD_Find_Slow_Segments (unsigned char *);
 
 #endif /* HARD_H_ */

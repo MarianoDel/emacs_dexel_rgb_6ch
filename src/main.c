@@ -557,6 +557,49 @@ int main(void)
 #endif
     
     HARD_Find_Slow_Segments (ch_slow_segment);    //muestra las cuentas del vector de corriente
+
+#ifdef HARCODED_CURRENT_ON_INIT
+#ifdef DITHER_8
+    unsigned short v_curr_ch0 [16] = {939, 1383, 1735, 2048, 2388, 2676, 2938, 3157,
+                                      3389, 3662, 3746, 3827, 3905, 3983, 4057, 4132};
+    unsigned short v_curr_ch1 [16] = {1461, 2148, 2722, 3241, 3676, 4093, 4503, 4898,
+                                      5327, 5400, 5467, 5532, 5593, 5653, 5710, 5766};
+    unsigned short v_curr_ch2 [16] = {1296, 1859, 2328, 2692, 3042, 3364, 3645, 3918,
+                                      4207, 4503, 4548, 4591, 4632, 4674, 4713, 4753};
+    unsigned short v_curr_ch3 [16] = {1403, 1800, 2269, 2609, 2963, 3300, 3608, 3899,
+                                      4202, 4510, 4555, 4599, 4642, 4685, 4725, 4766};
+    
+    memcpy(&mem_conf.segments[0][0], v_curr_ch0, sizeof(v_curr_ch0));
+    memcpy(&mem_conf.segments[1][0], v_curr_ch1, sizeof(v_curr_ch1));
+    memcpy(&mem_conf.segments[2][0], v_curr_ch2, sizeof(v_curr_ch2));
+    memcpy(&mem_conf.segments[3][0], v_curr_ch3, sizeof(v_curr_ch3));
+    memset(&mem_conf.segments[4][0], '\0', sizeof(v_curr_ch0));
+    memset(&mem_conf.segments[5][0], '\0', sizeof(v_curr_ch0));
+#endif
+#ifdef DITHER_16
+    unsigned short v_curr_ch0 [16] = {1896, 2776, 3469, 4133, 4780, 5348, 5872, 6306,
+                                      6765, 7311, 7477, 7637, 7792, 7947, 8097, 8246};
+    unsigned short v_curr_ch1 [16] = {2930, 4299, 5448, 6464, 7332, 8161, 8981, 9790,
+                                      10626, 10770, 10907, 11033, 11155, 11273, 11386, 11496};
+    unsigned short v_curr_ch2 [16] = {2614, 3734, 4654, 5380, 6089, 6722, 7287, 7822,
+                                      8403, 8995, 9085, 9169, 9252, 9334, 9413, 9492};
+    unsigned short v_curr_ch3 [16] = {2820, 3610, 4537, 5214, 5920, 6595, 7209, 7788,
+                                      8392, 9008, 9099, 9186, 9271, 9356, 9436, 9517};
+    
+    memcpy(&mem_conf.segments[0][0], v_curr_ch0, sizeof(v_curr_ch0));
+    memcpy(&mem_conf.segments[1][0], v_curr_ch1, sizeof(v_curr_ch1));
+    memcpy(&mem_conf.segments[2][0], v_curr_ch2, sizeof(v_curr_ch2));
+    memcpy(&mem_conf.segments[3][0], v_curr_ch3, sizeof(v_curr_ch3));
+    memset(&mem_conf.segments[4][0], '\0', sizeof(v_curr_ch0));
+    memset(&mem_conf.segments[5][0], '\0', sizeof(v_curr_ch0));
+#endif
+    ch_slow_segment[0] = 10;
+    ch_slow_segment[1] = 8;
+    ch_slow_segment[2] = 9;
+    ch_slow_segment[3] = 9;
+    // ch_slow_segment[4] = 8;
+    // ch_slow_segment[5] = 8;
+#endif
     //-- FIN Para Debug Test inicial de corriente    
 
     //mando info al puerto
@@ -936,6 +979,9 @@ unsigned short last_ch4_pwm = 0;
 unsigned short last_ch5_pwm = 0;
 unsigned short last_ch6_pwm = 0;
 #endif
+
+unsigned short ch_minimun_value[6] = {46, 150, 150, 140, 140, 140};
+
 //aca filtro los offsets del pwm en vez del valor del canal
 //cada 5ms
 void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segment)
@@ -1025,16 +1071,29 @@ void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segme
         if (mem_conf.pwm_chnls[CH1_VAL_OFFSET])
         {
             unsigned char slow_sgm = slow_segment[CH1_VAL_OFFSET];
-            
+#ifdef MAP_CURRENT_WITH_SLOW_SEGMENT      
             ch1_pwm = HARD_Map_New_DMX_Data(
                 mem_conf.segments[CH1_VAL_OFFSET],
                 *(ch_val + CH1_VAL_OFFSET),
-                slow_sgm);
-
+                slow_sgm,
+                ch_minimun_value[CH1_VAL_OFFSET]);
+#endif
+#ifdef MAP_CURRENT_DIRECT
+            ch1_pwm = HARD_Process_New_PWM_Data(
+                mem_conf.segments[CH1_VAL_OFFSET],
+                *(ch_val + CH1_VAL_OFFSET));
+#endif
+            
 #ifdef USE_PWM_WITH_DELTA
             last_ch1_pwm = CalcNewDelta (last_ch1_pwm, ch1_pwm);
-            Update_PWM1(last_ch1_pwm);
+#ifdef USE_PWM_WITH_DITHER
+            TIM_LoadDitherSequences(0, last_ch1_pwm);
 #else
+            Update_PWM1(last_ch1_pwm);
+#endif
+#endif
+
+#ifdef USE_PWM_DIRECT
             ch1_pwm = MA16_U16Circular (&st_sp1, ch1_pwm);
 #ifdef USE_PWM_WITH_DITHER
             TIM_LoadDitherSequences(0, ch1_pwm);
@@ -1047,12 +1106,20 @@ void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segme
         if (mem_conf.pwm_chnls[CH2_VAL_OFFSET])
         {
             unsigned char slow_sgm = slow_segment[CH2_VAL_OFFSET];
-            
+
+#ifdef MAP_CURRENT_WITH_SLOW_SEGMENT                  
             ch2_pwm = HARD_Map_New_DMX_Data(
                 mem_conf.segments[CH2_VAL_OFFSET],
                 *(ch_val + CH2_VAL_OFFSET),
-                slow_sgm);
-
+                slow_sgm,
+                ch_minimun_value[CH2_VAL_OFFSET]);                
+#endif
+#ifdef MAP_CURRENT_DIRECT            
+            ch2_pwm = HARD_Process_New_PWM_Data(
+                mem_conf.segments[CH2_VAL_OFFSET],
+                *(ch_val + CH2_VAL_OFFSET));
+#endif
+            
 #ifdef USE_PWM_WITH_DELTA
             last_ch2_pwm = CalcNewDelta (last_ch2_pwm, ch2_pwm);
             Update_PWM2(last_ch2_pwm);
@@ -1070,11 +1137,19 @@ void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segme
         {
             unsigned char slow_sgm = slow_segment[CH3_VAL_OFFSET];
             
+#ifdef MAP_CURRENT_WITH_SLOW_SEGMENT      
             ch3_pwm = HARD_Map_New_DMX_Data(
                 mem_conf.segments[CH3_VAL_OFFSET],
                 *(ch_val + CH3_VAL_OFFSET),
-                slow_sgm);
-
+                slow_sgm,
+                ch_minimun_value[CH3_VAL_OFFSET]);                
+#endif
+#ifdef MAP_CURRENT_DIRECT
+            ch3_pwm = HARD_Process_New_PWM_Data(
+                mem_conf.segments[CH3_VAL_OFFSET],
+                *(ch_val + CH3_VAL_OFFSET));
+#endif
+            
 #ifdef USE_PWM_WITH_DELTA
             last_ch3_pwm = CalcNewDelta (last_ch3_pwm, ch3_pwm);
             Update_PWM3(last_ch3_pwm);
@@ -1091,16 +1166,30 @@ void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segme
         if (mem_conf.pwm_chnls[CH4_VAL_OFFSET])
         {
             unsigned char slow_sgm = slow_segment[CH4_VAL_OFFSET];
-            
+
+#ifdef MAP_CURRENT_WITH_SLOW_SEGMENT                  
             ch4_pwm = HARD_Map_New_DMX_Data(
                 mem_conf.segments[CH4_VAL_OFFSET],
                 *(ch_val + CH4_VAL_OFFSET),
-                slow_sgm);
-
+                    slow_sgm,
+                    ch_minimun_value[CH4_VAL_OFFSET]);                    
+#endif
+#ifdef MAP_CURRENT_DIRECT            
+            ch4_pwm = HARD_Process_New_PWM_Data(
+                mem_conf.segments[CH4_VAL_OFFSET],
+                *(ch_val + CH4_VAL_OFFSET));
+#endif
+            
 #ifdef USE_PWM_WITH_DELTA
             last_ch4_pwm = CalcNewDelta (last_ch4_pwm, ch4_pwm);
-            Update_PWM4(last_ch4_pwm);
+#ifdef USE_PWM_WITH_DITHER
+            TIM_LoadDitherSequences(3, last_ch4_pwm);
 #else
+            Update_PWM4(last_ch4_pwm);
+#endif
+#endif
+
+#ifdef USE_PWM_DIRECT
             ch4_pwm = MA16_U16Circular (&st_sp4, ch4_pwm);
 #ifdef USE_PWM_WITH_DITHER
             TIM_LoadDitherSequences(3, ch4_pwm);
@@ -1117,7 +1206,8 @@ void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segme
             ch5_pwm = HARD_Map_New_DMX_Data(
                 mem_conf.segments[CH5_VAL_OFFSET],
                 *(ch_val + CH5_VAL_OFFSET),
-                slow_sgm);
+                    slow_sgm,
+                ch_minimun_value[CH5_VAL_OFFSET]);                    
 
 #ifdef USE_PWM_WITH_DELTA
             last_ch5_pwm = CalcNewDelta (last_ch5_pwm, ch5_pwm);
@@ -1139,7 +1229,8 @@ void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segme
             ch6_pwm = HARD_Map_New_DMX_Data(
                 mem_conf.segments[CH6_VAL_OFFSET],
                 *(ch_val + CH6_VAL_OFFSET),
-                slow_sgm);
+                    slow_sgm,
+                    ch_minimun_value[CH6_VAL_OFFSET]);
 
 #ifdef USE_PWM_WITH_DELTA
             last_ch6_pwm = CalcNewDelta (last_ch6_pwm, ch6_pwm);
