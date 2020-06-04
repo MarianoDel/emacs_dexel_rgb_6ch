@@ -1,14 +1,14 @@
-//---------------------------------------------
+//----------------------------------------------------------
 // #### PROYECTO DEXEL 6CH BIDIRECCIONAL - Custom Board ####
 // ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### MAIN.C ################################
-//---------------------------------------------
+// #### MAIN.C #############################################
+//----------------------------------------------------------
 
-/* Includes ------------------------------------------------------------------*/
+// Includes --------------------------------------------------------------------
 #include "hard.h"
 #include "stm32f0xx.h"
 #include "gpio.h"
@@ -41,15 +41,15 @@
 
 
 // Externals -------------------------------------------------------------------
-// ------- Externals de la Memoria y los modos -------
+// --------- Externals de la Memoria y los modos -------
 parameters_typedef * pmem = (parameters_typedef *) (unsigned int *) FLASH_PAGE_FOR_BKP;	//en flash
 parameters_typedef mem_conf;
 
-// ------- Externals del ADC -------
+// --------- Externals del ADC ---------
 volatile unsigned short adc_ch [ADC_CHANNEL_QUANTITY];
 volatile unsigned char seq_ready;
 
-// ------- Externals de los timers -------
+// --------- Externals de los timers ---------
 volatile unsigned char timer_1seg = 0;
 volatile unsigned char switches_timer = 0;
 
@@ -69,11 +69,11 @@ unsigned short ch4_pwm = 0;
 unsigned short ch5_pwm = 0;
 unsigned short ch6_pwm = 0;
 
-// ------- Externals del USART -------
+// --------- Externals del USART -------
 volatile unsigned char usart1_have_data;
 volatile unsigned char usart2_have_data;
 
-// ------- Externals del DMX -------
+// --------- Externals del DMX -------
 volatile unsigned char Packet_Detected_Flag;
 volatile unsigned char DMX_packet_flag;
 volatile unsigned char RDM_packet_flag;
@@ -236,7 +236,6 @@ void UpdateFiltersTest_Reset (void);
 //------------------------------------------//
 int main(void)
 {
-    unsigned short i = 0;
     char s_to_send [100];
     main_state_t main_state = MAIN_INIT;
     resp_t resp = resp_continue;
@@ -265,7 +264,7 @@ int main(void)
             // else
             //     LED_ON;
 
-            for (i = 0; i < 255; i++)
+            for (unsigned char i = 0; i < 255; i++)
             {
                 asm (	"nop \n\t"
                         "nop \n\t"
@@ -630,7 +629,195 @@ int main(void)
     Usart2Send("\n");    
 #endif
 
-#endif
+#endif    //endif USART_DEBUG
+
+    
+    ///////////////////////////////////
+    // Pruebo el Blanco desde el DMX //
+    ///////////////////////////////////
+// #define DMX_TIMER    25
+// #define DMX_MAX_DATA    255
+// #define DMX_DATA_INC    1
+
+//     PWMChannelsReset();    
+//     unsigned char dmx_data = 0;
+//     unsigned char estado_dmx = 0;
+
+//     while (1)
+//     {
+//         switch (estado_dmx)
+//         {
+//         case 0:
+//             if (!dmx_filters_timer)
+//             {
+//                 dmx_filters_timer = DMX_TIMER;
+
+//                 if (dmx_data < DMX_MAX_DATA)
+//                 {
+//                     ch4_pwm = HARD_Map_New_DMX_Data(
+//                         mem_conf.segments[CH4_VAL_OFFSET],
+//                         dmx_data,
+//                         ch_mode_change_segment[CH4_VAL_OFFSET],
+//                         0);
+
+//                     // ch4_pwm = HARD_Process_New_PWM_Data(
+//                     //     mem_conf.segments[CH4_VAL_OFFSET],
+//                     //     *(ch_val + CH4_VAL_OFFSET));
+                    
+//                     if (ch4_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
+//                         ch4_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
+
+//                     TIM_LoadDitherSequences(CH4_VAL_OFFSET, ch4_pwm);
+//                     if ((DMX_MAX_DATA - dmx_data) > DMX_DATA_INC)
+//                         dmx_data += DMX_DATA_INC;
+//                     else
+//                         dmx_data = DMX_MAX_DATA;
+//                 }
+//                 else
+//                 {
+//                     estado_dmx++;
+//                     timer_standby = 2000;
+//                 }
+//             }
+//             break;
+
+//         case 1:
+//             if (!timer_standby)
+//             {
+//                 estado_dmx++;
+//                 dmx_data = DMX_MAX_DATA;
+//             }
+//             break;
+
+//         case 2:
+//             if (!dmx_filters_timer)
+//             {
+//                 dmx_filters_timer = DMX_TIMER;
+
+//                 if (dmx_data)
+//                 {
+//                     ch4_pwm = HARD_Map_New_DMX_Data(
+//                         mem_conf.segments[CH4_VAL_OFFSET],
+//                         dmx_data,
+//                         ch_mode_change_segment[CH4_VAL_OFFSET],
+//                         0);                    
+
+//                     // ch4_pwm = HARD_Process_New_PWM_Data(
+//                     //     mem_conf.segments[CH4_VAL_OFFSET],
+//                     //     *(ch_val + CH4_VAL_OFFSET));
+                    
+//                     if (ch4_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
+//                         ch4_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
+
+//                     TIM_LoadDitherSequences(CH4_VAL_OFFSET, ch4_pwm);
+//                     if (dmx_data > DMX_DATA_INC)
+//                         dmx_data -= DMX_DATA_INC;
+//                     else
+//                         dmx_data = 0;
+//                 }
+//                 else
+//                 {
+//                     estado_dmx++;
+//                     timer_standby = 2000;
+//                 }
+//             }
+//             break;
+
+//         case 3:
+//             if (!timer_standby)
+//             {
+//                 estado_dmx = 0;
+//                 dmx_data = 0;
+//             }
+//             break;
+
+//         default:
+//             estado_dmx = 0;
+//             break;
+//         }
+//     }
+    
+    ////////////////////////////////////////
+    // Pruebo el Blanco directo en el PWM //
+    ////////////////////////////////////////
+#define INC_TO_TEST    4    //3 mas o menos va
+#define MAX_VALUE_PWM_TO_TEST    4766
+#define INC_TIMER_TO_TEST    5
+
+    PWMChannelsReset();    
+    int i = 0;
+    unsigned char estado = 0;
+    while (1)
+    {
+        if (!dmx_filters_timer)
+        {
+            dmx_filters_timer = INC_TIMER_TO_TEST;
+
+            if (estado == 0)
+            {
+                if (i < MAX_VALUE_PWM_TO_TEST)
+                {
+                    ch4_pwm = (unsigned short) i;
+                    if (ch4_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
+                        ch4_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
+
+                    TIM_LoadDitherSequences(CH4_VAL_OFFSET, ch4_pwm);
+                    i += INC_TO_TEST;
+                }
+                else
+                {
+                    estado = 1;
+                    i = 0;
+                }
+
+            }
+
+            if (estado == 1)
+            {
+                if (i < 400)
+                    i++;
+                else
+                {
+                    estado = 2;
+                    i = MAX_VALUE_PWM_TO_TEST;
+                }
+                
+            }
+
+            if (estado == 2)
+            {
+                if(i > 0)
+                {
+                    ch4_pwm = (unsigned short) i;
+                    if (ch4_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
+                        ch4_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
+
+                    TIM_LoadDitherSequences(CH4_VAL_OFFSET, ch4_pwm);
+                    i -= INC_TO_TEST;
+                }
+                else
+                {
+                    estado = 3;
+                    i = 0;
+                }
+            }
+
+            if (estado == 3)
+            {
+                if (i < 400)
+                    i++;
+                else
+                {
+                    estado = 0;
+                    i = 0;
+                }
+                
+            }
+            
+        }
+    }
+
+    
 
     while (1)
     {

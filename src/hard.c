@@ -628,26 +628,26 @@ unsigned short HARD_Map_New_DMX_Data (unsigned short * p_seg,
         dummy = dmx_data * (p_seg[change_mode_seg - 1]);
         dummy /= const_segments[change_mode_seg - 1];        
     }
-    else
-        dummy = p_seg[change_mode_seg - 1];
-    // else if (segment_number == change_mode_seg)
-    // {
-    //     //segment is equal to ch_change_mode_segment
-
-    //     dummy = p_seg[change_mode_seg] - p_seg[change_mode_seg - 1];
-    //     dummy = dummy * (dmx_data - const_segments[change_mode_seg - 1]);
-    //     dummy /= const_segments[change_mode_seg] - const_segments[change_mode_seg - 1];
-    //     dummy += p_seg[change_mode_seg - 1];
-    // }
     // else
-    // {
-    //     //segment is at the end on CCM mode
+    //     dummy = p_seg[change_mode_seg - 1];
+    else if (segment_number == change_mode_seg)
+    {
+        //segment is equal to ch_change_mode_segment
 
-    //     dummy = p_seg[SEGMENTS_QTTY - 1] - p_seg[change_mode_seg];
-    //     dummy = dummy * (dmx_data - const_segments[change_mode_seg]);
-    //     dummy /= const_segments[SEGMENTS_QTTY - 1] - const_segments[change_mode_seg];
-    //     dummy += p_seg[change_mode_seg];
-    // }
+        dummy = p_seg[change_mode_seg] - p_seg[change_mode_seg - 1];
+        dummy = dummy * (dmx_data - const_segments[change_mode_seg - 1]);
+        dummy /= const_segments[change_mode_seg] - const_segments[change_mode_seg - 1];
+        dummy += p_seg[change_mode_seg - 1];
+    }
+    else
+    {
+        //segment is at the end on CCM mode
+
+        dummy = p_seg[SEGMENTS_QTTY - 1] - p_seg[change_mode_seg];
+        dummy = dummy * (dmx_data - const_segments[change_mode_seg]);
+        dummy /= const_segments[SEGMENTS_QTTY - 1] - const_segments[change_mode_seg];
+        dummy += p_seg[change_mode_seg];
+    }
 
     //check for the minimun
     if ((dummy) && (dummy < ch_minimun))

@@ -85,6 +85,7 @@ SRC += ./src/power_control.c
 SRC += ./src/ssd1306.c
 SRC += ./src/mainmenu.c
 SRC += ./src/screen.c
+SRC += ./src/test_functions.c
 
 
 ## Core Support

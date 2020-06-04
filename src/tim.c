@@ -192,6 +192,8 @@ void TIM_LoadDitherSequences (unsigned char which_ch, unsigned short new_duty)
 {
     volatile unsigned short * p1;
 
+    //TODO: si v_dither_tim fuese una matriz me puedo evitar el switch y apuntar con el canal
+    // quedaria funcionando entonces por tabla
     switch (which_ch)
     {
     case 0:
