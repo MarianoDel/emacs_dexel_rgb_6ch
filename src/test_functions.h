@@ -20,7 +20,8 @@
 
 
 // Exported Functions ----------------------------------------------------------
-
+void TEST_White_Dmx_Dimming (unsigned char, unsigned char);
+void TEST_White_Pwm_Dimming (unsigned char, unsigned char, unsigned short);
 
 #endif    /* _TEST_FUNTIONS_H_ */
 

@@ -27,6 +27,7 @@
 #include "master_mode.h"
 #include "programs_mode.h"
 #include "programs_functions.h"
+#include "test_functions.h"
 
 #include "flash_program.h"
 #include "i2c.h"
@@ -635,188 +636,13 @@ int main(void)
     ///////////////////////////////////
     // Pruebo el Blanco desde el DMX //
     ///////////////////////////////////
-// #define DMX_TIMER    25
-// #define DMX_MAX_DATA    255
-// #define DMX_DATA_INC    1
-
-//     PWMChannelsReset();    
-//     unsigned char dmx_data = 0;
-//     unsigned char estado_dmx = 0;
-
-//     while (1)
-//     {
-//         switch (estado_dmx)
-//         {
-//         case 0:
-//             if (!dmx_filters_timer)
-//             {
-//                 dmx_filters_timer = DMX_TIMER;
-
-//                 if (dmx_data < DMX_MAX_DATA)
-//                 {
-//                     ch4_pwm = HARD_Map_New_DMX_Data(
-//                         mem_conf.segments[CH4_VAL_OFFSET],
-//                         dmx_data,
-//                         ch_mode_change_segment[CH4_VAL_OFFSET],
-//                         0);
-
-//                     // ch4_pwm = HARD_Process_New_PWM_Data(
-//                     //     mem_conf.segments[CH4_VAL_OFFSET],
-//                     //     *(ch_val + CH4_VAL_OFFSET));
-                    
-//                     if (ch4_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
-//                         ch4_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
-
-//                     TIM_LoadDitherSequences(CH4_VAL_OFFSET, ch4_pwm);
-//                     if ((DMX_MAX_DATA - dmx_data) > DMX_DATA_INC)
-//                         dmx_data += DMX_DATA_INC;
-//                     else
-//                         dmx_data = DMX_MAX_DATA;
-//                 }
-//                 else
-//                 {
-//                     estado_dmx++;
-//                     timer_standby = 2000;
-//                 }
-//             }
-//             break;
-
-//         case 1:
-//             if (!timer_standby)
-//             {
-//                 estado_dmx++;
-//                 dmx_data = DMX_MAX_DATA;
-//             }
-//             break;
-
-//         case 2:
-//             if (!dmx_filters_timer)
-//             {
-//                 dmx_filters_timer = DMX_TIMER;
-
-//                 if (dmx_data)
-//                 {
-//                     ch4_pwm = HARD_Map_New_DMX_Data(
-//                         mem_conf.segments[CH4_VAL_OFFSET],
-//                         dmx_data,
-//                         ch_mode_change_segment[CH4_VAL_OFFSET],
-//                         0);                    
-
-//                     // ch4_pwm = HARD_Process_New_PWM_Data(
-//                     //     mem_conf.segments[CH4_VAL_OFFSET],
-//                     //     *(ch_val + CH4_VAL_OFFSET));
-                    
-//                     if (ch4_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
-//                         ch4_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
-
-//                     TIM_LoadDitherSequences(CH4_VAL_OFFSET, ch4_pwm);
-//                     if (dmx_data > DMX_DATA_INC)
-//                         dmx_data -= DMX_DATA_INC;
-//                     else
-//                         dmx_data = 0;
-//                 }
-//                 else
-//                 {
-//                     estado_dmx++;
-//                     timer_standby = 2000;
-//                 }
-//             }
-//             break;
-
-//         case 3:
-//             if (!timer_standby)
-//             {
-//                 estado_dmx = 0;
-//                 dmx_data = 0;
-//             }
-//             break;
-
-//         default:
-//             estado_dmx = 0;
-//             break;
-//         }
-//     }
+    // TEST_White_Dmx_Dimming(25, 1);
     
     ////////////////////////////////////////
     // Pruebo el Blanco directo en el PWM //
     ////////////////////////////////////////
-#define INC_TO_TEST    4    //3 mas o menos va
-#define MAX_VALUE_PWM_TO_TEST    4766
-#define INC_TIMER_TO_TEST    5
-
-    PWMChannelsReset();    
-    int i = 0;
-    unsigned char estado = 0;
-    while (1)
-    {
-        if (!dmx_filters_timer)
-        {
-            dmx_filters_timer = INC_TIMER_TO_TEST;
-
-            if (estado == 0)
-            {
-                if (i < MAX_VALUE_PWM_TO_TEST)
-                {
-                    ch4_pwm = (unsigned short) i;
-                    if (ch4_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
-                        ch4_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
-
-                    TIM_LoadDitherSequences(CH4_VAL_OFFSET, ch4_pwm);
-                    i += INC_TO_TEST;
-                }
-                else
-                {
-                    estado = 1;
-                    i = 0;
-                }
-
-            }
-
-            if (estado == 1)
-            {
-                if (i < 400)
-                    i++;
-                else
-                {
-                    estado = 2;
-                    i = MAX_VALUE_PWM_TO_TEST;
-                }
-                
-            }
-
-            if (estado == 2)
-            {
-                if(i > 0)
-                {
-                    ch4_pwm = (unsigned short) i;
-                    if (ch4_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
-                        ch4_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
-
-                    TIM_LoadDitherSequences(CH4_VAL_OFFSET, ch4_pwm);
-                    i -= INC_TO_TEST;
-                }
-                else
-                {
-                    estado = 3;
-                    i = 0;
-                }
-            }
-
-            if (estado == 3)
-            {
-                if (i < 400)
-                    i++;
-                else
-                {
-                    estado = 0;
-                    i = 0;
-                }
-                
-            }
-            
-        }
-    }
-
+    // TEST_White_Pwm_Dimming(2, 3, 4705);    //DCM -> CCM
+    TEST_White_Pwm_Dimming(2, 3, 4200);    //solo DCM    
     
 
     while (1)
