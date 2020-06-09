@@ -132,18 +132,19 @@ for i in range(256):
     full_dmx_output_white_map_each_sgm[i] = Mapping_each_sgm(white_segments, dmx_segments, white_minimun, i)
 
 
+dmx_input_first = 25
+dmx_input_last = 50
+print ('Mapping with each dmx: '+ str(dmx_input_first))
+print (Mapping_each_sgm(white_segments, dmx_segments, white_minimun, dmx_input_first))
 
-print ('Mapping each 15')
-print (Mapping_each_sgm(white_segments, dmx_segments, white_minimun, 15))
+print ('Mapping with each dmx: '+ str(dmx_input_last))
+print (Mapping_each_sgm(white_segments, dmx_segments, white_minimun, dmx_input_last))
 
-print ('Mapping each 31')
-print (Mapping_each_sgm(white_segments, dmx_segments, white_minimun, 31))
+print ('Mapping with ch_mode dmx: '+ str(dmx_input_first))
+print (Mapping_change_mode(white_segments, dmx_segments, ch_mode_sgm, white_minimun, dmx_input_first))
 
-print ('Mapping ch_mode 15')
-print (Mapping_change_mode(white_segments, dmx_segments, ch_mode_sgm, white_minimun, 15))
-
-print ('Mapping ch_mode 31')
-print (Mapping_change_mode(white_segments, dmx_segments, ch_mode_sgm, white_minimun, 31))
+print ('Mapping with ch_mode dmx: '+ str(dmx_input_last))
+print (Mapping_change_mode(white_segments, dmx_segments, ch_mode_sgm, white_minimun, dmx_input_last))
 
 
 fig, ax = plt.subplots()

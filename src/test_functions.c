@@ -28,6 +28,7 @@ extern unsigned char ch_mode_change_segment [];
 
 // Module Private Types & Macros -----------------------------------------------
 typedef enum {
+    dimming_init,
     dimming_up,
     waiting_in_max,
     dimming_dwn,
@@ -43,11 +44,15 @@ typedef enum {
 
 // Module Functions ------------------------------------------------------------
 
-void TEST_White_Dmx_Dimming (unsigned char dmx_timer, unsigned char dmx_increment)
+void TEST_Dmx_Dimming (unsigned char dmx_timer,
+                       unsigned char dmx_increment,
+                       unsigned char dmx_max,
+                       unsigned char ch,
+                       unsigned char func_mode)
 {
     unsigned char dmx_data = 0;
     dimming_states_t estado_dmx = dimming_up;
-    unsigned short ch4_pwm = 0;
+    unsigned short ch_pwm = 0;
 
     PWMChannelsReset();    
 
@@ -60,26 +65,32 @@ void TEST_White_Dmx_Dimming (unsigned char dmx_timer, unsigned char dmx_incremen
             {
                 dmx_filters_timer = dmx_timer;
 
-                if (dmx_data < DMX_MAX_DATA)
+                if (dmx_data < dmx_max)
                 {
-                    ch4_pwm = HARD_Map_New_DMX_Data(
-                        mem_conf.segments[CH4_VAL_OFFSET],
-                        dmx_data,
-                        ch_mode_change_segment[CH4_VAL_OFFSET],
-                        0);
+                    if (func_mode == BY_CHANGE_MODE)
+                    {
+                        ch_pwm = HARD_Map_New_DMX_Data(
+                            mem_conf.segments[ch],
+                            dmx_data,
+                            ch_mode_change_segment[ch],
+                            0);
+                    }
 
-                    // ch4_pwm = HARD_Process_New_PWM_Data(
-                    //     mem_conf.segments[CH4_VAL_OFFSET],
-                    //     *(ch_val + CH4_VAL_OFFSET));
+                    if (func_mode == SEGMENT_BY_SEGMENT)
+                    {
+                        ch_pwm = HARD_Process_New_PWM_Data(
+                            mem_conf.segments[ch],
+                            dmx_data);
+                    }
                     
-                    if (ch4_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
-                        ch4_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
+                    if (ch_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
+                        ch_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
 
-                    TIM_LoadDitherSequences(CH4_VAL_OFFSET, ch4_pwm);
-                    if ((DMX_MAX_DATA - dmx_data) > dmx_increment)
+                    TIM_LoadDitherSequences(ch, ch_pwm);
+                    if ((dmx_max - dmx_data) > dmx_increment)
                         dmx_data += dmx_increment;
                     else
-                        dmx_data = DMX_MAX_DATA;
+                        dmx_data = dmx_max;
                 }
                 else
                 {
@@ -93,7 +104,7 @@ void TEST_White_Dmx_Dimming (unsigned char dmx_timer, unsigned char dmx_incremen
             if (!timer_standby)
             {
                 estado_dmx = dimming_dwn;
-                dmx_data = DMX_MAX_DATA;
+                dmx_data = dmx_max;
             }
             break;
 
@@ -104,20 +115,26 @@ void TEST_White_Dmx_Dimming (unsigned char dmx_timer, unsigned char dmx_incremen
 
                 if (dmx_data)
                 {
-                    ch4_pwm = HARD_Map_New_DMX_Data(
-                        mem_conf.segments[CH4_VAL_OFFSET],
-                        dmx_data,
-                        ch_mode_change_segment[CH4_VAL_OFFSET],
-                        0);                    
+                    if (func_mode == SEGMENT_BY_SEGMENT)
+                    {
+                        ch_pwm = HARD_Map_New_DMX_Data(
+                            mem_conf.segments[ch],
+                            dmx_data,
+                            ch_mode_change_segment[ch],
+                            0);
+                    }
 
-                    // ch4_pwm = HARD_Process_New_PWM_Data(
-                    //     mem_conf.segments[CH4_VAL_OFFSET],
-                    //     *(ch_val + CH4_VAL_OFFSET));
+                    if (func_mode == BY_CHANGE_MODE)
+                    {
+                        ch_pwm = HARD_Process_New_PWM_Data(
+                            mem_conf.segments[ch],
+                            dmx_data);
+                    }
                     
-                    if (ch4_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
-                        ch4_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
+                    if (ch_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
+                        ch_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
 
-                    TIM_LoadDitherSequences(CH4_VAL_OFFSET, ch4_pwm);
+                    TIM_LoadDitherSequences(ch, ch_pwm);
                     if (dmx_data > dmx_increment)
                         dmx_data -= dmx_increment;
                     else
@@ -147,11 +164,11 @@ void TEST_White_Dmx_Dimming (unsigned char dmx_timer, unsigned char dmx_incremen
 }
 
 
-void TEST_White_Pwm_Dimming (unsigned char pwm_timer, unsigned char pwm_increment, unsigned short pwm_max)
+void TEST_Pwm_Dimming (pwm_dimming_t * dim)
 {
-    dimming_states_t estado_pwm = dimming_up;
+    dimming_states_t estado_pwm = dimming_init;
     unsigned short pwm_value = 0;
-    unsigned short ch4_pwm = 0;    
+    unsigned short ch_pwm = 0;    
 
     PWMChannelsReset();    
 
@@ -159,24 +176,29 @@ void TEST_White_Pwm_Dimming (unsigned char pwm_timer, unsigned char pwm_incremen
     {
         switch (estado_pwm)
         {
+        case dimming_init:
+            pwm_value = dim->pwm_min;
+            estado_pwm = dimming_up;            
+            break;
+            
         case dimming_up:
             if (!dmx_filters_timer)
             {
-                dmx_filters_timer = pwm_timer;
+                dmx_filters_timer = dim->time_step_ms;
 
-                if (pwm_value < pwm_max)
+                if (pwm_value < dim->pwm_max)
                 {
-                    ch4_pwm = pwm_value;
-                    
-                    if (ch4_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
-                        ch4_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
-
-                    TIM_LoadDitherSequences(CH4_VAL_OFFSET, ch4_pwm);
-
-                    if ((pwm_value + pwm_increment) < pwm_max)
-                        pwm_value += pwm_increment;
+                    if ((pwm_value + dim->pwm_increment) < dim->pwm_max)
+                        pwm_value += dim->pwm_increment;
                     else
-                        pwm_value = pwm_max;
+                        pwm_value = dim->pwm_max;
+
+                    ch_pwm = pwm_value;
+                    
+                    if (ch_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
+                        ch_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
+
+                    TIM_LoadDitherSequences(dim->channel, ch_pwm);
                     
                 }
                 else
@@ -196,20 +218,22 @@ void TEST_White_Pwm_Dimming (unsigned char pwm_timer, unsigned char pwm_incremen
         case dimming_dwn:
             if (!dmx_filters_timer)
             {
-                dmx_filters_timer = pwm_timer;
-                if(pwm_value)
+                dmx_filters_timer = dim->time_step_ms;
+                
+                if(pwm_value > dim->pwm_min)
                 {
-                    ch4_pwm = pwm_value;
-
-                    if (ch4_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
-                        ch4_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
-
-                    TIM_LoadDitherSequences(CH4_VAL_OFFSET, ch4_pwm);
-
-                    if (pwm_value > pwm_increment)
-                        pwm_value -= pwm_increment;
+                    if (pwm_value > (dim->pwm_increment + dim->pwm_min))
+                        pwm_value -= dim->pwm_increment;
                     else
-                        pwm_value = 0;
+                        pwm_value = dim->pwm_min;
+
+                    ch_pwm = pwm_value;
+
+                    if (ch_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
+                        ch_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
+
+                    TIM_LoadDitherSequences(dim->channel, ch_pwm);
+
                 }
                 else
                 {
@@ -226,7 +250,7 @@ void TEST_White_Pwm_Dimming (unsigned char pwm_timer, unsigned char pwm_incremen
             break;
 
         default:
-            estado_pwm = dimming_up;
+            estado_pwm = dimming_init;
             break;
         }
     }

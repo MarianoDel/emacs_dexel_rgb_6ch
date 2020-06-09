@@ -636,13 +636,37 @@ int main(void)
     ///////////////////////////////////
     // Pruebo el Blanco desde el DMX //
     ///////////////////////////////////
-    // TEST_White_Dmx_Dimming(25, 1);
+    // TEST_White_Dmx_Dimming_By_Segments(25, 1, 255);
+    // TEST_White_Dmx_Dimming_By_Change_Mode(25, 5, 255);
+    
     
     ////////////////////////////////////////
     // Pruebo el Blanco directo en el PWM //
     ////////////////////////////////////////
-    // TEST_White_Pwm_Dimming(2, 3, 4705);    //DCM -> CCM
-    TEST_White_Pwm_Dimming(2, 3, 4200);    //solo DCM    
+    // 3600 puede ser un minimo con el led apenas prendido
+    // 4800 serian 27.64V
+    // 3400 serian 20.64V
+    // pwm_dimming_t dimmer = {
+    //     .time_step_ms = 25,
+    //     .pwm_min = 0,
+    //     .pwm_max = 4800,
+    //     .pwm_increment = 12,
+    //     .channel = CH4_VAL_OFFSET
+    // };
+        
+    // TEST_Pwm_Dimming(&dimmer);    //DCM -> CCM
+
+    pwm_dimming_t dimmer = {
+        .time_step_ms = 5,
+        .pwm_min = 0,
+        .pwm_max = 4766,
+        .pwm_increment = 12,
+        .channel = CH3_VAL_OFFSET
+    };
+        
+    TEST_Pwm_Dimming(&dimmer);    //DCM -> CCM
+    
+
     
 
     while (1)
