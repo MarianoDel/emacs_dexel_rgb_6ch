@@ -837,7 +837,7 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
         display_update();        
         
         unsigned short * p_seg;
-        led_current_settings_t led_curr;
+        // led_current_settings_t led_curr;
         p_seg = &mem_conf.segments[0][0];
         // HARD_Find_Current_Segments(&led_curr, p_seg);
 

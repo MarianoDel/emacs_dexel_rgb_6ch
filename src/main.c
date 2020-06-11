@@ -509,107 +509,7 @@ int main(void)
 
     memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
 
-    //-- Para Debug Test inicial de corriente
-// #ifdef ALWAYS_CHECK_CURRENT_ON_INIT
-//     unsigned short * p_seg = &mem_conf.segments[0][0];
-//     led_current_settings_t led_curr;
-
-//     HARD_Find_Current_Segments(&led_curr, p_seg);
-
-//     for (unsigned char j = 0; j < 6; j++)
-//     {        
-//         sprintf(s_to_send, "segments[%d]: ", j);
-//         Usart2Send(s_to_send);
-//         // for (unsigned char i = 0; i < SEGMENTS_QTTY; i++)
-//         for (unsigned char i = 0; i < 16; i++)            
-//         {
-//             // sprintf(s_to_send, "%d ", segments[j][i]);
-//             sprintf(s_to_send, "%d ", mem_conf.segments[j][i]);
-//             Usart2Send(s_to_send);
-//             Wait_ms(10);
-//         }
-//         Usart2Send("\n");
-//     }
-    
-// #endif
-    
-//     HARD_Find_Slow_Segments (ch_mode_change_segment);    //muestra las cuentas del vector de corriente
-
-// #ifdef HARCODED_CURRENT_ON_INIT
-// #ifdef DITHER_8
-//     unsigned short v_curr_ch0 [16] = {939, 1383, 1735, 2048, 2388, 2676, 2938, 3157,
-//                                       3389, 3662, 3746, 3827, 3905, 3983, 4057, 4132};
-//     unsigned short v_curr_ch1 [16] = {1461, 2148, 2722, 3241, 3676, 4093, 4503, 4898,
-//                                       5327, 5400, 5467, 5532, 5593, 5653, 5710, 5766};
-//     unsigned short v_curr_ch2 [16] = {1296, 1859, 2328, 2692, 3042, 3364, 3645, 3918,
-//                                       4207, 4503, 4548, 4591, 4632, 4674, 4713, 4753};
-//     unsigned short v_curr_ch3 [16] = {1403, 1800, 2269, 2609, 2963, 3300, 3608, 3899,
-//                                       4202, 4510, 4555, 4599, 4642, 4685, 4725, 4766};
-
-//     // unsigned short v_curr_ch3 [16] = {1403, 1800, 2269, 2609, 2963, 3300, 3608, 3899,
-//     //                                   4202, 4202, 4202, 4202, 4202, 4202, 4202, 4202};
-    
-//     memcpy(&mem_conf.segments[0][0], v_curr_ch0, sizeof(v_curr_ch0));
-//     memcpy(&mem_conf.segments[1][0], v_curr_ch1, sizeof(v_curr_ch1));
-//     memcpy(&mem_conf.segments[2][0], v_curr_ch2, sizeof(v_curr_ch2));
-//     memcpy(&mem_conf.segments[3][0], v_curr_ch3, sizeof(v_curr_ch3));
-//     memcpy(&mem_conf.segments[4][0], v_curr_ch3, sizeof(v_curr_ch3));    
-//     // memset(&mem_conf.segments[4][0], '\0', sizeof(v_curr_ch0));
-//     memset(&mem_conf.segments[5][0], '\0', sizeof(v_curr_ch0));
-// #endif
-//     //segmento anterior al primero en modo CCM    
-//     ch_mode_change_segment[0] = 10;
-//     ch_mode_change_segment[1] = 8;
-//     ch_mode_change_segment[2] = 9;
-//     ch_mode_change_segment[3] = 9;
-//     ch_mode_change_segment[4] = 9;    
-//     // ch_mode_change_segment[3] = 15;    //para funcionar junto con el vector de que no cambie el modo
-//     // ch_mode_change_segment[4] = 8;
-//     // ch_mode_change_segment[5] = 8;
-
-//     mem_conf.pwm_chnls[0] = 4132;
-//     mem_conf.pwm_chnls[1] = 5766;
-//     mem_conf.pwm_chnls[2] = 4753;
-//     mem_conf.pwm_chnls[3] = 4202;
-//     mem_conf.pwm_chnls[4] = 4202;
-//     mem_conf.pwm_chnls[5] = 0;
-// #endif
-    //-- FIN Para Debug Test inicial de corriente    
-
-    //mando info al puerto
-// #ifdef USART2_DEBUG_MODE
-
-// #ifdef USE_SLOW_SEGMENT_LAST_BUT_ONE
-//     Wait_ms(100);
-//     sprintf(s_to_send, "slow_segment_last_but_one: ");
-//     Usart2Send(s_to_send);
-
-//     for (unsigned char j = 0; j < 6; j++)
-//     {
-//         sprintf(s_to_send, "%d ",
-//                 mem_conf.segments[j][(ch_mode_change_segment[j] - 1)]);
-//         Usart2Send(s_to_send);
-//         Wait_ms(10);
-//     }
-//     Usart2Send("\n");   
-// #else
-//     Wait_ms(100);
-//     sprintf(s_to_send, "slow_segment: ");
-//     Usart2Send(s_to_send);
-
-//     for (unsigned char j = 0; j < 6; j++)
-//     {
-//         sprintf(s_to_send, "%d ",
-//                 mem_conf.segments[j][ch_mode_change_segment[j]]);
-//         Usart2Send(s_to_send);
-//         Wait_ms(10);
-//     }
-//     Usart2Send("\n");    
-// #endif
-
-// #endif    //endif USART_DEBUG
-
-    
+    //-- Para Debug Test inicial de PWMs y DMXs
     ///////////////////////////////////
     // Pruebo el Blanco desde el DMX //
     ///////////////////////////////////
@@ -642,6 +542,10 @@ int main(void)
     // };
         
     // TEST_Pwm_Dimming(&dimmer);    //DCM -> CCM
+    //-- FIN Para Debug Test inicial de PWMs y DMXs
+
+
+    
     
 
     

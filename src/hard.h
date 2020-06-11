@@ -36,14 +36,6 @@
 // #define USE_FILTER_LENGHT_8
 #define USE_FILTER_LENGHT_16
 
-// --- Led current configurations --- //
-// #define ALWAYS_CHECK_CURRENT_ON_INIT
-// #define USE_HARCODED_CURRENT
-#define HARCODED_CURRENT_ON_INIT
-
-// --- Current Mapping DMX -> PWM --- //
-// #define MAP_CURRENT_DIRECT
-#define MAP_CURRENT_WITH_SLOW_SEGMENT
 
 // --- How to control the PWM generation, select only one --- //
 #define USE_PWM_DIRECT    //mapea lo que llega en el dmx a la curva de corriente
@@ -70,11 +62,6 @@
 #define DMX_UPDATE_TIMER    5    //si pongo esto en 2 se ven saltos en el blanco incluso con delta-single-step
 // #define DMX_UPDATE_TIMER_WITH_DITHER    2
 
-// --- How to understand the current readed --- //
-// #define USE_INDUCTOR_IN_DCM
-// #define USE_INDUCTOR_IN_CCM
-#define USE_INDUCTOR_REAL_MEAS
-
 // --- After configuration what to do with the flash --- //
 #define SAVE_FLASH_IMMEDIATE
 // #define SAVE_FLASH_WITH_TIMEOUT
@@ -83,13 +70,6 @@
 #define USE_FREQ_48KHZ
 // #define USE_FREQ_24KHZ
 // #define USE_FREQ_16KHZ
-
-// --- Segments Modes --- //
-// #define LINEAR_SEGMENT_8
-#define LINEAR_SEGMENT_16
-// #define LINEAR_SEGMENT_32
-// #define FIBONACCI_12
-// #define FIBONACCI_8    
 
 // --- Usart2 Modes --- //
 #define USART2_DEBUG_MODE
@@ -100,14 +80,6 @@
 #define WHITE_AS_IN_RGB		//el blanco lo forma con los 3 colores
 //#define WHITE_AS_WHITE	//el blanco tiene leds blancos individuales
 
-#ifdef USE_HARCODED_CURRENT
-#define HARCODED_CURRENT_CH1    2000
-#define HARCODED_CURRENT_CH2    2000
-#define HARCODED_CURRENT_CH3    2000
-#define HARCODED_CURRENT_CH4    2000
-#define HARCODED_CURRENT_CH5    2000
-#define HARCODED_CURRENT_CH6    2000
-#endif
 
 // --- Sanity checks --- //
 #if ((!defined USE_PWM_DIRECT) \
@@ -153,19 +125,6 @@
 #endif
 
 //-------- Configuration for Outputs-Channels -----
-#define MAX_CURRENT_IN_ADC    820
-
-#define MIN_CURRENT_INT    0
-#define MIN_CURRENT_DEC    7
-#define MAX_CURRENT_INT    2
-#define MAX_CURRENT_DEC    0
-
-#define MAX_CURRENT_MILLIS    1100
-
-//esto es dmx_data * MAX_CURRENT * MAX_CURRENT_IN_ADC_COMPENSATED / 512
-//255 * 2.0 * 823 / 512 = 820
-#define MAX_CURRENT_IN_ADC_COMPENSATED    (MAX_CURRENT_IN_ADC + 3)
-
 #define MIN_MAINS_VOLTAGE    20
 #define MAX_MAINS_VOLTAGE    48
 #define MIN_MAX_POWER    40
@@ -478,17 +437,6 @@ typedef enum {
 
 } resp_t;
 
-typedef struct {
-    //asking for
-    unsigned short sp_current;
-    unsigned char channel;
-
-    //results
-    unsigned short duty_getted;
-    unsigned short real_current_getted;
-    unsigned short filtered_current_getted;
-    
-} led_current_settings_t;
 
 #define SW_BACK()    CheckS1()
 #define SW_ENTER()    CheckS2()
@@ -501,16 +449,10 @@ sw_state_t CheckS3 (void);
 sw_state_t CheckS4 (void);
 sw_actions_t CheckSW (void);
 void UpdateSwitches (void);
-resp_t UpdateDutyCycle (led_current_settings_t *);
-void UpdateDutyCycleReset (void);
 void PWMChannelsReset (void);
 void HardUpdateMaxPower (void);
 void HardUpdateMaxPowerReset (void);
 unsigned short PWMChannelsOffset (unsigned char, unsigned short);
 unsigned char DMXMapping (unsigned char);
-resp_t HARD_Find_Current_Segments (led_current_settings_t *, unsigned short *);
-unsigned short HARD_Process_New_PWM_Data (unsigned short *, unsigned char);
-unsigned short HARD_Map_New_DMX_Data (unsigned short *, unsigned char, unsigned char, unsigned short);
-void HARD_Find_Slow_Segments (unsigned char *);
 
 #endif /* HARD_H_ */

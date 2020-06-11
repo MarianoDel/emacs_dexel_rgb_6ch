@@ -69,18 +69,18 @@ void TEST_Dmx_Dimming (unsigned char dmx_timer,
                 {
                     if (func_mode == BY_CHANGE_MODE)
                     {
-                        ch_pwm = HARD_Map_New_DMX_Data(
-                            mem_conf.segments[ch],
-                            dmx_data,
-                            ch_mode_change_segment[ch],
-                            0);
+                        // ch_pwm = HARD_Map_New_DMX_Data(
+                        //     mem_conf.segments[ch],
+                        //     dmx_data,
+                        //     ch_mode_change_segment[ch],
+                        //     0);
                     }
 
                     if (func_mode == SEGMENT_BY_SEGMENT)
                     {
-                        ch_pwm = HARD_Process_New_PWM_Data(
-                            mem_conf.segments[ch],
-                            dmx_data);
+                        // ch_pwm = HARD_Process_New_PWM_Data(
+                        //     mem_conf.segments[ch],
+                        //     dmx_data);
                     }
                     
                     if (ch_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
@@ -117,18 +117,18 @@ void TEST_Dmx_Dimming (unsigned char dmx_timer,
                 {
                     if (func_mode == SEGMENT_BY_SEGMENT)
                     {
-                        ch_pwm = HARD_Map_New_DMX_Data(
-                            mem_conf.segments[ch],
-                            dmx_data,
-                            ch_mode_change_segment[ch],
-                            0);
+                        // ch_pwm = HARD_Map_New_DMX_Data(
+                        //     mem_conf.segments[ch],
+                        //     dmx_data,
+                        //     ch_mode_change_segment[ch],
+                        //     0);
                     }
 
                     if (func_mode == BY_CHANGE_MODE)
                     {
-                        ch_pwm = HARD_Process_New_PWM_Data(
-                            mem_conf.segments[ch],
-                            dmx_data);
+                        // ch_pwm = HARD_Process_New_PWM_Data(
+                        //     mem_conf.segments[ch],
+                        //     dmx_data);
                     }
                     
                     if (ch_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
