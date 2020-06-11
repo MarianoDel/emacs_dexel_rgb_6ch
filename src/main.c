@@ -90,7 +90,7 @@ volatile unsigned char data512[SIZEOF_DMX_DATA512];
 volatile unsigned char data7[SIZEOF_DMX_DATA7];
 volatile unsigned char * pdmx;
 
-//para el PID en hard.c
+// resultados de los filtros aplicados
 unsigned short sp1_filtered = 0;
 unsigned short sp2_filtered = 0;
 unsigned short sp3_filtered = 0;
@@ -111,29 +111,6 @@ ma16_u16_data_obj_t st_sp6;
 #endif
 
 
-#ifdef USE_PWM_CTRL_PID_MA32
-pid_data_obj_t pid_ch1;
-pid_data_obj_t pid_ch2;
-pid_data_obj_t pid_ch3;
-pid_data_obj_t pid_ch4;
-pid_data_obj_t pid_ch5;
-pid_data_obj_t pid_ch6;
-
-ma16_u16_data_obj_t isense_ch1_data_filter;
-ma16_u16_data_obj_t isense_ch2_data_filter;
-ma16_u16_data_obj_t isense_ch3_data_filter;
-ma16_u16_data_obj_t isense_ch4_data_filter;
-ma16_u16_data_obj_t isense_ch5_data_filter;
-ma16_u16_data_obj_t isense_ch6_data_filter;
-
-unsigned short isense_ch1_filtered;
-unsigned short isense_ch2_filtered;
-unsigned short isense_ch3_filtered;
-unsigned short isense_ch4_filtered;
-unsigned short isense_ch5_filtered;
-unsigned short isense_ch6_filtered;
-
-#endif
 
 //--- VARIABLES GLOBALES ---//
 //para pruebas mantener esto en memoria
@@ -656,15 +633,15 @@ int main(void)
         
     // TEST_Pwm_Dimming(&dimmer);    //DCM -> CCM
 
-    pwm_dimming_t dimmer = {
-        .time_step_ms = 5,
-        .pwm_min = 0,
-        .pwm_max = 4766,
-        .pwm_increment = 12,
-        .channel = CH3_VAL_OFFSET
-    };
+    // pwm_dimming_t dimmer = {
+    //     .time_step_ms = 5,
+    //     .pwm_min = 0,
+    //     .pwm_max = 4766,
+    //     .pwm_increment = 12,
+    //     .channel = CH3_VAL_OFFSET
+    // };
         
-    TEST_Pwm_Dimming(&dimmer);    //DCM -> CCM
+    // TEST_Pwm_Dimming(&dimmer);    //DCM -> CCM
     
 
     
@@ -707,29 +684,6 @@ int main(void)
             //limpio los filtros
             UpdateFiltersTest_Reset();
 
-#ifdef USE_PWM_CTRL_PID_MA32
-            //limpio PIDs
-            pid_ch1.ki = 10;
-            pid_ch2.ki = 10;
-            pid_ch3.ki = 10;
-            pid_ch4.ki = 10;
-            pid_ch5.ki = 10;
-            pid_ch6.ki = 10;
-            
-            PID_Small_Ki_Flush_Errors (&pid_ch1);
-            PID_Small_Ki_Flush_Errors (&pid_ch2);
-            PID_Small_Ki_Flush_Errors (&pid_ch3);
-            PID_Small_Ki_Flush_Errors (&pid_ch4);
-            PID_Small_Ki_Flush_Errors (&pid_ch5);
-            PID_Small_Ki_Flush_Errors (&pid_ch6);
-
-            MA16_U16Circular_Reset(&isense_ch1_data_filter);
-            MA16_U16Circular_Reset(&isense_ch2_data_filter);
-            MA16_U16Circular_Reset(&isense_ch3_data_filter);
-            MA16_U16Circular_Reset(&isense_ch4_data_filter);
-            MA16_U16Circular_Reset(&isense_ch5_data_filter);
-            MA16_U16Circular_Reset(&isense_ch6_data_filter);
-#endif
             main_state++;            
             break;
 
@@ -1293,156 +1247,7 @@ void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segme
     }
 #endif    //USE_PWM_DIRECT_OR_DELTA
 
-#ifdef USE_PWM_CTRL_PID_MA32
-    if (!dmx_filters_timer)
-    {
-        short d = 0;
-        dmx_filters_timer = DMX_UPDATE_TIMER;
-    
-        if (mem_conf.pwm_chnls[CH1_VAL_OFFSET])
-        {
-            unsigned int a = 0;
 
-            if (*(ch_val + CH1_VAL_OFFSET))
-            {
-                //si es buck directo el valor de la maxima corriente es
-                //2A * 0.33ohms = 0.66V en 12b del ADC = 819
-                a = *(ch_val + CH1_VAL_OFFSET) * 819;
-                a >>= 8;
-            
-                sp1_filtered = MA16_U16Circular (&st_sp1, (unsigned short) a);
-                pid_ch1.setpoint = sp1_filtered;
-                // pid_ch1.sample = I_Channel_1;
-                pid_ch1.sample = isense_ch1_filtered;                
-                d = PID_Small_Ki (&pid_ch1);
-
-                if (d > 0)
-                {
-                    if (d > DUTY_MAX_ALLOWED)
-                        d = DUTY_MAX_ALLOWED;
-                }
-                else
-                    d = 0;
-            }
-            else
-                d = 0;
-            
-            Update_PWM1(d);
-            ch1_pwm = d;
-        }
-        
-        if (mem_conf.pwm_chnls[CH2_VAL_OFFSET])
-        {
-            unsigned int a = 0;
-
-            if (*(ch_val + CH2_VAL_OFFSET))
-            {
-                //si es buck directo el valor de la maxima corriente es
-                //2A * 0.33ohms = 0.66V en 12b del ADC = 819
-                a = *(ch_val + CH2_VAL_OFFSET) * 819;
-                a >>= 8;
-            
-                sp2_filtered = MA16_U16Circular (&st_sp2, (unsigned short) a);
-                pid_ch2.setpoint = sp2_filtered;
-                // pid_ch2.sample = I_Channel_2;
-                pid_ch2.sample = isense_ch2_filtered;                
-                d = PID_Small_Ki (&pid_ch2);
-
-                if (d > 0)
-                {
-                    if (d > DUTY_MAX_ALLOWED)
-                        d = DUTY_MAX_ALLOWED;
-                }
-                else
-                    d = 0;
-            }
-            else
-                d = 0;
-            
-            Update_PWM2(d);
-            ch2_pwm = d;
-        }
-        
-        if (mem_conf.pwm_chnls[CH3_VAL_OFFSET])
-        {
-            unsigned int a = 0;
-
-            if (*(ch_val + CH3_VAL_OFFSET))
-            {
-                //si es buck directo el valor de la maxima corriente es
-                //2A * 0.33ohms = 0.66V en 12b del ADC = 819
-                a = *(ch_val + CH3_VAL_OFFSET) * 819;
-                a >>= 8;
-            
-                sp3_filtered = MA16_U16Circular (&st_sp3, (unsigned short) a);
-                pid_ch3.setpoint = sp3_filtered;
-                // pid_ch3.sample = I_Channel_3;
-                pid_ch3.sample = isense_ch3_filtered;
-                d = PID_Small_Ki (&pid_ch3);
-
-                if (d > 0)
-                {
-                    if (d > DUTY_MAX_ALLOWED)
-                        d = DUTY_MAX_ALLOWED;
-                }
-                else
-                    d = 0;
-            }
-            else
-                d = 0;
-            
-            Update_PWM3(d);
-            ch3_pwm = d;
-        }
-                
-        if (mem_conf.pwm_chnls[CH4_VAL_OFFSET])
-        {
-            unsigned int a = 0;
-
-            if (*(ch_val + CH4_VAL_OFFSET))
-            {
-                //si es buck directo el valor de la maxima corriente es
-                //2A * 0.33ohms = 0.66V en 12b del ADC = 819
-                a = *(ch_val + CH4_VAL_OFFSET) * 819;
-                a >>= 8;
-            
-                sp4_filtered = MA16_U16Circular (&st_sp4, (unsigned short) a);
-                pid_ch4.setpoint = sp4_filtered;
-                // pid_ch4.sample = I_Channel_4;
-                pid_ch4.sample = isense_ch4_filtered;
-                d = PID_Small_Ki (&pid_ch4);
-
-                if (d > 0)
-                {
-                    if (d > DUTY_MAX_ALLOWED)
-                        d = DUTY_MAX_ALLOWED;
-                }
-                else
-                    d = 0;
-            }
-            else
-                d = 0;
-            
-            Update_PWM4(d);
-            ch4_pwm = d;
-        }
-    }
-#endif    //USE_PWM_CTRL_PID_MA32
-
-#ifdef USE_PWM_CTRL_PID_MA32
-    //update de filtros de canales
-    if (sequence_ready)
-    {
-        sequence_ready_reset;
-
-        isense_ch1_filtered = MA16_U16Circular(&isense_ch1_data_filter, I_Channel_1);
-        isense_ch2_filtered = MA16_U16Circular(&isense_ch2_data_filter, I_Channel_2);
-        isense_ch3_filtered = MA16_U16Circular(&isense_ch3_data_filter, I_Channel_3);
-        isense_ch4_filtered = MA16_U16Circular(&isense_ch4_data_filter, I_Channel_4);
-        isense_ch5_filtered = MA16_U16Circular(&isense_ch5_data_filter, I_Channel_5);
-        isense_ch6_filtered = MA16_U16Circular(&isense_ch6_data_filter, I_Channel_6);
-    }        
-#endif
 }
 
 

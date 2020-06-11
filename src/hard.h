@@ -49,7 +49,7 @@
 #define USE_PWM_DIRECT    //mapea lo que llega en el dmx a la curva de corriente
 // #define USE_PWM_WITH_DELTA    //mapea la corriente pero la busca punto a punto
 // #define USE_PWM_DELTA_INT_TIMER_FAST
-// #define USE_PWM_CTRL_PID_MA32
+
 
 // --- If Delta mode how to go throw steps --- //
 // #define DELTA_SINGLE_STEP
@@ -112,8 +112,8 @@
 // --- Sanity checks --- //
 #if ((!defined USE_PWM_DIRECT) \
      && (!defined USE_PWM_WITH_DELTA)      \
-     && (!defined USE_PWM_DELTA_INT_TIMER_FAST) \
-     && (!defined USE_PWM_CTRL_PID_MA32))
+     && (!defined USE_PWM_DELTA_INT_TIMER_FAST))
+
 #error "Must select what type of PWM generation to use"
 #endif
 
