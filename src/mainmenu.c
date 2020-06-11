@@ -839,7 +839,7 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
         unsigned short * p_seg;
         led_current_settings_t led_curr;
         p_seg = &mem_conf.segments[0][0];
-        HARD_Find_Current_Segments(&led_curr, p_seg);
+        // HARD_Find_Current_Segments(&led_curr, p_seg);
 
         set_option_string1("Done!");
         blank_option_string2();
