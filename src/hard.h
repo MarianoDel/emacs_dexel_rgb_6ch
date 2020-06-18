@@ -38,7 +38,7 @@
 
 
 // --- How to control the PWM generation, select only one --- //
-#define USE_PWM_DIRECT    //mapea lo que llega en el dmx a la curva de corriente
+#define USE_PWM_DIRECT    //mapea lo que llega en el dmx al PWM directo
 // #define USE_PWM_WITH_DELTA    //mapea la corriente pero la busca punto a punto
 // #define USE_PWM_DELTA_INT_TIMER_FAST
 
@@ -101,10 +101,6 @@
 #endif
 #endif
 
-#if ((defined USE_PWM_DIRECT) \
-     || (defined USE_PWM_WITH_DELTA))
-#define USE_PWM_DIRECT_OR_DELTA
-#endif
 //---- End of Features Configuration ----------
 
 

@@ -203,6 +203,7 @@ unsigned char need_to_save = 0;
 extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
 unsigned short Distance (unsigned short, unsigned short);
+void CheckFiltersAndOffsets (unsigned char *);
 void CheckFiltersAndOffsets2 (unsigned char *, unsigned char *);
 void UpdateFiltersTest_Reset (void);
 
@@ -520,15 +521,15 @@ int main(void)
     ////////////////////////////////////////
     // Pruebo el Blanco directo en el PWM //
     ////////////////////////////////////////
-    pwm_dimming_t dimmer = {
-        .time_step_ms = 25,
-        .pwm_min = 2,
-        .pwm_max = 400,
-        .pwm_increment = 1,
-        .channel = CH3_VAL_OFFSET
-    };
+    // pwm_dimming_t dimmer = {
+    //     .time_step_ms = 25,
+    //     .pwm_min = 2,
+    //     .pwm_max = 400,
+    //     .pwm_increment = 1,
+    //     .channel = CH3_VAL_OFFSET
+    // };
         
-    TEST_Pwm_Dimming(&dimmer);    //DCM -> CCM
+    // TEST_Pwm_Dimming(&dimmer);    //DCM -> CCM
 
     // pwm_dimming_t dimmer = {
     //     .time_step_ms = 5,
@@ -639,7 +640,8 @@ int main(void)
             
         case MAIN_IN_SLAVE_MODE:
             FuncSlaveMode (ch_values);
-            CheckFiltersAndOffsets2 (ch_values, ch_mode_change_segment);
+            CheckFiltersAndOffsets (ch_values);
+            // CheckFiltersAndOffsets2 (ch_values, ch_mode_change_segment);            
 
 #ifdef USART2_DEBUG_MODE
             if (!timer_standby)
@@ -856,6 +858,60 @@ unsigned short Distance (unsigned short a, unsigned short b)
 }
 
 
+
+//aca filtro los offsets del pwm en vez del valor del canal
+//cada 5ms
+void CheckFiltersAndOffsets (unsigned char * ch_dmx_val)
+{
+    //filters para el dmx - generalmente 8 puntos a 200Hz -
+    //desde el sp al sp_filter
+#ifdef USE_PWM_DIRECT
+    if (!dmx_filters_timer)
+    {
+        unsigned int pwm_value = 0;
+        
+        dmx_filters_timer = DMX_UPDATE_TIMER;
+
+        // channel 1
+        pwm_value = *(ch_dmx_val + CH1_VAL_OFFSET) * DUTY_100_PERCENT;
+        pwm_value = pwm_value / 255;
+        ch1_pwm = MA16_U16Circular (&st_sp1, (unsigned short) pwm_value);
+        Update_PWM1(ch1_pwm);
+
+        // channel 2
+        pwm_value = *(ch_dmx_val + CH2_VAL_OFFSET) * DUTY_100_PERCENT;
+        pwm_value = pwm_value / 255;
+        ch2_pwm = MA16_U16Circular (&st_sp2, (unsigned short) pwm_value);
+        Update_PWM2(ch2_pwm);
+
+        // channel 3
+        pwm_value = *(ch_dmx_val + CH3_VAL_OFFSET) * DUTY_100_PERCENT;
+        pwm_value = pwm_value / 255;
+        ch3_pwm = MA16_U16Circular (&st_sp3, (unsigned short) pwm_value);
+        Update_PWM3(ch3_pwm);
+
+        // channel 4
+        pwm_value = *(ch_dmx_val + CH4_VAL_OFFSET) * DUTY_100_PERCENT;
+        pwm_value = pwm_value / 255;
+        ch4_pwm = MA16_U16Circular (&st_sp4, (unsigned short) pwm_value);
+        Update_PWM4(ch4_pwm);
+
+        // channel 5
+        pwm_value = *(ch_dmx_val + CH5_VAL_OFFSET) * DUTY_100_PERCENT;
+        pwm_value = pwm_value / 255;
+        ch5_pwm = MA16_U16Circular (&st_sp5, (unsigned short) pwm_value);
+        Update_PWM5(ch5_pwm);
+
+        // channel 6
+        pwm_value = *(ch_dmx_val + CH6_VAL_OFFSET) * DUTY_100_PERCENT;
+        pwm_value = pwm_value / 255;
+        ch6_pwm = MA16_U16Circular (&st_sp6, (unsigned short) pwm_value);
+        Update_PWM6(ch6_pwm);
+    }
+#endif    //USE_PWM_DIRECT
+}
+
+
 #ifdef USE_PWM_WITH_DELTA
 unsigned short last_ch1_pwm = 0;
 unsigned short last_ch2_pwm = 0;
@@ -869,8 +925,6 @@ IIR_first_order_data_obj_t ch2_iir;
 
 unsigned short ch_minimun_value[6] = {46, 150, 150, 140, 140, 140};
 
-//aca filtro los offsets del pwm en vez del valor del canal
-//cada 5ms
 void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segment)
 {
     //filters para el dmx - generalmente 8 puntos a 200Hz -
@@ -950,11 +1004,13 @@ void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segme
     
 #endif    //USE_PWM_DELTA_INT_TIMER_FAST
 
-#ifdef USE_PWM_DIRECT_OR_DELTA
+#ifdef USE_PWM_DIRECT
     if (!dmx_filters_timer)
     {
         dmx_filters_timer = DMX_UPDATE_TIMER;
-        
+
+        // channel 1        
+        ch1_pwm = MA16_U16Circular (&st_sp1, ch1_pwm);
 //         if (mem_conf.pwm_chnls[CH1_VAL_OFFSET])
 //         {
 //             unsigned char slow_sgm = slow_segment[CH1_VAL_OFFSET];
