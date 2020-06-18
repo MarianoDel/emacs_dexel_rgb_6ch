@@ -49,7 +49,7 @@
 // #define DELTA_MULTIPLE_STEPS_100
 
 // --- Dither Selection --- //
-#define USE_PWM_WITH_DITHER
+// #define USE_PWM_WITH_DITHER
 
 // --- Dither Deph --- //
 #define DITHER_8
@@ -67,9 +67,10 @@
 // #define SAVE_FLASH_WITH_TIMEOUT
 
 // --- PWM Frequency --- //
-#define USE_FREQ_48KHZ
+// #define USE_FREQ_48KHZ
 // #define USE_FREQ_24KHZ
 // #define USE_FREQ_16KHZ
+#define USE_FREQ_4_8KHZ
 
 // --- Usart2 Modes --- //
 #define USART2_DEBUG_MODE
@@ -80,6 +81,9 @@
 #define WHITE_AS_IN_RGB		//el blanco lo forma con los 3 colores
 //#define WHITE_AS_WHITE	//el blanco tiene leds blancos individuales
 
+
+// --- Enable Test Pin or Use Pwm
+#define USE_TESTS_PIN
 
 // --- Sanity checks --- //
 #if ((!defined USE_PWM_DIRECT) \
@@ -214,7 +218,10 @@
 //GPIOC pin8    NC
 //GPIOC pin9    NC
 
-//GPIOA pin8    
+//GPIOA pin8    or TEST_PIN
+#define TEST_PIN1 ((GPIOA->ODR & 0x0100) != 0)
+#define TEST_PIN1_ON (GPIOA->BSRR = 0x00000100)
+#define TEST_PIN1_OFF (GPIOA->BSRR = 0x01000000)
 //GPIOA pin9    TIM1 CH1 - CH2
 
 //GPIOA pin10    NC
@@ -241,16 +248,16 @@
 
 //GPIOB pin3    
 #define SW_RX_TX ((GPIOB->ODR & 0x0008) != 0)
-#define SW_RX_TX_DE GPIOB->BSRR = 0x00000008
-#define SW_RX_TX_RE_NEG GPIOB->BSRR = 0x00080000
+#define SW_RX_TX_DE (GPIOB->BSRR = 0x00000008)
+#define SW_RX_TX_RE_NEG (GPIOB->BSRR = 0x00080000)
 
 //GPIOB pin4     
 //GPIOB pin5     TIM3 CH1 - CH2
 
 //GPIOB pin6     Tx
 #define DMX_TX_PIN ((GPIOB->ODR & 0x0040) != 0)
-#define DMX_TX_PIN_ON GPIOB->BSRR = 0x00000040
-#define DMX_TX_PIN_OFF GPIOB->BSRR = 0x00400000
+#define DMX_TX_PIN_ON (GPIOB->BSRR = 0x00000040)
+#define DMX_TX_PIN_OFF (GPIOB->BSRR = 0x00400000)
 //GPIOB pin7     Rx Usart 1
 
 //GPIOB pin8
@@ -259,8 +266,14 @@
 
 //GPIOB pin9     
 #define CTRL_FAN ((GPIOB->ODR & 0x0200) != 0)
-#define CTRL_FAN_ON GPIOB->BSRR = 0x00000200
-#define CTRL_FAN_OFF GPIOB->BSRR = 0x02000000
+#define CTRL_FAN_ON (GPIOB->BSRR = 0x00000200)
+#define CTRL_FAN_OFF (GPIOB->BSRR = 0x02000000)
+
+#ifdef USE_TESTS_PIN
+#define TEST_PIN2    CTRL_FAN
+#define TEST_PIN2_ON    CTRL_FAN_ON
+#define TEST_PIN2_OFF    CTRL_FAN_OFF
+#endif
 
 #endif    //HARDWARE_VERSION_2_0
 

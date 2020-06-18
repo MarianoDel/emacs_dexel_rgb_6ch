@@ -121,7 +121,7 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
         set_option_string4("Hardware config.");
         set_option_string5("Save & Exit");
         blank_option_string6();
-        
+
         mm_selected = 1;
         MainMenu_SetOptions(mm_selected);
 

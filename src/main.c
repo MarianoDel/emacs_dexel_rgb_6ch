@@ -520,18 +520,15 @@ int main(void)
     ////////////////////////////////////////
     // Pruebo el Blanco directo en el PWM //
     ////////////////////////////////////////
-    // 3600 puede ser un minimo con el led apenas prendido
-    // 4800 serian 27.64V
-    // 3400 serian 20.64V
-    // pwm_dimming_t dimmer = {
-    //     .time_step_ms = 25,
-    //     .pwm_min = 0,
-    //     .pwm_max = 4800,
-    //     .pwm_increment = 12,
-    //     .channel = CH4_VAL_OFFSET
-    // };
+    pwm_dimming_t dimmer = {
+        .time_step_ms = 25,
+        .pwm_min = 2,
+        .pwm_max = 400,
+        .pwm_increment = 1,
+        .channel = CH3_VAL_OFFSET
+    };
         
-    // TEST_Pwm_Dimming(&dimmer);    //DCM -> CCM
+    TEST_Pwm_Dimming(&dimmer);    //DCM -> CCM
 
     // pwm_dimming_t dimmer = {
     //     .time_step_ms = 5,
@@ -545,10 +542,6 @@ int main(void)
     //-- FIN Para Debug Test inicial de PWMs y DMXs
 
 
-    
-    
-
-    
 
     while (1)
     {
@@ -760,7 +753,7 @@ int main(void)
         UpdateSwitches();
 
         // update de LCD
-        // display_update_int_state_machine();
+        display_update_int_state_machine();
         
 
         //sensado de temperatura

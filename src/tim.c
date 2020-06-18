@@ -161,6 +161,8 @@ void TIM_1_Init (void)
     TIM1->PSC = 1;
 #elif defined USE_FREQ_16KHZ
     TIM1->PSC = 2;
+#elif defined USE_FREQ_4_8KHZ
+    TIM1->PSC = 9;
 #else
 #error "set freq on hard.h"
 #endif
@@ -312,6 +314,8 @@ void TIM_3_Init (void)
     TIM3->PSC = 1;
 #elif defined USE_FREQ_16KHZ
     TIM3->PSC = 2;
+#elif defined USE_FREQ_4_8KHZ
+    TIM3->PSC = 9;
 #else
 #error "set freq on hard.h"
 #endif

@@ -396,7 +396,6 @@ void display_update_int_state_machine (void)
     case DISPLAY_UPDATE_SEND_PAGE:
         cmdbuf[0] = 0x40;
         memcpy(cmdbuf + 1, SSD1306_buffer + 1 + d_update_page * 128, 128);
-
         display_write_buf_int( cmdbuf, sizeof(cmdbuf) );    //size cmdbuf = 129
         d_update_st++;
         break;

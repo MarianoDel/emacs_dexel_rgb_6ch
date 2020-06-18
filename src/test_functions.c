@@ -40,6 +40,7 @@ typedef enum {
 
 
 // Module Private Functions ----------------------------------------------------
+void TEST_LoadPWM (unsigned char, unsigned short);
 
 
 // Module Functions ------------------------------------------------------------
@@ -194,11 +195,19 @@ void TEST_Pwm_Dimming (pwm_dimming_t * dim)
                         pwm_value = dim->pwm_max;
 
                     ch_pwm = pwm_value;
-                    
+
+#ifdef USE_PWM_WITH_DITHER                    
                     if (ch_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
                         ch_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
 
+
                     TIM_LoadDitherSequences(dim->channel, ch_pwm);
+#else
+                    if (ch_pwm > DUTY_MAX_ALLOWED)
+                        ch_pwm = DUTY_MAX_ALLOWED;
+                    
+                    TEST_LoadPWM(dim->channel, ch_pwm);
+#endif
                     
                 }
                 else
@@ -229,10 +238,17 @@ void TEST_Pwm_Dimming (pwm_dimming_t * dim)
 
                     ch_pwm = pwm_value;
 
+#ifdef USE_PWM_WITH_DITHER
                     if (ch_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
                         ch_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
 
                     TIM_LoadDitherSequences(dim->channel, ch_pwm);
+#else
+                    if (ch_pwm > DUTY_MAX_ALLOWED)
+                        ch_pwm = DUTY_MAX_ALLOWED;
+                    
+                    TEST_LoadPWM(dim->channel, ch_pwm);
+#endif
 
                 }
                 else
@@ -254,6 +270,37 @@ void TEST_Pwm_Dimming (pwm_dimming_t * dim)
             break;
         }
     }
+}
+
+
+void TEST_LoadPWM (unsigned char which_ch, unsigned short new_duty)
+{
+    switch (which_ch)
+    {
+    case CH1_VAL_OFFSET:
+        Update_PWM1(new_duty);
+        break;
+
+    case CH2_VAL_OFFSET:
+        Update_PWM2(new_duty);
+        break;
+
+    case CH3_VAL_OFFSET:
+        Update_PWM3(new_duty);
+        break;
+
+    case CH4_VAL_OFFSET:
+        Update_PWM4(new_duty);
+        break;
+
+    case CH5_VAL_OFFSET:
+        Update_PWM5(new_duty);
+        break;
+
+    case CH6_VAL_OFFSET:
+        Update_PWM6(new_duty);
+        break;
+    }            
 }
 
 //--- end of file ---//
