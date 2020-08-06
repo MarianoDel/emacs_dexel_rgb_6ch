@@ -14,6 +14,7 @@
 #include "hard.h"
 #include "flash_program.h"
 #include "tim.h"
+#include "pwm.h"
 
 
 // Externals -------------------------------------------------------------------

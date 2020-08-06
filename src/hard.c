@@ -10,12 +10,6 @@
 #include "hard.h"
 #include "stm32f0xx.h"
 
-#include "dsp.h"
-#include "adc.h"
-#include "tim.h"
-
-#include "flash_program.h"
-
 #include <string.h>
 
 #ifdef USART2_DEBUG_MODE
@@ -23,20 +17,179 @@
 #include "uart.h"
 #endif
 
-/* Externals variables --------------------------------------------------------*/
-extern volatile unsigned char switches_timer;
-extern volatile unsigned short timer_standby;
 
-extern volatile unsigned short adc_ch [];
+#define SWITCHES_TIMER_RELOAD    5
+#define SWITCHES_THRESHOLD_FULL	1000		//5 segundos
+#define SWITCHES_THRESHOLD_HALF	100		//1 segundo
+#define SWITCHES_THRESHOLD_MIN	5		//25 ms
 
-extern ma16_u16_data_obj_t st_sp1;
-extern ma16_u16_data_obj_t st_sp2;
+#define ENCODER_COUNTER_ROOF    10
+#define ENCODER_COUNTER_THRESHOLD    3
 
-extern parameters_typedef mem_conf;
-extern unsigned char data7[];
-extern unsigned char data512[];
+// Externals -------------------------------------------------------------------
 
-/* Global variables -----------------------------------------------------------*/
+
+// Globals ---------------------------------------------------------------------
+volatile unsigned char switches_timer = 0;
+
+
+
+// Module Private Functions ----------------------------------------------------
+void UpdateSwitches (void);
+void UpdateEncoderFilters (void);
+
+
+// Module Functions ------------------------------------------------------------
+void HARD_Timeouts (void)
+{
+    if (switches_timer)
+        switches_timer--;
+    
+    UpdateSwitches();
+
+    UpdateEncoderFilters ();
+
+}
+
+
+
+// Module Functions ------------------------------------------------------------
+
+
+
+
+// Encoder Routines ------------------------------------------------------------
+unsigned short sw_set_cntr = 0;
+
+resp_sw_t CheckSET (void)
+{
+    resp_sw_t sw = SW_NO;
+    
+    if (sw_set_cntr > SWITCHES_THRESHOLD_FULL)
+        sw = SW_FULL;
+    else if (sw_set_cntr > SWITCHES_THRESHOLD_HALF)
+        sw = SW_HALF;
+    else if (sw_set_cntr > SWITCHES_THRESHOLD_MIN)
+        sw = SW_MIN;
+
+    return sw;    
+}
+
+
+void UpdateSwitches (void)
+{
+    if (!switches_timer)
+    {
+        if (ENC_SW)
+            sw_set_cntr++;
+        else if (sw_set_cntr > 50)
+            sw_set_cntr -= 50;
+        else if (sw_set_cntr > 10)
+            sw_set_cntr -= 5;
+        else if (sw_set_cntr)
+            sw_set_cntr--;
+        
+        switches_timer = SWITCHES_TIMER_RELOAD;
+    }       
+}
+
+
+volatile unsigned char enc_clk_cntr = 0;
+volatile unsigned char enc_dt_cntr = 0;
+void UpdateEncoderFilters (void)
+{
+    if (ENC_CLK)
+    {
+        if (enc_clk_cntr < ENCODER_COUNTER_ROOF)
+            enc_clk_cntr++;
+    }
+    else
+    {
+        if (enc_clk_cntr)
+            enc_clk_cntr--;        
+    }
+
+    if (ENC_DT)
+    {
+        if (enc_dt_cntr < ENCODER_COUNTER_ROOF)
+            enc_dt_cntr++;
+    }
+    else
+    {
+        if (enc_dt_cntr)
+            enc_dt_cntr--;        
+    }
+}
+
+
+unsigned char last_clk = 0;
+unsigned char encoder_ccw = 0;
+unsigned char encoder_cw = 0;
+void UpdateEncoder (void)
+{
+    unsigned char current_clk = 0;
+
+    //check if we have rising edge on clk
+    if (enc_clk_cntr > ENCODER_COUNTER_THRESHOLD)
+        current_clk = 1;
+    else
+        current_clk = 0;
+    
+    if ((last_clk == 0) && (current_clk == 1))    //rising edge
+    {
+        //have a new clock edge
+        if (enc_dt_cntr > ENCODER_COUNTER_THRESHOLD)
+        {
+            //CW
+            if (encoder_cw < 1)
+                encoder_cw++;
+        }
+        else
+        {
+            //CCW
+            if (encoder_ccw < 1)
+                encoder_ccw++;
+        }
+    }
+
+    if (last_clk != current_clk)
+        last_clk = current_clk;
+}
+
+
+unsigned char CheckCCW (void)
+{
+    unsigned char a = 0;
+    
+    if (encoder_ccw)
+    {
+        encoder_ccw--;
+        a = 1;
+    }
+    
+    return a;
+}
+
+
+unsigned char CheckCW (void)
+{
+    unsigned char a = 0;
+    
+    if (encoder_cw)
+    {
+        encoder_cw--;
+        a = 1;
+    }
+    
+    return a;
+}
+
+// End of Encoder Routines -----------------------------------------------------
+
+
+
+
+#ifdef HARDWARE_VERSION_2_0
 //para los switches
 unsigned short s1 = 0;
 unsigned short s2 = 0;
@@ -44,14 +197,6 @@ unsigned short s3 = 0;
 unsigned short s4 = 0;
 unsigned char s_wait_end = 0;
 
-#define sequence_ready         (DMA1->ISR & DMA_ISR_TCIF1)
-#define sequence_ready_reset   (DMA1->IFCR = DMA_ISR_TCIF1)
-
-/* Module Private Function Declarations ---------------------------------------*/ 
-unsigned char GetProcessedSegment (unsigned char);
-
-
-/* Module Functions Definitions -----------------------------------------------*/
 sw_actions_t CheckSW (void)
 {
     sw_actions_t action = do_nothing;
@@ -89,8 +234,6 @@ sw_actions_t CheckSW (void)
     return action;    
 }
 
-
-/* Module Functions Definitions -----------------------------------------------*/
 unsigned char CheckS1 (void)	//cada check tiene 10ms
 {
     if (s1 > SWITCHES_THRESHOLD_FULL)
@@ -195,69 +338,6 @@ void UpdateSwitches (void)
     }
 }
 
-
-
-void PWMChannelsReset (void)
-{
-#ifdef USE_PWM_WITH_DITHER
-    DisableDitherInterrupt;
-    Update_PWM1(0);
-    Update_PWM2(0);
-    Update_PWM3(0);
-    Update_PWM4(0);
-    Update_PWM5(0);
-    Update_PWM6(0);
-    TIM_LoadDitherSequences(0, 0);
-    TIM_LoadDitherSequences(1, 0);
-    TIM_LoadDitherSequences(2, 0);
-    TIM_LoadDitherSequences(3, 0);
-    TIM_LoadDitherSequences(4, 0);
-    TIM_LoadDitherSequences(5, 0);
-    EnableDitherInterrupt;
-#else
-    Update_PWM1(0);
-    Update_PWM2(0);
-    Update_PWM3(0);
-    Update_PWM4(0);
-    Update_PWM5(0);
-    Update_PWM6(0);
 #endif
-}
-
-
-unsigned short PWMChannelsOffset (unsigned char dmx_data, unsigned short pwm_max_curr_data)
-{
-    unsigned int calc = 0;
-    
-    if (!dmx_data)
-        calc = 0;
-    else
-    {
-        //tengo 10 puntos minimo para activar transistores y mosfet
-        calc = (dmx_data - 1) * (pwm_max_curr_data - DUTY_TRANSISTORS_ON);
-        calc = calc / 255;
-        // calc >>= 8;
-        calc += DUTY_TRANSISTORS_ON;
-    }
-    return (unsigned short) calc;
-}
-
-unsigned char DMXMapping (unsigned char to_map)
-{
-    unsigned short temp = 0;
-    if (to_map < 30)
-    {
-        temp = to_map * 183;
-        temp = temp / 30;
-    }
-    else
-    {
-        temp = to_map * 72;
-        temp = temp / 225;
-        temp += 173;
-    }
-
-    return temp;
-}
 
 //--- end of file ---//

@@ -34,6 +34,7 @@
 #include "mainmenu.h"
 #include "screen.h"
 #include "ssd1306.h"
+#include "pwm.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -52,7 +53,7 @@ volatile unsigned char seq_ready;
 
 // --------- Externals de los timers ---------
 volatile unsigned char timer_1seg = 0;
-volatile unsigned char switches_timer = 0;
+
 
 #ifdef USE_PWM_DELTA_INT_TIMER_FAST
 volatile unsigned short dmx_timer_hundreds_us_ch1 = 0;
@@ -206,7 +207,7 @@ unsigned short Distance (unsigned short, unsigned short);
 void CheckFiltersAndOffsets (unsigned char *);
 void CheckFiltersAndOffsets2 (unsigned char *, unsigned char *);
 void UpdateFiltersTest_Reset (void);
-
+void PWMChannelsReset (void);
 
 //-------------------------------------------//
 // @brief  Main program.
@@ -440,6 +441,7 @@ int main(void)
     // Inicio del Programa Principal //
     ///////////////////////////////////
     // OLED Init
+    Wait_ms(500);    //for supply stability
     I2C2_Init();
     Wait_ms(10);
 
@@ -474,7 +476,7 @@ int main(void)
     //--- Mensaje Bienvenida ---//
     //---- Defines from hard.h -----//
 #ifdef USART2_DEBUG_MODE
-    Usart2Send("\nDexel RGB 6CH Bidireccional\n -- powered by: Kirno Technology --\n");
+    Usart2Send("\nDexel RGB 6CH Bidirectional\n -- powered by: Kirno Technology --\n");
     Wait_ms(100);
 #ifdef HARD
     Usart2Send(HARD);
@@ -628,7 +630,8 @@ int main(void)
             FuncsMasterMode(ch_values);
             CheckFiltersAndOffsets2 (ch_values, ch_mode_change_segment);
 
-            if ((SW_ENTER() > S_HALF) || (SW_BACK() > S_HALF))
+            // if ((SW_ENTER() > S_HALF) || (SW_BACK() > S_HALF))
+            if (CheckSET() > SW_NO)
                 main_state = MAIN_ENTERING_MAIN_MENU;
 
             if (!timer_standby)
@@ -668,7 +671,8 @@ int main(void)
             }
 #endif
 
-            if ((SW_ENTER() > S_HALF) || (SW_BACK() > S_HALF))
+            // if ((SW_ENTER() > S_HALF) || (SW_BACK() > S_HALF))
+            if (CheckSET() > SW_NO)
                 main_state = MAIN_ENTERING_MAIN_MENU;
 
             break;
@@ -677,7 +681,8 @@ int main(void)
             FuncsProgramsMode(ch_values);
             CheckFiltersAndOffsets2 (ch_values, ch_mode_change_segment);
 
-            if ((SW_ENTER() > S_HALF) || (SW_BACK() > S_HALF))
+            // if ((SW_ENTER() > S_HALF) || (SW_BACK() > S_HALF))
+            if (CheckSET() > SW_NO)
                 main_state = MAIN_ENTERING_MAIN_MENU;
 
             break;
@@ -726,7 +731,7 @@ int main(void)
             action = do_nothing;
 
             // Check switches first
-            action = CheckSW();        
+            action = CheckSET();        
             resp = MainMenu_Update(action);
 
             if (resp == resp_need_to_save)
@@ -817,9 +822,6 @@ void TimingDelay_Decrement(void)
     if (temp_sample_timer)
         temp_sample_timer--;
 
-    if (switches_timer)
-        switches_timer--;
-
     if (dmx_filters_timer)
         dmx_filters_timer--;
 
@@ -836,6 +838,9 @@ void TimingDelay_Decrement(void)
 
     //para main menu
     // UpdateTimerModeMenu ();
+
+    //para funciones en hard
+    HARD_Timeouts();
 }
 
 
@@ -1218,6 +1223,7 @@ void UpdateFiltersTest_Reset (void)
     ch2_iir.a_param_to_div_by_1000 = 998;
     ch2_iir.output_z1 = 0;
 }
+
 
 
 //--- end of file ---//

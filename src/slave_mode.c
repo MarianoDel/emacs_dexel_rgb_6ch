@@ -222,10 +222,7 @@ inline void UpdateSlaveModeMenuManager (void)
 
     case MENU_OFF:
         //estado menu apagado
-        if ((SW_UP() > S_NO) ||
-            (SW_DWN() > S_NO) ||
-            (SW_ENTER() > S_NO) ||
-            (SW_BACK() > S_NO) ||
+        if ((CheckSET() > SW_NO) ||
             (slave_mode_dmx_receiving_timer))
         {
             slave_mode_enable_menu_timer = TT_MENU_TIMEOUT;    //vuelvo a mostrar

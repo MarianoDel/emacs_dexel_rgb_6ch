@@ -84,26 +84,20 @@
 #define TIM17EnableInterrupt     (TIM17->DIER |= TIM_DIER_UIE)
 
 
-#define EnablePreload_CH1    (TIM1->CCMR1 |= TIM_CCMR1_OC1PE)
-#define EnablePreload_CH2    (TIM1->CCMR1 |= TIM_CCMR1_OC2PE)
-#define EnablePreload_CH3    (TIM3->CCMR1 |= TIM_CCMR1_OC1PE)
-#define EnablePreload_CH4    (TIM3->CCMR1 |= TIM_CCMR1_OC2PE)
-#define EnablePreload_CH5    (TIM3->CCMR2 |= TIM_CCMR2_OC3PE)
-#define EnablePreload_CH6    (TIM3->CCMR2 |= TIM_CCMR2_OC4PE)
+#define EnablePreload_TIM1_CH1    (TIM1->CCMR1 |= TIM_CCMR1_OC1PE)
+#define EnablePreload_TIM1_CH2    (TIM1->CCMR1 |= TIM_CCMR1_OC2PE)
+#define EnablePreload_TIM3_CH1    (TIM3->CCMR1 |= TIM_CCMR1_OC1PE)
+#define EnablePreload_TIM3_CH2    (TIM3->CCMR1 |= TIM_CCMR1_OC2PE)
+#define EnablePreload_TIM3_CH3    (TIM3->CCMR2 |= TIM_CCMR2_OC3PE)
+#define EnablePreload_TIM3_CH4    (TIM3->CCMR2 |= TIM_CCMR2_OC4PE)
 
-#define DisablePreload_CH1    (TIM1->CCMR1 &= ~TIM_CCMR1_OC1PE)
-#define DisablePreload_CH2    (TIM1->CCMR1 &= ~TIM_CCMR1_OC2PE)
-#define DisablePreload_CH3    (TIM3->CCMR1 &= ~TIM_CCMR1_OC1PE)
-#define DisablePreload_CH4    (TIM3->CCMR1 &= ~TIM_CCMR1_OC2PE)
-#define DisablePreload_CH5    (TIM3->CCMR2 &= ~TIM_CCMR2_OC3PE)
-#define DisablePreload_CH6    (TIM3->CCMR2 &= ~TIM_CCMR2_OC4PE)
+#define DisablePreload_TIM1_CH1    (TIM1->CCMR1 &= ~TIM_CCMR1_OC1PE)
+#define DisablePreload_TIM1_CH2    (TIM1->CCMR1 &= ~TIM_CCMR1_OC2PE)
+#define DisablePreload_TIM3_CH1    (TIM3->CCMR1 &= ~TIM_CCMR1_OC1PE)
+#define DisablePreload_TIM3_CH2    (TIM3->CCMR1 &= ~TIM_CCMR1_OC2PE)
+#define DisablePreload_TIM3_CH3    (TIM3->CCMR2 &= ~TIM_CCMR2_OC3PE)
+#define DisablePreload_TIM3_CH4    (TIM3->CCMR2 &= ~TIM_CCMR2_OC4PE)
 
-#define Update_PWM1(X)    Update_TIM1_CH1(X)
-#define Update_PWM2(X)    Update_TIM1_CH2(X)
-#define Update_PWM3(X)    Update_TIM3_CH1(X)
-#define Update_PWM4(X)    Update_TIM3_CH2(X)
-#define Update_PWM5(X)    Update_TIM3_CH3(X)
-#define Update_PWM6(X)    Update_TIM3_CH4(X)
 
 //--- Exported functions ---//
 void TIM1_BRK_UP_TRG_COM_IRQHandler (void);
