@@ -207,7 +207,7 @@ unsigned short Distance (unsigned short, unsigned short);
 void CheckFiltersAndOffsets (unsigned char *);
 void CheckFiltersAndOffsets2 (unsigned char *, unsigned char *);
 void UpdateFiltersTest_Reset (void);
-void PWMChannelsReset (void);
+
 
 //-------------------------------------------//
 // @brief  Main program.
@@ -644,7 +644,9 @@ int main(void)
         case MAIN_IN_SLAVE_MODE:
             FuncSlaveMode (ch_values);
             CheckFiltersAndOffsets (ch_values);
-            // CheckFiltersAndOffsets2 (ch_values, ch_mode_change_segment);            
+
+
+// CheckFiltersAndOffsets2 (ch_values, ch_mode_change_segment);            
 
 #ifdef USART2_DEBUG_MODE
             if (!timer_standby)
