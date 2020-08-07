@@ -279,27 +279,27 @@ void TEST_LoadPWM (unsigned char which_ch, unsigned short new_duty)
     switch (which_ch)
     {
     case CH1_VAL_OFFSET:
-        Update_PWM1(new_duty);
+        PWM_Update_CH1(new_duty);
         break;
 
     case CH2_VAL_OFFSET:
-        Update_PWM2(new_duty);
+        PWM_Update_CH2(new_duty);
         break;
 
     case CH3_VAL_OFFSET:
-        Update_PWM3(new_duty);
+        PWM_Update_CH3(new_duty);
         break;
 
     case CH4_VAL_OFFSET:
-        Update_PWM4(new_duty);
+        PWM_Update_CH4(new_duty);
         break;
 
     case CH5_VAL_OFFSET:
-        Update_PWM5(new_duty);
+        PWM_Update_CH5(new_duty);
         break;
 
     case CH6_VAL_OFFSET:
-        Update_PWM6(new_duty);
+        PWM_Update_CH6(new_duty);
         break;
     }            
 }

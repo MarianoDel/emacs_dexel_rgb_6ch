@@ -25,17 +25,13 @@
 #endif
 //----------- End of ADC Configurations --------------//
 
-#define I_Channel_1		adc_ch[0]
-#define I_Channel_2	        adc_ch[1]
-#define I_Channel_3	       	adc_ch[2]
-#define I_Channel_4	      	adc_ch[3]
-#define I_Channel_5	      	adc_ch[4]
-#define I_Channel_6	      	adc_ch[5]
-#define V_Sense_48V	      	adc_ch[6]
-#define Temp_Channel	      	adc_ch[7]
+#define V_Sense_48V	      	adc_ch[0]
+#define Temp_Channel	      	adc_ch[1]
 
-#define ADC_CHANNEL_QUANTITY         8
+#define ADC_CHANNEL_QUANTITY         2
 #define ADC_LAST_CHANNEL_QUANTITY    (ADC_CHANNEL_QUANTITY - 1)
+
+#define ADC_All_Orer_Channels    (ADC_Channel_12 | ADC_Channel_14)
 //----------- End of ADC Defines --------------//
 
 #define RCC_ADC_CLK 		(RCC->APB2ENR & 0x00000200)

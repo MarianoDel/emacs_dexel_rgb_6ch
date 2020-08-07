@@ -41,13 +41,7 @@
 // --- How to control the PWM generation, select only one --- //
 #define USE_PWM_DIRECT    //mapea lo que llega en el dmx al PWM directo
 // #define USE_PWM_WITH_DELTA    //mapea la corriente pero la busca punto a punto
-// #define USE_PWM_DELTA_INT_TIMER_FAST
 
-
-// --- If Delta mode how to go throw steps --- //
-// #define DELTA_SINGLE_STEP
-#define DELTA_MULTIPLE_STEPS_50
-// #define DELTA_MULTIPLE_STEPS_100
 
 // --- Dither Selection --- //
 // #define USE_PWM_WITH_DITHER
@@ -56,10 +50,8 @@
 #define DITHER_8
 // #define DITHER_16
 
-// --- What to do with the slow segment --- //
-// #define USE_SLOW_SEGMENT_LAST_BUT_ONE
-
-#define DMX_UPDATE_TIMER_FAST    4    //tick en 200us
+// --- How often we update the PWM outputs --- //
+#define DMX_UPDATE_TIMER_WITH_DELTA    3    //tick en 1ms
 #define DMX_UPDATE_TIMER    5    //si pongo esto en 2 se ven saltos en el blanco incluso con delta-single-step
 // #define DMX_UPDATE_TIMER_WITH_DITHER    2
 
@@ -82,9 +74,6 @@
 #define WHITE_AS_IN_RGB		//el blanco lo forma con los 3 colores
 //#define WHITE_AS_WHITE	//el blanco tiene leds blancos individuales
 
-
-// --- Enable Test Pin or Use Pwm
-#define USE_TESTS_PIN
 
 // --- Sanity checks --- //
 #if ((!defined USE_PWM_DIRECT) \

@@ -31,12 +31,12 @@ void PWMChannelsReset (void)
 {
 #ifdef USE_PWM_WITH_DITHER
     DisableDitherInterrupt;
-    Update_PWM1(0);
-    Update_PWM2(0);
-    Update_PWM3(0);
-    Update_PWM4(0);
-    Update_PWM5(0);
-    Update_PWM6(0);
+    PWM_Update_CH1(0);
+    PWM_Update_CH2(0);
+    PWM_Update_CH3(0);
+    PWM_Update_CH4(0);
+    PWM_Update_CH5(0);
+    PWM_Update_CH6(0);
     TIM_LoadDitherSequences(0, 0);
     TIM_LoadDitherSequences(1, 0);
     TIM_LoadDitherSequences(2, 0);
@@ -45,12 +45,12 @@ void PWMChannelsReset (void)
     TIM_LoadDitherSequences(5, 0);
     EnableDitherInterrupt;
 #else
-    Update_PWM1(0);
-    Update_PWM2(0);
-    Update_PWM3(0);
-    Update_PWM4(0);
-    Update_PWM5(0);
-    Update_PWM6(0);
+    PWM_Update_CH1(0);
+    PWM_Update_CH2(0);
+    PWM_Update_CH3(0);
+    PWM_Update_CH4(0);
+    PWM_Update_CH5(0);
+    PWM_Update_CH6(0);
 #endif
 }
 

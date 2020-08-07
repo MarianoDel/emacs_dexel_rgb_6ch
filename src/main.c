@@ -99,8 +99,6 @@ unsigned short sp4_filtered = 0;
 unsigned short sp5_filtered = 0;
 unsigned short sp6_filtered = 0;
 
-unsigned char ch_mode_change_segment [6] = { 0 };    
-
 
 #ifdef USE_FILTER_LENGHT_16
 ma16_u16_data_obj_t st_sp1;
@@ -262,20 +260,6 @@ int main(void)
 #ifdef USE_PWM_DELTA_INT_TIMER_FAST
     TIM_17_Init();
 #endif
-
-    // EnablePreload_CH1;
-    // EnablePreload_CH2;
-    // EnablePreload_CH3;
-    // EnablePreload_CH4;
-    // EnablePreload_CH5;
-    // EnablePreload_CH6;
-
-    // DisablePreload_CH1;
-    // DisablePreload_CH2;
-    // DisablePreload_CH3;
-    // DisablePreload_CH4;
-    // DisablePreload_CH5;
-    // DisablePreload_CH6;
 
     PWMChannelsReset();
 
@@ -512,39 +496,6 @@ int main(void)
 
     memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
 
-    //-- Para Debug Test inicial de PWMs y DMXs
-    ///////////////////////////////////
-    // Pruebo el Blanco desde el DMX //
-    ///////////////////////////////////
-    // TEST_White_Dmx_Dimming_By_Segments(25, 1, 255);
-    // TEST_White_Dmx_Dimming_By_Change_Mode(25, 5, 255);
-    
-    
-    ////////////////////////////////////////
-    // Pruebo el Blanco directo en el PWM //
-    ////////////////////////////////////////
-    // pwm_dimming_t dimmer = {
-    //     .time_step_ms = 25,
-    //     .pwm_min = 2,
-    //     .pwm_max = 400,
-    //     .pwm_increment = 1,
-    //     .channel = CH3_VAL_OFFSET
-    // };
-        
-    // TEST_Pwm_Dimming(&dimmer);    //DCM -> CCM
-
-    // pwm_dimming_t dimmer = {
-    //     .time_step_ms = 5,
-    //     .pwm_min = 0,
-    //     .pwm_max = 4766,
-    //     .pwm_increment = 12,
-    //     .channel = CH3_VAL_OFFSET
-    // };
-        
-    // TEST_Pwm_Dimming(&dimmer);    //DCM -> CCM
-    //-- FIN Para Debug Test inicial de PWMs y DMXs
-
-
 
     while (1)
     {
@@ -564,25 +515,15 @@ int main(void)
 
             //reseteo canales
             PWMChannelsReset();
-                        
+
+            //limpio los filtros
+            UpdateFiltersTest_Reset();
+
 #ifdef USART2_DEBUG_MODE            
             sprintf(s_to_send, "prog type: %d\n", mem_conf.program_type);
             Usart2Send(s_to_send);
             Wait_ms(100);
-            sprintf(s_to_send, "Max pwm channels: %d %d %d %d %d %d\n",
-                    mem_conf.pwm_chnls[0],
-                    mem_conf.pwm_chnls[1],
-                    mem_conf.pwm_chnls[2],
-                    mem_conf.pwm_chnls[3],
-                    mem_conf.pwm_chnls[4],
-                    mem_conf.pwm_chnls[5]);
-            
-            Usart2Send(s_to_send);
-            Wait_ms(100);
 #endif
-
-            //limpio los filtros
-            UpdateFiltersTest_Reset();
 
             main_state++;            
             break;
@@ -628,7 +569,7 @@ int main(void)
 
         case MAIN_IN_MASTER_MODE:    //por ahora programs mode
             FuncsMasterMode(ch_values);
-            CheckFiltersAndOffsets2 (ch_values, ch_mode_change_segment);
+            CheckFiltersAndOffsets (ch_values);
 
             // if ((SW_ENTER() > S_HALF) || (SW_BACK() > S_HALF))
             if (CheckSET() > SW_NO)
@@ -681,7 +622,7 @@ int main(void)
 
         case MAIN_IN_PROGRAMS_MODE:
             FuncsProgramsMode(ch_values);
-            CheckFiltersAndOffsets2 (ch_values, ch_mode_change_segment);
+            CheckFiltersAndOffsets (ch_values);
 
             // if ((SW_ENTER() > S_HALF) || (SW_BACK() > S_HALF))
             if (CheckSET() > SW_NO)
@@ -865,6 +806,14 @@ unsigned short Distance (unsigned short a, unsigned short b)
 }
 
 
+#ifdef USE_PWM_WITH_DELTA
+unsigned short last_ch1_pwm = 0;
+unsigned short last_ch2_pwm = 0;
+unsigned short last_ch3_pwm = 0;
+unsigned short last_ch4_pwm = 0;
+unsigned short last_ch5_pwm = 0;
+unsigned short last_ch6_pwm = 0;
+#endif
 
 //aca filtro los offsets del pwm en vez del valor del canal
 //cada 5ms
@@ -883,331 +832,134 @@ void CheckFiltersAndOffsets (unsigned char * ch_dmx_val)
         pwm_value = *(ch_dmx_val + CH1_VAL_OFFSET) * DUTY_100_PERCENT;
         pwm_value = pwm_value / 255;
         ch1_pwm = MA16_U16Circular (&st_sp1, (unsigned short) pwm_value);
-        Update_PWM1(ch1_pwm);
+        PWM_Update_CH1(ch1_pwm);
 
         // channel 2
         pwm_value = *(ch_dmx_val + CH2_VAL_OFFSET) * DUTY_100_PERCENT;
         pwm_value = pwm_value / 255;
         ch2_pwm = MA16_U16Circular (&st_sp2, (unsigned short) pwm_value);
-        Update_PWM2(ch2_pwm);
+        PWM_Update_CH2(ch2_pwm);
 
         // channel 3
         pwm_value = *(ch_dmx_val + CH3_VAL_OFFSET) * DUTY_100_PERCENT;
         pwm_value = pwm_value / 255;
         ch3_pwm = MA16_U16Circular (&st_sp3, (unsigned short) pwm_value);
-        Update_PWM3(ch3_pwm);
+        PWM_Update_CH3(ch3_pwm);
 
         // channel 4
         pwm_value = *(ch_dmx_val + CH4_VAL_OFFSET) * DUTY_100_PERCENT;
         pwm_value = pwm_value / 255;
         ch4_pwm = MA16_U16Circular (&st_sp4, (unsigned short) pwm_value);
-        Update_PWM4(ch4_pwm);
+        PWM_Update_CH4(ch4_pwm);
 
         // channel 5
         pwm_value = *(ch_dmx_val + CH5_VAL_OFFSET) * DUTY_100_PERCENT;
         pwm_value = pwm_value / 255;
         ch5_pwm = MA16_U16Circular (&st_sp5, (unsigned short) pwm_value);
-        Update_PWM5(ch5_pwm);
+        PWM_Update_CH5(ch5_pwm);
 
         // channel 6
         pwm_value = *(ch_dmx_val + CH6_VAL_OFFSET) * DUTY_100_PERCENT;
         pwm_value = pwm_value / 255;
         ch6_pwm = MA16_U16Circular (&st_sp6, (unsigned short) pwm_value);
-        Update_PWM6(ch6_pwm);
+        PWM_Update_CH6(ch6_pwm);
     }
 #endif    //USE_PWM_DIRECT
-}
-
 
 #ifdef USE_PWM_WITH_DELTA
-unsigned short last_ch1_pwm = 0;
-unsigned short last_ch2_pwm = 0;
-unsigned short last_ch3_pwm = 0;
-unsigned short last_ch4_pwm = 0;
-unsigned short last_ch5_pwm = 0;
-unsigned short last_ch6_pwm = 0;
-#endif
-
-IIR_first_order_data_obj_t ch2_iir;
-
-unsigned short ch_minimun_value[6] = {46, 150, 150, 140, 140, 140};
-
-void CheckFiltersAndOffsets2 (unsigned char * ch_val, unsigned char * slow_segment)
-{
-    //filters para el dmx - generalmente 8 puntos a 200Hz -
-    //desde el sp al sp_filter
-#ifdef USE_PWM_DELTA_INT_TIMER_FAST
-    //cada 5ms mapeo los pwm y los cargo por interrupcion
     if (!dmx_filters_timer)
     {
-        dmx_filters_timer = DMX_UPDATE_TIMER;
+        unsigned int pwm_value = 0;
+        
+        dmx_filters_timer = DMX_UPDATE_TIMER_WITH_DELTA;
 
-        if (mem_conf.pwm_chnls[CH1_VAL_OFFSET])
+        // channel 1
+        pwm_value = *(ch_dmx_val + CH1_VAL_OFFSET) * DUTY_100_PERCENT;
+        pwm_value = pwm_value / 255;
+        if (last_ch1_pwm > (unsigned short) pwm_value)
         {
-            unsigned char slow_sgm = slow_segment[CH1_VAL_OFFSET];
-            
-            ch1_pwm = HARD_Map_New_DMX_Data(
-                mem_conf.segments[CH1_VAL_OFFSET],
-                *(ch_val + CH1_VAL_OFFSET),
-                slow_sgm);
-            
+            last_ch1_pwm--;
+            PWM_Update_CH1(last_ch1_pwm);
+        }
+        else if (last_ch1_pwm < (unsigned short) pwm_value)
+        {
+            last_ch1_pwm++;
+            PWM_Update_CH1(last_ch1_pwm);
         }
 
-        if (mem_conf.pwm_chnls[CH2_VAL_OFFSET])
+        // channel 2
+        pwm_value = *(ch_dmx_val + CH2_VAL_OFFSET) * DUTY_100_PERCENT;
+        pwm_value = pwm_value / 255;
+        if (last_ch2_pwm > (unsigned short) pwm_value)
         {
-            unsigned char slow_sgm = slow_segment[CH2_VAL_OFFSET];
-
-            ch2_pwm = HARD_Map_New_DMX_Data(
-                mem_conf.segments[CH2_VAL_OFFSET],
-                *(ch_val + CH2_VAL_OFFSET),
-                slow_sgm);
-            
+            last_ch2_pwm--;
+            PWM_Update_CH2(last_ch2_pwm);
+        }
+        else if (last_ch2_pwm < (unsigned short) pwm_value)
+        {
+            last_ch2_pwm++;
+            PWM_Update_CH2(last_ch2_pwm);
         }
 
-        if (mem_conf.pwm_chnls[CH3_VAL_OFFSET])
+        // channel 3
+        pwm_value = *(ch_dmx_val + CH3_VAL_OFFSET) * DUTY_100_PERCENT;
+        pwm_value = pwm_value / 255;
+        if (last_ch3_pwm > (unsigned short) pwm_value)
         {
-            unsigned char slow_sgm = slow_segment[CH3_VAL_OFFSET];
-
-            ch3_pwm = HARD_Map_New_DMX_Data(
-                mem_conf.segments[CH3_VAL_OFFSET],
-                *(ch_val + CH3_VAL_OFFSET),
-                slow_sgm);
-            
+            last_ch3_pwm--;
+            PWM_Update_CH3(last_ch3_pwm);
         }
-                
-        if (mem_conf.pwm_chnls[CH4_VAL_OFFSET])
+        else if (last_ch3_pwm < (unsigned short) pwm_value)
         {
-            unsigned char slow_sgm = slow_segment[CH4_VAL_OFFSET];
-
-            ch4_pwm = HARD_Map_New_DMX_Data(
-                mem_conf.segments[CH4_VAL_OFFSET],
-                *(ch_val + CH4_VAL_OFFSET),
-                slow_sgm);
-            
+            last_ch3_pwm++;
+            PWM_Update_CH3(last_ch3_pwm);
         }
 
-        if (mem_conf.pwm_chnls[CH5_VAL_OFFSET])
+        // channel 4
+        pwm_value = *(ch_dmx_val + CH4_VAL_OFFSET) * DUTY_100_PERCENT;
+        pwm_value = pwm_value / 255;
+        if (last_ch4_pwm > (unsigned short) pwm_value)
         {
-            unsigned char slow_sgm = slow_segment[CH5_VAL_OFFSET];
-
-            ch5_pwm = HARD_Map_New_DMX_Data(
-                mem_conf.segments[CH5_VAL_OFFSET],
-                *(ch_val + CH5_VAL_OFFSET),
-                slow_sgm);
-            
+            last_ch4_pwm--;
+            PWM_Update_CH4(last_ch4_pwm);
+        }
+        else if (last_ch4_pwm < (unsigned short) pwm_value)
+        {
+            last_ch4_pwm++;
+            PWM_Update_CH4(last_ch4_pwm);
         }
 
-        if (mem_conf.pwm_chnls[CH6_VAL_OFFSET])
+        // channel 5
+        pwm_value = *(ch_dmx_val + CH5_VAL_OFFSET) * DUTY_100_PERCENT;
+        pwm_value = pwm_value / 255;
+        if (last_ch5_pwm > (unsigned short) pwm_value)
         {
-            unsigned char slow_sgm = slow_segment[CH6_VAL_OFFSET];
-
-            ch6_pwm = HARD_Map_New_DMX_Data(
-                mem_conf.segments[CH6_VAL_OFFSET],
-                *(ch_val + CH6_VAL_OFFSET),
-                slow_sgm);
-            
+            last_ch5_pwm--;
+            PWM_Update_CH5(last_ch5_pwm);
         }
+        else if (last_ch5_pwm < (unsigned short) pwm_value)
+        {
+            last_ch5_pwm++;
+            PWM_Update_CH5(last_ch5_pwm);
+        }
+
+        // channel 6
+        pwm_value = *(ch_dmx_val + CH6_VAL_OFFSET) * DUTY_100_PERCENT;
+        pwm_value = pwm_value / 255;
+        if (last_ch6_pwm > (unsigned short) pwm_value)
+        {
+            last_ch6_pwm--;
+            PWM_Update_CH6(last_ch6_pwm);
+        }
+        else if (last_ch6_pwm < (unsigned short) pwm_value)
+        {
+            last_ch6_pwm++;
+            PWM_Update_CH6(last_ch6_pwm);
+        }
+        
     }
     
-#endif    //USE_PWM_DELTA_INT_TIMER_FAST
-
-#ifdef USE_PWM_DIRECT
-    if (!dmx_filters_timer)
-    {
-        dmx_filters_timer = DMX_UPDATE_TIMER;
-
-        // channel 1        
-        ch1_pwm = MA16_U16Circular (&st_sp1, ch1_pwm);
-//         if (mem_conf.pwm_chnls[CH1_VAL_OFFSET])
-//         {
-//             unsigned char slow_sgm = slow_segment[CH1_VAL_OFFSET];
-// #ifdef MAP_CURRENT_WITH_SLOW_SEGMENT      
-//             ch1_pwm = HARD_Map_New_DMX_Data(
-//                 mem_conf.segments[CH1_VAL_OFFSET],
-//                 *(ch_val + CH1_VAL_OFFSET),
-//                 slow_sgm,
-//                 ch_minimun_value[CH1_VAL_OFFSET]);
-// #endif
-// #ifdef MAP_CURRENT_DIRECT
-//             ch1_pwm = HARD_Process_New_PWM_Data(
-//                 mem_conf.segments[CH1_VAL_OFFSET],
-//                 *(ch_val + CH1_VAL_OFFSET));
-// #endif
-            
-// #ifdef USE_PWM_WITH_DELTA
-//             last_ch1_pwm = CalcNewDelta (last_ch1_pwm, ch1_pwm);
-// #ifdef USE_PWM_WITH_DITHER
-//             TIM_LoadDitherSequences(0, last_ch1_pwm);
-// #else
-//             Update_PWM1(last_ch1_pwm);
-// #endif
-// #endif
-
-// #ifdef USE_PWM_DIRECT
-//             ch1_pwm = MA16_U16Circular (&st_sp1, ch1_pwm);
-// #ifdef USE_PWM_WITH_DITHER
-//             TIM_LoadDitherSequences(0, ch1_pwm);
-// #else
-//             Update_PWM1(ch1_pwm);
-// #endif
-// #endif
-//         }
-        
-//         if (mem_conf.pwm_chnls[CH2_VAL_OFFSET])
-//         {
-//             unsigned char slow_sgm = slow_segment[CH2_VAL_OFFSET];
-
-// #ifdef MAP_CURRENT_WITH_SLOW_SEGMENT                  
-//             ch2_pwm = HARD_Map_New_DMX_Data(
-//                 mem_conf.segments[CH2_VAL_OFFSET],
-//                 *(ch_val + CH2_VAL_OFFSET),
-//                 slow_sgm,
-//                 ch_minimun_value[CH2_VAL_OFFSET]);                
-// #endif
-// #ifdef MAP_CURRENT_DIRECT            
-//             ch2_pwm = HARD_Process_New_PWM_Data(
-//                 mem_conf.segments[CH2_VAL_OFFSET],
-//                 *(ch_val + CH2_VAL_OFFSET));
-// #endif
-            
-// #ifdef USE_PWM_WITH_DELTA
-//             last_ch2_pwm = CalcNewDelta (last_ch2_pwm, ch2_pwm);
-//             Update_PWM2(last_ch2_pwm);
-// #else
-//             ch2_pwm = IIR_first_order(&ch2_iir, ch2_pwm);
-//             // ch2_pwm = MA16_U16Circular (&st_sp2, ch2_pwm);
-//             if (ch2_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
-//                 ch2_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
-            
-// #ifdef USE_PWM_WITH_DITHER
-//             TIM_LoadDitherSequences(1, ch2_pwm);
-// #else
-//             Update_PWM2(ch2_pwm);
-// #endif
-// #endif
-//         }
-        
-//         if (mem_conf.pwm_chnls[CH3_VAL_OFFSET])
-//         {
-//             unsigned char slow_sgm = slow_segment[CH3_VAL_OFFSET];
-            
-// #ifdef MAP_CURRENT_WITH_SLOW_SEGMENT      
-//             ch3_pwm = HARD_Map_New_DMX_Data(
-//                 mem_conf.segments[CH3_VAL_OFFSET],
-//                 *(ch_val + CH3_VAL_OFFSET),
-//                 slow_sgm,
-//                 ch_minimun_value[CH3_VAL_OFFSET]);                
-// #endif
-// #ifdef MAP_CURRENT_DIRECT
-//             ch3_pwm = HARD_Process_New_PWM_Data(
-//                 mem_conf.segments[CH3_VAL_OFFSET],
-//                 *(ch_val + CH3_VAL_OFFSET));
-// #endif
-            
-// #ifdef USE_PWM_WITH_DELTA
-//             last_ch3_pwm = CalcNewDelta (last_ch3_pwm, ch3_pwm);
-//             Update_PWM3(last_ch3_pwm);
-// #else
-//             ch3_pwm = MA16_U16Circular (&st_sp3, ch3_pwm);
-// #ifdef USE_PWM_WITH_DITHER
-//             TIM_LoadDitherSequences(2, ch3_pwm);
-// #else
-//             Update_PWM3(ch3_pwm);
-// #endif
-// #endif
-//         }
-        
-//         if (mem_conf.pwm_chnls[CH4_VAL_OFFSET])
-//         {
-//             unsigned char slow_sgm = slow_segment[CH4_VAL_OFFSET];
-
-// #ifdef MAP_CURRENT_WITH_SLOW_SEGMENT                  
-//             ch4_pwm = HARD_Map_New_DMX_Data(
-//                 mem_conf.segments[CH4_VAL_OFFSET],
-//                 *(ch_val + CH4_VAL_OFFSET),
-//                     slow_sgm,
-//                     ch_minimun_value[CH4_VAL_OFFSET]);                    
-// #endif
-// #ifdef MAP_CURRENT_DIRECT            
-//             ch4_pwm = HARD_Process_New_PWM_Data(
-//                 mem_conf.segments[CH4_VAL_OFFSET],
-//                 *(ch_val + CH4_VAL_OFFSET));
-// #endif
-            
-// #ifdef USE_PWM_WITH_DELTA
-//             last_ch4_pwm = CalcNewDelta (last_ch4_pwm, ch4_pwm);
-// #ifdef USE_PWM_WITH_DITHER
-//             TIM_LoadDitherSequences(3, last_ch4_pwm);
-// #else
-//             Update_PWM4(last_ch4_pwm);
-// #endif
-// #endif
-
-// #ifdef USE_PWM_DIRECT
-//             ch4_pwm = MA16_U16Circular (&st_sp4, ch4_pwm);
-//             // ch4_pwm = IIR_first_order(ch4_pwm);
-//             if (ch4_pwm > DUTY_MAX_ALLOWED_WITH_DITHER)
-//                 ch4_pwm = DUTY_MAX_ALLOWED_WITH_DITHER;
-            
-// #ifdef USE_PWM_WITH_DITHER
-//             // TIM_LoadDitherSequences(3, ch6_pwm);
-//             TIM_LoadDitherSequences(3, ch4_pwm);            
-// #else
-//             Update_PWM4(ch4_pwm);
-// #endif
-// #endif
-//         }
-        
-//         if (mem_conf.pwm_chnls[CH5_VAL_OFFSET])
-//         {
-//             unsigned char slow_sgm = slow_segment[CH5_VAL_OFFSET];
-            
-//             ch5_pwm = HARD_Map_New_DMX_Data(
-//                 mem_conf.segments[CH5_VAL_OFFSET],
-//                 *(ch_val + CH5_VAL_OFFSET),
-//                     slow_sgm,
-//                 ch_minimun_value[CH5_VAL_OFFSET]);                    
-
-// #ifdef USE_PWM_WITH_DELTA
-//             last_ch5_pwm = CalcNewDelta (last_ch5_pwm, ch5_pwm);
-//             Update_PWM5(last_ch5_pwm);
-// #else
-//             ch5_pwm = MA16_U16Circular (&st_sp5, ch5_pwm);
-// #ifdef USE_PWM_WITH_DITHER
-//             TIM_LoadDitherSequences(4, ch5_pwm);
-// #else
-//             Update_PWM5(ch5_pwm);
-// #endif
-// #endif
-//         }
-        
-//         if (mem_conf.pwm_chnls[CH6_VAL_OFFSET])
-//         {
-//             unsigned char slow_sgm = slow_segment[CH6_VAL_OFFSET];
-            
-//             ch6_pwm = HARD_Map_New_DMX_Data(
-//                 mem_conf.segments[CH6_VAL_OFFSET],
-//                 *(ch_val + CH6_VAL_OFFSET),
-//                     slow_sgm,
-//                     ch_minimun_value[CH6_VAL_OFFSET]);
-
-// #ifdef USE_PWM_WITH_DELTA
-//             last_ch6_pwm = CalcNewDelta (last_ch6_pwm, ch6_pwm);
-//             Update_PWM6(last_ch6_pwm);
-// #else
-//             ch6_pwm = MA16_U16Circular (&st_sp6, ch6_pwm);
-// #ifdef USE_PWM_WITH_DITHER
-//             TIM_LoadDitherSequences(5, ch6_pwm);
-// #else
-//             Update_PWM6(ch6_pwm);
-// #endif
-// #endif
-        // }
-        
-    }
-#endif    //USE_PWM_DIRECT_OR_DELTA
-
-
+#endif    //USE_PWM_WITH_DELTA
 }
 
 
@@ -1221,9 +973,14 @@ void UpdateFiltersTest_Reset (void)
     MA16_U16Circular_Reset(&st_sp5);
     MA16_U16Circular_Reset(&st_sp6);
 #endif
-    ch2_iir.b_param_to_div_by_1000 = 2;
-    ch2_iir.a_param_to_div_by_1000 = 998;
-    ch2_iir.output_z1 = 0;
+#ifdef USE_PWM_WITH_DELTA
+    last_ch1_pwm = 0;
+    last_ch2_pwm = 0;
+    last_ch3_pwm = 0;
+    last_ch4_pwm = 0;
+    last_ch5_pwm = 0;
+    last_ch6_pwm = 0;
+#endif
 }
 
 

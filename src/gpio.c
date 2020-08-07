@@ -62,12 +62,8 @@ void GPIO_Config (void)
         GPIOA_CLK_ON;
 
     temp = GPIOA->MODER;	//2 bits por pin
-    temp &= 0xFC30CC00;		//PA0 - PA1 (analog input); PA2 - PA3 alternative; PA4 analog; PA6 analog
-#ifdef USE_TESTS_PIN
-    temp |= 0x0005FFAF;		//PA8 - PA9 out PARA PRUEBAS; PA11 & PA12 input
-#else
-    temp |= 0x000A33AF;		//PA8 - PA9 (alternative); PA11 & PA12 input
-#endif
+    temp &= 0xFFF0F30F;		//PA2 - PA3 alternative; PA5 input
+    temp |= 0x000A00A0;		//PA8 - PA9 (alternative);
     GPIOA->MODER = temp;
 
     temp = GPIOA->OTYPER;	//1 bit por pin
@@ -81,8 +77,8 @@ void GPIO_Config (void)
     GPIOA->OSPEEDR = temp;
 
     temp = GPIOA->PUPDR;	//2 bits por pin
-    temp &= 0xFC3FFFFF;         //PA11 PA12 pull up
-    temp |= 0x01400000;
+    temp &= 0xFFFFFFFF;   
+    temp |= 0x00000000;
     GPIOA->PUPDR = temp;
     
 #endif
@@ -109,21 +105,21 @@ void GPIO_Config (void)
     GPIOB->OSPEEDR = temp;
 
     temp = GPIOB->PUPDR;	//2 bits por pin
-    temp &= 0x0FFFFFFF;        //PB14 PB15 pull up
-    temp |= 0x50000000;
+    temp &= 0xFFFFFFFF; 
+    temp |= 0x00000000;
     GPIOB->PUPDR = temp;
 
 #endif
 
 #ifdef GPIOC_ENABLE
 
-    //--- GPIO F ---//
+    //--- GPIO C ---//
     if (!GPIOC_CLK)
         GPIOC_CLK_ON;
 
     temp = GPIOC->MODER;	//2 bits por pin
-    temp &= 0xFFFFFCC0;		//PC0 - PC2 analog; PC4 analog
-    temp |= 0x0000033F;       
+    temp &= 0xFFFFFCCF;		//PC2 analog; PC4 analog
+    temp |= 0x00000330;       
     GPIOC->MODER = temp;
 
     temp = GPIOC->OTYPER;	//1 bit por pin
