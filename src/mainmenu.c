@@ -55,12 +55,7 @@ typedef enum {
     
     MAIN_MENU_PAGE_HARDWARE_A,
     MAIN_MENU_PAGE_HARDWARE_B,
-    MAIN_MENU_PAGE_HARDWARE_CURR_A,
-    MAIN_MENU_PAGE_HARDWARE_CURR_B,
-    MAIN_MENU_PAGE_HARDWARE_POWER_A,
-    MAIN_MENU_PAGE_HARDWARE_POWER_B,
-    MAIN_MENU_PAGE_HARDWARE_TEST_LED_A,
-    MAIN_MENU_PAGE_HARDWARE_TEST_LED_B,
+    MAIN_MENU_PAGE_HARDWARE_BACK,
 
     MAIN_MENU_PAGE_EXIT,
     MAIN_MENU_PAGE_SAVE_AND_EXIT
@@ -745,246 +740,48 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
         // HARDWARE CONFIGURATION //
         ////////////////////////////
     case MAIN_MENU_PAGE_HARDWARE_A:
-        // Menu Title
-        MainMenu_SetTitle(s_hardware_title);
+        resp = MainMenu_CheckFree(mm_action);
 
-        // Menu options
-        MainMenu_BlankOptions();
-        set_option_string1("Set max current");
-        set_option_string2("Set max power");
-        set_option_string3("Test LEDs current");
-        sprintf(s_temp, "Max Curr: %4dmA", curr_current);
-        set_option_string4(s_temp);
-        sprintf(s_temp, "Max power: %3dW", curr_power);
-        set_option_string5(s_temp);        
-        blank_option_string6();
+        if (resp == resp_ok)
+        {
+            // Menu Title
+            MainMenu_SetTitle(s_hardware_title);
 
-        mm_selected = 1;
-        MainMenu_SetOptions(mm_selected);
+            // Menu options
+            MainMenu_BlankOptions();
+            set_option_string1("Nothing to do here");
+            set_option_string2("Back!");
+            blank_option_string3();
+            blank_option_string4();
+            blank_option_string5();
+            blank_option_string6();
 
-        mm_changed = 1;
+            mm_selected = 2;
+            MainMenu_SetOptions(mm_selected);
+
+            mm_changed = 1;
         
-        mmenu_state = MAIN_MENU_PAGE_HARDWARE_B;
+            mmenu_state = MAIN_MENU_PAGE_HARDWARE_B;
+            resp = resp_continue;
+        }
         break;
 
     case MAIN_MENU_PAGE_HARDWARE_B:
-        if (mm_action == selection_dwn)
-        {
-            if (mm_selected < 3)
-                mm_selected++;
-            else
-                mm_selected = 1;
-
-            MainMenu_SetOptions(mm_selected);
-            mm_changed = 1;
-        }
-
-        if (mm_action == selection_up)
-        {
-            if (mm_selected > 1)
-                mm_selected--;
-            else
-                mm_selected = 3;
-
-            MainMenu_SetOptions(mm_selected);
-            mm_changed = 1;
-        }
-
         if (mm_action == selection_enter)
-        {
-            switch (mm_selected)
-            {
-            case 1:
-                mmenu_state = MAIN_MENU_PAGE_HARDWARE_CURR_A;
-                break;
-            case 2:
-                mmenu_state = MAIN_MENU_PAGE_HARDWARE_POWER_A;
-                break;
-            case 3:
-                mmenu_state = MAIN_MENU_PAGE_HARDWARE_TEST_LED_A;
-                break;
-            }            
-        }
-
-        if (mm_action == selection_back)
-            mmenu_state = MAIN_MENU_PAGE_MM_A;
+            mmenu_state = MAIN_MENU_PAGE_HARDWARE_BACK;
         
         break;
 
-    case MAIN_MENU_PAGE_HARDWARE_CURR_A:
-        // Menu Title
-        MainMenu_SetTitle("Hardware config.");
+    case MAIN_MENU_PAGE_HARDWARE_BACK:
+        resp = MainMenu_CheckFree(mm_action);
+        if (resp == resp_ok)
+        {
+            mmenu_state = MAIN_MENU_INIT;
+            resp = resp_continue;
+        }
+        break;
 
-        // Menu options
-        MainMenu_BlankOptions();
-        set_option_string1("Set with UP/DWN");
-        sprintf(s_temp, "Max curr: %4dmA", curr_current);
-        set_option_string2(s_temp);
-        blank_option_string3();        
-        blank_option_string4();
-        blank_option_string5();
-        blank_option_string6();
-        mm_selected = 0;
-        MainMenu_SetOptions(mm_selected);
-
-        mm_changed = 1;
         
-        mmenu_state = MAIN_MENU_PAGE_HARDWARE_CURR_B;
-        break;
-
-    case MAIN_MENU_PAGE_HARDWARE_CURR_B:
-        if (mm_action == selection_dwn)
-        {
-            if (curr_current > 500)
-            {
-                curr_current -= 100;
-                MainMenu_BlankOptions();
-                sprintf(s_temp, "Max curr: %4dmA", curr_current);
-                set_option_string2(s_temp);
-                MainMenu_SetOptions(0);
-                mm_changed = 1;
-            }
-        }
-
-        if (mm_action == selection_up)
-        {
-            if (curr_current < 2000)
-            {
-                curr_current += 100;
-                MainMenu_BlankOptions();
-                sprintf(s_temp, "Max curr: %4dmA", curr_current);
-                set_option_string2(s_temp);
-                MainMenu_SetOptions(0);
-                mm_changed = 1;
-            }
-        }
-
-        if ((mm_action == selection_enter) || (mm_action == selection_back))
-        {
-            mmenu_state = MAIN_MENU_PAGE_HARDWARE_A;
-        }
-
-        break;
-
-    case MAIN_MENU_PAGE_HARDWARE_POWER_A:
-        // Menu Title
-        MainMenu_SetTitle("Hardware config.");
-
-        // Menu options
-        MainMenu_BlankOptions();
-        set_option_string1("Set with UP/DWN");
-        sprintf(s_temp, "Max pwr: %3dW", curr_power);
-        set_option_string2(s_temp);
-        blank_option_string3();        
-        blank_option_string4();
-        blank_option_string5();
-        blank_option_string6();
-        mm_selected = 0;
-        MainMenu_SetOptions(mm_selected);
-
-        mm_changed = 1;
-        
-        mmenu_state = MAIN_MENU_PAGE_HARDWARE_POWER_B;
-        break;
-
-    case MAIN_MENU_PAGE_HARDWARE_POWER_B:
-        if (mm_action == selection_dwn)
-        {
-            if (curr_power > 50)
-            {
-                curr_power -= 10;
-                MainMenu_BlankOptions();
-                sprintf(s_temp, "Max pwr: %3dW", curr_power);
-                set_option_string2(s_temp);
-                MainMenu_SetOptions(0);
-                mm_changed = 1;
-            }
-        }
-
-        if (mm_action == selection_up)
-        {
-            if (curr_power < 200)
-            {
-                curr_power += 10;
-                MainMenu_BlankOptions();
-                sprintf(s_temp, "Max pwr: %3dW", curr_power);
-                set_option_string2(s_temp);
-                MainMenu_SetOptions(0);
-                mm_changed = 1;
-            }
-        }
-
-        if ((mm_action == selection_enter) || (mm_action == selection_back))
-        {
-            mmenu_state = MAIN_MENU_PAGE_HARDWARE_A;
-        }
-
-        break;
-
-        ///////////////////////////////////////////
-        // HARDWARE CONFIGURATION LED TESTING... //
-        ///////////////////////////////////////////
-    case MAIN_MENU_PAGE_HARDWARE_TEST_LED_A:
-        // Menu Title
-        MainMenu_SetTitle("Testing LEDs");
-
-        // Menu options
-        MainMenu_BlankOptions();
-        display_update();        
-        
-        unsigned short * p_seg;
-        // led_current_settings_t led_curr;
-        p_seg = &mem_conf.segments[0][0];
-        // HARD_Find_Current_Segments(&led_curr, p_seg);
-
-        set_option_string1("Done!");
-        blank_option_string2();
-        sprintf(s_temp, "c1: %4d c2: %4d",
-                mem_conf.segments[0][15],
-                mem_conf.segments[1][15]);
-        set_option_string3(s_temp);
-        sprintf(s_temp, "c3: %4d c4: %4d",
-                mem_conf.segments[2][15],
-                mem_conf.segments[3][15]);
-        set_option_string4(s_temp);
-        sprintf(s_temp, "c5: %4d c6: %4d",
-                mem_conf.segments[4][15],
-                mem_conf.segments[5][15]);
-        set_option_string5(s_temp);
-        blank_option_string6();
-        mm_selected = 0;
-        MainMenu_SetOptions(mm_selected);
-
-        mm_changed = 1;
-        mmenu_state = MAIN_MENU_PAGE_HARDWARE_TEST_LED_B;
-
-        //mando info al puerto
-#ifdef USART2_DEBUG_MODE
-        char s_to_send [100];
-        for (unsigned char j = 0; j < 6; j++)
-        {        
-            sprintf(s_to_send, "segments[%d]: ", j);
-            Usart2Send(s_to_send);
-            // for (unsigned char i = 0; i < SEGMENTS_QTTY; i++)
-            for (unsigned char i = 0; i < 16; i++)            
-            {
-                // sprintf(s_to_send, "%d ", segments[j][i]);
-                sprintf(s_to_send, "%d ", mem_conf.segments[j][i]);
-                Usart2Send(s_to_send);
-                Wait_ms(10);
-            }
-            Usart2Send("\n");
-        }
-#endif
-        break;
-
-    case MAIN_MENU_PAGE_HARDWARE_TEST_LED_B:
-        if ((mm_action == selection_enter) || (mm_action == selection_back))
-        {
-            mmenu_state = MAIN_MENU_PAGE_HARDWARE_A;
-        }
-        break;
-
         //////////
         // EXIT //
         //////////
