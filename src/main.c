@@ -586,9 +586,6 @@ int main(void)
             FuncSlaveMode (ch_values);
             CheckFiltersAndOffsets (ch_values);
 
-
-// CheckFiltersAndOffsets2 (ch_values, ch_mode_change_segment);            
-
 #ifdef USART2_DEBUG_MODE
             if (!timer_standby)
             {
@@ -614,7 +611,6 @@ int main(void)
             }
 #endif
 
-            // if ((SW_ENTER() > S_HALF) || (SW_BACK() > S_HALF))
             if (CheckSET() > SW_NO)
                 main_state = MAIN_ENTERING_MAIN_MENU;
 
@@ -673,8 +669,16 @@ int main(void)
         case MAIN_IN_MAIN_MENU:
             action = do_nothing;
 
-            // Check switches first
-            action = CheckSET();        
+            // Check encoder first
+            if (CheckSET() > SW_NO)
+                action = selection_enter;
+
+            if (CheckCCW())
+                action = selection_dwn;
+
+            if (CheckCW())
+                action = selection_up;
+
             resp = MainMenu_Update(action);
 
             if (resp == resp_need_to_save)
@@ -692,6 +696,8 @@ int main(void)
             if (resp == resp_finish)
                 main_state = MAIN_HARDWARE_INIT;
 
+            UpdateEncoder();
+            
             break;
             
         default:

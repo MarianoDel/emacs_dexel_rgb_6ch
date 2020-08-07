@@ -35,7 +35,6 @@ volatile unsigned char switches_timer = 0;
 
 
 // Module Private Functions ----------------------------------------------------
-void UpdateSwitches (void);
 void UpdateEncoderFilters (void);
 
 
@@ -45,7 +44,7 @@ void HARD_Timeouts (void)
     if (switches_timer)
         switches_timer--;
     
-    UpdateSwitches();
+    // UpdateSwitches();    //lo llamo en el main
 
     UpdateEncoderFilters ();
 
