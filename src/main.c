@@ -115,9 +115,7 @@ unsigned char need_to_save = 0;
 // Module Private Functions ----------------------------------------------------
 extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
-unsigned short Distance (unsigned short, unsigned short);
 void CheckFiltersAndOffsets (unsigned char *);
-void CheckFiltersAndOffsets2 (unsigned char *, unsigned char *);
 void UpdateFiltersTest_Reset (void);
 
 
@@ -773,15 +771,6 @@ void EXTI4_15_IRQHandler (void)    //nueva detecta el primer 0 en usart Consola 
         DmxInt_Break_Handler();
         EXTI->PR |= 0x0100;
     }
-}
-
-
-unsigned short Distance (unsigned short a, unsigned short b)
-{
-    if (a < b)
-        return (b - a);
-    else
-        return (a - b);
 }
 
 
