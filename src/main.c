@@ -421,7 +421,12 @@ int main(void)
         mem_conf.max_power = 200;
     }
 
-
+    //--- Test for ADC Channels ---//
+#ifdef HARD_TEST_MODE_VOLTS_TEMP
+    TEST_Voltage_Temperature();
+#endif
+    //--- End of Test for ADC Channels ---//
+    
     while (1)
     {
         switch (main_state)

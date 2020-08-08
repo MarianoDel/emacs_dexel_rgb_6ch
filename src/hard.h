@@ -30,6 +30,7 @@
 // #define HARD_TEST_MODE_ONLY_OLED_SLAVE_MODE
 // #define HARD_TEST_MODE_ONLY_OLED_PROGRAMS_MODE
 // #define HARD_TEST_MODE_ONLY_OLED_MASTER_MODE
+#define HARD_TEST_MODE_VOLTS_TEMP
 
 //---- Features Configuration ----------------
 // #define WITH_GRANDMASTER
