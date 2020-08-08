@@ -32,20 +32,20 @@ typedef enum {
 programs_mode_menu_state_t programs_mode_menu_state;
 
 // Module Private Functions ----------------------------------------------------
-void ProgramsModeMenu (void);
+void ProgramsModeMenu (sw_actions_t);
 
 // Module Funtions -------------------------------------------------------------
-void FuncsProgramsMode (unsigned char * ch_val)
+
+// programs config
+#define last_program    mem_conf.last_program_in_flash
+#define last_seq    mem_conf.last_program_deep_in_flash
+void FuncsProgramsMode (unsigned char * ch_val, sw_actions_t mm_action)
 {
     Func_PX(ch_val,
-            mem_conf.last_program_in_flash,
-            mem_conf.last_program_deep_in_flash);
+            last_program,
+            last_seq);
 
-    ProgramsModeMenu();
-
-    // if (CheckS1() > S_HALF)    //aca o en el menu master mode
-    //     resp = resp_change_all_up;
-
+    ProgramsModeMenu(mm_action);
 }
 
 
@@ -55,7 +55,7 @@ void ProgramsModeMenuReset (void)
 }
 
 
-inline void ProgramsModeMenu (void)
+inline void ProgramsModeMenu (sw_actions_t mm_action)
 {
     char s_temp[18];
     
@@ -75,9 +75,9 @@ inline void ProgramsModeMenu (void)
         MainMenu_BlankLine1();
         MainMenu_BlankLine2();
         
-        sprintf(s_temp, "Program: %2d", mem_conf.last_program_in_flash);
+        sprintf(s_temp, "Program: %2d", last_program);
         MainMenu_SetLine3(s_temp);
-        sprintf(s_temp, "Sequence: %2d", mem_conf.last_program_deep_in_flash);
+        sprintf(s_temp, "Sequence: %2d", last_seq);
         MainMenu_SetLine4(s_temp);
         
         MainMenu_BlankLine5();
@@ -89,19 +89,27 @@ inline void ProgramsModeMenu (void)
         break;
 
     case PROGRAMS_MODE_MENU_RUNNING:
-        //TODO: chequear sw para mover sequence
-        // sprintf(s_lcd1, "Pgm: %2d ", mem_conf.last_program_in_flash);
-        // sprintf(s_lcd2, "Seq: %2d ", mem_conf.last_program_deep_in_flash);
-        // resp = FuncShowBlink (s_lcd1, s_lcd2, 0, BLINK_NO);
+        if ((mm_action == selection_dwn) &&
+            (last_seq > MIN_PROGRAM_SEQ))
+        {
+            last_seq--;
+            programs_mode_menu_state = PROGRAMS_MODE_MENU_INIT;
+        }
 
-        // if (resp == resp_finish)
-        //     mp_mode_menu_state = MP_MODE_MENU_SHOW_RUNNING;
+        if ((mm_action == selection_up) &&
+            (last_seq < MAX_PROGRAM_SEQ))
+        {
+            last_seq++;
+            programs_mode_menu_state = PROGRAMS_MODE_MENU_INIT;            
+        }
         break;
         
     default:
         programs_mode_menu_state = PROGRAMS_MODE_MENU_INIT;
         break;
-    }    
+    }
+
+    
 }
 
 

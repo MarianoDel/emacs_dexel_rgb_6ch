@@ -9,6 +9,7 @@
 
 // Includes --------------------------------------------------------------------
 #include "mainmenu.h"
+#include "programs_functions.h"
 #include "ssd1306.h"
 #include "hard.h"
 #include "i2c.h"
@@ -95,6 +96,9 @@ void MainMenu_Init (void)
     mmenu_state = MAIN_MENU_INIT;
 }
 
+
+// general config
+#define program_type    mem_conf.program_type
 // programs mode conf
 #define last_program    mem_conf.last_program_in_flash
 #define last_seq    mem_conf.last_program_deep_in_flash
@@ -202,6 +206,7 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
 
         if (resp == resp_ok)
         {
+            program_type = MASTER_MODE;
             // Menu Title
             MainMenu_SetTitle("Master Mode Config");
 
@@ -213,22 +218,9 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
                 set_option_string1("DMX send Disable");
             set_option_string2("Back!");
 
-            // // Menu Title
-            // MainMenu_SetTitle(s_slave_title);
-
-            // // Menu options
-            // MainMenu_BlankOptions();
-            // set_option_string1("Change UP/DWN");
-            // set_option_string2("Set to Finish");
-            // blank_option_string3();
-        
-            // sprintf(s_temp, "Chnls qtty: %2d", dmx_chnls_qtty);
-            
-
             blank_option_string3();
             
             set_option_string4("Mstr Mode selected");
-            mem_conf.program_type = MASTER_MODE;
             
             sprintf(s_temp, "Curr. prog: %2d", last_program);
             set_option_string5(s_temp);
@@ -308,6 +300,7 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
 
         if (resp == resp_ok)
         {
+            program_type = SLAVE_MODE;
             // Menu Title
             MainMenu_SetTitle(s_slave_title);
 
@@ -557,6 +550,7 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
 
         if (resp == resp_ok)
         {
+            program_type = PROGRAMS_MODE;
             // Menu Title
             MainMenu_SetTitle(s_programs_title);
 
@@ -707,11 +701,11 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
             (mm_action == selection_up)) 
         {
             if ((mm_action == selection_dwn) &&
-                (last_seq > 0))
+                (last_seq > MIN_PROGRAM_SEQ))
                 last_seq--;
 
             if ((mm_action == selection_up) &&
-                (last_seq < 9))
+                (last_seq < MAX_PROGRAM_SEQ))
                 last_seq++;
 
             MainMenu_BlankOptions();

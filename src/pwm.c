@@ -54,5 +54,20 @@ void PWMChannelsReset (void)
 #endif
 }
 
+unsigned short PWM_Map_From_Dmx (unsigned char dmx_val)
+{
+    unsigned int pwm = 0;
+
+    if (dmx_val)
+    {
+        pwm = dmx_val * 391;
+        pwm = pwm / 100;
+        pwm += 4;
+    }
+
+    return (unsigned short) pwm;
+
+}
+
 
 //--- end of file ---//

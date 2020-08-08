@@ -10,13 +10,13 @@
 #define _PROGRAMS_MODE_H_
 
 // Config Defines --------------------------------------------------------------
-
+#include "hard.h"
 
 // Common Defines --------------------------------------------------------------
 
 
 // Module Exported Functions ---------------------------------------------------
-void FuncsProgramsMode (unsigned char *);
+void FuncsProgramsMode (unsigned char *, sw_actions_t);
 void ProgramsModeMenuReset (void);
 
 

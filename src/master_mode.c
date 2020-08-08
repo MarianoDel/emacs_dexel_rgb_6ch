@@ -32,19 +32,21 @@ typedef enum {
 master_mode_menu_state_t master_mode_menu_state;
 
 // Module Private Functions ----------------------------------------------------
-void MasterModeMenu (void);
+void MasterModeMenu (sw_actions_t);
 
 // Module Funtions -------------------------------------------------------------
-void FuncsMasterMode (unsigned char * ch_val)
+
+// dmx master conf
+#define dmx_master_enable    mem_conf.master_send_dmx_enable
+#define last_program    mem_conf.last_program_in_flash
+#define last_seq    mem_conf.last_program_deep_in_flash
+void FuncsMasterMode (unsigned char * ch_val, sw_actions_t mm_action)
 {
     Func_PX(ch_val,
-            mem_conf.last_program_in_flash,
-            mem_conf.last_program_deep_in_flash);
+            last_program,
+            last_seq);
 
-    MasterModeMenu();
-
-    // if (CheckS1() > S_HALF)    //aca o en el menu master mode
-    //     resp = resp_change_all_up;
+    MasterModeMenu(mm_action);
 
 }
 
@@ -57,7 +59,7 @@ void MasterModeMenuReset (void)
 
 // dmx master conf
 #define dmx_master_enable    mem_conf.master_send_dmx_enable
-inline void MasterModeMenu (void)
+inline void MasterModeMenu (sw_actions_t mm_action)
 {
     char s_temp[18];
     
@@ -93,13 +95,19 @@ inline void MasterModeMenu (void)
         break;
 
     case MASTER_MODE_MENU_RUNNING:
-        //TODO: chequear sw para mover sequence
-        // sprintf(s_lcd1, "Pgm: %2d ", mem_conf.last_program_in_flash);
-        // sprintf(s_lcd2, "Seq: %2d ", mem_conf.last_program_deep_in_flash);
-        // resp = FuncShowBlink (s_lcd1, s_lcd2, 0, BLINK_NO);
+        if ((mm_action == selection_dwn) &&
+            (last_seq > MIN_PROGRAM_SEQ))
+        {
+            last_seq--;
+            master_mode_menu_state = MASTER_MODE_MENU_INIT;
+        }
 
-        // if (resp == resp_finish)
-        //     mp_mode_menu_state = MP_MODE_MENU_SHOW_RUNNING;
+        if ((mm_action == selection_up) &&
+            (last_seq < MAX_PROGRAM_SEQ))
+        {
+            last_seq++;
+            master_mode_menu_state = MASTER_MODE_MENU_INIT;
+        }
         break;
         
     default:

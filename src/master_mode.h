@@ -10,13 +10,13 @@
 #define _MASTER_MODE_H_
 
 // Config Defines --------------------------------------------------------------
-
+#include "hard.h"
 
 // Common Defines --------------------------------------------------------------
 
 
 // Module Exported Functions ---------------------------------------------------
-void FuncsMasterMode (unsigned char *);
+void FuncsMasterMode (unsigned char *, sw_actions_t);
 void MasterModeMenuReset (void);
 
 

@@ -14,7 +14,9 @@
 #include "tim.h"
 
 //-------- Defines -------------
-
+#define PROGRAM_SEQ_LENGTH    10
+#define MIN_PROGRAM_SEQ    0
+#define MAX_PROGRAM_SEQ    (PROGRAM_SEQ_LENGTH - 1)
 #define MAX_FADE 255
 
 //states del P7

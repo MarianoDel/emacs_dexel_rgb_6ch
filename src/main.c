@@ -520,14 +520,24 @@ int main(void)
             break;
 
         case MAIN_IN_MASTER_MODE:    //por ahora programs mode
-            FuncsMasterMode(ch_values);
+            action = do_nothing;
+
+            // Check encoder first
+            if (CheckCCW())
+                action = selection_dwn;
+
+            if (CheckCW())
+                action = selection_up;
+
+            FuncsMasterMode(ch_values, action);
             CheckFiltersAndOffsets (ch_values);
 
-            // if ((SW_ENTER() > S_HALF) || (SW_BACK() > S_HALF))
             if (CheckSET() > SW_NO)
                 main_state = MAIN_ENTERING_MAIN_MENU;
 
-            if (!timer_standby)
+            UpdateEncoder();
+            
+            if ((mem_conf.master_send_dmx_enable) && (!timer_standby))
             {
                 timer_standby = 40;
                 SendDMXPacket (PCKT_INIT);
@@ -569,13 +579,23 @@ int main(void)
             break;
 
         case MAIN_IN_PROGRAMS_MODE:
-            FuncsProgramsMode(ch_values);
+            action = do_nothing;
+
+            // Check encoder first
+            if (CheckCCW())
+                action = selection_dwn;
+
+            if (CheckCW())
+                action = selection_up;
+            
+            FuncsProgramsMode(ch_values, action);
             CheckFiltersAndOffsets (ch_values);
 
-            // if ((SW_ENTER() > S_HALF) || (SW_BACK() > S_HALF))
             if (CheckSET() > SW_NO)
                 main_state = MAIN_ENTERING_MAIN_MENU;
 
+            UpdateEncoder();
+            
             break;
 
         case MAIN_IN_OVERTEMP:
@@ -783,44 +803,48 @@ void CheckFiltersAndOffsets (unsigned char * ch_dmx_val)
 #ifdef USE_PWM_DIRECT
     if (!dmx_filters_timer)
     {
-        unsigned int pwm_value = 0;
-        
         dmx_filters_timer = DMX_UPDATE_TIMER;
 
         // channel 1
-        pwm_value = *(ch_dmx_val + CH1_VAL_OFFSET) * DUTY_100_PERCENT;
-        pwm_value = pwm_value / 255;
-        ch1_pwm = MA16_U16Circular (&st_sp1, (unsigned short) pwm_value);
+        ch1_pwm = MA16_U16Circular (
+            &st_sp1,
+            PWM_Map_From_Dmx(*(ch_dmx_val + CH1_VAL_OFFSET))
+            );
         PWM_Update_CH1(ch1_pwm);
 
         // channel 2
-        pwm_value = *(ch_dmx_val + CH2_VAL_OFFSET) * DUTY_100_PERCENT;
-        pwm_value = pwm_value / 255;
-        ch2_pwm = MA16_U16Circular (&st_sp2, (unsigned short) pwm_value);
+        ch2_pwm = MA16_U16Circular (
+            &st_sp2,
+            PWM_Map_From_Dmx(*(ch_dmx_val + CH2_VAL_OFFSET))
+            );
         PWM_Update_CH2(ch2_pwm);
 
         // channel 3
-        pwm_value = *(ch_dmx_val + CH3_VAL_OFFSET) * DUTY_100_PERCENT;
-        pwm_value = pwm_value / 255;
-        ch3_pwm = MA16_U16Circular (&st_sp3, (unsigned short) pwm_value);
+        ch3_pwm = MA16_U16Circular (
+            &st_sp3,
+            PWM_Map_From_Dmx(*(ch_dmx_val + CH3_VAL_OFFSET))
+            );
         PWM_Update_CH3(ch3_pwm);
 
         // channel 4
-        pwm_value = *(ch_dmx_val + CH4_VAL_OFFSET) * DUTY_100_PERCENT;
-        pwm_value = pwm_value / 255;
-        ch4_pwm = MA16_U16Circular (&st_sp4, (unsigned short) pwm_value);
+        ch4_pwm = MA16_U16Circular (
+            &st_sp4,
+            PWM_Map_From_Dmx(*(ch_dmx_val + CH4_VAL_OFFSET))
+            );
         PWM_Update_CH4(ch4_pwm);
 
         // channel 5
-        pwm_value = *(ch_dmx_val + CH5_VAL_OFFSET) * DUTY_100_PERCENT;
-        pwm_value = pwm_value / 255;
-        ch5_pwm = MA16_U16Circular (&st_sp5, (unsigned short) pwm_value);
+        ch5_pwm = MA16_U16Circular (
+            &st_sp5,
+            PWM_Map_From_Dmx(*(ch_dmx_val + CH5_VAL_OFFSET))
+            );
         PWM_Update_CH5(ch5_pwm);
 
         // channel 6
-        pwm_value = *(ch_dmx_val + CH6_VAL_OFFSET) * DUTY_100_PERCENT;
-        pwm_value = pwm_value / 255;
-        ch6_pwm = MA16_U16Circular (&st_sp6, (unsigned short) pwm_value);
+        ch6_pwm = MA16_U16Circular (
+            &st_sp6,
+            PWM_Map_From_Dmx(*(ch_dmx_val + CH6_VAL_OFFSET))
+            );
         PWM_Update_CH6(ch6_pwm);
     }
 #endif    //USE_PWM_DIRECT
