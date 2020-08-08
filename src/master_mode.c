@@ -55,9 +55,10 @@ void MasterModeMenuReset (void)
 }
 
 
+// dmx master conf
+#define dmx_master_enable    mem_conf.master_send_dmx_enable
 inline void MasterModeMenu (void)
 {
-    resp_t resp = resp_continue;
     char s_temp[18];
     
     switch (master_mode_menu_state)
@@ -73,7 +74,7 @@ inline void MasterModeMenu (void)
 
         // Menu options
         MainMenu_BlankOptions();
-        if (mem_conf.master_enable)
+        if (dmx_master_enable)
             MainMenu_SetLine1("Sending DMX data");
         else
             MainMenu_SetLine1("Not sending DMX");

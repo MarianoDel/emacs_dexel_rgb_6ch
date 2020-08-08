@@ -55,15 +55,6 @@ volatile unsigned char seq_ready;
 volatile unsigned char timer_1seg = 0;
 
 
-#ifdef USE_PWM_DELTA_INT_TIMER_FAST
-volatile unsigned short dmx_timer_hundreds_us_ch1 = 0;
-volatile unsigned short dmx_timer_hundreds_us_ch2 = 0;
-volatile unsigned short dmx_timer_hundreds_us_ch3 = 0;
-volatile unsigned short dmx_timer_hundreds_us_ch4 = 0;
-volatile unsigned short dmx_timer_hundreds_us_ch5 = 0;
-volatile unsigned short dmx_timer_hundreds_us_ch6 = 0;
-#endif
-
 unsigned short ch1_pwm = 0;
 unsigned short ch2_pwm = 0;
 unsigned short ch3_pwm = 0;
@@ -80,7 +71,6 @@ volatile unsigned char Packet_Detected_Flag;
 volatile unsigned char DMX_packet_flag;
 volatile unsigned char RDM_packet_flag;
 volatile unsigned char dmx_receive_flag = 0;
-volatile unsigned short DMX_channel_received = 0;
 volatile unsigned short DMX_channel_selected = 1;
 volatile unsigned char DMX_channel_quantity = 4;
 volatile unsigned char dmx_timeout_timer = 0;
@@ -111,83 +101,7 @@ ma16_u16_data_obj_t st_sp6;
 
 
 
-//--- VARIABLES GLOBALES ---//
-//para pruebas mantener esto en memoria
-// parameters_typedef const parameters_typedef_constant =
-parameters_typedef __attribute__ ((section("memParams1"))) const parameters_typedef_constant =
-    {
-        .program_type = SLAVE_MODE,
-
-        .master_enable = 1,
-        
-        .last_program_in_flash = 9,
-        .last_program_deep_in_flash = 0,
-
-        .dmx_channel = 1,
-        .dmx_channel_quantity = 6,
-        .dmx_grandmaster = 0,        
-        
-        // .max_current_int = 2,
-        // .max_current_dec = 0,
-        .max_current_ma = 2000,
-
-        .volts_in_mains = 35,
-        .max_power = 40,
-        
-        .volts_ch[0] = 35,
-        .volts_ch[1] = 35,
-        .volts_ch[2] = 35,
-        .volts_ch[3] = 35,
-        .volts_ch[4] = 35,
-        .volts_ch[5] = 35,
-
-        .pwm_chnls[0] = DUTY_70_PERCENT,
-        .pwm_chnls[1] = DUTY_60_PERCENT,
-        .pwm_chnls[2] = DUTY_60_PERCENT,        
-        .pwm_chnls[3] = DUTY_87_PERCENT,    //Green
-        // .pwm_chnls[3] = DUTY_75_PERCENT,    //Red        
-        .pwm_chnls[4] = DUTY_60_PERCENT,
-        .pwm_chnls[5] = DUTY_60_PERCENT,
-        
-    };
-
-//OJO!!! este es el dummy en memoria
-parameters_typedef __attribute__ ((section("memParams2"))) const parameters_typedef_dummys =
-    {
-        .program_type = 2,    
-
-        .master_enable = 2,
-        
-        .last_program_in_flash = 2,
-        .last_program_deep_in_flash = 2,
-
-        .dmx_channel = 2,
-        .dmx_channel_quantity = 2,
-        .dmx_grandmaster = 0,        
-        
-        // .max_current_int = 2,
-        // .max_current_dec = 0,
-        .max_current_ma = 2000,
-
-        .volts_in_mains = 2,
-        .volts_ch[0] = 2,
-        .volts_ch[1] = 2,
-        .volts_ch[2] = 2,
-        .volts_ch[3] = 2,
-        .volts_ch[4] = 2,
-        .volts_ch[5] = 2,
-        
-        .pwm_chnls[0] = 2,
-        .pwm_chnls[1] = 2,
-        .pwm_chnls[2] = 2,
-        .pwm_chnls[3] = 2,
-        .pwm_chnls[4] = 2,
-        .pwm_chnls[5] = 2,
-        
-    };
-
-
-
+// Globals ---------------------------------------------------------------------
 // ------- de los timers -------
 volatile unsigned short timer_standby;
 volatile unsigned short wait_ms_var = 0;
@@ -198,7 +112,7 @@ volatile unsigned short need_to_save_timer = 0;
 // ------- para la memoria -------
 unsigned char need_to_save = 0;
 
-//--- FUNCIONES DEL MODULO ---//
+// Module Private Functions ----------------------------------------------------
 extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
 unsigned short Distance (unsigned short, unsigned short);
@@ -207,11 +121,7 @@ void CheckFiltersAndOffsets2 (unsigned char *, unsigned char *);
 void UpdateFiltersTest_Reset (void);
 
 
-//-------------------------------------------//
-// @brief  Main program.
-// @param  None
-// @retval None
-//------------------------------------------//
+// Module Functions ------------------------------------------------------------
 int main(void)
 {
     char s_to_send [100];
@@ -494,7 +404,24 @@ int main(void)
 
     ADC1->CR |= ADC_CR_ADSTART;
 
-    memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
+    // get saved config or create one for default
+    if (pmem->program_type != 0xff)
+    {
+        //memory with valid data
+        memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
+    }
+    else
+    {
+        //memory empty use some defaults
+        mem_conf.program_type = SLAVE_MODE;
+        mem_conf.master_send_dmx_enable = 0;
+        mem_conf.last_program_in_flash = 9;
+        mem_conf.last_program_deep_in_flash = 0;
+        mem_conf.dmx_first_channel = 1;
+        mem_conf.dmx_channel_quantity = 6;
+        mem_conf.dmx_grandmaster = 0;
+        mem_conf.max_power = 200;
+    }
 
 
     while (1)
@@ -525,6 +452,31 @@ int main(void)
             Wait_ms(100);
 #endif
 
+            // Init Program Screen
+            switch (mem_conf.program_type)
+            {
+            case 1:
+                strcpy(s_to_send, "  Master ");                
+                break;
+            case 2:
+                strcpy(s_to_send, "Slave/DMX");
+                break;
+            case 3:
+                strcpy(s_to_send, "Programs ");
+                break;
+            }
+            
+            SCREEN_ShowText2(
+                " Running ",
+                " on      ",
+                s_to_send,
+                "         "
+                );
+            timer_standby = 500;
+    
+            while (timer_standby)
+                display_update_int_state_machine();
+
             main_state++;            
             break;
 
@@ -543,7 +495,7 @@ int main(void)
             {
                 //variables de recepcion
                 Packet_Detected_Flag = 0;
-                DMX_channel_selected = mem_conf.dmx_channel;
+                DMX_channel_selected = mem_conf.dmx_first_channel;
                 DMX_channel_quantity = mem_conf.dmx_channel_quantity;
 
                 //habilito recepcion
@@ -656,7 +608,8 @@ int main(void)
             
         case MAIN_ENTERING_MAIN_MENU:
             //deshabilitar salidas hardware
-            SW_RX_TX_RE_NEG;
+            // SW_RX_TX_RE_NEG;
+            SW_RX_TX_DE;            
             DMX_Disa();
 
             //reseteo canales

@@ -56,6 +56,12 @@ unsigned char last_ch4;
 unsigned char last_ch5;
 unsigned char last_ch6;
 
+#define CONTRAST_TO_HIGH    0
+#define CONTRAST_HIGH    1
+#define CONTRAST_TO_LOW    2
+#define CONTRAST_LOW    3
+unsigned char contrast = CONTRAST_TO_HIGH;
+
 //-- Private Defines -----------------
 //-- para los menues -----------------
 
@@ -173,7 +179,7 @@ void FuncSlaveMode (unsigned char * ch_val)
             dmx_end_of_packet_update = 1;
         }
 
-        // UpdateSlaveModeMenuManager();
+        UpdateSlaveModeMenuManager();
         
         break;
 
@@ -215,7 +221,7 @@ inline void UpdateSlaveModeMenuManager (void)
         //ya mostre el menu mucho tiempo, lo apago, si no estoy con dmx
         if ((!slave_mode_dmx_receiving_timer) && (!slave_mode_enable_menu_timer))
         {
-            display_contrast(0x0F);
+            contrast = CONTRAST_TO_LOW;
             slave_mode_menu_manager = MENU_OFF;
         }
         break;
@@ -227,7 +233,7 @@ inline void UpdateSlaveModeMenuManager (void)
         {
             slave_mode_enable_menu_timer = TT_MENU_TIMEOUT;    //vuelvo a mostrar
             slave_mode_menu_manager = MENU_ON;
-            display_contrast(0xCF);
+            contrast = CONTRAST_TO_HIGH;
         }
         break;
 
@@ -235,9 +241,30 @@ inline void UpdateSlaveModeMenuManager (void)
         slave_mode_menu_manager = 0;
         break;
     }
+
+    switch (contrast)
+    {
+    case CONTRAST_TO_HIGH:
+        if (display_update_int_contrast(0xCF))
+            contrast = CONTRAST_HIGH;
+        break;
+
+    case CONTRAST_HIGH:
+        break;
+
+    case CONTRAST_TO_LOW:
+        if (display_update_int_contrast(0x0F))
+            contrast = CONTRAST_LOW;
+        break;
+
+    case CONTRAST_LOW:
+        break;
+    }
 }
 
 
+// dmx slave conf
+#define dmx_first_chnl    mem_conf.dmx_first_channel
 unsigned char change_values = 0;
 inline void MenuSlaveModeRunning (void)
 {
@@ -276,7 +303,7 @@ inline void MenuSlaveModeRunning (void)
 
             Percentage(last_ch1, &one_int, &one_dec);
             sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                    mem_conf.dmx_channel,
+                    dmx_first_chnl,
                     one_int,
                     one_dec);
 
@@ -294,7 +321,7 @@ inline void MenuSlaveModeRunning (void)
 
             Percentage(last_ch2, &one_int, &one_dec);
             sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                    mem_conf.dmx_channel + 1,
+                    dmx_first_chnl+ 1,
                     one_int,
                     one_dec);
 
@@ -312,7 +339,7 @@ inline void MenuSlaveModeRunning (void)
 
             Percentage(last_ch3, &one_int, &one_dec);
             sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                    mem_conf.dmx_channel + 2,
+                    dmx_first_chnl + 2,
                     one_int,
                     one_dec);
 
@@ -330,7 +357,7 @@ inline void MenuSlaveModeRunning (void)
 
             Percentage(last_ch4, &one_int, &one_dec);
             sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                    mem_conf.dmx_channel + 3,
+                    dmx_first_chnl + 3,
                     one_int,
                     one_dec);
 
@@ -348,7 +375,7 @@ inline void MenuSlaveModeRunning (void)
 
             Percentage(last_ch5, &one_int, &one_dec);
             sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                    mem_conf.dmx_channel + 4,
+                    dmx_first_chnl + 4,
                     one_int,
                     one_dec);
 
@@ -366,7 +393,7 @@ inline void MenuSlaveModeRunning (void)
 
             Percentage(last_ch6, &one_int, &one_dec);
             sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                    mem_conf.dmx_channel + 5,
+                    dmx_first_chnl + 5,
                     one_int,
                     one_dec);
 

@@ -57,7 +57,6 @@ void ProgramsModeMenuReset (void)
 
 inline void ProgramsModeMenu (void)
 {
-    resp_t resp = resp_continue;
     char s_temp[18];
     
     switch (programs_mode_menu_state)

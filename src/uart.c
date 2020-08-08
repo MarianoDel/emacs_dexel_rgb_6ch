@@ -16,22 +16,14 @@
 #include <string.h>
 
 
-
-
-//--- Private typedef ---//
-//--- Private define ---//
-//--- Private macro ---//
-
-
-
-//--- VARIABLES EXTERNAS ---//
-
+// Externals -------------------------------------------------------------------
 extern volatile unsigned char usart1_have_data;
 extern volatile unsigned char usart2_have_data;
 extern volatile unsigned char * pdmx;
 extern volatile unsigned char data512[];
 
-//--- Private variables ---//
+
+// Globals ---------------------------------------------------------------------
 volatile unsigned char * ptx1;
 volatile unsigned char * ptx1_pckt_index;
 volatile unsigned char * prx1;
@@ -45,12 +37,13 @@ volatile unsigned char tx2buff[SIZEOF_DATA];
 volatile unsigned char rx2buff[SIZEOF_DATA];
 
 
-//Reception buffer.
+// Module Private Types & Macros -----------------------------------------------
 
-//Transmission buffer.
 
-//--- Private function prototypes ---//
-//--- Private functions ---//
+// Module Private Functions ----------------------------------------------------
+
+
+// Module Functions ------------------------------------------------------------
 unsigned char ReadUsart1Buffer (unsigned char * bout, unsigned short max_len)
 {
     unsigned int len;
@@ -116,23 +109,7 @@ void USART1_IRQHandler(void)
     {
         if (USART1->ISR & USART_ISR_TXE)
         {
-
             DmxInt_Serial_Handler_Transmitter ();
-            
-            // if (dummy)
-            //     USART1->CR1 &= ~USART_CR1_TXEIE;
-            
-            // if ((ptx1 < &tx1buff[SIZEOF_DATA]) && (ptx1 < ptx1_pckt_index))
-            // {
-            //     USART1->TDR = *ptx1;
-            //     ptx1++;
-            // }
-            // else
-            // {
-            //     ptx1 = tx1buff;
-            //     ptx1_pckt_index = tx1buff;
-            //     USART1->CR1 &= ~USART_CR1_TXEIE;
-            // }
         }
     }
 

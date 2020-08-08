@@ -420,7 +420,7 @@ void display_update_int_state_machine (void)
             }
         }
         break;
-        
+
     case DISPLAY_UPDATE_ENDED:
     default:
         break;
@@ -470,6 +470,21 @@ void display_update (void)
 #endif    
 }
 
+
+// TODO: mejorar esto o agregarlo a todos los comandos
+// responde 0 si no puede
+// 1 si puede
+unsigned char display_update_int_contrast (unsigned char new_contrast)
+{
+    unsigned char done = 0;
+    if (d_update_st == DISPLAY_UPDATE_ENDED)
+    {
+        display_contrast(new_contrast);
+        done = 1;
+    }
+
+    return done;
+}
 
 
 

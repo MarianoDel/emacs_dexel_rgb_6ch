@@ -22,7 +22,8 @@
 #include "rdm_util.h"
 #endif
 
-//--- VARIABLES EXTERNAS ---//
+
+// Externals -------------------------------------------------------------------
 extern volatile unsigned char RDM_packet_flag;
 extern volatile unsigned char data512[];
 extern volatile unsigned char data7[];
@@ -31,16 +32,18 @@ extern volatile unsigned char Packet_Detected_Flag;
 extern volatile unsigned char DMX_packet_flag;
 extern volatile unsigned char RDM_packet_flag;
 extern volatile unsigned char dmx_receive_flag;
-extern volatile unsigned short DMX_channel_received;
 extern volatile unsigned short DMX_channel_selected;
 extern volatile unsigned char DMX_channel_quantity;
 extern volatile unsigned char dmx_timeout_timer;
 
 extern volatile unsigned char * pdmx;
 extern parameters_typedef mem_conf;
-//--- VARIABLES GLOBALES ---//
+
+
+// Globals ---------------------------------------------------------------------
 volatile unsigned char dmx_state = 0;
 volatile pckt_rx_t dmx_signal_state = PCKT_RX_IDLE;
+volatile unsigned short current_channel_index = 0;
 
 //-- Private Functions ----------
 // extern inline void UsartSendDMX (void);
@@ -53,14 +56,14 @@ void DMX_Ena (void)
 {
     //habilito la interrupción
     EXTIOn ();
-    USART1->CR1 |= USART_CR1_UE;
+    USART1->CR1 |= (USART_CR1_RXNEIE | USART_CR1_UE);
 }
 
 void DMX_Disa (void)
 {
     //deshabilito la interrupción
     EXTIOff ();
-    USART1->CR1 &= ~USART_CR1_UE;
+    USART1->CR1 &= ~(USART_CR1_RXNEIE | USART_CR1_UE);
 }
 
 void UpdatePackets (void)
@@ -79,48 +82,43 @@ void UpdatePackets (void)
 
 void DmxInt_Serial_Handler_Receiver (unsigned char dummy)
 {
-    unsigned short i;
-    
     if (dmx_receive_flag)
     {
-        data512[DMX_channel_received] = dummy;
-        if (DMX_channel_received < 511)
-            DMX_channel_received++;
-        else
-            DMX_channel_received = 0;
-
-        if (mem_conf.dmx_grandmaster)
+        if (current_channel_index < (SIZEOF_DMX_DATA512 - 1))    //else silently discard
         {
-            if (DMX_channel_received >= (DMX_channel_selected + DMX_channel_quantity + 1))
-            {
-                //en data7[0] pongo el valor del grandmaster
-                for (i=0; i < (DMX_channel_quantity + 1); i++)
-                {
-                    data7[i] = data512[(DMX_channel_selected) + i];
-                }
+            data512[current_channel_index] = dummy;            
 
-                //--- Reception end ---//
-                DMX_channel_received = 0;
-                dmx_receive_flag = 0;
-                Packet_Detected_Flag = 1;
-            }
-        }
-        else    //sin grandmaster
-        {
-            if (DMX_channel_received >= (DMX_channel_selected + DMX_channel_quantity))
+            if (mem_conf.dmx_grandmaster)
             {
-                //copio el inicio del buffer y luego los elegidos
-                data7[0] = data512[0];
-                for (i=0; i<DMX_channel_quantity; i++)
+                if (current_channel_index >= (DMX_channel_selected + DMX_channel_quantity + 1))
                 {
-                    data7[i + 1] = data512[(DMX_channel_selected) + i];
-                }
+                    //TODO: VER ESTO, NO CREO QUE LO HAGA en data7[0] pongo el valor del grandmaster
+                    for (unsigned char i = 0; i < (DMX_channel_quantity + 1); i++)
+                        data7[i] = data512[(DMX_channel_selected) + i];
 
-                //--- Reception end ---//
-                DMX_channel_received = 0;
-                dmx_receive_flag = 0;
-                Packet_Detected_Flag = 1;
+                    //--- Reception end ---//
+                    current_channel_index = 0;
+                    dmx_receive_flag = 0;
+                    Packet_Detected_Flag = 1;
+                }
             }
+            else    //sin grandmaster
+            {
+                if (current_channel_index >= (DMX_channel_selected + DMX_channel_quantity))
+                {
+                    //copio el inicio del buffer y luego los elegidos
+                    data7[0] = data512[0];
+                    for (unsigned char i = 0; i < DMX_channel_quantity; i++)
+                        data7[i + 1] = data512[(DMX_channel_selected) + i];
+
+                    //--- Reception end ---//
+                    current_channel_index = 0;
+                    dmx_receive_flag = 0;
+                    Packet_Detected_Flag = 1;
+                }
+            }
+            
+            current_channel_index++;
         }
     }
 }
@@ -129,7 +127,6 @@ void DmxInt_Serial_Handler_Receiver (unsigned char dummy)
 //el tiempo en 0 es la senial break (de 87us a 4800us) es valido
 //el tiempo en 1 es la senial mark (de 8us aprox.) no se controla el tiempo
 //despues ya llegan los bytes serie a 250Kbits y pueden tener tiempo idle entre ellos
-
 void DmxInt_Break_Handler (void)
 {
     unsigned short aux;
@@ -162,7 +159,7 @@ void DmxInt_Break_Handler (void)
                 if ((aux > 87) && (aux < 4600))		//Consola marca CODE modelo A24 tiene break 4.48ms fecha 11-04-17
                 {
                     dmx_signal_state++;
-                    DMX_channel_received = 0;
+                    current_channel_index = 0;
                     dmx_timeout_timer = DMX_TIMEOUT;		//activo el timeout para esperar un MARK valido
                 }
                 else	//falso disparo

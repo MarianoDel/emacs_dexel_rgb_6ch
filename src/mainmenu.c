@@ -99,12 +99,11 @@ void MainMenu_Init (void)
 #define last_program    mem_conf.last_program_in_flash
 #define last_seq    mem_conf.last_program_deep_in_flash
 // dmx master conf
-#define dmx_master_enable    mem_conf.master_enable
+#define dmx_master_enable    mem_conf.master_send_dmx_enable
 // dmx slave conf
 #define dmx_chnls_qtty    mem_conf.dmx_channel_quantity
-#define dmx_first_chnl    mem_conf.dmx_channel
+#define dmx_first_chnl    mem_conf.dmx_first_channel
 #define dmx_gndmaster    mem_conf.dmx_grandmaster
-#define curr_current    mem_conf.max_current_ma
 #define curr_power    mem_conf.max_power
 resp_t MainMenu_Update (sw_actions_t mm_action)
 {
@@ -270,15 +269,15 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
             switch (mm_selected)
             {
             case 1:
-                if (mem_conf.master_enable)
+                if (dmx_master_enable)
                 {
                     set_option_string1("DMX send Disable");
-                    mem_conf.master_enable = 0;
+                    dmx_master_enable = 0;
                 }
                 else
                 {
                     set_option_string1("DMX send Enable");
-                    mem_conf.master_enable = 1;
+                    dmx_master_enable = 1;
                 }
 
                 MainMenu_SetOptions(1);
@@ -465,11 +464,11 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
             (mm_action == selection_up))
         {
             if ((mm_action == selection_dwn) &&
-                (dmx_first_chnl > 1))
+                (dmx_first_chnl > 2))
                 dmx_first_chnl--;
 
             if ((mm_action == selection_up) &&
-                (dmx_first_chnl < (511 - dmx_chnls_qtty)))
+                (dmx_first_chnl < (511 - dmx_chnls_qtty - 1)))
                 dmx_first_chnl++;
             
             MainMenu_BlankOptions();

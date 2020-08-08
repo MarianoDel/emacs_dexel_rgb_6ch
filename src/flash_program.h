@@ -15,7 +15,7 @@
 
 
 //-- Configurations Defines --------------------
-#define FLASH_PAGE_FOR_BKP PAGE60    //dejo la 61 libre para dummy
+#define FLASH_PAGE_FOR_BKP PAGE61    //last page saves the configuration
 
 //-- Configuration for Struct --------------------
 #define MASTER_MODE    1
@@ -30,35 +30,24 @@ typedef struct parameters {
     unsigned char program_type;
 
     //-- Para Modo Master ----
-    unsigned char master_enable;
+    unsigned char master_send_dmx_enable;
     
     //-- Para Programas y modo Master ----
     unsigned char last_program_in_flash;
     unsigned char last_program_deep_in_flash;
 
     //-- Para Modo Slave ----                  //4
-    unsigned short dmx_channel;
+    unsigned short dmx_first_channel;
     unsigned char dmx_channel_quantity;	
     unsigned char dmx_grandmaster;	
 
     //-- Para Configuracion de Hardware ----   //8
-    // unsigned char max_current_int;
-    // unsigned char max_current_dec;
-    unsigned short max_current_ma;
-
-    unsigned char volts_in_mains;
-    unsigned char max_power;          //12
-    
-    unsigned char volts_ch [6];    //18
-    
-    unsigned short pwm_chnls [6];    //30
-    unsigned short pwm_base_chnls [6];    //42
-
-    unsigned short segments [6][16];    //2 * 6 * 16 = 192
-                                        //42 + 192 = 234
+    unsigned char max_power;          
     unsigned char dummy1;
-    unsigned char dummy2;            //236
-    // unsigned char dummy3;            //32
+    unsigned char dummy2;          
+    unsigned char dummy3;       
+
+    //-- End of Struct check alignment ---- //12
 
 } parameters_typedef;
 

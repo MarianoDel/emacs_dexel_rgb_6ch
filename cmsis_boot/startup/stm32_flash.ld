@@ -88,19 +88,19 @@ SECTIONS
     __exidx_end = .;
   } >FLASH
 
-  .memParams1 0x0800F000 :
-  {
-    . = ALIGN(4);
-    KEEP(*(memParams1)) /* direccion de memoria en que quiero esta estructura */
-    . = ALIGN(4);
-  } >FLASH
+  /* .memParams1 0x0800F000 : */
+  /* { */
+  /*   . = ALIGN(4); */
+  /*   KEEP(*(memParams1)) /\* direccion de memoria en que quiero esta estructura *\/ */
+  /*   . = ALIGN(4); */
+  /* } >FLASH */
 
-  .memParams2 0x0800F400 :
-  {
-    . = ALIGN(4);
-    KEEP(*(memParams2)) /* OJO este es el dummy!!! direccion de memoria en que quiero esta estructura */
-    . = ALIGN(4);
-  } >FLASH
+  /* .memParams2 0x0800F400 : */
+  /* { */
+  /*   . = ALIGN(4); */
+  /*   KEEP(*(memParams2)) /\* OJO este es el dummy!!! direccion de memoria en que quiero esta estructura *\/ */
+  /*   . = ALIGN(4); */
+  /* } >FLASH */
 
 
   .preinit_array     :
