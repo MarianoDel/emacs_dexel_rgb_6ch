@@ -37,40 +37,6 @@ extern unsigned char ch_slow_segment [];
 
 
 // Globals ---------------------------------------------------------------------
-#ifdef USE_PWM_WITH_DITHER
-#ifdef DITHER_8
-#define SIZEOF_DITHER_VECT    8
-//                                              0     1     2     3     4     5     6     7
-unsigned char v_sequence[SIZEOF_DITHER_VECT] = {0x00, 0x80, 0x88, 0xA8, 0xAA, 0xBA, 0xBB, 0xFB };
-
-#endif
-#ifdef DITHER_16
-#define SIZEOF_DITHER_VECT    16
-//                                               0       1       2       3      
-unsigned short v_sequence[SIZEOF_DITHER_VECT] = {0x0000, 0x8000, 0x8080, 0x8808,
-                                                 0x8888, 0xA888, 0xA8A8, 0xAAA8,
-                                                 0xAAAA, 0xBAAA, 0xBABA, 0xBBBA,
-                                                 0xBBBB, 0xFBBB, 0xFBFB, 0xFFFB};
-
-#endif
-volatile unsigned short v_dither_tim1_ch1[SIZEOF_DITHER_VECT] = { 0 };
-volatile unsigned short v_dither_tim1_ch2[SIZEOF_DITHER_VECT] = { 0 };
-volatile unsigned short v_dither_tim3_ch1[SIZEOF_DITHER_VECT] = { 0 };
-volatile unsigned short v_dither_tim3_ch2[SIZEOF_DITHER_VECT] = { 0 };
-volatile unsigned short v_dither_tim3_ch3[SIZEOF_DITHER_VECT] = { 0 };
-volatile unsigned short v_dither_tim3_ch4[SIZEOF_DITHER_VECT] = { 0 };
-volatile unsigned char dither_sequence_cnt = 0;
-
-#endif
-
-#ifdef USE_PWM_DELTA_INT_TIMER_FAST
-volatile unsigned short last_ch1_pwm = 0;
-volatile unsigned short last_ch2_pwm = 0;
-volatile unsigned short last_ch3_pwm = 0;
-volatile unsigned short last_ch4_pwm = 0;
-volatile unsigned short last_ch5_pwm = 0;
-volatile unsigned short last_ch6_pwm = 0;
-#endif
 
 // Module Private Functions ----------------------------------------------------
 unsigned short CalcNewDelta (unsigned short, unsigned short);
@@ -178,11 +144,6 @@ void TIM_1_Init (void)
     temp |= 0x00000022;			//PA9 -> AF2; PA8 -> AF2
     GPIOA->AFR[1] = temp;
 
-#ifdef USE_PWM_WITH_DITHER
-    NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
-    NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 9);
-#endif
-    
     // Enable timer interrupt ver UDIS
     // TIM1->DIER |= TIM_DIER_UIE;
     // NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
@@ -190,91 +151,6 @@ void TIM_1_Init (void)
     
     TIM1->CR1 |= TIM_CR1_CEN;
 }
-
-
-#ifdef USE_PWM_WITH_DITHER
-void TIM_LoadDitherSequences (unsigned char which_ch, unsigned short new_duty)
-{
-    volatile unsigned short * p1;
-
-    //TODO: si v_dither_tim fuese una matriz me puedo evitar el switch y apuntar con el canal
-    // quedaria funcionando entonces por tabla
-    switch (which_ch)
-    {
-    case 0:
-        p1 = v_dither_tim1_ch1;
-        break;
-
-    case 1:
-        p1 = v_dither_tim1_ch2;
-        break;
-
-    case 2:
-        p1 = v_dither_tim3_ch1;
-        break;
-
-    case 3:
-        p1 = v_dither_tim3_ch2;
-        break;
-
-    case 4:
-        p1 = v_dither_tim3_ch3;
-        break;
-
-    case 5:
-        p1 = v_dither_tim3_ch4;
-        break;
-    }        
-
-#ifdef DITHER_8
-    unsigned char seq_index = (unsigned char) (new_duty & 0x0007);
-    unsigned char seq_value = v_sequence[seq_index];    
-
-    unsigned short adj_duty = new_duty >> 3;
-    unsigned short adj_duty_plus_one = adj_duty + 1;
-#endif
-
-#ifdef DITHER_16
-    unsigned char seq_index = (unsigned char) (new_duty & 0x000F);
-    unsigned short seq_value = v_sequence[seq_index];    
-
-    unsigned short adj_duty = new_duty >> 4;
-    unsigned short adj_duty_plus_one = adj_duty + 1;
-#endif
-    
-    for (unsigned char i = 0; i < SIZEOF_DITHER_VECT; i++)
-    {
-        if (seq_value & 0x01)
-            *(p1 + i) = adj_duty_plus_one;
-        else
-            *(p1 + i) = adj_duty;
-
-        seq_value >>= 1;
-    }
-}
-
-
-void TIM1_BRK_UP_TRG_COM_IRQHandler (void)    //48KHz or USE_FREQ_XXKHZ on hard.h
-{
-    //update the pwm mosfet channels with the pre-calculed sequences
-    TIM1->CCR1 = v_dither_tim1_ch1[dither_sequence_cnt];
-    TIM1->CCR2 = v_dither_tim1_ch2[dither_sequence_cnt];
-    TIM3->CCR1 = v_dither_tim3_ch1[dither_sequence_cnt];
-    TIM3->CCR2 = v_dither_tim3_ch2[dither_sequence_cnt];
-    TIM3->CCR3 = v_dither_tim3_ch3[dither_sequence_cnt];
-    TIM3->CCR4 = v_dither_tim3_ch4[dither_sequence_cnt];
-
-    //update the sequence counter
-    if (dither_sequence_cnt < (SIZEOF_DITHER_VECT - 1))
-        dither_sequence_cnt++;
-    else
-        dither_sequence_cnt = 0;
-
-    //clear flag
-    if (TIM1->SR & TIM_SR_UIF)
-        TIM1->SR &= ~TIM_SR_UIF;
-}
-#endif
 
 
 void TIM_3_Init (void)

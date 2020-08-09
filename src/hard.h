@@ -49,12 +49,6 @@
 // #define WITH_POWER_CONTROL
 // #define WITH_POWER_CONTROL_SHOW_IN_DISPLAY
 
-// --- Dither Selection --- //
-// #define USE_PWM_WITH_DITHER
-
-// --- Dither Deph --- //
-#define DITHER_8
-// #define DITHER_16
 
 // --- How often we update the PWM outputs --- //
 #define DMX_UPDATE_TIMER_WITH_DELTA    3    //tick en 1ms
