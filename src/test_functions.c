@@ -33,7 +33,7 @@ extern volatile unsigned short adc_ch [];
 void TEST_Voltage_Temperature (void)
 {
     char s_to_send [100];
-    unsigned char seq_cnt = 0;
+    unsigned short seq_cnt = 0;
     float volts = 0.0;
     unsigned char volts_int = 0;
     unsigned char volts_dec = 0;
@@ -43,7 +43,7 @@ void TEST_Voltage_Temperature (void)
         {
             sequence_ready_reset;
             seq_cnt++;
-            if (seq_cnt > 250)
+            if (seq_cnt > 2400)
             {
                 seq_cnt = 0;
                 volts = V_Sense_48V * 3.3 * 34;
@@ -52,7 +52,7 @@ void TEST_Voltage_Temperature (void)
                 volts = volts - volts_int;
                 volts = volts * 100;
                 volts_dec = (unsigned char) volts;
-                sprintf(s_to_send, "temp: %d vdig: %d voltage: %d.%02d\n",
+                sprintf(s_to_send, "temp: %d vdig: %d voltage: %d.%02dV\n",
                         Temp_Channel,
                         V_Sense_48V,
                         volts_int,

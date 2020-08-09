@@ -54,6 +54,7 @@ void PWMChannelsReset (void)
 #endif
 }
 
+
 unsigned short PWM_Map_From_Dmx (unsigned char dmx_val)
 {
     unsigned int pwm = 0;
@@ -69,5 +70,39 @@ unsigned short PWM_Map_From_Dmx (unsigned char dmx_val)
 
 }
 
+
+void PWM_Set_PwrCtrl (unsigned char * ch_dmx_val)
+{
+    unsigned char channels_in_excess = 0;
+    unsigned short total_dmx = 0;
+
+    //cuantos tengo arriba del threshold y cuanto de total
+    for (unsigned char i = 0; i < mem_conf.dmx_channel_quantity; i++)
+    {
+        if (*(ch_dmx_val + i) > POWER_CONTROL_INDIVIDUAL_THRESHOLD)
+            channels_in_excess++;
+
+        total_dmx += *(ch_dmx_val + i);
+    }
+
+    if (total_dmx > POWER_CONTROL_GENERAL_THRESHOLD)
+    {
+        // el exceso total que quito
+        total_dmx -= POWER_CONTROL_GENERAL_THRESHOLD;
+        // el exceso por canal que quito
+        total_dmx = total_dmx / channels_in_excess;
+
+        unsigned short new = 0;
+        for (unsigned char i = 0; i < mem_conf.dmx_channel_quantity; i++)
+        {
+            if (*(ch_dmx_val + i) > POWER_CONTROL_INDIVIDUAL_THRESHOLD)
+            {
+                new = *(ch_dmx_val + i) * total_dmx;
+                new = new / 256;
+                *(ch_dmx_val + i) = new; 
+            }
+        }
+    }
+}
 
 //--- end of file ---//
