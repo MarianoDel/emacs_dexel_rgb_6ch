@@ -29,17 +29,6 @@
 #define DUTY_100_PERCENT	1000
 #define DUTY_ALWAYS			(DUTY_100_PERCENT + 1)
 
-// --- Dutys with dither --- //
-#ifdef DITHER_8
-#define DUTY_MAX_ALLOWED_WITH_DITHER    (DUTY_MAX_ALLOWED << 3)
-#define DUTY_90_PERCENT_WITH_DITHER    (DUTY_90_PERCENT << 3)
-#endif
-
-#ifdef DITHER_16
-#define DUTY_MAX_ALLOWED_WITH_DITHER    (DUTY_MAX_ALLOWED << 4)
-#define DUTY_90_PERCENT_WITH_DITHER    (DUTY_90_PERCENT << 4)
-#endif
-
 
 #define TIM_CNTR_FOR_DMX_MAX    255
 #define TIM_CNTR_FOR_DMX_DELTA    (TIM_CNTR_FOR_DMX_MAX - TIM_CNTR_FOR_DMX_MODE_CHANGE)
@@ -77,8 +66,6 @@
 
 #define TIM1DisableInterrupt     (TIM1->DIER &= ~TIM_DIER_UIE)
 #define TIM1EnableInterrupt      (TIM1->DIER |= TIM_DIER_UIE)
-#define EnableDitherInterrupt    (TIM1->DIER |= TIM_DIER_UIE)
-#define DisableDitherInterrupt    (TIM1->DIER &= ~TIM_DIER_UIE)    
 
 #define TIM17DisableInterrupt    (TIM17->DIER &= ~TIM_DIER_UIE)
 #define TIM17EnableInterrupt     (TIM17->DIER |= TIM_DIER_UIE)
@@ -119,7 +106,6 @@ void Update_TIM3_CH2 (unsigned short);
 void Update_TIM3_CH3 (unsigned short);
 void Update_TIM3_CH4 (unsigned short);
 
-void TIM_LoadDitherSequences (unsigned char, unsigned short);
 void Wait_ms (unsigned short wait);
 
 #endif    /* _TIM_H_ */

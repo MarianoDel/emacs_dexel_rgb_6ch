@@ -53,7 +53,6 @@
 // --- How often we update the PWM outputs --- //
 #define DMX_UPDATE_TIMER_WITH_DELTA    3    //tick en 1ms
 #define DMX_UPDATE_TIMER    5    //si pongo esto en 2 se ven saltos en el blanco incluso con delta-single-step
-// #define DMX_UPDATE_TIMER_WITH_DITHER    2
 
 // --- After configuration what to do with the flash --- //
 #define SAVE_FLASH_IMMEDIATE
