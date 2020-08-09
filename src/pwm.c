@@ -38,6 +38,7 @@ void PWMChannelsReset (void)
 }
 
 
+//TODO: esto mapea a un pwm maximo de 1000
 unsigned short PWM_Map_From_Dmx (unsigned char dmx_val)
 {
     unsigned int pwm = 0;

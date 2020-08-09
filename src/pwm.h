@@ -19,7 +19,7 @@
 
 
 // Exported Constants or Macros ------------------------------------------------
-#define POWER_CONTROL_GENERAL_THRESHOLD    512
+#define POWER_CONTROL_GENERAL_THRESHOLD    512    // este es un valor total de dmx no pwm
 
 #define EnablePreload_PWM1    EnablePreload_TIM3_CH4
 #define EnablePreload_PWM2    EnablePreload_TIM3_CH3

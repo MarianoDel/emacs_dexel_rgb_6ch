@@ -81,14 +81,9 @@ volatile unsigned char data512[SIZEOF_DMX_DATA512];
 volatile unsigned char data7[SIZEOF_DMX_DATA7];
 volatile unsigned char * pdmx;
 
-// resultados de los filtros aplicados
-unsigned short sp1_filtered = 0;
-unsigned short sp2_filtered = 0;
-unsigned short sp3_filtered = 0;
-unsigned short sp4_filtered = 0;
-unsigned short sp5_filtered = 0;
-unsigned short sp6_filtered = 0;
-
+#ifdef CHECK_FILTERS_BY_INT
+volatile unsigned char channels_values_int [6] = { 0 };
+#endif
 
 #ifdef USE_FILTER_LENGHT_16
 ma16_u16_data_obj_t st_sp1;
@@ -102,20 +97,21 @@ ma16_u16_data_obj_t st_sp6;
 
 
 // Globals ---------------------------------------------------------------------
-// ------- de los timers -------
+// -- for the ms timers ----------------
 volatile unsigned short timer_standby;
 volatile unsigned short wait_ms_var = 0;
 volatile unsigned char temp_sample_timer = 0;
 volatile unsigned short need_to_save_timer = 0;
 
-
-// ------- para la memoria -------
+// -- for the memory -------------------
 unsigned char need_to_save = 0;
+
 
 // Module Private Functions ----------------------------------------------------
 extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
 void CheckFiltersAndOffsets (unsigned char *);
+void CheckFiltersAndOffsets_NoTimed (unsigned char *);
 void UpdateFiltersTest_Reset (void);
 
 
@@ -549,7 +545,13 @@ int main(void)
             
         case MAIN_IN_SLAVE_MODE:
             FuncSlaveMode (ch_values);
+#ifdef CHECK_FILTERS_BY_INT
+            for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
+                channels_values_int[n] = ch_values[n];
+
+#else
             CheckFiltersAndOffsets (ch_values);
+#endif
 
 #ifdef USART2_DEBUG_MODE
             if (!timer_standby)
@@ -747,9 +749,6 @@ void TimingDelay_Decrement(void)
     if (temp_sample_timer)
         temp_sample_timer--;
 
-    if (dmx_filters_timer)
-        dmx_filters_timer--;
-
     if (dmx_timeout_timer)
         dmx_timeout_timer--;
     else
@@ -766,6 +765,21 @@ void TimingDelay_Decrement(void)
 
     //para funciones en hard
     HARD_Timeouts();
+
+    //para filtros y offset DMX
+#ifdef CHECK_FILTERS_BY_INT
+    if (dmx_filters_timer)
+        dmx_filters_timer--;
+    else
+    {
+        dmx_filters_timer = DMX_UPDATE_TIMER;
+        CheckFiltersAndOffsets_NoTimed(channels_values_int);
+    }
+#else
+    if (dmx_filters_timer)
+        dmx_filters_timer--;
+#endif
+
 }
 
 
@@ -788,61 +802,18 @@ unsigned short last_ch5_pwm = 0;
 unsigned short last_ch6_pwm = 0;
 #endif
 
-//aca filtro los offsets del pwm en vez del valor del canal
-//cada 5ms
+
+//asi como esta demora 20us aprox.
 void CheckFiltersAndOffsets (unsigned char * ch_dmx_val)
 {
-    //filters para el dmx - generalmente 8 puntos a 200Hz -
-    //desde el sp al sp_filter
+    //dmx filters - generaly 8 points at 200Hz -
 #ifdef USE_PWM_DIRECT
-    if (!dmx_filters_timer)
+    if (!dmx_filters_timer)    //asi como esta demora 20us aprox.
     {
         dmx_filters_timer = DMX_UPDATE_TIMER;
-
-        // channel 1
-        ch1_pwm = MA16_U16Circular (
-            &st_sp1,
-            PWM_Map_From_Dmx(*(ch_dmx_val + CH1_VAL_OFFSET))
-            );
-        PWM_Update_CH1(ch1_pwm);
-
-        // channel 2
-        ch2_pwm = MA16_U16Circular (
-            &st_sp2,
-            PWM_Map_From_Dmx(*(ch_dmx_val + CH2_VAL_OFFSET))
-            );
-        PWM_Update_CH2(ch2_pwm);
-
-        // channel 3
-        ch3_pwm = MA16_U16Circular (
-            &st_sp3,
-            PWM_Map_From_Dmx(*(ch_dmx_val + CH3_VAL_OFFSET))
-            );
-        PWM_Update_CH3(ch3_pwm);
-
-        // channel 4
-        ch4_pwm = MA16_U16Circular (
-            &st_sp4,
-            PWM_Map_From_Dmx(*(ch_dmx_val + CH4_VAL_OFFSET))
-            );
-        PWM_Update_CH4(ch4_pwm);
-
-        // channel 5
-        ch5_pwm = MA16_U16Circular (
-            &st_sp5,
-            PWM_Map_From_Dmx(*(ch_dmx_val + CH5_VAL_OFFSET))
-            );
-        PWM_Update_CH5(ch5_pwm);
-
-        // channel 6
-        ch6_pwm = MA16_U16Circular (
-            &st_sp6,
-            PWM_Map_From_Dmx(*(ch_dmx_val + CH6_VAL_OFFSET))
-            );
-        PWM_Update_CH6(ch6_pwm);
+        CheckFiltersAndOffsets_NoTimed (ch_dmx_val);
     }
-#endif    //USE_PWM_DIRECT
-
+#endif
 #ifdef USE_PWM_WITH_DELTA
     if (!dmx_filters_timer)
     {
@@ -937,6 +908,57 @@ void CheckFiltersAndOffsets (unsigned char * ch_dmx_val)
     }
     
 #endif    //USE_PWM_WITH_DELTA
+}
+
+
+void CheckFiltersAndOffsets_NoTimed (unsigned char * ch_dmx_val)
+{
+    // channel 1
+    ch1_pwm = MA16_U16Circular (
+        &st_sp1,
+        PWM_Map_From_Dmx(*(ch_dmx_val + CH1_VAL_OFFSET))
+        );
+    PWM_Update_CH1(ch1_pwm);
+
+    // channel 2
+    ch2_pwm = MA16_U16Circular (
+        &st_sp2,
+        PWM_Map_From_Dmx(*(ch_dmx_val + CH2_VAL_OFFSET))
+        );
+    PWM_Update_CH2(ch2_pwm);
+
+    // channel 3
+    ch3_pwm = MA16_U16Circular (
+        &st_sp3,
+        PWM_Map_From_Dmx(*(ch_dmx_val + CH3_VAL_OFFSET))
+        );
+    PWM_Update_CH3(ch3_pwm);
+
+    // channel 4
+    ch4_pwm = MA16_U16Circular (
+        &st_sp4,
+        PWM_Map_From_Dmx(*(ch_dmx_val + CH4_VAL_OFFSET))
+        );
+    PWM_Update_CH4(ch4_pwm);
+
+    // channel 5
+    ch5_pwm = MA16_U16Circular (
+        &st_sp5,
+        PWM_Map_From_Dmx(*(ch_dmx_val + CH5_VAL_OFFSET))
+        );
+    PWM_Update_CH5(ch5_pwm);
+
+    // channel 6
+    ch6_pwm = MA16_U16Circular (
+        &st_sp6,
+        PWM_Map_From_Dmx(*(ch_dmx_val + CH6_VAL_OFFSET))
+        );
+    PWM_Update_CH6(ch6_pwm);
+
+    if (CTRL_FAN)
+        CTRL_FAN_OFF;
+    else
+        CTRL_FAN_ON;
 }
 
 

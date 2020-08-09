@@ -49,6 +49,8 @@
 // #define WITH_POWER_CONTROL
 // #define WITH_POWER_CONTROL_SHOW_IN_DISPLAY
 
+// --- Filters checked by int on DMX ---//
+#define CHECK_FILTERS_BY_INT
 
 // --- How often we update the PWM outputs --- //
 #define DMX_UPDATE_TIMER_WITH_DELTA    3    //tick en 1ms
@@ -76,22 +78,32 @@
 
 // --- Sanity checks --- //
 #if ((!defined USE_PWM_DIRECT) \
-     && (!defined USE_PWM_WITH_DELTA)      \
-     && (!defined USE_PWM_DELTA_INT_TIMER_FAST))
+     && (!defined USE_PWM_WITH_DELTA))
 
 #error "Must select what type of PWM generation to use"
 #endif
 
-#if (defined USE_PWM_WITH_DELTA) || (defined USE_PWM_DELTA_INT_TIMER_FAST)
-#if ((!defined DELTA_MULTIPLE_STEPS_100) \
-     && (!defined DELTA_MULTIPLE_STEPS_50) \
-     && (!defined DELTA_SINGLE_STEP))
-#error "Must select the delta steps"
-#endif
-#endif
-
 //---- End of Features Configuration ----------
 
+//-- Configuration for some Analog things ------
+//---- Voltage Sensor
+#define MIN_PWR_SUPPLY    VOLTS_20
+#define MAX_PWR_SUPPLY    VOLTS_50
+
+#define VOLTS_20    730
+#define VOLTS_50    1825
+//---- LM335 measurement Temperatures
+//37	2,572V
+//40	2,600V
+//45	2,650V
+//50	2,681V
+//55	2,725V
+//60	2,765V
+#define TEMP_IN_30		3226
+#define TEMP_IN_35		3279
+#define TEMP_IN_50		3434
+#define TEMP_IN_65		3591
+#define TEMP_DISCONECT		4000
 
 
 //--- Hardware Welcome Code ------------------//
@@ -115,39 +127,6 @@
 #ifdef SOFTWARE_VERSION_1_0
 #define SOFT "Software Version: 1.0\n"
 #endif
-
-//-------- Configuration for Outputs-Channels -----
-#define MIN_MAINS_VOLTAGE    20
-#define MAX_MAINS_VOLTAGE    48
-#define MIN_MAX_POWER    40
-#define MAX_MAX_POWER    100
-
-#define MAX_DUTY_CYCLE    DUTY_95_PERCENT
-
-
-#define CH1_VAL_OFFSET    0
-#define CH2_VAL_OFFSET    1
-#define CH3_VAL_OFFSET    2
-#define CH4_VAL_OFFSET    3
-#define CH5_VAL_OFFSET    4
-#define CH6_VAL_OFFSET    5
-
-//---- Configuration for Firmware-Programs --------
-
-
-//-------- Configuration for Outputs-Firmware ------
-//---- Temperaturas en el LM335
-//37	2,572
-//40	2,600
-//45	2,650
-//50	2,681
-//55	2,725
-//60	2,765
-#define TEMP_IN_30		3226
-#define TEMP_IN_35		3279
-#define TEMP_IN_50		3434
-#define TEMP_IN_65		3591
-#define TEMP_DISCONECT		4000
 
 
 //-- End Of Defines For Configuration ---------------
@@ -488,14 +467,14 @@
 #endif    //HARDWARE_VERSION_1_0
 
 
-
-// #define SWITCHES_TIMER_RELOAD	10
-
-// #define SWITCHES_THRESHOLD_FULL	300		//3 segundos
-// #define SWITCHES_THRESHOLD_HALF	100		//1 segundo
-// #define SWITCHES_THRESHOLD_MIN	5		//50 ms
-
 // Exported Types & Macros -----------------------------------------------------
+#define CH1_VAL_OFFSET    0
+#define CH2_VAL_OFFSET    1
+#define CH3_VAL_OFFSET    2
+#define CH4_VAL_OFFSET    3
+#define CH5_VAL_OFFSET    4
+#define CH6_VAL_OFFSET    5
+
 typedef enum {
     SW_NO = 0,
     SW_MIN,
@@ -579,3 +558,5 @@ sw_actions_t CheckSW (void);
 #endif
 
 #endif /* HARD_H_ */
+
+//--- end of file ---//

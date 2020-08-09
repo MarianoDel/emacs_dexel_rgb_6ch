@@ -11,14 +11,11 @@
 #include "hard.h"
 #include "flash_program.h"
 
-//cual es el de mas ciclo de trabajo el 1 o el 9
-#define ONE_FOR_NINE
 
-
-/* Externals variables ---------------------------------------------------------*/
+// Externals -------------------------------------------------------------------
 extern parameters_typedef mem_conf;
 
-/* Global variables ------------------------------------------------------------*/
+// Globals ---------------------------------------------------------------------
 volatile unsigned short prog_timer;
 
 unsigned char prog_state = 0;
@@ -38,36 +35,21 @@ unsigned char last_w = 0;
 #endif
 
 //posicion y porcentajes generales
-//posicion							 0   1   2   3   4     5   6   7   8   9
-//porcentajes						10  10  17.5 25  32.5  40 52.5 65  85  100
+//porcentajes					      10  10 17.5 25 32.5 40   52.5  65  85   100
 const unsigned char v_percent [PROGRAM_SEQ_LENGTH] = {25, 25, 44, 64, 83, 102, 134, 166, 217, 255 };
 
 //cambios de velocidad en ms
-//posicion							0	 1    2    3    4     5     6     7     8     9
 const unsigned short v_speed [PROGRAM_SEQ_LENGTH] = { 50, 50, 100, 200, 400, 600, 1000, 1600, 2200, 3000 };
 
-#ifdef ONE_FOR_NINE
 //cambios de velocidad de fading en multiplos de ms
-//posicion				  				  0   1   2   3  4  5  6  7  8  9
 const unsigned char v_speed_fading[PROGRAM_SEQ_LENGTH] = { 20, 20, 15, 10, 6, 5, 4, 3, 2, 1 };
 
 //cambios de velocidad de strobe en multiplos de ms (buscar todos divisible por 2)
-//posicion				  				    0    1    2    3    4    5    6    7    8    9
 const unsigned short v_speed_strobe[PROGRAM_SEQ_LENGTH] = { 700, 700, 600, 500, 400, 350, 300, 250, 200, 100 };
 const unsigned char v_cycles_strobe[PROGRAM_SEQ_LENGTH] = {  4,  4,   5,   6,   6,   7,   7,   8,   8,   9 };
-#else
-//cambios de velocidad de fading en multiplos de ms
-//posicion				  				 0  1  2  3  4  5  6  7   8   9
-const unsigned char v_speed_fading[PROGRAM_SEQ_LENGTH] = { 1, 1, 2, 3, 4, 5, 6, 10, 15, 20 };
-
-//cambios de velocidad de strobe en multiplos de ms (buscar todos divisible por 2)
-//posicion				  				   0   1    2    3    4    5    6    7    8     9
-const unsigned short v_speed_strobe[PROGRAM_SEQ_LENGTH] = { 100, 100, 200, 250, 300, 350, 400, 500, 600, 700 };
-const unsigned char v_cycles_strobe[PROGRAM_SEQ_LENGTH] = {  9,  9,   8,   8,   7,   7,   6,   6,   5,    4 };
-#endif
 
 
-//-- Private Module Functions --------------------
+// Module Private Functions ----------------------------------------------------
 void Func_P1(unsigned char *, unsigned char);
 void Func_P2(unsigned char *, unsigned char);
 void Func_P3(unsigned char *, unsigned char);
@@ -79,13 +61,7 @@ void Func_P8(unsigned char *, unsigned char);
 void Func_P9(unsigned char *, unsigned char);
 
 
-
-//-- End of Private Module Functions --------------
-
-
-
-/* Functions -------------------------------------------------------------------*/
-
+// Module Functions ------------------------------------------------------------
 void UpdateProgTimers (void)
 {
     if (prog_timer)
