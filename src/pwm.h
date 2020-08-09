@@ -19,6 +19,8 @@
 
 
 // Exported Constants or Macros ------------------------------------------------
+#define POWER_CONTROL_GENERAL_THRESHOLD    512
+
 #define EnablePreload_PWM1    EnablePreload_TIM3_CH4
 #define EnablePreload_PWM2    EnablePreload_TIM3_CH3
 #define EnablePreload_PWM3    EnablePreload_TIM3_CH1
@@ -45,7 +47,7 @@
 // Exported Functions ----------------------------------------------------------
 void PWMChannelsReset (void);
 unsigned short PWM_Map_From_Dmx (unsigned char);
-void PWM_Set_PwrCtrl (unsigned char *);
+void PWM_Set_PwrCtrl (unsigned char *, unsigned char);
 
 
 #endif    /* __PWM_H_ */

@@ -17,6 +17,7 @@
 #include "ssd1306.h"
 #include "mainmenu.h"
 #include "flash_program.h"
+#include "pwm.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -93,8 +94,8 @@ static slave_mode_menu_running_t slave_mode_menu_state = SLAVE_MODE_MENU_RUNNING
 
 // Module Private Functions ----------------------------------------------------
 void SlaveModeMenuManagerReset (void);
-void UpdateSlaveModeMenuManager (void);
-void MenuSlaveModeRunning (void);
+void UpdateSlaveModeMenuManager (unsigned char *);
+void MenuSlaveModeRunning (unsigned char *);
 void Percentage (unsigned char, unsigned char *, unsigned char *);
 
 
@@ -177,9 +178,13 @@ void FuncSlaveMode (unsigned char * ch_val)
             *(ch_val + 5) = data7[6];
             
             dmx_end_of_packet_update = 1;
+
+#ifdef WITH_POWER_CONTROL
+            PWM_Set_PwrCtrl(ch_val, mem_conf.dmx_channel_quantity);
+#endif
         }
 
-        UpdateSlaveModeMenuManager();
+        UpdateSlaveModeMenuManager(ch_val);
         
         break;
 
@@ -196,7 +201,7 @@ void SlaveModeMenuManagerReset (void)
     slave_mode_menu_state = SLAVE_MODE_MENU_RUNNING_INIT;
 }
 
-inline void UpdateSlaveModeMenuManager (void)
+inline void UpdateSlaveModeMenuManager (unsigned char * ch_values)
 {
     //veo el menu solo si alguien toca los botones / timeout o DMX enchufado
     switch (slave_mode_menu_manager)
@@ -216,7 +221,7 @@ inline void UpdateSlaveModeMenuManager (void)
         
     case MENU_ON:
         //estado normal
-        MenuSlaveModeRunning();
+        MenuSlaveModeRunning(ch_values);
 
         //ya mostre el menu mucho tiempo, lo apago, si no estoy con dmx
         if ((!slave_mode_dmx_receiving_timer) && (!slave_mode_enable_menu_timer))
@@ -266,7 +271,7 @@ inline void UpdateSlaveModeMenuManager (void)
 // dmx slave conf
 #define dmx_first_chnl    mem_conf.dmx_first_channel
 unsigned char change_values = 0;
-inline void MenuSlaveModeRunning (void)
+inline void MenuSlaveModeRunning (unsigned char * ch_values)
 {
     char s_temp[18];
     unsigned char one_int = 0;
@@ -302,15 +307,33 @@ inline void MenuSlaveModeRunning (void)
             last_ch1 = data7[1];
 
             Percentage(last_ch1, &one_int, &one_dec);
+
+#ifdef WITH_POWER_CONTROL_SHOW_IN_DISPLAY
+            if (data7[1] != ch_values[CH1_VAL_OFFSET])
+            {
+                sprintf(s_temp, "ch%3d: %3d.%01d%% *",
+                        dmx_first_chnl,
+                        one_int,
+                        one_dec);
+            }
+            else
+            {
+                sprintf(s_temp, "ch%3d: %3d.%01d%%",
+                        dmx_first_chnl,
+                        one_int,
+                        one_dec);
+            }
+#else
             sprintf(s_temp, "ch%3d: %3d.%01d%%",
                     dmx_first_chnl,
                     one_int,
-                    one_dec);
+                    one_dec);            
+#endif
 
             MainMenu_SetLine1(s_temp);
             change_values = 1;
         }
-
+        
         slave_mode_menu_state++;
         break;
 

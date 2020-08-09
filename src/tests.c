@@ -17,7 +17,7 @@
 // Globals ---------------------------------------------------------------------
 
 #define POWER_CONTROL_GENERAL_THRESHOLD    512
-#define POWER_CONTROL_INDIVIDUAL_THRESHOLD    64
+#define POWER_CONTROL_INDIVIDUAL_THRESHOLD    2
 
 #define DMX_CHANNEL_QUANTITY    6
 unsigned char ch_values [DMX_CHANNEL_QUANTITY];
@@ -29,31 +29,24 @@ void PWM_Set_PwrCtrl (unsigned char *);
 // Module Functions ------------------------------------------------------------
 int main (int argc, char *argv[])
 {
-    unsigned char exceded = 0;
     unsigned short total_value = 0;
     unsigned short new_total_value = 0;    
-    unsigned short must_save = 0;
+    int must_save = 0;
     
     printf("Test Power control for DMX data\n");
     ch_values[0] = 255;
     ch_values[1] = 255;
-    ch_values[2] = 255;
-    ch_values[3] = 255;
-    ch_values[4] = 255;
-    ch_values[5] = 255;
-
+    ch_values[2] = 85;
+    ch_values[3] = 85;
+    ch_values[4] = 2;
+    ch_values[5] = 1;
+    
     for (unsigned char i = 0; i < DMX_CHANNEL_QUANTITY; i++)
-    {
-        if (ch_values[i] > POWER_CONTROL_INDIVIDUAL_THRESHOLD)
-            exceded++;
-
         total_value += ch_values[i];
-    }
 
     must_save = total_value - POWER_CONTROL_GENERAL_THRESHOLD;
-    printf("total: %d exceded: %d must_save: %d\n",
+    printf("total: %d must_save: %d\n",
            total_value,
-           exceded,
            must_save);
     
     printf("Started Channels values: \n");
@@ -86,33 +79,29 @@ int main (int argc, char *argv[])
 
 void PWM_Set_PwrCtrl (unsigned char * ch_dmx_val)
 {
-    unsigned char channels_in_excess = 0;
     unsigned short total_dmx = 0;
 
-    //cuantos tengo arriba del threshold y cuanto de total
+    //cuantos en total
     for (unsigned char i = 0; i < DMX_CHANNEL_QUANTITY; i++)
-    {
-        if (*(ch_dmx_val + i) > POWER_CONTROL_INDIVIDUAL_THRESHOLD)
-            channels_in_excess++;
-
         total_dmx += *(ch_dmx_val + i);
-    }
 
     if (total_dmx > POWER_CONTROL_GENERAL_THRESHOLD)
     {
-        // el exceso total que quito
-        total_dmx -= POWER_CONTROL_GENERAL_THRESHOLD;
-        // el exceso por canal que quito
-        total_dmx = total_dmx / channels_in_excess;
-
-        unsigned short new = 0;
+        unsigned int new = 0;
         for (unsigned char i = 0; i < DMX_CHANNEL_QUANTITY; i++)
         {
-            if (*(ch_dmx_val + i) > POWER_CONTROL_INDIVIDUAL_THRESHOLD)
+            // si el canal tiene algo
+            if (*(ch_dmx_val + i))
             {
-                new = *(ch_dmx_val + i) * total_dmx;
-                new = new / 256;
-                *(ch_dmx_val + i) = new; 
+                new = *(ch_dmx_val + i) * (POWER_CONTROL_GENERAL_THRESHOLD);
+                new = new / total_dmx;
+
+                // no dejo que se apaguen los canales
+                if (new)
+                    *(ch_dmx_val + i) = (unsigned char) new;
+                else
+                    *(ch_dmx_val + i) = 1;
+                
             }
         }
     }

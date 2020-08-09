@@ -71,35 +71,31 @@ unsigned short PWM_Map_From_Dmx (unsigned char dmx_val)
 }
 
 
-void PWM_Set_PwrCtrl (unsigned char * ch_dmx_val)
+void PWM_Set_PwrCtrl (unsigned char * ch_dmx_val, unsigned char chnls_qtty)
 {
-    unsigned char channels_in_excess = 0;
     unsigned short total_dmx = 0;
 
-    //cuantos tengo arriba del threshold y cuanto de total
-    for (unsigned char i = 0; i < mem_conf.dmx_channel_quantity; i++)
-    {
-        if (*(ch_dmx_val + i) > POWER_CONTROL_INDIVIDUAL_THRESHOLD)
-            channels_in_excess++;
-
+    //cuantos en total
+    for (unsigned char i = 0; i < chnls_qtty; i++)
         total_dmx += *(ch_dmx_val + i);
-    }
 
     if (total_dmx > POWER_CONTROL_GENERAL_THRESHOLD)
     {
-        // el exceso total que quito
-        total_dmx -= POWER_CONTROL_GENERAL_THRESHOLD;
-        // el exceso por canal que quito
-        total_dmx = total_dmx / channels_in_excess;
-
-        unsigned short new = 0;
-        for (unsigned char i = 0; i < mem_conf.dmx_channel_quantity; i++)
+        unsigned int new = 0;
+        for (unsigned char i = 0; i < chnls_qtty; i++)
         {
-            if (*(ch_dmx_val + i) > POWER_CONTROL_INDIVIDUAL_THRESHOLD)
+            // si el canal tiene algo
+            if (*(ch_dmx_val + i))
             {
-                new = *(ch_dmx_val + i) * total_dmx;
-                new = new / 256;
-                *(ch_dmx_val + i) = new; 
+                new = *(ch_dmx_val + i) * (POWER_CONTROL_GENERAL_THRESHOLD);
+                new = new / total_dmx;
+
+                // no dejo que se apaguen los canales
+                if (new)
+                    *(ch_dmx_val + i) = (unsigned char) new;
+                else
+                    *(ch_dmx_val + i) = 1;
+                
             }
         }
     }
