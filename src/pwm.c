@@ -43,12 +43,22 @@ unsigned short PWM_Map_From_Dmx (unsigned char dmx_val)
 {
     unsigned int pwm = 0;
 
+#if (DUTY_100_PERCENT == 1000)    
     if (dmx_val)
     {
         pwm = dmx_val * 391;
         pwm = pwm / 100;
         pwm += 4;
     }
+#endif
+#if (DUTY_100_PERCENT == 4000)
+    if (dmx_val)
+    {
+        pwm = dmx_val * 157;
+        pwm = pwm / 10;
+        pwm += 13;
+    }
+#endif
 
     return (unsigned short) pwm;
 

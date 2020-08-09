@@ -11,10 +11,19 @@
 #ifndef _TIM_H_
 #define _TIM_H_
 
+#include "hard.h"    //for freq conf
+
 //--- Exported types ---//
 //--- Exported constants ---//
-#define DUTY_MAX_ALLOWED    DUTY_95_PERCENT
+#define DUTY_MAX_ALLOWED  (DUTY_95_PERCENT)
+#define DUTY_ALWAYS       (DUTY_100_PERCENT + 1)
 
+#ifdef USE_FREQ_16KHZ
+#define DUTY_TRANSISTORS_ON	28
+#define DUTY_100_PERCENT	4000
+#endif
+
+#ifdef USE_FREQ_4_8KHZ
 #define DUTY_TRANSISTORS_ON	7
 #define DUTY_50_PERCENT		500
 #define DUTY_60_PERCENT		600
@@ -27,7 +36,8 @@
 #define DUTY_90_PERCENT		900
 #define DUTY_95_PERCENT		950
 #define DUTY_100_PERCENT	1000
-#define DUTY_ALWAYS			(DUTY_100_PERCENT + 1)
+#endif
+
 
 
 //--- Exported macro ---//

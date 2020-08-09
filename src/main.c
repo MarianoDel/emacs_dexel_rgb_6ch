@@ -111,7 +111,7 @@ unsigned char need_to_save = 0;
 extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
 void CheckFiltersAndOffsets (unsigned char *);
-void CheckFiltersAndOffsets_NoTimed (unsigned char *);
+void CheckFiltersAndOffsets_NoTimed (volatile unsigned char *);
 void UpdateFiltersTest_Reset (void);
 
 
@@ -911,7 +911,7 @@ void CheckFiltersAndOffsets (unsigned char * ch_dmx_val)
 }
 
 
-void CheckFiltersAndOffsets_NoTimed (unsigned char * ch_dmx_val)
+void CheckFiltersAndOffsets_NoTimed (volatile unsigned char * ch_dmx_val)
 {
     // channel 1
     ch1_pwm = MA16_U16Circular (

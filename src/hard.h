@@ -50,7 +50,10 @@
 // #define WITH_POWER_CONTROL_SHOW_IN_DISPLAY
 
 // --- Filters checked by int on DMX ---//
-#define CHECK_FILTERS_BY_INT
+// #define CHECK_FILTERS_BY_INT
+
+// --- Update the display OLED on DMX? ---//
+// #define NO_DISPLAY_UPDATE_ON_DMX
 
 // --- How often we update the PWM outputs --- //
 #define DMX_UPDATE_TIMER_WITH_DELTA    3    //tick en 1ms
@@ -63,8 +66,8 @@
 // --- PWM Frequency --- //
 // #define USE_FREQ_48KHZ
 // #define USE_FREQ_24KHZ
-// #define USE_FREQ_16KHZ
-#define USE_FREQ_4_8KHZ
+#define USE_FREQ_16KHZ
+// #define USE_FREQ_4_8KHZ
 
 // --- Usart2 Modes --- //
 #define USART2_DEBUG_MODE

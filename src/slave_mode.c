@@ -184,7 +184,9 @@ void FuncSlaveMode (unsigned char * ch_val)
 #endif
         }
 
+#ifndef NO_DISPLAY_UPDATE_ON_DMX
         UpdateSlaveModeMenuManager(ch_val);
+#endif
         
         break;
 
