@@ -81,7 +81,6 @@ SRC += ./src/master_mode.c
 SRC += ./src/programs_mode.c
 SRC += ./src/flash_program.c
 SRC += ./src/programs_functions.c
-# SRC += ./src/power_control.c    //pasar esto al nuevo modulo pwm
 SRC += ./src/ssd1306.c
 SRC += ./src/mainmenu.c
 SRC += ./src/screen.c
