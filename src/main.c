@@ -83,6 +83,7 @@ volatile unsigned char * pdmx;
 
 #ifdef CHECK_FILTERS_BY_INT
 volatile unsigned char channels_values_int [6] = { 0 };
+volatile unsigned char enable_outputs_by_int = 0;
 #endif
 
 #ifdef USE_FILTER_LENGHT_16
@@ -100,8 +101,13 @@ ma16_u16_data_obj_t st_sp6;
 // -- for the ms timers ----------------
 volatile unsigned short timer_standby;
 volatile unsigned short wait_ms_var = 0;
-volatile unsigned char temp_sample_timer = 0;
 volatile unsigned short need_to_save_timer = 0;
+#ifdef USE_OVERTEMP_PROT
+volatile unsigned char temp_sample_timer = 0;
+#endif
+#if (defined USE_OVERVOLTAGE_PROT) || (defined USE_UNDERVOLTAGE_PROT)
+volatile unsigned char voltage_sample_timer = 0;
+#endif
 
 // -- for the memory -------------------
 unsigned char need_to_save = 0;
@@ -485,7 +491,12 @@ int main(void)
                 //habilito transmisiones
                 SW_RX_TX_DE;
                 DMX_Ena();
-                
+
+#ifdef CHECK_FILTERS_BY_INT
+                //habilito salidas si estoy con int                
+                enable_outputs_by_int = 1;
+#endif
+
                 MasterModeMenuReset();
                 main_state = MAIN_IN_MASTER_MODE;             
             }                
@@ -500,6 +511,11 @@ int main(void)
                 //habilito recepcion
                 SW_RX_TX_RE_NEG;
                 DMX_Ena();
+
+#ifdef CHECK_FILTERS_BY_INT
+                //habilito salidas si estoy con int
+                enable_outputs_by_int = 1;
+#endif
                 
                 FuncSlaveModeReset();
                 main_state = MAIN_IN_SLAVE_MODE;
@@ -507,6 +523,11 @@ int main(void)
 
             if (mem_conf.program_type == PROGRAMS_MODE)
             {
+#ifdef CHECK_FILTERS_BY_INT
+                //habilito salidas si estoy con int
+                enable_outputs_by_int = 1;
+#endif
+                
                 main_state = MAIN_IN_PROGRAMS_MODE;
             }
 
@@ -604,6 +625,14 @@ int main(void)
             break;
 
         case MAIN_IN_OVERTEMP:
+            SW_RX_TX_DE;            
+            DMX_Disa();
+
+#ifdef CHECK_FILTERS_BY_INT
+            //deshabilito salidas si estoy con int
+            enable_outputs_by_int = 0;
+#endif
+            
             CTRL_FAN_ON;
             PWMChannelsReset();
             
@@ -630,6 +659,78 @@ int main(void)
             }
             
             break;
+
+        case MAIN_IN_OVERVOLTAGE:
+            SW_RX_TX_DE;            
+            DMX_Disa();
+#ifdef CHECK_FILTERS_BY_INT
+            //deshabilito salidas si estoy con int
+            enable_outputs_by_int = 0;
+#endif
+
+            CTRL_FAN_OFF;
+            PWMChannelsReset();
+            
+            SCREEN_ShowText2(
+                "Power    ",
+                "   Over  ",
+                " Voltage!",
+                "         "
+                );
+
+#ifdef USART2_DEBUG_MODE
+            sprintf(s_to_send, "overvoltage: %d\n", V_Sense_48V);
+            Usart2Send(s_to_send);
+#endif
+
+            main_state = MAIN_IN_OVERVOLTAGE_B;
+            break;
+
+        case MAIN_IN_OVERVOLTAGE_B:
+            if (V_Sense_48V < MAX_PWR_SUPPLY)
+            {
+                //reconecto
+                main_state = MAIN_HARDWARE_INIT;
+            }
+            
+            break;
+
+        case MAIN_IN_UNDERVOLTAGE:
+            SW_RX_TX_DE;            
+            DMX_Disa();
+
+#ifdef CHECK_FILTERS_BY_INT
+            //deshabilito salidas si estoy con int
+            enable_outputs_by_int = 0;
+#endif
+            
+            CTRL_FAN_OFF;
+            PWMChannelsReset();
+            
+            SCREEN_ShowText2(
+                "Power    ",
+                " is Too  ",
+                "  Low!   ",
+                "         "
+                );
+
+#ifdef USART2_DEBUG_MODE
+            sprintf(s_to_send, "undervoltage: %d\n", V_Sense_48V);
+            Usart2Send(s_to_send);
+#endif
+
+            main_state = MAIN_IN_UNDERVOLTAGE_B;
+            break;
+
+        case MAIN_IN_UNDERVOLTAGE_B:
+            if (V_Sense_48V > MIN_PWR_SUPPLY)
+            {
+                //reconecto
+                main_state = MAIN_HARDWARE_INIT;
+            }
+            
+            break;
+            
             
         case MAIN_ENTERING_MAIN_MENU:
             //deshabilitar salidas hardware
@@ -688,8 +789,26 @@ int main(void)
 
         // update de LCD
         display_update_int_state_machine();
-        
 
+        
+#if (defined USE_OVERVOLTAGE_PROT) || (defined USE_UNDERVOLTAGE_PROT)
+        if (!voltage_sample_timer)
+        {
+            voltage_sample_timer = 10;	//tomo muestra cada 10ms
+
+            if ((main_state != MAIN_IN_OVERVOLTAGE) &&
+                (main_state != MAIN_IN_OVERVOLTAGE_B) &&
+                (main_state != MAIN_IN_UNDERVOLTAGE_B) &&
+                (main_state != MAIN_IN_UNDERVOLTAGE_B))
+            {
+                if (V_Sense_48V > MAX_PWR_SUPPLY)
+                    main_state = MAIN_IN_OVERVOLTAGE;
+                else if (V_Sense_48V < MIN_PWR_SUPPLY)
+                    main_state = MAIN_IN_UNDERVOLTAGE;
+            }
+        }
+#endif
+        
         //sensado de temperatura
 #ifdef USE_OVERTEMP_PROT
         if (!temp_sample_timer)
@@ -705,8 +824,10 @@ int main(void)
                 }
                 else if (Temp_Channel > TEMP_IN_35)
                     CTRL_FAN_ON;
+#ifndef USE_CTRL_FAN_FOR_INT_FILTERS_UPDATE
                 else if (Temp_Channel < TEMP_IN_30)
                     CTRL_FAN_OFF;
+#endif
             }
         }
 #endif
@@ -746,9 +867,16 @@ void TimingDelay_Decrement(void)
     if (need_to_save_timer)
         need_to_save_timer--;
 
+#ifdef USE_OVERTEMP_PROT
     if (temp_sample_timer)
         temp_sample_timer--;
+#endif
 
+#if (defined USE_OVERVOLTAGE_PROT) || (defined USE_UNDERVOLTAGE_PROT)
+    if (voltage_sample_timer)
+        voltage_sample_timer--;
+#endif
+    
     if (dmx_timeout_timer)
         dmx_timeout_timer--;
     else
@@ -773,7 +901,8 @@ void TimingDelay_Decrement(void)
     else
     {
         dmx_filters_timer = DMX_UPDATE_TIMER;
-        CheckFiltersAndOffsets_NoTimed(channels_values_int);
+        if (enable_outputs_by_int)
+            CheckFiltersAndOffsets_NoTimed(channels_values_int);
     }
 #else
     if (dmx_filters_timer)
@@ -955,10 +1084,12 @@ void CheckFiltersAndOffsets_NoTimed (volatile unsigned char * ch_dmx_val)
         );
     PWM_Update_CH6(ch6_pwm);
 
+#ifdef USE_CTRL_FAN_FOR_INT_FILTERS_UPDATE
     if (CTRL_FAN)
         CTRL_FAN_OFF;
     else
         CTRL_FAN_ON;
+#endif
 }
 
 

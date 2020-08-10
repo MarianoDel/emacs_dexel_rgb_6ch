@@ -39,7 +39,11 @@
 #define USE_FILTER_LENGHT_16
 
 //--- Check the temp sensor ---//
-// #define USE_OVERTEMP_PROT
+#define USE_OVERTEMP_PROT
+
+//--- Check the voltage sensor ---//
+#define USE_OVERVOLTAGE_PROT
+#define USE_UNDERVOLTAGE_PROT
 
 // --- How to control the PWM generation, select only one --- //
 #define USE_PWM_DIRECT    //mapea lo que llega en el dmx al PWM directo
@@ -50,7 +54,8 @@
 // #define WITH_POWER_CONTROL_SHOW_IN_DISPLAY
 
 // --- Filters checked by int on DMX ---//
-// #define CHECK_FILTERS_BY_INT
+#define CHECK_FILTERS_BY_INT
+// #define USE_CTRL_FAN_FOR_INT_FILTERS_UPDATE
 
 // --- Update the display OLED on DMX? ---//
 // #define NO_DISPLAY_UPDATE_ON_DMX
@@ -517,6 +522,10 @@ typedef enum
     MAIN_IN_PROGRAMS_MODE,
     MAIN_IN_OVERTEMP,
     MAIN_IN_OVERTEMP_B,
+    MAIN_IN_OVERVOLTAGE,
+    MAIN_IN_OVERVOLTAGE_B,
+    MAIN_IN_UNDERVOLTAGE,
+    MAIN_IN_UNDERVOLTAGE_B,
     MAIN_ENTERING_MAIN_MENU,
     MAIN_IN_MAIN_MENU
     
