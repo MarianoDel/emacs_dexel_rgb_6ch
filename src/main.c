@@ -119,6 +119,7 @@ void TimingDelay_Decrement(void);
 void CheckFiltersAndOffsets (unsigned char *);
 void CheckFiltersAndOffsets_NoTimed (volatile unsigned char *);
 void UpdateFiltersTest_Reset (void);
+void SysTickError (void);
 
 
 // Module Functions ------------------------------------------------------------
@@ -131,205 +132,29 @@ int main(void)
 
     unsigned char ch_values [6] = { 0 };
 
-#ifdef HARD_TEST_MODE_DO_NOTHING
-    while (1);
-#endif
-
-    //GPIO Configuration.
+    // Gpio Configuration.
     GPIO_Config();
 
-#ifdef HARD_TEST_MODE_DO_NOTHING_AFTER_GPIOS
-    while (1);
-#endif
-    
-    //ACTIVAR SYSTICK TIMER
+    // Systick Timer Activation
     if (SysTick_Config(48000))
-    {
-        while (1)	/* Capture error */
-        {
-            // if (LED)
-            //     LED_OFF;
-            // else
-            //     LED_ON;
+        SysTickError();
 
-            for (unsigned char i = 0; i < 255; i++)
-            {
-                asm (	"nop \n\t"
-                        "nop \n\t"
-                        "nop \n\t" );
-            }
-        }
-    }
-
-
-    //pruebas hard//
+    // Peripherals Activation
     USART2Config();
 
     TIM_1_Init();
     TIM_3_Init();
-#ifdef USE_PWM_DELTA_INT_TIMER_FAST
-    TIM_17_Init();
-#endif
 
     PWMChannelsReset();
 
-#ifdef HARD_TEST_MODE_FAN
-    while (1)
-    {
-        CTRL_FAN_ON;
-        Wait_ms(1000);
-        CTRL_FAN_OFF;
-        Wait_ms(2000);
-    }
-#endif
+    // Tests Functions
+    // TF_Control_Fan ();
+    // TF_Oled_Screen ();
+    // TF_Oled_and_Main_Menu ();
+    // TF_Oled_and_Slave_Mode ();
+    // TF_Oled_and_Programs_Mode ();
+    // TF_Oled_and_Master_Mode ();    
 
-#ifdef HARD_TEST_MODE_ONLY_OLED_SCREENS
-    resp = resp_ok;
-    I2C2_Init();
-    Wait_ms(100);
-
-    //primer pantalla
-    SCREEN_Init();
-
-    unsigned char a = 0;
-    while (1)
-    {
-        if (!timer_standby)
-        {
-            CTRL_FAN_ON;
-            timer_standby = 1000;
-            if (a)
-            {
-                SCREEN_ShowText2(
-                    "Primera  ",
-                    " Pantalla",
-                    "         ",
-                    "         "
-                    );
-                a = 0;
-            }
-            else
-            {
-                SCREEN_ShowText2(
-                    "         ",
-                    "         ",
-                    "Segunda  ",
-                    " Pantalla"
-                    );
-                a = 1;
-            }
-            CTRL_FAN_OFF;
-        }
-        display_update_int_state_machine();
-
-        //chequeo de jitter
-        // if (!dmx_timeout_timer)
-        // {
-        //     dmx_timeout_timer = 5;
-        //     if (CTRL_FAN)
-        //         CTRL_FAN_OFF;
-        //     else
-        //         CTRL_FAN_ON;
-            
-        // }
-    }
-#endif
-
-    
-#ifdef HARD_TEST_MODE_ONLY_OLED_MAIN_MENU
-    resp = resp_ok;
-    I2C2_Init();
-    Wait_ms(100);
-
-    MainMenu_Init();
-
-    while (1)
-    {
-        action = do_nothing;
-
-        // Check switches first
-        action = CheckSW();        
-        resp = MainMenu_Update(action);
-
-        UpdateSwitches();
-    }
-#endif
-
-    
-#ifdef HARD_TEST_MODE_ONLY_OLED_SLAVE_MODE
-    resp = resp_ok;
-    I2C2_Init();
-    Wait_ms(100);
-
-    //primer pantalla
-    SCREEN_Init();
-    SCREEN_ShowText2(
-        "Slave    ",
-        "     Mode",
-        "         ",
-        "         "
-        );
-
-    FuncSlaveModeReset();
-
-    while (1)
-    {
-        FuncSlaveMode(ch_values);
-
-        //simulate dmx packets arrivals
-        if (!timer_standby)
-        {
-            timer_standby = 100;
-            Packet_Detected_Flag = 1;
-        }
-    }
-
-#endif
-    
-#ifdef HARD_TEST_MODE_ONLY_OLED_PROGRAMS_MODE
-    resp = resp_ok;
-    I2C2_Init();
-    Wait_ms(100);
-
-    //primer pantalla
-    SCREEN_Init();
-    SCREEN_ShowText2(
-        "Programs ",
-        "     Mode",
-        "         ",
-        "         "
-        );
-
-    ProgramsModeMenuReset();
-
-    while (1)
-    {
-        FuncsProgramsMode(ch_values);
-    }
-#endif
-
-
-#ifdef HARD_TEST_MODE_ONLY_OLED_MASTER_MODE
-    resp = resp_ok;
-    I2C2_Init();
-    Wait_ms(100);
-
-    //primer pantalla
-    SCREEN_Init();
-    SCREEN_ShowText2(
-        "Master   ",
-        "     Mode",
-        "         ",
-        "         "
-        );
-    
-    MasterModeMenuReset();
-
-    while (1)
-    {
-        FuncsMasterMode(ch_values);
-    }
-#endif
 
     ///////////////////////////////////
     // Inicio del Programa Principal //
@@ -1111,6 +936,26 @@ void UpdateFiltersTest_Reset (void)
     last_ch5_pwm = 0;
     last_ch6_pwm = 0;
 #endif
+}
+
+
+void SysTickError (void)
+{
+    //Capture systick error...
+    while (1)
+    {
+        if (CTRL_FAN)
+            CTRL_FAN_OFF;
+        else
+            CTRL_FAN_ON;
+
+        for (unsigned char i = 0; i < 255; i++)
+        {
+            asm ("nop \n\t"
+                 "nop \n\t"
+                 "nop \n\t" );
+        }
+    }
 }
 
 
