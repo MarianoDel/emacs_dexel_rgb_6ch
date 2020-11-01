@@ -11,6 +11,7 @@
 #define _HARD_H_
 
 #include "stm32f0xx.h"
+#include "switches_answers.h"
 
 
 //-- Defines For Configuration -------------------

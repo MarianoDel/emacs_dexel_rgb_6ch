@@ -9,7 +9,7 @@
 #ifndef _MAINMENU_H_
 #define _MAINMENU_H_
 
-#include "hard.h"
+#include "switches_answers.h"
 
 // Config Defines --------------------------------------------------------------
 

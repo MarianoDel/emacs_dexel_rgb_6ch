@@ -10,15 +10,11 @@
 // Includes --------------------------------------------------------------------
 #include "mainmenu.h"
 #include "programs_functions.h"
-#include "ssd1306.h"
-#include "hard.h"
-#include "i2c.h"
-#include "flash_program.h"
+// #include "ssd1306.h"
+#include "parameters.h"
+
 #include <string.h>
 #include <stdio.h>
-#include "uart.h"
-
-#include "tim.h"    //quitar esto al final del debug
 
 // Externals -------------------------------------------------------------------
 extern parameters_typedef mem_conf;

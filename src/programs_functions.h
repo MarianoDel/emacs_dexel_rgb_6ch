@@ -10,8 +10,7 @@
 #ifndef _PROGRAMS_FUNCTIONS_H_
 #define _PROGRAMS_FUNCTIONS_H_
 
-#include "hard.h"
-#include "tim.h"
+#include "switches_answers.h"
 
 //-------- Defines -------------
 #define PROGRAM_SEQ_LENGTH    10
