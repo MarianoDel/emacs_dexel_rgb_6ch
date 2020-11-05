@@ -1,20 +1,26 @@
-# emacs_dexel_rgb_6ch
-Placa Dexel 6CH modelo nuevo V1.0
-
+# DMX 6CH control board
 micro STM32F030R8T6
 
-#antes de empezar revisar seleccion del micro
-stm32f0_flash.cfg		//work area size y flash image
+Before begin check micro selection and configs.
+-----------------------------------------------
 
-stm32f0_flash_lock.cfg		//work area size y flash image
+* work area size y flash image
+> stm32f0_flash.cfg
 
-stm32f0_gdb.cfg		//work area size
+* work area size y flash image
+> stm32f0_flash_lock.cfg
 
-stm32f0_reset.cfg		//work area size
+* work area size
+> stm32f0_gdb.cfg
 
+* work area size
+> stm32f0_reset.cfg
 
-./cmsis_boot/startup/stm32_flash.ld		//end of ram; stack size; memory lenght
+* end of ram; stack size; memory lenght
+>./cmsis_boot/startup/stm32_flash.ld
 
-./cmsis_boot/stm32f0xx.h					//linea 68 elegir micro
+* check processor definition on line 68 -> but modify on Makefile
+>./cmsis_boot/stm32f0xx.h
+> Makefile
 
 

@@ -208,7 +208,7 @@ clean:
 tests:
 	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
 	gcc -c src/mainmenu.c -I. $(INCDIR)
-	gcc src/tests.c mainmenu.o -lpthread
+	gcc src/tests.c mainmenu.o -lpthread -lncurses
 	./a.out
 	# sino copiar funcion a testear al main de tests.c
 	# gcc src/tests.c

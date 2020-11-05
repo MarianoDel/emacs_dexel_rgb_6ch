@@ -13,6 +13,7 @@
 #include "parameters.h"
 #include "switches_answers.h"
 
+#include <curses.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -86,57 +87,86 @@ void * KeyboardInput (void * arg);
 // Module Functions ------------------------------------------------------------
 sw_actions_t action = do_nothing;
 int main_loop = 1;
-int main (int argc, char *argv[])
+
+void print_in_middle(WINDOW *win, int starty, int startx, int width, char *string);
+
+int main(int argc, char *argv[])
 {
-    pthread_t p1;
-    int rc;
+    initscr();			/* Start curses mode 		*/
+    start_color();			/* Start color 			*/
 
-    rc = pthread_create(&p1, NULL, KeyboardInput, (void *)rc);
-    if (rc){
-        printf("ERROR; return code from pthread_create() is %d\n", rc);
-        exit(-1);
-    }
-
-    gfx_init(DISPLAYWIDTH, DISPLAYHEIGHT);    
-    MainMenu_Init ();
-    do {
-
-        MainMenu_Update(action);
-            
-    } while (main_loop);
-
+    init_pair(1, COLOR_RED, COLOR_BLACK);
+    attron(COLOR_PAIR(1));
         
-    // printf("\n");
-
-    // display_setPixel(0, 0, WHITE);
-    // ShowDisplay(mem_buffer);
-    // display_setPixel(127, 63, WHITE);
-    // ShowDisplay(mem_buffer);
-    
-    // display_line(0,0,10,0,WHITE);
-    // ShowDisplay(mem_buffer);
-    // display_line(20,0,20,20,WHITE);
-    // ShowDisplay(mem_buffer);
-    // gfx_init(DISPLAYWIDTH, DISPLAYHEIGHT);
-    // gfx_drawRect(0,0,20,20, WHITE);
-    // ShowDisplay(mem_buffer);
-    // gfx_drawCircle(30,30,10,WHITE);
-    // ShowDisplay(mem_buffer);
-    // gfx_drawTriangle(40,30,50,40,45,50,WHITE);
-    // ShowDisplay(mem_buffer);
-    
-    // gfx_setCursor(0, 40);
-    // gfx_setTextSize(1);
-    // gfx_setTextColor(WHITE);
-    // gfx_write('c');
-    // gfx_write('a');
-    // gfx_write('c');
-    // gfx_write('a');
-    // gfx_print("caca");
-    // ShowDisplay(mem_buffer);
-    
-    return 0;
+    print_in_middle(stdscr, LINES / 2, 0, 0, "Viola !!! In color ...");
+    attroff(COLOR_PAIR(1));
+    getch();
+    endwin();
 }
+
+void print_in_middle(WINDOW *win, int starty, int startx, int width, char *string)
+{	int length, x, y;
+	float temp;
+
+	if(win == NULL)
+		win = stdscr;
+	getyx(win, y, x);
+	if(startx != 0)
+		x = startx;
+	if(starty != 0)
+		y = starty;
+	if(width == 0)
+		width = 80;
+
+	length = strlen(string);
+	temp = (width - length)/ 2;
+	x = startx + (int)temp;
+	mvwprintw(win, y, x, "%s", string);
+        mvwprintw(win, y+1, x, "lines: %d columns: %d", LINES, COLS);
+	refresh();
+}
+
+// int main (int argc, char *argv[])
+// {
+//     // pthread_t p1;
+//     // int rc;
+
+//     // rc = pthread_create(&p1, NULL, KeyboardInput, (void *)rc);
+//     // if (rc){
+//     //     printf("ERROR; return code from pthread_create() is %d\n", rc);
+//     //     exit(-1);
+//     // }
+
+//     // gfx_init(DISPLAYWIDTH, DISPLAYHEIGHT);    
+//     // MainMenu_Init ();
+//     // do {
+
+//     //     MainMenu_Update(action);
+            
+//     // } while (main_loop);
+
+//     initscr();
+//     start_color();			/* Start color functionality	*/
+	
+//     init_pair(1, COLOR_CYAN, COLOR_BLACK);
+//     printw("A Big string which i didn't care to type fully ");    
+//     mvchgat(0, 0, -1, A_BLINK, 1, NULL);	
+// 	/* 
+// 	 * First two parameters specify the position at which to start 
+// 	 * Third parameter number of characters to update. -1 means till 
+// 	 * end of line
+// 	 * Forth parameter is the normal attribute you wanted to give 
+// 	 * to the charcter
+// 	 * Fifth is the color index. It is the index given during init_pair()
+// 	 * use 0 if you didn't want color
+// 	 * Sixth one is always NULL 
+// 	 */
+//     // refresh();
+//     getch();
+//     endwin();        
+    
+//     return 0;
+// }
 
 
 void * KeyboardInput (void * arg)
