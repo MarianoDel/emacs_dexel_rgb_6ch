@@ -21,6 +21,7 @@ Before begin check micro selection and configs.
 
 * check processor definition on line 68 -> but modify on Makefile
 >./cmsis_boot/stm32f0xx.h
+
 > Makefile
 
 
