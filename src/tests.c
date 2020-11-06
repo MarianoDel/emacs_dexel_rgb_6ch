@@ -81,6 +81,18 @@ unsigned char mem_buffer [DISPLAYHEIGHT * DISPLAYWIDTH / 8] = { 0 };
 #define WHITE 1
 #define INVERSE 2   
 
+typedef struct {
+    int height;
+    int width;
+    int starty;
+    int startx;
+
+} WIN_st;
+    
+void draw_win(WINDOW *);
+void draw_box(WIN_st *);
+void draw_box_tittle (WIN_st *, char *);
+
 void * KeyboardInput (void * arg);
     
 
@@ -92,16 +104,99 @@ void print_in_middle(WINDOW *win, int starty, int startx, int width, char *strin
 
 int main(int argc, char *argv[])
 {
+    WIN_st ggram_win;
+    WIN_st help_win;
+    
     initscr();			/* Start curses mode 		*/
     start_color();			/* Start color 			*/
 
     init_pair(1, COLOR_RED, COLOR_BLACK);
     attron(COLOR_PAIR(1));
-        
+
+    ggram_win.starty = 0;
+    ggram_win.startx = 0;
+    ggram_win.height = 30;
+    ggram_win.width = 130;
+    
+    draw_box(&ggram_win);
+
+    help_win.starty = 30;
+    help_win.startx = 0;
+    help_win.height = 3;
+    help_win.width = 130;
+    
+    draw_box(&help_win);    
+    
     print_in_middle(stdscr, LINES / 2, 0, 0, "Viola !!! In color ...");
+    refresh();
+
+    draw_box_tittle(&help_win, "lines in this sheet");
+    
     attroff(COLOR_PAIR(1));
     getch();
     endwin();
+}
+
+void draw_box (WIN_st * pw)
+{
+    int x1 = pw->startx;
+    int y1 = pw->starty;
+    int x2 = pw->startx + pw->width;
+    int y2 = pw->starty + pw->height;
+    int dx = pw->width;
+    int dy = pw->height;
+    
+    mvhline(y1, x1, '-', dx);
+    mvhline(y2, x1, '-', dx);
+    mvvline(y1, x1, '|', dy);
+    mvvline(y1, x2, '|', dy);
+
+    mvwprintw(stdscr, 0, 30, "y1: %d x1: %d y2: %d x2: %d", y1, x1, y2, x2);
+    refresh();
+    
+    mvaddch(y1, x1, '+');
+    mvaddch(y1, x2, '+');
+    mvaddch(y2, x1, '+');
+    mvaddch(y2, x2, '+');
+    
+}
+
+
+void draw_box_tittle (WIN_st * pw, char * tittle)
+{
+    int x1 = pw->startx;
+    int y1 = pw->starty;
+    int x2 = pw->startx + pw->width;
+    int y2 = pw->starty + pw->height;
+    int dx = pw->width;
+    int dy = pw->height;
+
+    int tittle_len = strlen(tittle);
+
+    if (dx >= tittle_len + 2)
+    {
+        int tittle_x = (dx - tittle_len) / 2;
+        mvwprintw(stdscr, y1, tittle_x, "%s", tittle);
+        refresh();
+    }       
+}
+
+
+void draw_win(WINDOW *local_win)
+{	
+    wborder(local_win,'|','|','-','-','+','+','+','+');    
+    /* The parameters taken are 
+     * 1. win: the window on which to operate
+     * 2. ls: character to be used for the left side of the window 
+     * 3. rs: character to be used for the right side of the window 
+     * 4. ts: character to be used for the top side of the window 
+     * 5. bs: character to be used for the bottom side of the window 
+     * 6. tl: character to be used for the top left corner of the window 
+     * 7. tr: character to be used for the top right corner of the window 
+     * 8. bl: character to be used for the bottom left corner of the window 
+     * 9. br: character to be used for the bottom right corner of the window
+     */
+    wrefresh(local_win);
 }
 
 void print_in_middle(WINDOW *win, int starty, int startx, int width, char *string)
