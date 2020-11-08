@@ -29,7 +29,6 @@ typedef unsigned char uint8_t;
 
 
 // Module Functions to Test ----------------------------------------------------
-void ShowDisplay (unsigned char *);
 void display_clear(void);
 void display_update(void);
 void display_setPixel( int16_t x, int16_t y, uint16_t color );
@@ -61,6 +60,7 @@ void gfx_println( const char* s );
 
 #define DISPLAYHEIGHT    64
 #define DISPLAYWIDTH    128
+// unsigned char mem_buffer [DISPLAYHEIGHT * DISPLAYWIDTH / 8] = {[256 ... 384] = 0xFF };
 unsigned char mem_buffer [DISPLAYHEIGHT * DISPLAYWIDTH / 8] = { 0 };
 
 // see data sheet page 25 for Graphic Display Data RAM organization
@@ -82,103 +82,213 @@ unsigned char mem_buffer [DISPLAYHEIGHT * DISPLAYWIDTH / 8] = { 0 };
 #define INVERSE 2   
 
 typedef struct {
-    int height;
-    int width;
-    int starty;
-    int startx;
+    int first_line;
+    int last_line;
+    int first_segment;
 
-} WIN_st;
-    
+} GGRAM_displayed_st;
+
+typedef enum {
+    DISPLAY_NONE = 0,
+    DISPLAY_UP,
+    DISPLAY_DOWN
+
+} display_actions_e;
+
 void draw_win(WINDOW *);
-void draw_box(WIN_st *);
-void draw_box_tittle (WIN_st *, char *);
+void draw_box_tittle (WINDOW *, char *);
+void draw_box_bottom (WINDOW *, char *);
+void draw_box_bottom_right (WINDOW *, char *);
+void draw_box_content (WINDOW *, char *);
+
+void ShowDisplay (WINDOW *, GGRAM_displayed_st *, unsigned char *);
+
 
 void * KeyboardInput (void * arg);
     
 
 // Module Functions ------------------------------------------------------------
 sw_actions_t action = do_nothing;
+display_actions_e display_actions = DISPLAY_NONE;
 int main_loop = 1;
 
 void print_in_middle(WINDOW *win, int starty, int startx, int width, char *string);
 
+WINDOW * ggram_win;
+WINDOW * help_win;
+GGRAM_displayed_st ggram_displayed;
+
 int main(int argc, char *argv[])
 {
-    WIN_st ggram_win;
-    WIN_st help_win;
-    
     initscr();			/* Start curses mode 		*/
+    cbreak();			/* Line buffering disabled, Pass on
+					 * everty thing to me 		*/
+    keypad(stdscr, TRUE);		/* I need that nifty F1 	*/
+
     start_color();			/* Start color 			*/
 
     init_pair(1, COLOR_RED, COLOR_BLACK);
-    attron(COLOR_PAIR(1));
-
-    ggram_win.starty = 0;
-    ggram_win.startx = 0;
-    ggram_win.height = 30;
-    ggram_win.width = 130;
-    
-    draw_box(&ggram_win);
-
-    help_win.starty = 30;
-    help_win.startx = 0;
-    help_win.height = 3;
-    help_win.width = 130;
-    
-    draw_box(&help_win);    
-    
-    print_in_middle(stdscr, LINES / 2, 0, 0, "Viola !!! In color ...");
+    init_pair(2, COLOR_YELLOW, COLOR_BLACK);    
+    // attron(COLOR_PAIR(1));
     refresh();
 
-    draw_box_tittle(&help_win, "lines in this sheet");
+    
+    ggram_win = newwin(34, 130, 0, 0);
+    wattron(ggram_win, COLOR_PAIR(1));
+    wborder(ggram_win, '|','|','-','-','+','+','+','+');
+    wrefresh(ggram_win);	
+
+    help_win = newwin(3, 130, 34, 0);
+    wattron(help_win, COLOR_PAIR(2));
+    wborder(help_win, '|','|','-','-','+','+','+','+');
+    wrefresh(help_win);	
+
+    int x_ggram = 0;
+    int y_ggram = 0;
+    getmaxyx(ggram_win, y_ggram, x_ggram);
+    
+    char str [130] = { 0 };
+    sprintf(str, "line num: %d", y_ggram);
+
+    draw_box_tittle(help_win, "Help Menu");    
+    draw_box_tittle(ggram_win, "lines in this sheet");
+    draw_box_bottom(ggram_win, str);
+    draw_box_bottom(ggram_win, "un string demasiado largo");
+    draw_box_bottom_right(ggram_win, "cntr: 200");
+
+    mvwprintw(help_win,1,1, "u -> up  d -> dwn  s -> select  b -> back  F1 -> quit");
+    wrefresh(help_win);
+
+    ggram_displayed.first_line = 0;
+    ggram_displayed.last_line = 16;
+    ggram_displayed.first_segment = 0;
+    ShowDisplay (ggram_win, &ggram_displayed, mem_buffer);
+
+    //start main loop
+    pthread_t p1;
+    int rc;
+
+    rc = pthread_create(&p1, NULL, KeyboardInput, (void *)rc);
+    if (rc){
+        printf("ERROR; return code from pthread_create() is %d\n", rc);
+        exit(-1);
+    }
+
+    gfx_init(DISPLAYWIDTH, DISPLAYHEIGHT);    
+    MainMenu_Init ();
+    do {
+
+        MainMenu_Update(action);
+        action = do_nothing;
+        usleep(2000);
+
+        if (display_actions == DISPLAY_UP)
+        {
+            if (ggram_displayed.first_segment > 0)
+            {
+                ggram_displayed.first_segment--;
+                ShowDisplay (ggram_win, &ggram_displayed, mem_buffer);
+            }
+            display_actions = DISPLAY_NONE;
+        }
+
+        if (display_actions == DISPLAY_DOWN)
+        {
+            if (ggram_displayed.first_segment < 4)
+            {
+                ggram_displayed.first_segment++;
+                ShowDisplay (ggram_win, &ggram_displayed, mem_buffer);
+            }
+            display_actions = DISPLAY_NONE;
+        }
+
+    } while (main_loop);
+
+    //end of main loop
+
+    
     
     attroff(COLOR_PAIR(1));
-    getch();
+    // getch();
     endwin();
 }
 
-void draw_box (WIN_st * pw)
-{
-    int x1 = pw->startx;
-    int y1 = pw->starty;
-    int x2 = pw->startx + pw->width;
-    int y2 = pw->starty + pw->height;
-    int dx = pw->width;
-    int dy = pw->height;
-    
-    mvhline(y1, x1, '-', dx);
-    mvhline(y2, x1, '-', dx);
-    mvvline(y1, x1, '|', dy);
-    mvvline(y1, x2, '|', dy);
 
-    mvwprintw(stdscr, 0, 30, "y1: %d x1: %d y2: %d x2: %d", y1, x1, y2, x2);
-    refresh();
+int last_box_tittle_len = 0;
+void draw_box_tittle (WINDOW * pw, char * tittle)
+{
+    int tittle_len = strlen(tittle);
+
+    int dx = 0;
+    int dy = 0;
+    getmaxyx(pw, dy, dx);
+
+    //clean last tittle
+    int tittle_x = (dx - last_box_tittle_len) / 2;
+    wmove(pw, 0, tittle_x);
+    for (int i = 0; i < last_box_tittle_len; i++)
+        waddch(pw, '-');
+
+    last_box_tittle_len = tittle_len;
     
-    mvaddch(y1, x1, '+');
-    mvaddch(y1, x2, '+');
-    mvaddch(y2, x1, '+');
-    mvaddch(y2, x2, '+');
-    
+    //write new tittle
+    if (dx >= tittle_len + 2)
+    {
+        tittle_x = (dx - tittle_len) / 2;
+        mvwprintw(pw, 0, tittle_x, "%s", tittle);
+        wrefresh(pw);
+    }       
 }
 
 
-void draw_box_tittle (WIN_st * pw, char * tittle)
+int last_box_bottom_len = 0;
+void draw_box_bottom (WINDOW * pw, char * tittle)
 {
-    int x1 = pw->startx;
-    int y1 = pw->starty;
-    int x2 = pw->startx + pw->width;
-    int y2 = pw->starty + pw->height;
-    int dx = pw->width;
-    int dy = pw->height;
-
     int tittle_len = strlen(tittle);
 
+    int dx = 0;
+    int dy = 0;
+    getmaxyx(pw, dy, dx);
+
+    //clean last tittle
+    int tittle_x = (dx - last_box_bottom_len) / 2;
+    wmove(pw, dy - 1, tittle_x);
+    for (int i = 0; i < last_box_bottom_len; i++)
+        waddch(pw, '-');
+
+    last_box_bottom_len = tittle_len;
+    
     if (dx >= tittle_len + 2)
     {
-        int tittle_x = (dx - tittle_len) / 2;
-        mvwprintw(stdscr, y1, tittle_x, "%s", tittle);
-        refresh();
+        tittle_x = (dx - tittle_len) / 2;
+        mvwprintw(pw, dy - 1, tittle_x, "%s", tittle);
+        wrefresh(pw);
     }       
+}
+
+
+int last_box_bottom_right_len = 0;
+void draw_box_bottom_right (WINDOW * pw, char * tittle)
+{
+    int tittle_len = strlen(tittle);
+
+    int dx = 0;
+    int dy = 0;
+    getmaxyx(pw, dy, dx);
+
+    //clean last tittle
+    int tittle_x = dx - last_box_bottom_right_len - 2;
+    wmove(pw, dy - 1, tittle_x);
+    for (int i = 0; i < last_box_bottom_right_len; i++)
+        waddch(pw, '-');
+
+    last_box_bottom_right_len = tittle_len;    
+    
+    tittle_x = dx - tittle_len - 2;
+    mvwprintw(pw, dy - 1, tittle_x, "%s", tittle);
+
+    wmove(pw, dy - 1, dx - 40);
+    wrefresh(pw);
 }
 
 
@@ -199,46 +309,9 @@ void draw_win(WINDOW *local_win)
     wrefresh(local_win);
 }
 
-void print_in_middle(WINDOW *win, int starty, int startx, int width, char *string)
-{	int length, x, y;
-	float temp;
-
-	if(win == NULL)
-		win = stdscr;
-	getyx(win, y, x);
-	if(startx != 0)
-		x = startx;
-	if(starty != 0)
-		y = starty;
-	if(width == 0)
-		width = 80;
-
-	length = strlen(string);
-	temp = (width - length)/ 2;
-	x = startx + (int)temp;
-	mvwprintw(win, y, x, "%s", string);
-        mvwprintw(win, y+1, x, "lines: %d columns: %d", LINES, COLS);
-	refresh();
-}
 
 // int main (int argc, char *argv[])
 // {
-//     // pthread_t p1;
-//     // int rc;
-
-//     // rc = pthread_create(&p1, NULL, KeyboardInput, (void *)rc);
-//     // if (rc){
-//     //     printf("ERROR; return code from pthread_create() is %d\n", rc);
-//     //     exit(-1);
-//     // }
-
-//     // gfx_init(DISPLAYWIDTH, DISPLAYHEIGHT);    
-//     // MainMenu_Init ();
-//     // do {
-
-//     //     MainMenu_Update(action);
-            
-//     // } while (main_loop);
 
 //     initscr();
 //     start_color();			/* Start color functionality	*/
@@ -266,91 +339,84 @@ void print_in_middle(WINDOW *win, int starty, int startx, int width, char *strin
 
 void * KeyboardInput (void * arg)
 {
-    int loop = 1;
-    char sel = 0;
-
-    while(loop)
+    int ch;
+    while((ch = getch()) != KEY_F(1))
     {
-        action = do_nothing;
-        printf("u -> up  d -> dwn  s -> select  b -> back  q -> quit\n");
-        printf("action? ");
-        scanf(" %c", &sel);
-
-        switch (sel)
+        switch(ch)
         {
+        case KEY_UP:
+            display_actions = DISPLAY_UP;
+            break;
+            
+        case KEY_DOWN:
+            display_actions = DISPLAY_DOWN;
+            break;
+
         case 'u':
             action = selection_up;
-            printf("selection up\n");
             break;
 
         case 'd':
             action = selection_dwn;
-            printf("selection dwn\n");            
             break;
 
         case 's':
             action = selection_enter;
-            printf("selection enter\n");            
             break;
 
         case 'b':
             action = selection_back;
-            printf("selection back\n");            
             break;
 
-        case 'q':
-            loop = 0;
-            printf("exiting program\n");
-            break;
-
-        default:
-            printf("error!\n");
-            break;
         }
-        sel = 0;
+        ch = 0;
     }
-
+    
     main_loop = 0;
     pthread_exit(NULL);
 }
 
 
 unsigned int disp_cnt = 0;
-void ShowDisplay (unsigned char * mem)
-{
-    //first square side
-    printf("\n+");
-    for (int i = 0; i < DISPLAYWIDTH; i++)
-        printf("-");
-    printf("+\n");
+void ShowDisplay (WINDOW * pw, GGRAM_displayed_st * pdisp, unsigned char * mem)
+{    
+    //which lines of ggram to show
+    //sanity checks
+    if (pdisp->first_segment > 4)
+        return;
 
-    //64 lines grouped by 8
-    for (int z = 0; z < DISPLAYWIDTH * 8; z+=DISPLAYWIDTH)
+    //64 lines grouped by 8; only show 4 segments of the 8 on the display
+    int lines_cntr = 0;
+    int first_seg_z = pdisp->first_segment * DISPLAYWIDTH;
+    int last_seg_z = (pdisp->first_segment + 4) * DISPLAYWIDTH;
+    for (int z = first_seg_z; z < last_seg_z; z += DISPLAYWIDTH)
     {
+        //8 lines from 128bytes (DISPLAYWIDTH)
         for (int j = 0; j < DISPLAYHEIGHT / 8; j++)
         {
-            printf("|");
             unsigned char c = 1;
-            c <<= j;        
+            c <<= j;
+            wmove(pw, lines_cntr+j+1, 1);
             for (int i = 0; i < DISPLAYWIDTH; i++)
             {
                 if (mem[z + i] & c)
-                    printf("#");
+                    waddch(pw, '#');
                 else
-                    printf(" ");
+                    waddch(pw, ' ');
             }
-            printf("|\n");        
         }
+        lines_cntr+=8;
     }
-    
-    //last square side
-    printf("+");
-    for (int i = 0; i < DISPLAYWIDTH; i++)
-        printf("-");
-    printf("+\n");
 
     disp_cnt++;
-    printf("display counter: %d\n", disp_cnt);
+    
+    char str [30] = { 0 };
+    sprintf(str, "cntr: %d", disp_cnt);
+    draw_box_bottom_right(pw, str);
+    sprintf(str, "line num: %d", pdisp->first_segment * 8);
+    draw_box_tittle(pw, str);
+    sprintf(str, "line num: %d", (pdisp->first_segment + 4) * 8);
+    draw_box_bottom(pw, str);
 }
 
 
@@ -361,7 +427,7 @@ void display_clear(void)
 
 void display_update(void)
 {
-    ShowDisplay(mem_buffer);
+    ShowDisplay(ggram_win, &ggram_displayed, mem_buffer);
 }
 
 // used by gfx_ functions. Needs to be implemented by display_
