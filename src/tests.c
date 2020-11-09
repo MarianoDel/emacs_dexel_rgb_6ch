@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <unistd.h>
 
 
 // Externals -------------------------------------------------------------------
@@ -141,6 +142,7 @@ int main(int argc, char *argv[])
     help_win = newwin(3, 130, 34, 0);
     wattron(help_win, COLOR_PAIR(2));
     wborder(help_win, '|','|','-','-','+','+','+','+');
+    // wborder(help_win, 0,0,113|A_ALTCHARSET,163|A_ALTCHARSET,ACS_ULCORNER,0,0,0);    
     wrefresh(help_win);	
 
     int x_ggram = 0;
@@ -310,33 +312,6 @@ void draw_win(WINDOW *local_win)
 }
 
 
-// int main (int argc, char *argv[])
-// {
-
-//     initscr();
-//     start_color();			/* Start color functionality	*/
-	
-//     init_pair(1, COLOR_CYAN, COLOR_BLACK);
-//     printw("A Big string which i didn't care to type fully ");    
-//     mvchgat(0, 0, -1, A_BLINK, 1, NULL);	
-// 	/* 
-// 	 * First two parameters specify the position at which to start 
-// 	 * Third parameter number of characters to update. -1 means till 
-// 	 * end of line
-// 	 * Forth parameter is the normal attribute you wanted to give 
-// 	 * to the charcter
-// 	 * Fifth is the color index. It is the index given during init_pair()
-// 	 * use 0 if you didn't want color
-// 	 * Sixth one is always NULL 
-// 	 */
-//     // refresh();
-//     getch();
-//     endwin();        
-    
-//     return 0;
-// }
-
-
 void * KeyboardInput (void * arg)
 {
     int ch;
@@ -400,7 +375,8 @@ void ShowDisplay (WINDOW * pw, GGRAM_displayed_st * pdisp, unsigned char * mem)
             for (int i = 0; i < DISPLAYWIDTH; i++)
             {
                 if (mem[z + i] & c)
-                    waddch(pw, '#');
+                    // waddch(pw, '*'|A_BOLD);
+                    waddch(pw, '*'|A_STANDOUT);
                 else
                     waddch(pw, ' ');
             }
