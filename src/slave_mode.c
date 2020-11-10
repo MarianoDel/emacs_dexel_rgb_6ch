@@ -14,7 +14,7 @@
 #include "stm32f0xx.h"
 #include "dsp.h"
 
-#include "ssd1306.h"
+#include "ssd1306_gfx.h"
 #include "mainmenu.h"
 #include "flash_program.h"
 #include "pwm.h"

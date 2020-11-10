@@ -33,7 +33,8 @@
 #include "i2c.h"
 #include "mainmenu.h"
 #include "screen.h"
-#include "ssd1306.h"
+#include "ssd1306_display.h"
+#include "ssd1306_gfx.h"
 #include "pwm.h"
 
 #include <stdio.h>

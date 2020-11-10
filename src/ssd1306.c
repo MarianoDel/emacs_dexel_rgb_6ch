@@ -41,12 +41,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "ssd1306.h"
-#include "i2c.h"
+// #include "i2c.h"
 #include <stdlib.h>
 #include "font.h"
 #include <string.h>
 
-#include "hard.h"
 
 #define DISPLAYWIDTH 128
 #define DISPLAYHEIGHT 64

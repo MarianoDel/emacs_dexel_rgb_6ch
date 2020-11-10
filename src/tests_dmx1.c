@@ -8,12 +8,13 @@
 //---------------------------------------------
 
 // Includes Modules for tests --------------------------------------------------
-#include "mainmenu.h"
 #include "font.h"
 #include "parameters.h"
 #include "switches_answers.h"
 #include "ssd1306_gfx.h"
 #include "ssd1306_params.h"
+#include "dmx1_menu.h"
+#include "display_utils.h"
 
 #include <curses.h>
 #include <stdio.h>
@@ -69,8 +70,8 @@ void * KeyboardInput (void * arg);
 sw_actions_t action = do_nothing;
 display_actions_e display_actions = DISPLAY_NONE;
 int main_loop = 1;
-
-void print_in_middle(WINDOW *win, int starty, int startx, int width, char *string);
+int dmx_up = 0;
+int dmx_dwn = 0;
 
 WINDOW * ggram_win;
 WINDOW * help_win;
@@ -115,7 +116,7 @@ int main(int argc, char *argv[])
     draw_box_bottom(ggram_win, "un string demasiado largo");
     draw_box_bottom_right(ggram_win, "cntr: 200");
 
-    mvwprintw(help_win,1,1, "u -> up  d -> dwn  s -> select  b -> back  F1 -> quit");
+    mvwprintw(help_win,1,1, "u -> up  d -> dwn  j -> dmx up  k -> dmx down  F1 -> quit");
     wrefresh(help_win);
 
     ggram_displayed.first_line = 0;
@@ -134,11 +135,47 @@ int main(int argc, char *argv[])
     }
 
     gfx_init(DISPLAYWIDTH, DISPLAYHEIGHT);    
-    MainMenu_Init ();
+
+    dmx1_menu_data_t dmx1_st;
+    dmx1_st.dmx_first_chnl = 1;
+    unsigned char ch[6] = {0, 2, 3, 10, 128, 230};
+    dmx1_st.dmx_new_pckt = 0;
+    // dmx1_st.ch[0] = 0;
+    // dmx1_st.ch[1] = 2;
+    // dmx1_st.ch[2] = 3;
+    // dmx1_st.ch[3] = 10;
+    // dmx1_st.ch[4] = 128;
+    // dmx1_st.ch[5] = 230;
+    dmx1_st.pchannels = ch;
+    
+    DMX1ModeMenuReset();
 
     do {
 
-        MainMenu_Update(action);
+        if (dmx_up)
+        {
+            for (int i = 0; i < 6; i++)
+            {                
+                if (ch[i] < 255)
+                    ch[i] += 1;
+            }
+            dmx1_st.dmx_new_pckt = 1;
+            dmx_up = 0;
+        }
+
+        if (dmx_dwn)
+        {
+            for (int i = 0; i < 6; i++)
+            {                
+                if (ch[i] > 0)
+                    ch[i] -= 1;
+            }
+            dmx1_st.dmx_new_pckt = 1;            
+            dmx_dwn = 0;
+        }
+        
+        dmx1_st.actions = action;
+        DMX1ModeMenu(&dmx1_st);
         action = do_nothing;
         usleep(2000);
 
@@ -283,6 +320,14 @@ void * KeyboardInput (void * arg)
             action = selection_back;
             break;
 
+        case 'j':
+            dmx_up = 1;
+            break;
+
+        case 'k':
+            dmx_dwn = 1;
+            break;
+            
         }
         ch = 0;
     }

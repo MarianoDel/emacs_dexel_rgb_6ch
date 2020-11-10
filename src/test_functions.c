@@ -18,7 +18,7 @@
 #include "tim.h"
 
 #include "i2c.h"
-#include "ssd1306.h"
+#include "ssd1306_gfx.h"
 #include "screen.h"
 #include "mainmenu.h"
 #include "slave_mode.h"

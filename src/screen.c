@@ -9,7 +9,9 @@
 
 // Includes --------------------------------------------------------------------
 #include "screen.h"
-#include "ssd1306.h"
+#include "ssd1306_display.h"
+#include "ssd1306_gfx.h"
+#include "ssd1306_params.h"
 
 #include "i2c.h"    //TODO: MEJORAR ESTO PARA ADDR SLV
 
@@ -24,6 +26,7 @@
 void SCREEN_Init (void)
 {
     display_init(I2C_ADDRESS_SLV);
+    gfx_init( DISPLAYWIDTH, DISPLAYHEIGHT );
 }
 
 

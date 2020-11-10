@@ -81,7 +81,8 @@ SRC += ./src/master_mode.c
 SRC += ./src/programs_mode.c
 SRC += ./src/flash_program.c
 SRC += ./src/programs_functions.c
-SRC += ./src/ssd1306.c
+SRC += ./src/ssd1306_display.c
+SRC += ./src/ssd1306_gfx.c
 SRC += ./src/mainmenu.c
 SRC += ./src/screen.c
 SRC += ./src/pwm.c
@@ -208,10 +209,19 @@ clean:
 tests:
 	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
 	gcc -c src/mainmenu.c -I. $(INCDIR)
-	gcc src/tests.c mainmenu.o -lpthread -lncurses
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	gcc src/tests.c mainmenu.o ssd1306_gfx.o -lpthread -lncurses
 	./a.out
 	# sino copiar funcion a testear al main de tests.c
 	# gcc src/tests.c
 	# ./a.out
+
+tests_dmx1:
+	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
+	gcc -c src/dmx1_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	gcc src/tests_dmx1.c dmx1_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
+	./a.out
 
 # *** EOF ***

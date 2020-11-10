@@ -10,7 +10,8 @@
 // Includes --------------------------------------------------------------------
 #include "mainmenu.h"
 #include "programs_functions.h"
-// #include "ssd1306.h"
+#include "ssd1306_gfx.h"
+// #include "ssd1306_display.h"
 #include "parameters.h"
 
 #include <string.h>
@@ -32,8 +33,8 @@ typedef enum {
     MAIN_MENU_PAGE_MASTER_B,
     MAIN_MENU_PAGE_MASTER_BACK,    
 
-    MAIN_MENU_PAGE_SLAVE_A,
-    MAIN_MENU_PAGE_SLAVE_B,
+    MAIN_MENU_PAGE_DMX1_A,
+    MAIN_MENU_PAGE_DMX1_B,
     MAIN_MENU_PAGE_SLAVE_CHNLS_QTTY_A,
     MAIN_MENU_PAGE_SLAVE_CHNLS_QTTY_B,    
     MAIN_MENU_PAGE_SLAVE_FIRST_CHNL_A,
@@ -125,21 +126,22 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
 
     case MAIN_MENU_PAGE_MM_AA:
         if (mm_action == do_nothing)
+        {
+            display_clear();
             mmenu_state = MAIN_MENU_PAGE_MM_A;
-        
+        }
         break;
 
     case MAIN_MENU_PAGE_MM_A:
         // Menu Title
-        MainMenu_SetTitle("      Main Menu");
+        // MainMenu_SetTitle("      Main Menu");
 
         // Menu options
-        set_option_string1("Master config.");
-        set_option_string2("Slave/DMX config.");
-        set_option_string3("Programs config.");
-        set_option_string4("Hardware config.");
-        set_option_string5("Back!");
-        set_option_string6("Save & Exit");        
+        set_option_string1("DMX 1");
+        set_option_string2("DMX 2");
+        set_option_string3("MASTER/SLAVE");
+        set_option_string4("MANUAL");
+        set_option_string5("RESET");
 
         mm_selected = 1;
         MainMenu_SetOptions(mm_selected);
@@ -152,7 +154,7 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
     case MAIN_MENU_PAGE_MM_B:
         if (mm_action == selection_dwn)
         {
-            if (mm_selected < 6)
+            if (mm_selected < 5)
                 mm_selected++;
 
             MainMenu_SetOptions(mm_selected);
@@ -173,10 +175,10 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
             switch (mm_selected)
             {
             case 1:
-                mmenu_state = MAIN_MENU_PAGE_MASTER_A;
+                mmenu_state = MAIN_MENU_PAGE_DMX1_A;
                 break;
             case 2:
-                mmenu_state = MAIN_MENU_PAGE_SLAVE_A;
+                mmenu_state = MAIN_MENU_PAGE_DMX1_A;
                 break;
             case 3:
                 mmenu_state = MAIN_MENU_PAGE_PROGRAMS_A;
@@ -288,45 +290,41 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
         }
         break;        
 
-        /////////////////////////////////
-        // SLAVE AND DMX CONFIGURATION //
-        /////////////////////////////////
-    case MAIN_MENU_PAGE_SLAVE_A:
+        /////////////////////
+        // DMX1 Common Dmx //
+        /////////////////////
+    case MAIN_MENU_PAGE_DMX1_A:
         resp = MainMenu_CheckFree(mm_action);
 
         if (resp == resp_ok)
         {
             program_type = SLAVE_MODE;
-            // Menu Title
-            MainMenu_SetTitle(s_slave_title);
 
             // Menu options
             MainMenu_BlankOptions();
-            set_option_string1("Channels qtty");
-            set_option_string2("First channel    ");
-            set_option_string3("Set Grandmaster");
-            set_option_string4("Back!");
-            sprintf(s_temp, "qtty: %2d fst: %3d",
-                    dmx_chnls_qtty,
-                    dmx_first_chnl);
-        
-            set_option_string5(s_temp);
-            if (dmx_gndmaster)
-                set_option_string6("Grandmaster: Y");
-            else
-                set_option_string6("Grandmaster: N");
 
-            mm_selected = 1;
+            sprintf(s_temp, "ADDR: %3d", dmx_first_chnl);            
+            MainMenu_SetLine1(s_temp);
+            MainMenu_BlankLine2();
+            sprintf(s_temp, "CH1: %3d     CH4: %3d", 0, 255);            
+            MainMenu_SetLine3(s_temp);
+            sprintf(s_temp, "CH2: %3d     CH5: %3d", 255, 0);                        
+            MainMenu_SetLine4(s_temp);
+            sprintf(s_temp, "CH3: %3d     CH6: %3d", 128, 127);                        
+            MainMenu_SetLine5(s_temp);
+            MainMenu_SetLine6("012345678901234567890");            
+            
+            mm_selected = 0;
             MainMenu_SetOptions(mm_selected);
 
             mm_changed = 1;
             
-            mmenu_state = MAIN_MENU_PAGE_SLAVE_B;
+            mmenu_state = MAIN_MENU_PAGE_DMX1_B;
             resp = resp_continue;
         }
         break;
 
-    case MAIN_MENU_PAGE_SLAVE_B:
+    case MAIN_MENU_PAGE_DMX1_B:
         if (mm_action == selection_dwn)
         {
             if (mm_selected < 4)
@@ -414,7 +412,7 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
         }
 
         if (mm_action == selection_enter)
-            mmenu_state = MAIN_MENU_PAGE_SLAVE_A;
+            mmenu_state = MAIN_MENU_PAGE_DMX1_A;
 
         break;
 
@@ -468,7 +466,7 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
         }
 
         if (mm_action == selection_enter)
-            mmenu_state = MAIN_MENU_PAGE_SLAVE_A;
+            mmenu_state = MAIN_MENU_PAGE_DMX1_A;
 
         break;
 
@@ -525,7 +523,7 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
         }
 
         if (mm_action == selection_enter)
-            mmenu_state = MAIN_MENU_PAGE_SLAVE_A;
+            mmenu_state = MAIN_MENU_PAGE_DMX1_A;
 
         break;
 
@@ -824,6 +822,7 @@ resp_t MainMenu_CheckFree (sw_actions_t a)
     case 1:
         if (a == do_nothing)
         {
+            display_clear();
             resp = resp_ok;
             check_free = 0;
         }
@@ -863,7 +862,10 @@ void MainMenu_SetOptions (unsigned char sel)
     char displaced [ALL_LINE_LENGTH] = { 0 };
     char * p_s_options;
 
-    gfx_setCursor(0, 12);
+    gfx_setCursor(0, 0);
+    gfx_setTextWrap(0);
+    gfx_setTextSize(1);
+    gfx_setTextColor(1);    
 
     for (unsigned char i = 1; i <= 6; i++)
     {
@@ -880,7 +882,7 @@ void MainMenu_SetOptions (unsigned char sel)
         else
         {
             p_s_options = &s_opt[i - 1][0];
-            sprintf(displaced, "%s ", p_s_options);
+            sprintf(displaced, "%s", p_s_options);
             gfx_println(displaced);
         }
     }
@@ -900,7 +902,9 @@ void MainMenu_BlankAllLines (void)
 
 void MainMenu_BlankLine1 (void)
 {
-    blank_option_string1();
+    gfx_fillRect(0, 0, 127, 8, 0);        
+    // set_option_string1(s_blankl);    
+    // blank_option_string1();    
 }
 
 

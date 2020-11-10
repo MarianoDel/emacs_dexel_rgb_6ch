@@ -14,7 +14,7 @@
 #include "mainmenu.h"
 #include "programs_functions.h"
 #include "flash_program.h"
-#include "ssd1306.h"
+#include "ssd1306_gfx.h"
 
 #include <stdio.h>
 

@@ -493,14 +493,14 @@ typedef enum {
 // } sw_state_t;
 
 // Switches actions
-typedef enum {
-    do_nothing = 0,
-    selection_up,
-    selection_dwn,
-    selection_enter,
-    selection_back
+// typedef enum {
+//     do_nothing = 0,
+//     selection_up,
+//     selection_dwn,
+//     selection_enter,
+//     selection_back
 
-} sw_actions_t;
+// } sw_actions_t;
 
 //ESTADOS DEL MAIN
 typedef enum
@@ -523,20 +523,20 @@ typedef enum
     
 } main_state_t;
 
-typedef enum {
-    resp_ok = 0,
-    resp_continue,
-    resp_selected,
-    resp_change,
-    resp_change_all_up,
-    resp_working,
-    resp_error,
-    resp_need_to_save,
-    resp_finish,
-    //main menu
-    resp_save
+// typedef enum {
+//     resp_ok = 0,
+//     resp_continue,
+//     resp_selected,
+//     resp_change,
+//     resp_change_all_up,
+//     resp_working,
+//     resp_error,
+//     resp_need_to_save,
+//     resp_finish,
+//     //main menu
+//     resp_save
 
-} resp_t;
+// } resp_t;
 
 
 
