@@ -63,8 +63,6 @@ void DMX1ModeMenuReset (void)
 }
 
 
-// dmx slave conf
-// #define dmx_first_chnl    mem_conf.dmx_first_channel
 unsigned char dmx1_menu_changed = 0;
 resp_t DMX1ModeMenu (dmx1_menu_data_t * pmenu_data)
 {
@@ -79,7 +77,7 @@ resp_t DMX1ModeMenu (dmx1_menu_data_t * pmenu_data)
     case DMX1_MODE_MENU_INIT:
         Display_StartLines ();
         Display_ClearLines();
-        sprintf(s_temp, "ADDR: %03d", pmenu_data->dmx_first_chnl);
+        sprintf(s_temp, "ADDR: %03d", *pmenu_data->dmx_first_chnl);
         Display_SetLine1(s_temp);
 
         Display_BlankLine2();
@@ -90,15 +88,7 @@ resp_t DMX1ModeMenu (dmx1_menu_data_t * pmenu_data)
         sprintf(s_temp, "CH3: %3d     CH6: %3d", 0, 0);                        
         Display_SetLine5(s_temp);
         Display_SetLine8("            DMX1 Mode");
-
         
-        //fuerzo cambio
-        // last_ch1 = ~data7[1];
-        // last_ch2 = ~data7[2];
-        // last_ch3 = ~data7[3];
-        // last_ch4 = ~data7[4];
-        // last_ch5 = ~data7[5];
-        // last_ch6 = ~data7[6];
         mm_changed = 1;
         dmx1_mode_menu_state++;
         break;
@@ -132,10 +122,7 @@ resp_t DMX1ModeMenu (dmx1_menu_data_t * pmenu_data)
             dmx1_menu_changed = 1;
         }
         
-        // dmx1_mode_menu_state++;
-        dmx1_mode_menu_state = DMX1_MODE_MENU_UPDATE_DISPLAY;        
-                
-
+        dmx1_mode_menu_state++;
         break;
 
     case DMX1_MODE_MENU_CHECK_CH2_CH5:
@@ -203,10 +190,10 @@ resp_t DMX1ModeMenu (dmx1_menu_data_t * pmenu_data)
     //check always for a change in address
     if (pmenu_data->actions == selection_up)
     {
-        if (pmenu_data->dmx_first_chnl < (512 - 6))
+        if (*pmenu_data->dmx_first_chnl < (512 - 6))
         {
-            pmenu_data->dmx_first_chnl++;
-            sprintf(s_temp, "ADDR: %03d", pmenu_data->dmx_first_chnl);
+            *pmenu_data->dmx_first_chnl += 1;
+            sprintf(s_temp, "ADDR: %03d", *pmenu_data->dmx_first_chnl);
             Display_BlankLine1();
             Display_SetLine1(s_temp);
 
@@ -216,10 +203,10 @@ resp_t DMX1ModeMenu (dmx1_menu_data_t * pmenu_data)
         
     if (pmenu_data->actions == selection_dwn)
     {
-        if (pmenu_data->dmx_first_chnl > 1)
+        if (*pmenu_data->dmx_first_chnl > 1)
         {
-            pmenu_data->dmx_first_chnl--;
-            sprintf(s_temp, "ADDR: %03d", pmenu_data->dmx_first_chnl);
+            *pmenu_data->dmx_first_chnl -= 1;
+            sprintf(s_temp, "ADDR: %03d", *pmenu_data->dmx_first_chnl);
             Display_BlankLine1();                
             Display_SetLine1(s_temp);
 

@@ -88,9 +88,7 @@ int main(int argc, char *argv[])
 
     init_pair(1, COLOR_RED, COLOR_BLACK);
     init_pair(2, COLOR_YELLOW, COLOR_BLACK);    
-    // attron(COLOR_PAIR(1));
     refresh();
-
     
     ggram_win = newwin(34, 130, 0, 0);
     wattron(ggram_win, COLOR_PAIR(1));
@@ -100,22 +98,9 @@ int main(int argc, char *argv[])
     help_win = newwin(3, 130, 34, 0);
     wattron(help_win, COLOR_PAIR(2));
     wborder(help_win, '|','|','-','-','+','+','+','+');
-    // wborder(help_win, 0,0,113|A_ALTCHARSET,163|A_ALTCHARSET,ACS_ULCORNER,0,0,0);    
     wrefresh(help_win);	
 
-    int x_ggram = 0;
-    int y_ggram = 0;
-    getmaxyx(ggram_win, y_ggram, x_ggram);
-    
-    char str [130] = { 0 };
-    sprintf(str, "line num: %d", y_ggram);
-
     draw_box_tittle(help_win, "Help Menu");    
-    draw_box_tittle(ggram_win, "lines in this sheet");
-    draw_box_bottom(ggram_win, str);
-    draw_box_bottom(ggram_win, "un string demasiado largo");
-    draw_box_bottom_right(ggram_win, "cntr: 200");
-
     mvwprintw(help_win,1,1, "u -> up  d -> dwn  j -> dmx up  k -> dmx down  F1 -> quit");
     wrefresh(help_win);
 
@@ -134,19 +119,35 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
+    ///////////////////////////////////////////////////////////////
+    // THIS IS THE RAM MEMORY GETTED FROM FLASH (SAVED OR EMPTY) //
+    ///////////////////////////////////////////////////////////////
+    //memory empty use some defaults
+    mem_conf.program_type = SLAVE_MODE;
+    mem_conf.master_send_dmx_enable = 0;
+    mem_conf.last_program_in_flash = 9;
+    mem_conf.last_program_deep_in_flash = 0;
+    mem_conf.dmx_first_channel = 1;
+    mem_conf.dmx_channel_quantity = 6;
+    mem_conf.dmx_grandmaster = 0;
+    mem_conf.max_power = 200;
+
     gfx_init(DISPLAYWIDTH, DISPLAYHEIGHT);    
 
+    ////////////////////////////////////////////
+    // THIS IS THE RAM DATA FOR THE DMX1 MODE //
+    ////////////////////////////////////////////
     dmx1_menu_data_t dmx1_st;
-    dmx1_st.dmx_first_chnl = 1;
+    dmx1_st.dmx_first_chnl = &mem_conf.dmx_first_channel;
+    // char s_temp[100];
+    // sprintf(s_temp, "dmx: %d addr: %d", *dmx1_st.dmx_first_chnl, dmx1_st.dmx_first_chnl);
+    // mvwprintw(help_win,1,1, s_temp);
+    // wrefresh(help_win);
+
     unsigned char ch[6] = {0, 2, 3, 10, 128, 230};
-    dmx1_st.dmx_new_pckt = 0;
-    // dmx1_st.ch[0] = 0;
-    // dmx1_st.ch[1] = 2;
-    // dmx1_st.ch[2] = 3;
-    // dmx1_st.ch[3] = 10;
-    // dmx1_st.ch[4] = 128;
-    // dmx1_st.ch[5] = 230;
     dmx1_st.pchannels = ch;
+    dmx1_st.dmx_new_pckt = 0;
+    
     
     DMX1ModeMenuReset();
 
