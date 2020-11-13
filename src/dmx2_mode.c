@@ -1,15 +1,15 @@
-//---------------------------------------------
-// #### PROYECTO DEXEL 6CH BIDIRECCIONAL - Custom Board ####
+//-------------------------------------------------
+// #### DEXEL 6CH BIDIRECCIONAL - Custom Board ####
 // ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### MODO_SLAVE.C #############################
-//---------------------------------------------
+// #### DMX2_MODE.C ###############################
+//-------------------------------------------------
 
-/* Includes ------------------------------------------------------------------*/
-#include "slave_mode.h"
+// Includes --------------------------------------------------------------------
+#include "dmx2_mode.h"
 #include "dmx1_menu.h"
 #include "flash_program.h"
 
@@ -33,8 +33,20 @@ typedef enum {
     
 } slave_mode_address_e;
 
+#define DMX2_PKT_TYPE    0
+#define DMX2_DIM_CH    1
+#define DMX2_STB_CH    2
+#define DMX2_SPD_CH    3
+#define DMX2_ECT_CH    4
+#define DMX2_CLR_CH1    5
+#define DMX2_CLR_CH2    6
+#define DMX2_CLR_CH3    7
+#define DMX2_CLR_CH4    8
+#define DMX2_CLR_CH5    9
+#define DMX2_CLR_CH6    10
+
 // Externals -------------------------------------------------------------------
-extern volatile unsigned char data7[];
+extern volatile unsigned char data11[];
 
 //del main para dmx
 extern volatile unsigned char Packet_Detected_Flag;

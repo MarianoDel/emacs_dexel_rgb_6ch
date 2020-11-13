@@ -26,7 +26,7 @@
 // Externals -------------------------------------------------------------------
 extern volatile unsigned char RDM_packet_flag;
 extern volatile unsigned char data512[];
-extern volatile unsigned char data7[];
+extern volatile unsigned char data11[];
 
 extern volatile unsigned char Packet_Detected_Flag;
 extern volatile unsigned char DMX_packet_flag;
@@ -70,10 +70,10 @@ void UpdatePackets (void)
 {
     if (Packet_Detected_Flag)
     {
-        if (data7[0] == 0x00)
+        if (data11[0] == 0x00)
             DMX_packet_flag = 1;
 
-        if (data7[0] == 0xCC)
+        if (data11[0] == 0xCC)
             RDM_packet_flag = 1;
 
         Packet_Detected_Flag = 0;
@@ -84,38 +84,22 @@ void DmxInt_Serial_Handler_Receiver (unsigned char dummy)
 {
     if (dmx_receive_flag)
     {
-        if (current_channel_index < (SIZEOF_DMX_DATA512 - 1))    //else silently discard
+        //TODO: analize this channel 511 is not included!!!
+        if (current_channel_index < LAST_DMX_CHANNEL_512)    //else discard silently
         {
             data512[current_channel_index] = dummy;            
 
-            if (mem_conf.dmx_grandmaster)
+            if (current_channel_index >= (DMX_channel_selected + DMX_channel_quantity))
             {
-                if (current_channel_index >= (DMX_channel_selected + DMX_channel_quantity + 1))
-                {
-                    //TODO: VER ESTO, NO CREO QUE LO HAGA en data7[0] pongo el valor del grandmaster
-                    for (unsigned char i = 0; i < (DMX_channel_quantity + 1); i++)
-                        data7[i] = data512[(DMX_channel_selected) + i];
+                //copio el inicio del buffer y luego los elegidos
+                data11[0] = data512[0];
+                for (unsigned char i = 0; i < DMX_channel_quantity; i++)
+                    data11[i + 1] = data512[(DMX_channel_selected) + i];
 
-                    //--- Reception end ---//
-                    current_channel_index = 0;
-                    dmx_receive_flag = 0;
-                    Packet_Detected_Flag = 1;
-                }
-            }
-            else    //sin grandmaster
-            {
-                if (current_channel_index >= (DMX_channel_selected + DMX_channel_quantity))
-                {
-                    //copio el inicio del buffer y luego los elegidos
-                    data7[0] = data512[0];
-                    for (unsigned char i = 0; i < DMX_channel_quantity; i++)
-                        data7[i + 1] = data512[(DMX_channel_selected) + i];
-
-                    //--- Reception end ---//
-                    current_channel_index = 0;
-                    dmx_receive_flag = 0;
-                    Packet_Detected_Flag = 1;
-                }
+                //--- Reception end ---//
+                current_channel_index = 0;
+                dmx_receive_flag = 0;
+                Packet_Detected_Flag = 1;
             }
             
             current_channel_index++;
@@ -218,11 +202,11 @@ void UpdateRDMResponder(void)
 {
     RDMKirnoHeader * p_header;
 
-    p_header = (RDMKirnoHeader *) data7;
+    p_header = (RDMKirnoHeader *) data11;
     if (RDM_packet_flag)
     {
         //voy a revisar si el paquete tiene buen checksum
-        if (RDMUtil_VerifyChecksumK((unsigned char *)data7, data7[1]) == true)
+        if (RDMUtil_VerifyChecksumK((unsigned char *)data11, data11[1]) == true)
         {
             LED_ON;
             //reviso si es unicast

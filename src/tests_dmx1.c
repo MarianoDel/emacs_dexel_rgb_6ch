@@ -129,7 +129,6 @@ int main(int argc, char *argv[])
     mem_conf.last_program_deep_in_flash = 0;
     mem_conf.dmx_first_channel = 10;
     mem_conf.dmx_channel_quantity = 6;
-    mem_conf.dmx_grandmaster = 0;
     mem_conf.max_power = 200;
 
     gfx_init(DISPLAYWIDTH, DISPLAYHEIGHT);    
@@ -194,6 +193,16 @@ int main(int argc, char *argv[])
             
         }
 
+        if (action == selection_enter)
+        {
+            if (dmx1_st.show_addres)
+                dmx1_st.show_addres = 0;
+            else
+                dmx1_st.show_addres = 1;
+            
+            new_loop = 1;
+        }
+        
         if (new_loop)
         {
             resp = DMX1ModeMenu(&dmx1_st);
@@ -203,6 +212,9 @@ int main(int argc, char *argv[])
         action = do_nothing;
         usleep(2000);
 
+        ///////////////////////////////////////////////
+        // Check if any move on display is necessary //
+        ///////////////////////////////////////////////
         if (display_actions == DISPLAY_UP)
         {
             if (ggram_displayed.first_segment > 0)

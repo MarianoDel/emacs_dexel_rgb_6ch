@@ -1,43 +1,28 @@
-//---------------------------------------------
+//-------------------------------------------------
+// #### DEXEL 6CH BIDIRECTIONAL - Custom Board ####
+// ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
-// ## @CPU:    STM32F303
 // ##
-// #### MAINMENU.H #################################
-//---------------------------------------------
-#ifndef _MAINMENU_H_
-#define _MAINMENU_H_
+// #### MAIN_MENU.H ###############################
+//-------------------------------------------------
 
+// Prevent recursive inclusion -------------------------------------------------
+#ifndef _MAIN_MENU_H_
+#define _MAIN_MENU_H_
+
+//-- includes to help configurations --//
 #include "switches_answers.h"
 
-// Config Defines --------------------------------------------------------------
-
-
-// Common Defines --------------------------------------------------------------
     
 
 // Module Exported Functions ---------------------------------------------------
-resp_t MainMenu_Update (sw_actions_t);
-void MainMenu_Init (void);
-
-void MainMenu_SetTitle (char *);
-void MainMenu_BlankOptions (void);
-void MainMenu_SetOptions (unsigned char);
-
-void MainMenu_BlankAllLines (void);
-void MainMenu_BlankLine1 (void);
-void MainMenu_BlankLine2 (void);
-void MainMenu_BlankLine3 (void);
-void MainMenu_BlankLine4 (void);
-void MainMenu_BlankLine5 (void);
-void MainMenu_BlankLine6 (void);
-void MainMenu_SetLine1 (char * s);
-void MainMenu_SetLine2 (char * s);
-void MainMenu_SetLine3 (char * s);
-void MainMenu_SetLine4 (char * s);
-void MainMenu_SetLine5 (char * s);
-void MainMenu_SetLine6 (char * s);
+resp_t MainMenu (sw_actions_t);
+void MainMenuReset (void);
 
 
-#endif    /* _MAINMENU_H_ */
+#endif    /* _MAIN_MENU_H_ */
+
+//--- end of file ---//
+

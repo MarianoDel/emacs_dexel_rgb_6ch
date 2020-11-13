@@ -1,11 +1,12 @@
-//---------------------------------------------
+//-------------------------------------------------
+// #### DEXEL 6CH BIDIRECTIONAL - Custom Board ####
+// ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
-// ## @CPU:    STM32F303
 // ##
-// #### MAINMENU.C ############################
-//---------------------------------------------
+// #### MAIN_MENU.C ###############################
+//-------------------------------------------------
 
 // Includes --------------------------------------------------------------------
 #include "mainmenu.h"
@@ -35,13 +36,11 @@ typedef enum {
 
     MAIN_MENU_PAGE_DMX1_A,
     MAIN_MENU_PAGE_DMX1_B,
-    MAIN_MENU_PAGE_SLAVE_CHNLS_QTTY_A,
-    MAIN_MENU_PAGE_SLAVE_CHNLS_QTTY_B,    
-    MAIN_MENU_PAGE_SLAVE_FIRST_CHNL_A,
-    MAIN_MENU_PAGE_SLAVE_FIRST_CHNL_B,    
-    MAIN_MENU_PAGE_SLAVE_GRANDM_A,
-    MAIN_MENU_PAGE_SLAVE_GRANDM_B,
-    MAIN_MENU_PAGE_SLAVE_BACK,    
+    MAIN_MENU_PAGE_DMX1_CHNLS_QTTY_A,
+    MAIN_MENU_PAGE_DMX1_CHNLS_QTTY_B,    
+    MAIN_MENU_PAGE_DMX1_FIRST_CHNL_A,
+    MAIN_MENU_PAGE_DMX1_FIRST_CHNL_B,    
+    MAIN_MENU_PAGE_DMX1_BACK,    
     
     MAIN_MENU_PAGE_PROGRAMS_A,
     MAIN_MENU_PAGE_PROGRAMS_B,
@@ -83,7 +82,7 @@ char s_blankl [] = {"                     "};
 
 resp_t MainMenu_CheckFree (sw_actions_t);
 
-char s_slave_title [] =    {"   Slave/DMX Mode"};
+char s_dmx1_title [] =    {"   Dmx1/DMX Mode"};
 char s_programs_title [] = {"   Programs Mode "};
 char s_hardware_title [] = {"   Hardware Config"};
 
@@ -101,10 +100,9 @@ void MainMenu_Init (void)
 #define last_seq    mem_conf.last_program_deep_in_flash
 // dmx master conf
 #define dmx_master_enable    mem_conf.master_send_dmx_enable
-// dmx slave conf
+// dmx dmx1 conf
 #define dmx_chnls_qtty    mem_conf.dmx_channel_quantity
 #define dmx_first_chnl    mem_conf.dmx_first_channel
-#define dmx_gndmaster    mem_conf.dmx_grandmaster
 #define curr_power    mem_conf.max_power
 resp_t MainMenu_Update (sw_actions_t mm_action)
 {
@@ -298,7 +296,7 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
 
         if (resp == resp_ok)
         {
-            program_type = SLAVE_MODE;
+            program_type = DMX1_MODE;
 
             // Menu options
             MainMenu_BlankOptions();
@@ -348,28 +346,27 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
             switch (mm_selected)
             {
             case 1:
-                mmenu_state = MAIN_MENU_PAGE_SLAVE_CHNLS_QTTY_A;
+                mmenu_state = MAIN_MENU_PAGE_DMX1_CHNLS_QTTY_A;
                 break;
             case 2:
-                mmenu_state = MAIN_MENU_PAGE_SLAVE_FIRST_CHNL_A;
+                mmenu_state = MAIN_MENU_PAGE_DMX1_FIRST_CHNL_A;
                 break;
             case 3:
-                mmenu_state = MAIN_MENU_PAGE_SLAVE_GRANDM_A;
                 break;
             case 4:
-                mmenu_state = MAIN_MENU_PAGE_SLAVE_BACK;
+                mmenu_state = MAIN_MENU_PAGE_DMX1_BACK;
                 break;
             }            
         }
         break;
 
-    case MAIN_MENU_PAGE_SLAVE_CHNLS_QTTY_A:
+    case MAIN_MENU_PAGE_DMX1_CHNLS_QTTY_A:
         resp = MainMenu_CheckFree(mm_action);
 
         if (resp == resp_ok)
         {
             // Menu Title
-            MainMenu_SetTitle(s_slave_title);
+            MainMenu_SetTitle(s_dmx1_title);
 
             // Menu options
             MainMenu_BlankOptions();
@@ -386,12 +383,12 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
 
             mm_changed = 1;
         
-            mmenu_state = MAIN_MENU_PAGE_SLAVE_CHNLS_QTTY_B;
+            mmenu_state = MAIN_MENU_PAGE_DMX1_CHNLS_QTTY_B;
             resp = resp_continue;
         }
         break;
 
-    case MAIN_MENU_PAGE_SLAVE_CHNLS_QTTY_B:
+    case MAIN_MENU_PAGE_DMX1_CHNLS_QTTY_B:
         
         if ((mm_action == selection_dwn) ||
             (mm_action == selection_up)) 
@@ -416,13 +413,13 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
 
         break;
 
-    case MAIN_MENU_PAGE_SLAVE_FIRST_CHNL_A:
+    case MAIN_MENU_PAGE_DMX1_FIRST_CHNL_A:
         resp = MainMenu_CheckFree(mm_action);
 
         if (resp == resp_ok)
         {
             // Menu Title
-            MainMenu_SetTitle(s_slave_title);
+            MainMenu_SetTitle(s_dmx1_title);
 
             // Menu options
             MainMenu_BlankOptions();
@@ -440,12 +437,12 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
 
             mm_changed = 1;
         
-            mmenu_state = MAIN_MENU_PAGE_SLAVE_FIRST_CHNL_B;
+            mmenu_state = MAIN_MENU_PAGE_DMX1_FIRST_CHNL_B;
             resp = resp_continue;
         }
         break;
 
-    case MAIN_MENU_PAGE_SLAVE_FIRST_CHNL_B:
+    case MAIN_MENU_PAGE_DMX1_FIRST_CHNL_B:
 
         if ((mm_action == selection_dwn) ||
             (mm_action == selection_up))
@@ -470,64 +467,8 @@ resp_t MainMenu_Update (sw_actions_t mm_action)
 
         break;
 
-    case MAIN_MENU_PAGE_SLAVE_GRANDM_A:
-        resp = MainMenu_CheckFree(mm_action);
 
-        if (resp == resp_ok)
-        {
-            // Menu Title
-            MainMenu_SetTitle(s_slave_title);
-
-            // Menu options
-            MainMenu_BlankOptions();
-            set_option_string1("Change UP/DWN");
-            set_option_string2("Set to Finish");
-            blank_option_string3();
-
-            if (dmx_gndmaster)
-                set_option_string4("Grandmaster: Y");
-            else
-                set_option_string4("Grandmaster: N");
-        
-            blank_option_string5();
-            blank_option_string6();
-            mm_selected = 0;
-            MainMenu_SetOptions(mm_selected);
-
-            mm_changed = 1;
-        
-            mmenu_state = MAIN_MENU_PAGE_SLAVE_GRANDM_B;
-            resp = resp_continue;
-        }
-        break;
-
-    case MAIN_MENU_PAGE_SLAVE_GRANDM_B:
-        if ((mm_action == selection_dwn) || (mm_action == selection_up))
-        {
-            if (dmx_gndmaster)
-            {
-                dmx_gndmaster = 0;
-                MainMenu_BlankOptions();
-                set_option_string4("Grandmaster: N");
-                MainMenu_SetOptions(0);
-                mm_changed = 1;                
-            }
-            else
-            {
-                dmx_gndmaster = 1;
-                MainMenu_BlankOptions();
-                set_option_string4("Grandmaster: Y");
-                MainMenu_SetOptions(0);
-                mm_changed = 1;                
-            }                
-        }
-
-        if (mm_action == selection_enter)
-            mmenu_state = MAIN_MENU_PAGE_DMX1_A;
-
-        break;
-
-    case MAIN_MENU_PAGE_SLAVE_BACK:
+    case MAIN_MENU_PAGE_DMX1_BACK:
         resp = MainMenu_CheckFree(mm_action);
         if (resp == resp_ok)
         {

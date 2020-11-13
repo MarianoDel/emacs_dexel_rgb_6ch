@@ -23,7 +23,7 @@
 #include "dsp.h"
 
 #include "dmx_transceiver.h"
-#include "slave_mode.h"
+#include "dmx1_mode.h"
 #include "master_mode.h"
 #include "programs_mode.h"
 #include "programs_functions.h"
@@ -79,7 +79,7 @@ volatile unsigned char dmx_filters_timer = 0;
 
 volatile unsigned char data512[SIZEOF_DMX_DATA512];
 //static unsigned char data_back[10];
-volatile unsigned char data7[SIZEOF_DMX_DATA7];
+volatile unsigned char data11[SIZEOF_DMX_DATA11];
 volatile unsigned char * pdmx;
 
 #ifdef CHECK_FILTERS_BY_INT
@@ -152,7 +152,7 @@ int main(void)
     // TF_Control_Fan ();
     // TF_Oled_Screen ();
     // TF_Oled_and_Main_Menu ();
-    // TF_Oled_and_Slave_Mode ();
+    // TF_Oled_and_DMX1_Mode ();
     // TF_Oled_and_Programs_Mode ();
     // TF_Oled_and_Master_Mode ();    
 
@@ -239,13 +239,12 @@ int main(void)
     else
     {
         //memory empty use some defaults
-        mem_conf.program_type = SLAVE_MODE;
+        mem_conf.program_type = DMX1_MODE;
         mem_conf.master_send_dmx_enable = 0;
         mem_conf.last_program_in_flash = 9;
         mem_conf.last_program_deep_in_flash = 0;
         mem_conf.dmx_first_channel = 1;
         mem_conf.dmx_channel_quantity = 6;
-        mem_conf.dmx_grandmaster = 0;
         mem_conf.max_power = 200;
     }
 
@@ -290,7 +289,7 @@ int main(void)
                 strcpy(s_to_send, "  Master ");                
                 break;
             case 2:
-                strcpy(s_to_send, "Slave/DMX");
+                strcpy(s_to_send, "DMX1");
                 break;
             case 3:
                 strcpy(s_to_send, "Programs ");
@@ -327,7 +326,7 @@ int main(void)
                 main_state = MAIN_IN_MASTER_MODE;             
             }                
                         
-            if (mem_conf.program_type == SLAVE_MODE)
+            if (mem_conf.program_type == DMX1_MODE)
             {
                 //variables de recepcion
                 Packet_Detected_Flag = 0;
@@ -343,8 +342,8 @@ int main(void)
                 enable_outputs_by_int = 1;
 #endif
                 
-                FuncSlaveModeReset();
-                main_state = MAIN_IN_SLAVE_MODE;
+                DMX1ModeReset();
+                main_state = MAIN_IN_DMX1_MODE;
             }
 
             if (mem_conf.program_type == PROGRAMS_MODE)
@@ -360,8 +359,8 @@ int main(void)
             //default state no debiera estar nunca aca!
             if (main_state == MAIN_GET_CONF)
             {
-                mem_conf.program_type = SLAVE_MODE;
-                main_state = MAIN_IN_SLAVE_MODE;
+                mem_conf.program_type = DMX1_MODE;
+                main_state = MAIN_IN_DMX1_MODE;
             }                
             break;
 
@@ -390,7 +389,7 @@ int main(void)
             }
             break;
             
-        case MAIN_IN_SLAVE_MODE:
+        case MAIN_IN_DMX1_MODE:
             action = do_nothing;
             
             // Check encoder first
@@ -403,7 +402,7 @@ int main(void)
             if (CheckSET() > SW_NO)
                 action = selection_enter;
             
-            FuncSlaveMode (ch_values, action);
+            DMX1Mode (ch_values, action);
             
 #ifdef CHECK_FILTERS_BY_INT
             for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
@@ -724,8 +723,8 @@ void TimingDelay_Decrement(void)
     else
         EXTIOn();    //dejo 20ms del paquete sin INT
 
-    //para modo_slave
-    UpdateTimerSlaveMode();
+    //para dmx1_mode
+    DMX1ModeUpdateTimer();
 
     //para programas
     UpdateProgTimers ();

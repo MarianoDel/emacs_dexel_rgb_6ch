@@ -1,32 +1,31 @@
-//---------------------------------------------
+//-------------------------------------------------
+// #### DEXEL 6CH BIDIRECTIONAL - Custom Board ####
 // ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### MODO_SLAVE.H #############################
-//---------------------------------------------
+// #### DMX1_MODE.H ###############################
+//-------------------------------------------------
 
 // Prevent recursive inclusion -------------------------------------------------
-#ifndef _MODO_SLAVE_H_
-#define _MODO_SLAVE_H_
+#ifndef _DMX1_MODE_H_
+#define _DMX1_MODE_H_
 
 //-- includes to help configurations --//
 #include "switches_answers.h"
 
 
 // Exported Types Constants and Macros -----------------------------------------
-#define TT_MENU_TIMEOUT    30000
-#define TT_DMX_RECEIVING    1000
 
 
 
 // Exported Module Functions ---------------------------------------------------
-void FuncSlaveMode (unsigned char *, sw_actions_t);
-void FuncSlaveModeReset (void);
-void UpdateTimerSlaveMode (void);
+void DMX1Mode (unsigned char *, sw_actions_t);
+void DMX1ModeReset (void);
+void DMX1ModeUpdateTimer (void);
 
 
-#endif    /* _SLAVE_MODE_H_ */
+#endif    /* _DMX1_MODE_H_ */
 
 //--- end of file ---//

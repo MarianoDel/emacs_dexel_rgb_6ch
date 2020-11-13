@@ -21,7 +21,7 @@
 #include "ssd1306_gfx.h"
 #include "screen.h"
 #include "mainmenu.h"
-#include "slave_mode.h"
+#include "dmx1_mode.h"
 #include "master_mode.h"
 #include "programs_mode.h"
 
@@ -166,7 +166,7 @@ void TF_Oled_and_Main_Menu (void)
 }
 
 
-void TF_Oled_and_Slave_Mode (void)
+void TF_Oled_and_DMX1_Mode (void)
 {
     unsigned char ch_values [6] = { 0 };
     sw_actions_t action = do_nothing;
@@ -183,11 +183,11 @@ void TF_Oled_and_Slave_Mode (void)
         "         "
         );
 
-    FuncSlaveModeReset();
+    DMX1ModeReset();
 
     while (1)
     {
-        FuncSlaveMode(ch_values, action);
+        DMX1Mode(ch_values, action);
 
         //simulate dmx packets arrivals
         if (!timer_standby)

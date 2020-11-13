@@ -41,7 +41,7 @@
 #define USE_PWM_DIRECT    //mapea lo que llega en el dmx al PWM directo
 // #define USE_PWM_WITH_DELTA    //mapea la corriente pero la busca punto a punto
 
-// --- Apply Power Control on Slave Mode ---//
+// --- Apply Power Control on DMX1 Mode ---//
 // #define WITH_POWER_CONTROL
 // #define WITH_POWER_CONTROL_SHOW_IN_DISPLAY
 
@@ -509,7 +509,7 @@ typedef enum
     MAIN_HARDWARE_INIT,
     MAIN_GET_CONF,
     MAIN_IN_MASTER_MODE,
-    MAIN_IN_SLAVE_MODE,
+    MAIN_IN_DMX1_MODE,
     MAIN_IN_WIFI_MODE,
     MAIN_IN_PROGRAMS_MODE,
     MAIN_IN_OVERTEMP,
