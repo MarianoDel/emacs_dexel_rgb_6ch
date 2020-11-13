@@ -18,10 +18,9 @@
 
 // Exported Types Constants and Macros -----------------------------------------
 typedef struct {
-    unsigned short * dmx_first_chnl;
-    unsigned char dmx_new_pckt;
-    sw_actions_t actions;
+    const unsigned short * dmx_first_chnl;
     const unsigned char * pchannels;
+    unsigned char show_addres;
     
 } dmx1_menu_data_t;
 

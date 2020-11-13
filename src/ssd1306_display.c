@@ -13,6 +13,10 @@
 #include "ssd1306_display.h"
 #include "i2c.h"
 
+#include "hard.h"
+#include "stm32f0xx.h"
+
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -305,6 +309,7 @@ void display_update_int_state_machine (void)
     case DISPLAY_UPDATE_INIT:
         d_update_page = 0;
         d_update_st++;
+        CTRL_FAN_ON;
         break;
 
     case DISPLAY_UPDATE_SET_PAGE_CMD_0:
@@ -382,6 +387,7 @@ void display_update_int_state_machine (void)
 
     case DISPLAY_UPDATE_ENDED:
     default:
+        CTRL_FAN_OFF;        
         break;
     }
 #endif

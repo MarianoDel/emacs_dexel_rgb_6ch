@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
     wrefresh(help_win);	
 
     draw_box_tittle(help_win, "Help Menu");    
-    mvwprintw(help_win,1,1, "u -> up  d -> dwn  j -> dmx up  k -> dmx down  F1 -> quit");
+    mvwprintw(help_win,1,1, "u -> up  d -> dwn  s -> show or not addr j -> dmx up  k -> dmx down  F1 -> quit");
     wrefresh(help_win);
 
     ggram_displayed.first_line = 0;
@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
     mem_conf.master_send_dmx_enable = 0;
     mem_conf.last_program_in_flash = 9;
     mem_conf.last_program_deep_in_flash = 0;
-    mem_conf.dmx_first_channel = 1;
+    mem_conf.dmx_first_channel = 10;
     mem_conf.dmx_channel_quantity = 6;
     mem_conf.dmx_grandmaster = 0;
     mem_conf.max_power = 200;
@@ -146,9 +146,10 @@ int main(int argc, char *argv[])
 
     unsigned char ch[6] = {0, 2, 3, 10, 128, 230};
     dmx1_st.pchannels = ch;
-    dmx1_st.dmx_new_pckt = 0;
+
+    int new_loop = 1;
     
-    
+    resp_t resp = resp_continue;
     DMX1ModeMenuReset();
 
     do {
@@ -160,7 +161,7 @@ int main(int argc, char *argv[])
                 if (ch[i] < 255)
                     ch[i] += 1;
             }
-            dmx1_st.dmx_new_pckt = 1;
+            new_loop = 1;
             dmx_up = 0;
         }
 
@@ -171,12 +172,34 @@ int main(int argc, char *argv[])
                 if (ch[i] > 0)
                     ch[i] -= 1;
             }
-            dmx1_st.dmx_new_pckt = 1;            
+            new_loop = 1;
             dmx_dwn = 0;
         }
-        
-        dmx1_st.actions = action;
-        DMX1ModeMenu(&dmx1_st);
+
+        if (action == selection_up)
+        {
+            if (mem_conf.dmx_first_channel < 506)
+                mem_conf.dmx_first_channel++;
+
+            new_loop = 1;
+            
+        }
+
+        if (action == selection_dwn)
+        {
+            if (mem_conf.dmx_first_channel > 1)
+                mem_conf.dmx_first_channel--;
+
+            new_loop = 1;
+            
+        }
+
+        if (new_loop)
+        {
+            resp = DMX1ModeMenu(&dmx1_st);
+            if (resp == resp_finish)
+                new_loop = 0;
+        }
         action = do_nothing;
         usleep(2000);
 

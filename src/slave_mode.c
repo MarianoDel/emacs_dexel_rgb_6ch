@@ -10,93 +10,50 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "slave_mode.h"
-#include "hard.h"
-#include "stm32f0xx.h"
-#include "dsp.h"
-
-#include "ssd1306_gfx.h"
-#include "mainmenu.h"
+#include "dmx1_menu.h"
 #include "flash_program.h"
-#include "pwm.h"
 
 #include <stdio.h>
 #include <string.h>
 
 
+// Private Types Constants and Macros ------------------------------------------
+typedef enum {
+    SLAVE_MODE_INIT = 0,
+    SLAVE_MODE_RUNNING
+
+} slave_mode_e;
+
+typedef enum {
+    DO_NOTHING = 0,
+    TO_CHANGE_WAIT_FREE,
+    CHANGING,
+    TO_DO_NOTHING_WAIT_FREE,
+    TO_CLEAN_OUT
+    
+} slave_mode_address_e;
+
 // Externals -------------------------------------------------------------------
 extern volatile unsigned char data7[];
 
-//del Main para timers
-extern volatile unsigned char dmx_filters_timer;
-
 //del main para dmx
 extern volatile unsigned char Packet_Detected_Flag;
+extern volatile unsigned short DMX_channel_selected;
 
 extern parameters_typedef mem_conf;
 
 
 // Globals ---------------------------------------------------------------------
-slave_mode_t slave_mode_state = SLAVE_MODE_INIT;
+slave_mode_e slave_mode_state = SLAVE_MODE_INIT;
 unsigned char dmx_end_of_packet_update = 0;
+
 
 //-- timers del modulo --------------------
 volatile unsigned short slave_mode_enable_menu_timer = 0;
 volatile unsigned short slave_mode_dmx_receiving_timer = 0;
 
-// extern volatile unsigned short standalone_timer;
-// extern volatile unsigned short standalone_enable_menu_timer;
-// extern volatile unsigned short minutes;
-// extern volatile unsigned short scroll1_timer;
-
-
-//--- Para los menues LCD ----------
-unsigned char last_ch1;
-unsigned char last_ch2;
-unsigned char last_ch3;
-unsigned char last_ch4;
-unsigned char last_ch5;
-unsigned char last_ch6;
-
-#define CONTRAST_TO_HIGH    0
-#define CONTRAST_HIGH    1
-#define CONTRAST_TO_LOW    2
-#define CONTRAST_LOW    3
-unsigned char contrast = CONTRAST_TO_HIGH;
-
-//-- Private Defines -----------------
-//-- para los menues -----------------
-
-
-typedef enum {
-    MENU_INIT = 0,
-    MENU_ON,
-    MENU_OFF
-
-} slave_mode_m_manager_t;
-
-
-typedef enum {
-    SLAVE_MODE_MENU_RUNNING_INIT = 0,
-    SLAVE_MODE_MENU_RUNNING_WAIT_NEW_PACKET,
-    SLAVE_MODE_MENU_RUNNING_CHECK_CH1,
-    SLAVE_MODE_MENU_RUNNING_CHECK_CH2,
-    SLAVE_MODE_MENU_RUNNING_CHECK_CH3,
-    SLAVE_MODE_MENU_RUNNING_CHECK_CH4,
-    SLAVE_MODE_MENU_RUNNING_CHECK_CH5,
-    SLAVE_MODE_MENU_RUNNING_CHECK_CH6,
-    SLAVE_MODE_MENU_RUNNING_UPDATE_DISPLAY
-
-} slave_mode_menu_running_t;
-
-static slave_mode_m_manager_t slave_mode_menu_manager = MENU_ON;
-static slave_mode_menu_running_t slave_mode_menu_state = SLAVE_MODE_MENU_RUNNING_INIT;
-
 
 // Module Private Functions ----------------------------------------------------
-void SlaveModeMenuManagerReset (void);
-void UpdateSlaveModeMenuManager (unsigned char *);
-void MenuSlaveModeRunning (unsigned char *);
-void Percentage (unsigned char, unsigned char *, unsigned char *);
 
 
 // Module Functions ------------------------------------------------------------
@@ -115,18 +72,22 @@ void FuncSlaveModeReset (void)
     slave_mode_state = SLAVE_MODE_INIT;
 }
 
-void FuncSlaveMode (unsigned char * ch_val)
+#define TT_SHOW_ADDRESS    500
+#define CNTR_TO_OUT    16
+#define timer_address    slave_mode_enable_menu_timer
+unsigned char address_show = 0;
+unsigned char address_cntr_out = 0;
+slave_mode_address_e slave_mode_address = DO_NOTHING;
+void FuncSlaveMode (unsigned char * ch_val, sw_actions_t action)
 {
-    unsigned short dummy_16;
+    resp_t resp = resp_continue;
+    
     
     switch (slave_mode_state)
     {
     case SLAVE_MODE_INIT:
-        SlaveModeMenuManagerReset();
-        slave_mode_state++;
-        break;
-
-    case SLAVE_MODE_CONF:
+        DMX1ModeMenuReset();
+        address_show = 1;
         slave_mode_state++;
         break;
 
@@ -144,6 +105,8 @@ void FuncSlaveMode (unsigned char * ch_val)
             //ajuste por grandmaster
             if (mem_conf.dmx_grandmaster)
             {
+                unsigned short dummy_16;
+                
                 dummy_16 = data7[0] * data7[1];
                 dummy_16 >>= 8;
                 data7[1] = (unsigned char) dummy_16;
@@ -169,15 +132,19 @@ void FuncSlaveMode (unsigned char * ch_val)
                 data7[6] = (unsigned char) dummy_16;
             }
 
-            //update de valores recibidos
-            *(ch_val + 0) = data7[1];
-            *(ch_val + 1) = data7[2];
-            *(ch_val + 2) = data7[3];
-            *(ch_val + 3) = data7[4];
-            *(ch_val + 4) = data7[5];
-            *(ch_val + 5) = data7[6];
+            // if (!dmx_end_of_packet_update)
+            // {
+                //update de valores recibidos
+                *(ch_val + 0) = data7[1];
+                *(ch_val + 1) = data7[2];
+                *(ch_val + 2) = data7[3];
+                *(ch_val + 3) = data7[4];
+                *(ch_val + 4) = data7[5];
+                *(ch_val + 5) = data7[6];
+
+                dmx_end_of_packet_update = 1;
+            // }
             
-            dmx_end_of_packet_update = 1;
 
 #ifdef WITH_POWER_CONTROL
             PWM_Set_PwrCtrl(ch_val, mem_conf.dmx_channel_quantity);
@@ -185,7 +152,30 @@ void FuncSlaveMode (unsigned char * ch_val)
         }
 
 #ifndef NO_DISPLAY_UPDATE_ON_DMX
-        UpdateSlaveModeMenuManager(ch_val);
+        if (dmx_end_of_packet_update)
+        {
+            // unsigned char ch[6];
+            // ch[0] = *(ch_val + 0);
+            // ch[1] = *(ch_val + 1);
+            // ch[2] = *(ch_val + 2);
+            // ch[3] = *(ch_val + 3);
+            // ch[4] = *(ch_val + 4);
+            // ch[5] = *(ch_val + 5);
+            
+            dmx1_menu_data_t dmx1_st;
+            dmx1_st.dmx_first_chnl = &mem_conf.dmx_first_channel;
+            // dmx1_st.pchannels = ch;
+            dmx1_st.pchannels = ch_val;
+            if (address_show)
+                dmx1_st.show_addres = 1;
+            else
+                dmx1_st.show_addres = 0;
+
+            resp = DMX1ModeMenu(&dmx1_st);
+            if (resp == resp_finish)
+                dmx_end_of_packet_update = 0;
+            
+        }
 #endif
         
         break;
@@ -194,282 +184,99 @@ void FuncSlaveMode (unsigned char * ch_val)
         slave_mode_state = SLAVE_MODE_INIT;
         break;
     }
+
+    
+    //check for a change in address
+    switch (slave_mode_address)
+    {
+    case DO_NOTHING:
+        if (action == selection_enter)
+            slave_mode_address++;
+        
+        break;
+
+    case TO_CHANGE_WAIT_FREE:
+        if (action == do_nothing)
+        {
+            address_cntr_out = CNTR_TO_OUT;
+            slave_mode_address++;
+        }
+        break;
+            
+    case CHANGING:
+        
+        if (action == selection_up)
+        {
+            if (DMX_channel_selected < (512 - 6))
+            {
+                DMX_channel_selected++;
+                mem_conf.dmx_first_channel = DMX_channel_selected;
+
+                //force the display change
+                dmx_end_of_packet_update = 1;
+                address_show = 1;
+                timer_address = TT_SHOW_ADDRESS;
+                address_cntr_out = CNTR_TO_OUT;
+
+                // resp = resp_need_to_save;            
+            }
+        }
+        
+        if (action == selection_dwn)
+        {
+            if (DMX_channel_selected > 1)
+            {
+                DMX_channel_selected--;
+                mem_conf.dmx_first_channel = DMX_channel_selected;            
+
+                //force the display change
+                dmx_end_of_packet_update = 1;
+                address_show = 1;
+                timer_address = TT_SHOW_ADDRESS;
+                address_cntr_out = CNTR_TO_OUT;                
+
+                // resp = resp_need_to_save;
+            }
+        }
+
+        if (action == selection_enter)
+            slave_mode_address++;
+
+        if (!timer_address)
+        {
+            if (address_show)
+                address_show = 0;
+            else
+                address_show = 1;
+
+            if (address_cntr_out)
+                address_cntr_out--;
+            
+            timer_address = TT_SHOW_ADDRESS;
+        }
+
+        if (!address_cntr_out)
+            slave_mode_address = TO_CLEAN_OUT;
+        
+        break;
+
+    case TO_DO_NOTHING_WAIT_FREE:
+        if (action == do_nothing)
+            slave_mode_address++;
+        
+        break;
+
+    case TO_CLEAN_OUT:
+        address_show = 1;
+        slave_mode_address = DO_NOTHING;
+        break;
+        
+    default:
+        slave_mode_address = DO_NOTHING;
+        break;            
+    }
+            
 }
             
-
-void SlaveModeMenuManagerReset (void)
-{
-    slave_mode_menu_manager = MENU_INIT;
-    slave_mode_menu_state = SLAVE_MODE_MENU_RUNNING_INIT;
-}
-
-inline void UpdateSlaveModeMenuManager (unsigned char * ch_values)
-{
-    //veo el menu solo si alguien toca los botones / timeout o DMX enchufado
-    switch (slave_mode_menu_manager)
-    {
-    case MENU_INIT:
-        gfx_setTextSize(1);
-        gfx_setTextBg(0);
-        gfx_setTextColor(1);
-        display_clear();
-
-        MainMenu_BlankAllLines();
-        MainMenu_SetTitle("   Slave/DMX Mode");
-        display_update();
-        
-        slave_mode_menu_manager++;
-        break;
-        
-    case MENU_ON:
-        //estado normal
-        MenuSlaveModeRunning(ch_values);
-
-        //ya mostre el menu mucho tiempo, lo apago, si no estoy con dmx
-        if ((!slave_mode_dmx_receiving_timer) && (!slave_mode_enable_menu_timer))
-        {
-            contrast = CONTRAST_TO_LOW;
-            slave_mode_menu_manager = MENU_OFF;
-        }
-        break;
-
-    case MENU_OFF:
-        //estado menu apagado
-        if ((CheckSET() > SW_NO) ||
-            (slave_mode_dmx_receiving_timer))
-        {
-            slave_mode_enable_menu_timer = TT_MENU_TIMEOUT;    //vuelvo a mostrar
-            slave_mode_menu_manager = MENU_ON;
-            contrast = CONTRAST_TO_HIGH;
-        }
-        break;
-
-    default:
-        slave_mode_menu_manager = 0;
-        break;
-    }
-
-    switch (contrast)
-    {
-    case CONTRAST_TO_HIGH:
-        if (display_update_int_contrast(0xCF))
-            contrast = CONTRAST_HIGH;
-        break;
-
-    case CONTRAST_HIGH:
-        break;
-
-    case CONTRAST_TO_LOW:
-        if (display_update_int_contrast(0x0F))
-            contrast = CONTRAST_LOW;
-        break;
-
-    case CONTRAST_LOW:
-        break;
-    }
-}
-
-
-// dmx slave conf
-#define dmx_first_chnl    mem_conf.dmx_first_channel
-unsigned char change_values = 0;
-inline void MenuSlaveModeRunning (unsigned char * ch_values)
-{
-    char s_temp[18];
-    unsigned char one_int = 0;
-    unsigned char one_dec = 0;
-
-    switch (slave_mode_menu_state)
-    {
-    case SLAVE_MODE_MENU_RUNNING_INIT:
-        //empiezo con las selecciones
-
-        //fuerzo cambio
-        last_ch1 = ~data7[1];
-        last_ch2 = ~data7[2];
-        last_ch3 = ~data7[3];
-        last_ch4 = ~data7[4];
-        last_ch5 = ~data7[5];
-        last_ch6 = ~data7[6];
-
-        slave_mode_menu_state++;
-        break;
-
-    case SLAVE_MODE_MENU_RUNNING_WAIT_NEW_PACKET:
-        if (dmx_end_of_packet_update)
-        {
-            dmx_end_of_packet_update = 0;
-            slave_mode_menu_state++;
-        }
-        break;
-        
-    case SLAVE_MODE_MENU_RUNNING_CHECK_CH1:
-        if (last_ch1 != data7[1])
-        {
-            last_ch1 = data7[1];
-
-            Percentage(last_ch1, &one_int, &one_dec);
-
-#ifdef WITH_POWER_CONTROL_SHOW_IN_DISPLAY
-            if (data7[1] != ch_values[CH1_VAL_OFFSET])
-            {
-                sprintf(s_temp, "ch%3d: %3d.%01d%% *",
-                        dmx_first_chnl,
-                        one_int,
-                        one_dec);
-            }
-            else
-            {
-                sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                        dmx_first_chnl,
-                        one_int,
-                        one_dec);
-            }
-#else
-            sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                    dmx_first_chnl,
-                    one_int,
-                    one_dec);            
-#endif
-
-            MainMenu_SetLine1(s_temp);
-            change_values = 1;
-        }
-        
-        slave_mode_menu_state++;
-        break;
-
-    case SLAVE_MODE_MENU_RUNNING_CHECK_CH2:        
-        if (last_ch2 != data7[2])
-        {
-            last_ch2 = data7[2];            
-
-            Percentage(last_ch2, &one_int, &one_dec);
-            sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                    dmx_first_chnl+ 1,
-                    one_int,
-                    one_dec);
-
-            MainMenu_SetLine2(s_temp);
-            change_values = 1;
-        }
-        
-        slave_mode_menu_state++;
-        break;
-
-    case SLAVE_MODE_MENU_RUNNING_CHECK_CH3:
-        if (last_ch3 != data7[3])
-        {
-            last_ch3 = data7[3];
-
-            Percentage(last_ch3, &one_int, &one_dec);
-            sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                    dmx_first_chnl + 2,
-                    one_int,
-                    one_dec);
-
-            MainMenu_SetLine3(s_temp);
-            change_values = 1;
-        }
-
-        slave_mode_menu_state++;
-        break;
-
-    case SLAVE_MODE_MENU_RUNNING_CHECK_CH4:
-        if (last_ch4 != data7[4])
-        {
-            last_ch4 = data7[4];
-
-            Percentage(last_ch4, &one_int, &one_dec);
-            sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                    dmx_first_chnl + 3,
-                    one_int,
-                    one_dec);
-
-            MainMenu_SetLine4(s_temp);
-            change_values = 1;
-        }
-
-        slave_mode_menu_state++;
-        break;
-
-    case SLAVE_MODE_MENU_RUNNING_CHECK_CH5:
-        if (last_ch5 != data7[5])
-        {
-            last_ch5 = data7[5];
-
-            Percentage(last_ch5, &one_int, &one_dec);
-            sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                    dmx_first_chnl + 4,
-                    one_int,
-                    one_dec);
-
-            MainMenu_SetLine5(s_temp);
-            change_values = 1;
-        }
-
-        slave_mode_menu_state++;
-        break;
-
-    case SLAVE_MODE_MENU_RUNNING_CHECK_CH6:
-        if (last_ch6 != data7[6])
-        {
-            last_ch6 = data7[6];
-
-            Percentage(last_ch6, &one_int, &one_dec);
-            sprintf(s_temp, "ch%3d: %3d.%01d%%",
-                    dmx_first_chnl + 5,
-                    one_int,
-                    one_dec);
-
-            MainMenu_SetLine6(s_temp);
-            change_values = 1;
-        }
-
-        slave_mode_menu_state++;
-        break;
-
-    case SLAVE_MODE_MENU_RUNNING_UPDATE_DISPLAY:
-        if (change_values)
-        {
-            change_values = 0;
-            MainMenu_BlankOptions();
-            MainMenu_SetOptions(0);
-            display_update();
-        }
-        
-        slave_mode_menu_state = SLAVE_MODE_MENU_RUNNING_WAIT_NEW_PACKET;
-        break;
-        
-    default:
-        slave_mode_menu_state = SLAVE_MODE_MENU_RUNNING_INIT;
-        break;
-    }
-}
-
-
-void Percentage (unsigned char dmx_value, unsigned char * val_int, unsigned char * val_dec)
-{
-    unsigned int calc = 0;
-    
-    if (dmx_value == 0)
-    {
-        *val_int = 0;
-        *val_dec = 0;
-    }
-    else if (dmx_value == 255)
-    {
-        *val_int = 100;
-        *val_dec = 0;
-    }
-    else
-    {
-        calc = dmx_value * 1000;
-        calc = calc / 255;        
-        *val_int = calc / 10;
-        *val_dec = calc - *val_int * 10;
-    }
-}
-
 
 //--- end of file ---//

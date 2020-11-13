@@ -169,6 +169,7 @@ void TF_Oled_and_Main_Menu (void)
 void TF_Oled_and_Slave_Mode (void)
 {
     unsigned char ch_values [6] = { 0 };
+    sw_actions_t action = do_nothing;
     
     I2C2_Init();
     Wait_ms(100);
@@ -186,7 +187,7 @@ void TF_Oled_and_Slave_Mode (void)
 
     while (1)
     {
-        FuncSlaveMode(ch_values);
+        FuncSlaveMode(ch_values, action);
 
         //simulate dmx packets arrivals
         if (!timer_standby)

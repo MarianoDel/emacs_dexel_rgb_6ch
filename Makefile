@@ -87,7 +87,8 @@ SRC += ./src/mainmenu.c
 SRC += ./src/screen.c
 SRC += ./src/pwm.c
 SRC += ./src/test_functions.c
-
+SRC += ./src/dmx1_menu.c
+SRC += ./src/display_utils.c
 
 ## Core Support
 SRC += $(CORELIBDIR)/core_cm0.c

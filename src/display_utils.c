@@ -9,6 +9,7 @@
 // Includes --------------------------------------------------------------------
 #include "display_utils.h"
 #include "ssd1306_gfx.h"
+#include "ssd1306_display.h"
 // #include "ssd1306_params.h"
 
 
@@ -102,56 +103,56 @@ void Display_BlankLine8 (void)
 void Display_SetLine1 (char * s)
 {
     gfx_setCursor(SRT_X, SRT_L1_Y);
-    gfx_println(s);
+    gfx_print(s);
 }
 
 
 void Display_SetLine2 (char * s)
 {
     gfx_setCursor(SRT_X, SRT_L2_Y);
-    gfx_println(s);
+    gfx_print(s);
 }
 
 
 void Display_SetLine3 (char * s)
 {
     gfx_setCursor(SRT_X, SRT_L3_Y);
-    gfx_println(s);
+    gfx_print(s);
 }
 
 
 void Display_SetLine4 (char * s)
 {
     gfx_setCursor(SRT_X, SRT_L4_Y);
-    gfx_println(s);
+    gfx_print(s);
 }
 
 
 void Display_SetLine5 (char * s)
 {
     gfx_setCursor(SRT_X, SRT_L5_Y);
-    gfx_println(s);
+    gfx_print(s);
 }
 
 
 void Display_SetLine6 (char * s)
 {
     gfx_setCursor(SRT_X, SRT_L6_Y);
-    gfx_println(s);
+    gfx_print(s);
 }
 
 
 void Display_SetLine7 (char * s)
 {
     gfx_setCursor(SRT_X, SRT_L7_Y);
-    gfx_println(s);
+    gfx_print(s);
 }
 
 
 void Display_SetLine8 (char * s)
 {
     gfx_setCursor(SRT_X, SRT_L8_Y);
-    gfx_println(s);
+    gfx_print(s);
 }
 
 
