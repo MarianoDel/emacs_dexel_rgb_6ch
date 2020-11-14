@@ -14,11 +14,12 @@
 
 //-- includes to help configurations --//
 #include "switches_answers.h"
+#include "parameters.h"
 
     
 
 // Module Exported Functions ---------------------------------------------------
-resp_t MainMenu (sw_actions_t);
+resp_t MainMenu (parameters_typedef *, sw_actions_t);
 void MainMenuReset (void);
 
 

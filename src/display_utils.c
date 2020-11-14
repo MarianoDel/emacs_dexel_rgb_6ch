@@ -10,7 +10,9 @@
 #include "display_utils.h"
 #include "ssd1306_gfx.h"
 #include "ssd1306_display.h"
-// #include "ssd1306_params.h"
+
+#include <stdio.h>
+#include <string.h>
 
 
 // Private Types Constants and Macros ------------------------------------------
@@ -52,107 +54,43 @@ void Display_ClearLines (void)
 }
 
 
-void Display_BlankLine1 (void)
+void Display_BlankLine (unsigned char line)
 {
-    gfx_fillRect(SRT_X, SRT_L1_Y, WIDTH, LINE_HEIGHT, 0);        
+    gfx_fillRect(SRT_X, LINE_HEIGHT * (line - 1), WIDTH, LINE_HEIGHT, 0);        
 }
 
 
-void Display_BlankLine2 (void)
+void Display_SetLine (unsigned char line, char * s)
 {
-    gfx_fillRect(SRT_X, SRT_L2_Y, WIDTH, LINE_HEIGHT, 0);        
-}
-
-
-void Display_BlankLine3 (void)
-{
-    gfx_fillRect(SRT_X, SRT_L3_Y, WIDTH, LINE_HEIGHT, 0);        
-}
-
-
-void Display_BlankLine4 (void)
-{
-    gfx_fillRect(SRT_X, SRT_L4_Y, WIDTH, LINE_HEIGHT, 0);        
-}
-
-
-void Display_BlankLine5 (void)
-{
-    gfx_fillRect(SRT_X, SRT_L5_Y, WIDTH, LINE_HEIGHT, 0);        
-}
-
-
-void Display_BlankLine6 (void)
-{
-    gfx_fillRect(SRT_X, SRT_L6_Y, WIDTH, LINE_HEIGHT, 0);        
-}
-
-
-void Display_BlankLine7 (void)
-{
-    gfx_fillRect(SRT_X, SRT_L7_Y, WIDTH, LINE_HEIGHT, 0);        
-}
-
-
-void Display_BlankLine8 (void)
-{
-    gfx_fillRect(SRT_X, SRT_L8_Y, WIDTH, LINE_HEIGHT, 0);        
-}
-
-
-void Display_SetLine1 (char * s)
-{
-    gfx_setCursor(SRT_X, SRT_L1_Y);
+    gfx_setCursor(SRT_X, LINE_HEIGHT * (line - 1));
     gfx_print(s);
 }
 
 
-void Display_SetLine2 (char * s)
+void Display_SetOptions (unsigned char line, char * s)
 {
-    gfx_setCursor(SRT_X, SRT_L2_Y);
-    gfx_print(s);
-}
+    char pretty [ALL_LINE_LENGTH_NULL] = { 0 };
+    unsigned char line_offset = LINE_HEIGHT * (line - 1);
 
+    if (strlen(s) > (ALL_LINE_LENGTH - 2))
+        return;
 
-void Display_SetLine3 (char * s)
-{
-    gfx_setCursor(SRT_X, SRT_L3_Y);
-    gfx_print(s);
-}
+    //clean line
+    gfx_fillRect(SRT_X, line_offset, WIDTH, LINE_HEIGHT, 0);
 
+    //change text type
+    gfx_setTextColor(0);
+    gfx_setTextBg(1);
 
-void Display_SetLine4 (char * s)
-{
-    gfx_setCursor(SRT_X, SRT_L4_Y);
-    gfx_print(s);
-}
+    //write prettify string
+    gfx_setCursor(SRT_X, line_offset);    
+    sprintf(pretty, " %s ", s);
+    gfx_print(pretty);
 
-
-void Display_SetLine5 (char * s)
-{
-    gfx_setCursor(SRT_X, SRT_L5_Y);
-    gfx_print(s);
-}
-
-
-void Display_SetLine6 (char * s)
-{
-    gfx_setCursor(SRT_X, SRT_L6_Y);
-    gfx_print(s);
-}
-
-
-void Display_SetLine7 (char * s)
-{
-    gfx_setCursor(SRT_X, SRT_L7_Y);
-    gfx_print(s);
-}
-
-
-void Display_SetLine8 (char * s)
-{
-    gfx_setCursor(SRT_X, SRT_L8_Y);
-    gfx_print(s);
+    //back to normal text type
+    gfx_setTextColor(1);
+    gfx_setTextBg(0);
+    
 }
 
 

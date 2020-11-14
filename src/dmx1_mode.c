@@ -10,7 +10,7 @@
 
 // Includes --------------------------------------------------------------------
 #include "dmx1_mode.h"
-#include "dmx1_menu.h"
+#include "dmx_menu.h"
 #include "flash_program.h"
 
 #include <stdio.h>
@@ -58,7 +58,7 @@ extern parameters_typedef mem_conf;
 
 // Globals ---------------------------------------------------------------------
 dmx1_mode_e dmx1_mode_state = DMX1_MODE_INIT;
-unsigned char dmx_end_of_packet_update = 0;
+unsigned char dmx1_end_of_packet_update = 0;
 
 
 //-- timers del modulo --------------------
@@ -88,8 +88,8 @@ void DMX1ModeReset (void)
 #define TT_SHOW_ADDRESS    500
 #define CNTR_TO_OUT    16
 #define timer_address    dmx1_mode_enable_menu_timer
-unsigned char address_show = 0;
-unsigned char address_cntr_out = 0;
+unsigned char dmx1_address_show = 0;
+unsigned char dmx1_address_cntr_out = 0;
 dmx1_mode_address_e dmx1_mode_address = DO_NOTHING;
 void DMX1Mode (unsigned char * ch_val, sw_actions_t action)
 {
@@ -99,8 +99,8 @@ void DMX1Mode (unsigned char * ch_val, sw_actions_t action)
     switch (dmx1_mode_state)
     {
     case DMX1_MODE_INIT:
-        DMX1ModeMenuReset();
-        address_show = 1;
+        DMXModeMenuReset();
+        dmx1_address_show = 1;
         dmx1_mode_state++;
         break;
 
@@ -125,7 +125,7 @@ void DMX1Mode (unsigned char * ch_val, sw_actions_t action)
                 *(ch_val + 4) = data11[DMX1_CLR_CH5];
                 *(ch_val + 5) = data11[DMX1_CLR_CH6];
 
-                dmx_end_of_packet_update = 1;
+                dmx1_end_of_packet_update = 1;
             }
 
 #ifdef WITH_POWER_CONTROL
@@ -134,20 +134,20 @@ void DMX1Mode (unsigned char * ch_val, sw_actions_t action)
         }
 
 #ifndef NO_DISPLAY_UPDATE_ON_DMX
-        if (dmx_end_of_packet_update)
+        if (dmx1_end_of_packet_update)
         {
-            dmx1_menu_data_t dmx1_st;
+            dmx_menu_data_t dmx1_st;
             dmx1_st.dmx_first_chnl = &mem_conf.dmx_first_channel;
             // dmx1_st.pchannels = ch;
             dmx1_st.pchannels = ch_val;
-            if (address_show)
+            if (dmx1_address_show)
                 dmx1_st.show_addres = 1;
             else
                 dmx1_st.show_addres = 0;
 
-            resp = DMX1ModeMenu(&dmx1_st);
+            resp = DMXModeMenu(&dmx1_st);
             if (resp == resp_finish)
-                dmx_end_of_packet_update = 0;
+                dmx1_end_of_packet_update = 0;
             
         }
 #endif
@@ -172,7 +172,7 @@ void DMX1Mode (unsigned char * ch_val, sw_actions_t action)
     case TO_CHANGE_WAIT_FREE:
         if (action == do_nothing)
         {
-            address_cntr_out = CNTR_TO_OUT;
+            dmx1_address_cntr_out = CNTR_TO_OUT;
             dmx1_mode_address++;
         }
         break;
@@ -187,10 +187,10 @@ void DMX1Mode (unsigned char * ch_val, sw_actions_t action)
                 mem_conf.dmx_first_channel = DMX_channel_selected;
 
                 //force the display change
-                dmx_end_of_packet_update = 1;
-                address_show = 1;
+                dmx1_end_of_packet_update = 1;
+                dmx1_address_show = 1;
                 timer_address = TT_SHOW_ADDRESS;
-                address_cntr_out = CNTR_TO_OUT;
+                dmx1_address_cntr_out = CNTR_TO_OUT;
 
                 // resp = resp_need_to_save;            
             }
@@ -204,10 +204,10 @@ void DMX1Mode (unsigned char * ch_val, sw_actions_t action)
                 mem_conf.dmx_first_channel = DMX_channel_selected;            
 
                 //force the display change
-                dmx_end_of_packet_update = 1;
-                address_show = 1;
+                dmx1_end_of_packet_update = 1;
+                dmx1_address_show = 1;
                 timer_address = TT_SHOW_ADDRESS;
-                address_cntr_out = CNTR_TO_OUT;                
+                dmx1_address_cntr_out = CNTR_TO_OUT;                
 
                 // resp = resp_need_to_save;
             }
@@ -218,18 +218,18 @@ void DMX1Mode (unsigned char * ch_val, sw_actions_t action)
 
         if (!timer_address)
         {
-            if (address_show)
-                address_show = 0;
+            if (dmx1_address_show)
+                dmx1_address_show = 0;
             else
-                address_show = 1;
+                dmx1_address_show = 1;
 
-            if (address_cntr_out)
-                address_cntr_out--;
+            if (dmx1_address_cntr_out)
+                dmx1_address_cntr_out--;
             
             timer_address = TT_SHOW_ADDRESS;
         }
 
-        if (!address_cntr_out)
+        if (!dmx1_address_cntr_out)
             dmx1_mode_address = TO_CLEAN_OUT;
         
         break;
@@ -241,7 +241,7 @@ void DMX1Mode (unsigned char * ch_val, sw_actions_t action)
         break;
 
     case TO_CLEAN_OUT:
-        address_show = 1;
+        dmx1_address_show = 1;
         dmx1_mode_address = DO_NOTHING;
         break;
         

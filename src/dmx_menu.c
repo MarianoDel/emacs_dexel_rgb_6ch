@@ -5,11 +5,11 @@
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### DMX1_MENU.C ###############################
+// #### DMX_MENU.C ################################
 //-------------------------------------------------
 
 // Includes --------------------------------------------------------------------
-#include "dmx1_menu.h"
+#include "dmx_menu.h"
 #include "display_utils.h"
 #include "ssd1306_gfx.h"
 
@@ -19,14 +19,14 @@
 
 // Private Types Constants and Macros ------------------------------------------
 typedef enum {
-    DMX1_MODE_MENU_INIT = 0,
-    DMX1_MODE_MENU_CHECK_CH1_CH4,
-    DMX1_MODE_MENU_CHECK_CH2_CH5,
-    DMX1_MODE_MENU_CHECK_CH3_CH6,
-    DMX1_MODE_MENU_CHECK_BRIGHTNESS,
-    DMX1_MODE_MENU_UPDATE_DISPLAY
+    DMX_MODE_MENU_INIT = 0,
+    DMX_MODE_MENU_CHECK_CH1_CH4,
+    DMX_MODE_MENU_CHECK_CH2_CH5,
+    DMX_MODE_MENU_CHECK_CH3_CH6,
+    DMX_MODE_MENU_CHECK_BRIGHTNESS,
+    DMX_MODE_MENU_UPDATE_DISPLAY
 
-} dmx1_mode_menu_e;
+} dmx_mode_menu_e;
 
 
 // Externals -------------------------------------------------------------------
@@ -36,7 +36,7 @@ typedef enum {
 
 
 
-static dmx1_mode_menu_e dmx1_mode_menu_state = DMX1_MODE_MENU_INIT;
+static dmx_mode_menu_e dmx_mode_menu_state = DMX_MODE_MENU_INIT;
 
 
 // Module Private Functions ----------------------------------------------------
@@ -44,20 +44,20 @@ void Percentage (unsigned char, unsigned char *, unsigned char *);
 
 
 // Module Functions ------------------------------------------------------------
-void DMX1ModeMenuReset (void)
+void DMXModeMenuReset (void)
 {
-    dmx1_mode_menu_state = DMX1_MODE_MENU_INIT;
+    dmx_mode_menu_state = DMX_MODE_MENU_INIT;
 }
 
 
-resp_t DMX1ModeMenu (dmx1_menu_data_t * pmenu_data)
+resp_t DMXModeMenu (dmx_menu_data_t * pmenu_data)
 {
     resp_t resp = resp_continue;
     char s_temp[21];    //20 caracteres por linea + '\0'
 
-    switch (dmx1_mode_menu_state)
+    switch (dmx_mode_menu_state)
     {
-    case DMX1_MODE_MENU_INIT:
+    case DMX_MODE_MENU_INIT:
         Display_StartLines ();
         Display_ClearLines();
 
@@ -67,12 +67,12 @@ resp_t DMX1ModeMenu (dmx1_menu_data_t * pmenu_data)
             strcpy(s_temp, "ADDR:");
         
         Display_SetLine1(s_temp);
-        Display_SetLine8("            DMX1 Mode");
+        Display_SetLine8("            DMX Mode");
 
-        dmx1_mode_menu_state++;
+        dmx_mode_menu_state++;
         break;
 
-    case DMX1_MODE_MENU_CHECK_CH1_CH4:
+    case DMX_MODE_MENU_CHECK_CH1_CH4:
 
         sprintf(s_temp, "CH1: %3d     CH4: %3d",
         // sprintf(s_temp, "CH1: %3d CH4: %3d",
@@ -81,10 +81,10 @@ resp_t DMX1ModeMenu (dmx1_menu_data_t * pmenu_data)
         Display_BlankLine3();
         Display_SetLine3(s_temp);
             
-        dmx1_mode_menu_state++;
+        dmx_mode_menu_state++;
         break;
 
-    case DMX1_MODE_MENU_CHECK_CH2_CH5:
+    case DMX_MODE_MENU_CHECK_CH2_CH5:
 
         sprintf(s_temp, "CH2: %3d     CH5: %3d",        
         // sprintf(s_temp, "CH2: %3d CH5: %3d",
@@ -93,10 +93,10 @@ resp_t DMX1ModeMenu (dmx1_menu_data_t * pmenu_data)
         Display_BlankLine4();
         Display_SetLine4(s_temp);
                     
-        dmx1_mode_menu_state++;
+        dmx_mode_menu_state++;
         break;
 
-    case DMX1_MODE_MENU_CHECK_CH3_CH6:
+    case DMX_MODE_MENU_CHECK_CH3_CH6:
 
         sprintf(s_temp, "CH3: %3d     CH6: %3d",        
         // sprintf(s_temp, "CH3: %3d CH6: %3d",
@@ -105,24 +105,24 @@ resp_t DMX1ModeMenu (dmx1_menu_data_t * pmenu_data)
         Display_BlankLine5();
         Display_SetLine5(s_temp);
             
-        dmx1_mode_menu_state++;
+        dmx_mode_menu_state++;
         break;
 
-    case DMX1_MODE_MENU_CHECK_BRIGHTNESS:
+    case DMX_MODE_MENU_CHECK_BRIGHTNESS:
         
-        dmx1_mode_menu_state++;
+        dmx_mode_menu_state++;
         break;
         
-    case DMX1_MODE_MENU_UPDATE_DISPLAY:
+    case DMX_MODE_MENU_UPDATE_DISPLAY:
 
         display_update();
         resp = resp_finish;
         
-        dmx1_mode_menu_state = DMX1_MODE_MENU_INIT;
+        dmx_mode_menu_state = DMX_MODE_MENU_INIT;
         break;
         
     default:
-        dmx1_mode_menu_state = DMX1_MODE_MENU_INIT;
+        dmx_mode_menu_state = DMX_MODE_MENU_INIT;
         break;
     }
 

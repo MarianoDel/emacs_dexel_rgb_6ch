@@ -1,5 +1,5 @@
 //-------------------------------------------------
-// #### DEXEL 6CH BIDIRECCIONAL - Custom Board ####
+// #### DEXEL 6CH BIDIRECTIONAL - Custom Board ####
 // ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
@@ -10,7 +10,7 @@
 
 // Includes --------------------------------------------------------------------
 #include "dmx2_mode.h"
-#include "dmx1_menu.h"
+#include "dmx_menu.h"
 #include "flash_program.h"
 
 #include <stdio.h>
@@ -19,10 +19,10 @@
 
 // Private Types Constants and Macros ------------------------------------------
 typedef enum {
-    SLAVE_MODE_INIT = 0,
-    SLAVE_MODE_RUNNING
+    DMX2_MODE_INIT = 0,
+    DMX2_MODE_RUNNING
 
-} slave_mode_e;
+} dmx2_mode_e;
 
 typedef enum {
     DO_NOTHING = 0,
@@ -31,7 +31,8 @@ typedef enum {
     TO_DO_NOTHING_WAIT_FREE,
     TO_CLEAN_OUT
     
-} slave_mode_address_e;
+} dmx2_mode_address_e;
+
 
 #define DMX2_PKT_TYPE    0
 #define DMX2_DIM_CH    1
@@ -45,6 +46,11 @@ typedef enum {
 #define DMX2_CLR_CH5    9
 #define DMX2_CLR_CH6    10
 
+
+#define TT_MENU_TIMEOUT    30000
+#define TT_DMX_RECEIVING    1000
+
+
 // Externals -------------------------------------------------------------------
 extern volatile unsigned char data11[];
 
@@ -56,54 +62,54 @@ extern parameters_typedef mem_conf;
 
 
 // Globals ---------------------------------------------------------------------
-slave_mode_e slave_mode_state = SLAVE_MODE_INIT;
-unsigned char dmx_end_of_packet_update = 0;
+dmx2_mode_e dmx2_mode_state = DMX2_MODE_INIT;
+unsigned char dmx2_end_of_packet_update = 0;
 
 
 //-- timers del modulo --------------------
-volatile unsigned short slave_mode_enable_menu_timer = 0;
-volatile unsigned short slave_mode_dmx_receiving_timer = 0;
+volatile unsigned short dmx2_mode_enable_menu_timer = 0;
+volatile unsigned short dmx2_mode_dmx_receiving_timer = 0;
 
 
 // Module Private Functions ----------------------------------------------------
 
 
 // Module Functions ------------------------------------------------------------
-void UpdateTimerSlaveMode (void)
+void DMX2ModeUpdateTimer (void)
 {
-    if (slave_mode_enable_menu_timer)
-        slave_mode_enable_menu_timer--;
+    if (dmx2_mode_enable_menu_timer)
+        dmx2_mode_enable_menu_timer--;
 
-    if (slave_mode_dmx_receiving_timer)
-        slave_mode_dmx_receiving_timer--;
+    if (dmx2_mode_dmx_receiving_timer)
+        dmx2_mode_dmx_receiving_timer--;
 
 }
 
-void FuncSlaveModeReset (void)
+void DMX2ModeReset (void)
 {
-    slave_mode_state = SLAVE_MODE_INIT;
+    dmx2_mode_state = DMX2_MODE_INIT;
 }
 
 #define TT_SHOW_ADDRESS    500
 #define CNTR_TO_OUT    16
-#define timer_address    slave_mode_enable_menu_timer
-unsigned char address_show = 0;
-unsigned char address_cntr_out = 0;
-slave_mode_address_e slave_mode_address = DO_NOTHING;
-void FuncSlaveMode (unsigned char * ch_val, sw_actions_t action)
+#define timer_address    dmx2_mode_enable_menu_timer
+unsigned char dmx2_address_show = 0;
+unsigned char dmx2_address_cntr_out = 0;
+dmx2_mode_address_e dmx2_mode_address = DO_NOTHING;
+void DMX2Mode (unsigned char * ch_val, sw_actions_t action)
 {
     resp_t resp = resp_continue;
     
     
-    switch (slave_mode_state)
+    switch (dmx2_mode_state)
     {
-    case SLAVE_MODE_INIT:
-        DMX1ModeMenuReset();
-        address_show = 1;
-        slave_mode_state++;
+    case DMX2_MODE_INIT:
+        DMXModeMenuReset();
+        dmx2_address_show = 1;
+        dmx2_mode_state++;
         break;
 
-    case SLAVE_MODE_RUNNING:
+    case DMX2_MODE_RUNNING:
 
         //update del dmx - generalmente a 40Hz -
         //desde el dmx al sp
@@ -112,51 +118,20 @@ void FuncSlaveMode (unsigned char * ch_val, sw_actions_t action)
             Packet_Detected_Flag = 0;
 
             //le aviso al menu que se estan recibiendo paquetes dmx
-            slave_mode_dmx_receiving_timer = TT_DMX_RECEIVING;            
+            dmx2_mode_dmx_receiving_timer = TT_DMX_RECEIVING;            
 
-            //ajuste por grandmaster
-            if (mem_conf.dmx_grandmaster)
+            if (data11[DMX2_PKT_TYPE] == 0x00)    //dmx packet
             {
-                unsigned short dummy_16;
-                
-                dummy_16 = data7[0] * data7[1];
-                dummy_16 >>= 8;
-                data7[1] = (unsigned char) dummy_16;
+                //update the colors channels
+                *(ch_val + 0) = data11[DMX2_CLR_CH1];
+                *(ch_val + 1) = data11[DMX2_CLR_CH2];
+                *(ch_val + 2) = data11[DMX2_CLR_CH3];
+                *(ch_val + 3) = data11[DMX2_CLR_CH4];
+                *(ch_val + 4) = data11[DMX2_CLR_CH5];
+                *(ch_val + 5) = data11[DMX2_CLR_CH6];
 
-                dummy_16 = data7[0] * data7[2];
-                dummy_16 >>= 8;
-                data7[2] = (unsigned char) dummy_16;
-
-                dummy_16 = data7[0] * data7[3];
-                dummy_16 >>= 8;
-                data7[3] = (unsigned char) dummy_16;
-
-                dummy_16 = data7[0] * data7[4];
-                dummy_16 >>= 8;
-                data7[4] = (unsigned char) dummy_16;
-
-                dummy_16 = data7[0] * data7[5];
-                dummy_16 >>= 8;
-                data7[5] = (unsigned char) dummy_16;
-
-                dummy_16 = data7[0] * data7[6];
-                dummy_16 >>= 8;
-                data7[6] = (unsigned char) dummy_16;
+                dmx2_end_of_packet_update = 1;
             }
-
-            // if (!dmx_end_of_packet_update)
-            // {
-                //update de valores recibidos
-                *(ch_val + 0) = data7[1];
-                *(ch_val + 1) = data7[2];
-                *(ch_val + 2) = data7[3];
-                *(ch_val + 3) = data7[4];
-                *(ch_val + 4) = data7[5];
-                *(ch_val + 5) = data7[6];
-
-                dmx_end_of_packet_update = 1;
-            // }
-            
 
 #ifdef WITH_POWER_CONTROL
             PWM_Set_PwrCtrl(ch_val, mem_conf.dmx_channel_quantity);
@@ -164,28 +139,20 @@ void FuncSlaveMode (unsigned char * ch_val, sw_actions_t action)
         }
 
 #ifndef NO_DISPLAY_UPDATE_ON_DMX
-        if (dmx_end_of_packet_update)
+        if (dmx2_end_of_packet_update)
         {
-            // unsigned char ch[6];
-            // ch[0] = *(ch_val + 0);
-            // ch[1] = *(ch_val + 1);
-            // ch[2] = *(ch_val + 2);
-            // ch[3] = *(ch_val + 3);
-            // ch[4] = *(ch_val + 4);
-            // ch[5] = *(ch_val + 5);
-            
-            dmx1_menu_data_t dmx1_st;
-            dmx1_st.dmx_first_chnl = &mem_conf.dmx_first_channel;
-            // dmx1_st.pchannels = ch;
-            dmx1_st.pchannels = ch_val;
-            if (address_show)
-                dmx1_st.show_addres = 1;
+            dmx_menu_data_t dmx2_st;
+            dmx2_st.dmx_first_chnl = &mem_conf.dmx_first_channel;
+            // dmx2_st.pchannels = ch;
+            dmx2_st.pchannels = ch_val;
+            if (dmx2_address_show)
+                dmx2_st.show_addres = 1;
             else
-                dmx1_st.show_addres = 0;
+                dmx2_st.show_addres = 0;
 
-            resp = DMX1ModeMenu(&dmx1_st);
+            resp = DMXModeMenu(&dmx2_st);
             if (resp == resp_finish)
-                dmx_end_of_packet_update = 0;
+                dmx2_end_of_packet_update = 0;
             
         }
 #endif
@@ -193,25 +160,25 @@ void FuncSlaveMode (unsigned char * ch_val, sw_actions_t action)
         break;
 
     default:
-        slave_mode_state = SLAVE_MODE_INIT;
+        dmx2_mode_state = DMX2_MODE_INIT;
         break;
     }
 
     
     //check for a change in address
-    switch (slave_mode_address)
+    switch (dmx2_mode_address)
     {
     case DO_NOTHING:
         if (action == selection_enter)
-            slave_mode_address++;
+            dmx2_mode_address++;
         
         break;
 
     case TO_CHANGE_WAIT_FREE:
         if (action == do_nothing)
         {
-            address_cntr_out = CNTR_TO_OUT;
-            slave_mode_address++;
+            dmx2_address_cntr_out = CNTR_TO_OUT;
+            dmx2_mode_address++;
         }
         break;
             
@@ -225,10 +192,10 @@ void FuncSlaveMode (unsigned char * ch_val, sw_actions_t action)
                 mem_conf.dmx_first_channel = DMX_channel_selected;
 
                 //force the display change
-                dmx_end_of_packet_update = 1;
-                address_show = 1;
+                dmx2_end_of_packet_update = 1;
+                dmx2_address_show = 1;
                 timer_address = TT_SHOW_ADDRESS;
-                address_cntr_out = CNTR_TO_OUT;
+                dmx2_address_cntr_out = CNTR_TO_OUT;
 
                 // resp = resp_need_to_save;            
             }
@@ -242,49 +209,49 @@ void FuncSlaveMode (unsigned char * ch_val, sw_actions_t action)
                 mem_conf.dmx_first_channel = DMX_channel_selected;            
 
                 //force the display change
-                dmx_end_of_packet_update = 1;
-                address_show = 1;
+                dmx2_end_of_packet_update = 1;
+                dmx2_address_show = 1;
                 timer_address = TT_SHOW_ADDRESS;
-                address_cntr_out = CNTR_TO_OUT;                
+                dmx2_address_cntr_out = CNTR_TO_OUT;                
 
                 // resp = resp_need_to_save;
             }
         }
 
         if (action == selection_enter)
-            slave_mode_address++;
+            dmx2_mode_address++;
 
         if (!timer_address)
         {
-            if (address_show)
-                address_show = 0;
+            if (dmx2_address_show)
+                dmx2_address_show = 0;
             else
-                address_show = 1;
+                dmx2_address_show = 1;
 
-            if (address_cntr_out)
-                address_cntr_out--;
+            if (dmx2_address_cntr_out)
+                dmx2_address_cntr_out--;
             
             timer_address = TT_SHOW_ADDRESS;
         }
 
-        if (!address_cntr_out)
-            slave_mode_address = TO_CLEAN_OUT;
+        if (!dmx2_address_cntr_out)
+            dmx2_mode_address = TO_CLEAN_OUT;
         
         break;
 
     case TO_DO_NOTHING_WAIT_FREE:
         if (action == do_nothing)
-            slave_mode_address++;
+            dmx2_mode_address++;
         
         break;
 
     case TO_CLEAN_OUT:
-        address_show = 1;
-        slave_mode_address = DO_NOTHING;
+        dmx2_address_show = 1;
+        dmx2_mode_address = DO_NOTHING;
         break;
         
     default:
-        slave_mode_address = DO_NOTHING;
+        dmx2_mode_address = DO_NOTHING;
         break;            
     }
             
