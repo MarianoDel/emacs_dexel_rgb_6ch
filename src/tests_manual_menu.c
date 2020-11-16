@@ -8,7 +8,7 @@
 //---------------------------------------------
 
 // Includes Modules for tests --------------------------------------------------
-#include "mainmenu.h"
+#include "manual_menu.h"
 
 #include "font.h"
 #include "parameters.h"
@@ -124,20 +124,22 @@ int main(int argc, char *argv[])
     // THIS IS THE RAM MEMORY GETTED FROM FLASH (SAVED OR EMPTY) //
     ///////////////////////////////////////////////////////////////
     //memory empty use some defaults
-    mem_conf.program_type = DMX1_MODE;
+    // programs_type_e program_type_to_test = MASTER_SLAVE_MODE;
+    programs_type_e program_type_to_test = MANUAL_MODE;    
+    mem_conf.program_type = program_type_to_test;
 
     gfx_init(DISPLAYWIDTH, DISPLAYHEIGHT);    
 
-    ////////////////////////////////////////////
-    // THIS IS THE RAM DATA FOR THE DMX1 MODE //
-    ////////////////////////////////////////////
+    ///////////////////////////////////////
+    // THIS IS THE RAM DATA FOR THE MODE //
+    ///////////////////////////////////////
     
     resp_t resp = resp_continue;
-    MainMenuReset();
+    ManualMenuReset();
 
     do {
 
-        resp = MainMenu(&mem_conf, action);
+        resp = ManualMenu(&mem_conf, action);
 
         if (resp == resp_finish)
         {
@@ -145,27 +147,42 @@ int main(int argc, char *argv[])
             
             switch (mem_conf.program_type)
             {
-            case DMX1_MODE:
-                mvwprintw(ggram_win,2,1, "DMX1 MODE SELECTED");
+            case MANUAL_FIXED_MODE:
+                mvwprintw(ggram_win,2,1, "MANUAL FIXED MODE SELECTED");
                 break;
 
-            case DMX2_MODE:
-                mvwprintw(ggram_win,2,1, "DMX2 MODE SELECTED");                
+            case MANUAL_SKIPPING_MODE:
+                mvwprintw(ggram_win,2,1, "MANUAL SKIPPING MODE SELECTED");                
                 break;
 
-            case MASTER_SLAVE_MODE:
-                mvwprintw(ggram_win,2,1, "MASTER/SLAVE MODE SELECTED");
+            case MANUAL_GRADUAL_MODE:
+                mvwprintw(ggram_win,2,1, "MANUAL GRADUAL MODE SELECTED");
                 break;
 
-            case MANUAL_MODE:
-                mvwprintw(ggram_win,2,1, "MANUAL MODE SELECTED");
+            case MANUAL_STROBE_MODE:
+                mvwprintw(ggram_win,2,1, "MANUAL STROBE MODE SELECTED");
                 break;
 
-            case RESET_MODE:
-                mvwprintw(ggram_win,2,1, "RESET MODE SELECTED");
+            case MASTER_FIXED_MODE:
+                mvwprintw(ggram_win,2,1, "MASTER FIXED MODE SELECTED");
                 break;
-            }
+
+            case MASTER_SKIPPING_MODE:
+                mvwprintw(ggram_win,2,1, "MASTER SKIPPING MODE SELECTED");                
+                break;
+
+            case MASTER_GRADUAL_MODE:
+                mvwprintw(ggram_win,2,1, "MASTER GRADUAL MODE SELECTED");
+                break;
+
+            case MASTER_STROBE_MODE:
+                mvwprintw(ggram_win,2,1, "MASTER STROBE MODE SELECTED");
+                break;
                 
+            }
+
+            //reload selections
+            mem_conf.program_type = program_type_to_test;
             wrefresh(ggram_win);
             sleep(3);
         }

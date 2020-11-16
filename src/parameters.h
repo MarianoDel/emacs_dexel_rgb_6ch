@@ -11,11 +11,24 @@
 #define _PARAMETERS_H_
 
 //-- Configuration for Struct --------------------
-#define MASTER_MODE    1
-#define DMX1_MODE     2
-#define DMX2_MODE     3
-#define PROGRAMS_MODE  4
-#define WIFI_MODE      5
+typedef enum {
+    DMX1_MODE = 0,
+    DMX2_MODE,
+    MASTER_SLAVE_MODE,   
+    MANUAL_MODE,
+    RESET_MODE,
+    MASTER_FIXED_MODE,
+    MASTER_SKIPPING_MODE,
+    MASTER_GRADUAL_MODE,
+    MASTER_STROBE_MODE,
+    SLAVE_MODE,
+    MANUAL_FIXED_MODE,
+    MANUAL_SKIPPING_MODE,
+    MANUAL_GRADUAL_MODE,
+    MANUAL_STROBE_MODE,
+    WIFI_MODE
+    
+} programs_type_e;
 
 //-- Memory Struct to Save --------------------
 typedef struct parameters {
@@ -34,13 +47,18 @@ typedef struct parameters {
     unsigned short dmx_first_channel;
     unsigned char dmx_channel_quantity;	
 
-    //-- Para Configuracion de Hardware ----   //7
-    unsigned short max_power;          
-    unsigned char dummy1;
-    unsigned char dummy2;          
-    unsigned char dummy3;       
+    //-- Hardware Config ----   //7
+    unsigned short max_power;
 
-    //-- End of Struct check alignment ---- //12
+    //-- For Fixed colors settings ----   //9
+    unsigned char fixed_channels [6];    //15
+
+    
+    unsigned char dummy1;
+    // unsigned char dummy2;          
+    // unsigned char dummy3;       
+
+    //-- End of Struct check alignment ---- //16
 
 } parameters_typedef;
 

@@ -8,7 +8,7 @@
 //---------------------------------------------
 
 // Includes Modules for tests --------------------------------------------------
-#include "mainmenu.h"
+#include "fixed_menu.h"
 
 #include "font.h"
 #include "parameters.h"
@@ -124,48 +124,44 @@ int main(int argc, char *argv[])
     // THIS IS THE RAM MEMORY GETTED FROM FLASH (SAVED OR EMPTY) //
     ///////////////////////////////////////////////////////////////
     //memory empty use some defaults
-    mem_conf.program_type = DMX1_MODE;
+    // programs_type_e program_type_to_test = MASTER_SLAVE_MODE;
+    // programs_type_e program_type_to_test = MANUAL_MODE;    
+    mem_conf.program_type = MANUAL_FIXED_MODE;
+    mem_conf.fixed_channels[0] = 0;
+    mem_conf.fixed_channels[1] = 0;
+    mem_conf.fixed_channels[2] = 0;
+    mem_conf.fixed_channels[3] = 0;
+    mem_conf.fixed_channels[4] = 0;
+    mem_conf.fixed_channels[5] = 0;
+
 
     gfx_init(DISPLAYWIDTH, DISPLAYHEIGHT);    
 
-    ////////////////////////////////////////////
-    // THIS IS THE RAM DATA FOR THE DMX1 MODE //
-    ////////////////////////////////////////////
+    ///////////////////////////////////////
+    // THIS IS THE RAM DATA FOR THE MODE //
+    ///////////////////////////////////////
     
     resp_t resp = resp_continue;
-    MainMenuReset();
+    FixedMenuReset();
 
     do {
 
-        resp = MainMenu(&mem_conf, action);
+        resp = FixedMenu(&mem_conf, action);
 
-        if (resp == resp_finish)
+        if (resp == resp_need_to_save)
         {
-            mvwprintw(ggram_win,1,1, "ended selections");
+            mvwprintw(ggram_win,1,1, "ended config");
             
-            switch (mem_conf.program_type)
-            {
-            case DMX1_MODE:
-                mvwprintw(ggram_win,2,1, "DMX1 MODE SELECTED");
-                break;
+            char s_temp [100] = { 0 };            
+            sprintf(s_temp, "CH1: %03d CH2: %03d CH3: %03d CH4: %03d CH5: %03d CH6: %03d",
+                    mem_conf.fixed_channels[0],
+                    mem_conf.fixed_channels[1],
+                    mem_conf.fixed_channels[2],
+                    mem_conf.fixed_channels[3],
+                    mem_conf.fixed_channels[4],
+                    mem_conf.fixed_channels[5]);
 
-            case DMX2_MODE:
-                mvwprintw(ggram_win,2,1, "DMX2 MODE SELECTED");                
-                break;
-
-            case MASTER_SLAVE_MODE:
-                mvwprintw(ggram_win,2,1, "MASTER/SLAVE MODE SELECTED");
-                break;
-
-            case MANUAL_MODE:
-                mvwprintw(ggram_win,2,1, "MANUAL MODE SELECTED");
-                break;
-
-            case RESET_MODE:
-                mvwprintw(ggram_win,2,1, "RESET MODE SELECTED");
-                break;
-            }
-                
+            mvwprintw(ggram_win,2,1, s_temp);
             wrefresh(ggram_win);
             sleep(3);
         }

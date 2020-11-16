@@ -10,11 +10,7 @@
 
 // Includes --------------------------------------------------------------------
 #include "mainmenu.h"
-// #include "programs_functions.h"
-// #include "ssd1306_gfx.h"
 #include "display_utils.h"
-// #include "ssd1306_display.h"
-// #include "parameters.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -126,15 +122,15 @@ resp_t MainMenu (parameters_typedef * mem, sw_actions_t actions)
                 break;
 
             case 3:
-                mem->program_type = DMX1_MODE;
+                mem->program_type = MASTER_SLAVE_MODE;
                 break;
 
             case 4:
-                mem->program_type = DMX1_MODE;
+                mem->program_type = MANUAL_MODE;
                 break;
 
             case 5:
-                mem->program_type = DMX1_MODE;
+                mem->program_type = RESET_MODE;
                 break;
             }
             mm_state++;
@@ -142,9 +138,12 @@ resp_t MainMenu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case MAIN_MENU_SELECTED:
+        mm_state++;
         break;
 
     case MAIN_MENU_WAIT_FREE:
+        resp = resp_finish;
+        mm_state = MAIN_MENU_INIT;
         break;
         
     default:

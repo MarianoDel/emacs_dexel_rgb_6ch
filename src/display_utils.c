@@ -60,14 +60,14 @@ void Display_BlankLine (unsigned char line)
 }
 
 
-void Display_SetLine (unsigned char line, char * s)
+void Display_SetLine (unsigned char line, const char * s)
 {
     gfx_setCursor(SRT_X, LINE_HEIGHT * (line - 1));
     gfx_print(s);
 }
 
 
-void Display_SetOptions (unsigned char line, char * s)
+void Display_SetOptions (unsigned char line, const char * s)
 {
     char pretty [ALL_LINE_LENGTH_NULL] = { 0 };
     unsigned char line_offset = LINE_HEIGHT * (line - 1);

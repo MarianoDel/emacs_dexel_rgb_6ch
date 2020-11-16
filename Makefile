@@ -90,6 +90,7 @@ SRC += ./src/pwm.c
 SRC += ./src/test_functions.c
 SRC += ./src/dmx_menu.c
 SRC += ./src/display_utils.c
+SRC += ./src/manual_menu.c
 
 ## Core Support
 SRC += $(CORELIBDIR)/core_cm0.c
@@ -232,6 +233,22 @@ tests_main_menu:
 	gcc -c src/display_utils.c -I. $(INCDIR)
 	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
 	gcc src/tests_main_menu.c mainmenu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
+	./a.out
+
+tests_manual_menu:
+	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
+	gcc -c src/manual_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	gcc src/tests_manual_menu.c manual_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
+	./a.out
+
+tests_fixed_menu:
+	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
+	gcc -c src/fixed_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	gcc src/tests_fixed_menu.c fixed_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
 	./a.out
 
 # *** EOF ***
