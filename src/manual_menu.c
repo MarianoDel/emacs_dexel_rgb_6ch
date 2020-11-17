@@ -120,19 +120,19 @@ resp_t ManualMenu (parameters_typedef * mem, sw_actions_t actions)
                 switch (manual_selected)
                 {
                 case 1:
-                    mem->program_type = MANUAL_FIXED_MODE;
+                    mem->program_inner_type = MANUAL_INNER_FIXED_MODE;
                     break;
 
                 case 2:
-                    mem->program_type = MANUAL_SKIPPING_MODE;
+                    mem->program_inner_type = MANUAL_INNER_SKIPPING_MODE;
                     break;
 
                 case 3:
-                    mem->program_type = MANUAL_GRADUAL_MODE;
+                    mem->program_inner_type = MANUAL_INNER_GRADUAL_MODE;
                     break;
 
                 case 4:
-                    mem->program_type = MANUAL_STROBE_MODE;
+                    mem->program_inner_type = MANUAL_INNER_STROBE_MODE;
                     break;
                 }
             }
@@ -142,19 +142,19 @@ resp_t ManualMenu (parameters_typedef * mem, sw_actions_t actions)
                 switch (manual_selected)
                 {
                 case 1:
-                    mem->program_type = MASTER_FIXED_MODE;
+                    mem->program_inner_type = MASTER_INNER_FIXED_MODE;
                     break;
 
                 case 2:
-                    mem->program_type = MASTER_SKIPPING_MODE;
+                    mem->program_inner_type = MASTER_INNER_SKIPPING_MODE;
                     break;
 
                 case 3:
-                    mem->program_type = MASTER_GRADUAL_MODE;
+                    mem->program_inner_type = MASTER_INNER_GRADUAL_MODE;
                     break;
 
                 case 4:
-                    mem->program_type = MASTER_STROBE_MODE;
+                    mem->program_inner_type = MASTER_INNER_STROBE_MODE;
                     break;
                 }
             }

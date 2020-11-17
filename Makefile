@@ -76,22 +76,27 @@ SRC += ./src/hard.c
 SRC += ./src/utils.c
 SRC += ./src/i2c.c
 SRC += ./src/dmx_transceiver.c
-SRC += ./src/dmx1_mode.c
-SRC += ./src/dmx2_mode.c
 # SRC += ./src/master_mode.c
 # SRC += ./src/programs_mode.c
 SRC += ./src/flash_program.c
 SRC += ./src/programs_functions.c
 SRC += ./src/ssd1306_display.c
 SRC += ./src/ssd1306_gfx.c
-SRC += ./src/mainmenu.c
+SRC += ./src/display_utils.c
 SRC += ./src/screen.c
 SRC += ./src/pwm.c
 SRC += ./src/test_functions.c
+
+SRC += ./src/mainmenu.c
+
+SRC += ./src/dmx1_mode.c
+SRC += ./src/dmx2_mode.c
 SRC += ./src/dmx_menu.c
-SRC += ./src/display_utils.c
+
+SRC += ./src/manual_mode.c
 SRC += ./src/manual_menu.c
 SRC += ./src/fixed_menu.c
+SRC += ./src/colors_menu.c
 
 ## Core Support
 SRC += $(CORELIBDIR)/core_cm0.c
@@ -250,6 +255,14 @@ tests_fixed_menu:
 	gcc -c src/display_utils.c -I. $(INCDIR)
 	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
 	gcc src/tests_fixed_menu.c fixed_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
+	./a.out
+
+tests_colors_menu:
+	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
+	gcc -c src/colors_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	gcc src/tests_colors_menu.c colors_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
 	./a.out
 
 # *** EOF ***

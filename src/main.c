@@ -241,10 +241,11 @@ int main(void)
     else
     {
         //memory empty use some defaults
-        mem_conf.program_type = MANUAL_FIXED_MODE;
+        mem_conf.program_type = MANUAL_MODE;
         mem_conf.master_send_dmx_enable = 0;
-        mem_conf.last_program_in_flash = 9;
-        mem_conf.last_program_deep_in_flash = 0;
+        // mem_conf.last_program_in_flash = 9;
+        mem_conf.program_inner_type = MANUAL_INNER_FIXED_MODE;
+        mem_conf.program_inner_type_speed = 0;
         mem_conf.dmx_first_channel = 1;
         mem_conf.dmx_channel_quantity = 6;
         mem_conf.max_power = 200;
@@ -284,22 +285,23 @@ int main(void)
             Wait_ms(100);
 #endif
 
-            mem_conf.program_type = MANUAL_FIXED_MODE;
+            //TODO: solo por el programador de ST que no borra la memoria
+            mem_conf.program_type = MANUAL_MODE;
+            
             // Init Program Screen
             switch (mem_conf.program_type)
             {
-            case 1:
-                strcpy(s_to_send, "  Master ");                
+            case DMX1_MODE:
+                strcpy(s_to_send, "  DMX1 ");
                 break;
-            case 2:
-                strcpy(s_to_send, "DMX1");
+            case DMX2_MODE:
+                strcpy(s_to_send, "  DMX2 ");
                 break;
-            case 3:
-                strcpy(s_to_send, "Programs ");
+            case MASTER_SLAVE_MODE:
+                strcpy(s_to_send, "  Master ");
                 break;
-
-            case MANUAL_FIXED_MODE:
-                strcpy(s_to_send, "Fixed Mode");
+            case MANUAL_MODE:
+                strcpy(s_to_send, "  Manual ");
                 break;
                 
             }
@@ -354,7 +356,7 @@ int main(void)
                 main_state = MAIN_IN_DMX1_MODE;
             }
 
-            if (mem_conf.program_type == MANUAL_FIXED_MODE)
+            if (mem_conf.program_type == MANUAL_MODE)
             {
 #ifdef CHECK_FILTERS_BY_INT
                 //habilito salidas si estoy con int
@@ -362,7 +364,7 @@ int main(void)
 #endif
                 FixedMenuReset();
                 
-                main_state = MAIN_IN_MANUAL_FIXED_MODE;
+                main_state = MAIN_IN_MANUAL_MODE;
             }
 
             
@@ -375,7 +377,7 @@ int main(void)
             }                
             break;
 
-        case MAIN_IN_MASTER_MODE:    //por ahora programs mode
+        case MAIN_IN_MASTER_SLAVE_MODE:    //por ahora programs mode
             // action = do_nothing;
 
             // // Check encoder first
@@ -456,7 +458,7 @@ int main(void)
             
             break;
 
-        case MAIN_IN_MANUAL_FIXED_MODE:
+        case MAIN_IN_MANUAL_MODE:
             action = do_nothing;
 
             // Check encoder first
@@ -469,7 +471,7 @@ int main(void)
             if (CheckSET() > SW_NO)
                 action = selection_enter;
 
-            resp = FixedMenu(&mem_conf, action);
+            resp = ManualMode (&mem_conf, action);
 
             if (resp == resp_change)
             {
@@ -492,7 +494,7 @@ int main(void)
             
             break;
 
-        case MAIN_IN_PROGRAMS_MODE:
+        // case MAIN_IN_PROGRAMS_MODE:
             // action = do_nothing;
 
             // // Check encoder first
@@ -510,7 +512,7 @@ int main(void)
 
             // UpdateEncoder();
             
-            break;
+            // break;
             
         case MAIN_IN_OVERTEMP:
             SW_RX_TX_DE;            

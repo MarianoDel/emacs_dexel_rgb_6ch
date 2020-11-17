@@ -12,20 +12,27 @@
 
 //-- Configuration for Struct --------------------
 typedef enum {
+    // program types (modes)
     DMX1_MODE = 0,
     DMX2_MODE,
     MASTER_SLAVE_MODE,   
     MANUAL_MODE,
     RESET_MODE,
-    MASTER_FIXED_MODE,
-    MASTER_SKIPPING_MODE,
-    MASTER_GRADUAL_MODE,
-    MASTER_STROBE_MODE,
+
+    // program inner types
+    MASTER_NO_INNER_MODE,
+    MASTER_INNER_FIXED_MODE,
+    MASTER_INNER_SKIPPING_MODE,
+    MASTER_INNER_GRADUAL_MODE,
+    MASTER_INNER_STROBE_MODE,
+
+    MANUAL_NO_INNER_MODE,
+    MANUAL_INNER_FIXED_MODE,
+    MANUAL_INNER_SKIPPING_MODE,
+    MANUAL_INNER_GRADUAL_MODE,
+    MANUAL_INNER_STROBE_MODE,
+    
     SLAVE_MODE,
-    MANUAL_FIXED_MODE,
-    MANUAL_SKIPPING_MODE,
-    MANUAL_GRADUAL_MODE,
-    MANUAL_STROBE_MODE,
     WIFI_MODE
     
 } programs_type_e;
@@ -40,8 +47,8 @@ typedef struct parameters {
     unsigned char master_send_dmx_enable;
     
     //-- Para Programas y modo Master ----
-    unsigned char last_program_in_flash;
-    unsigned char last_program_deep_in_flash;
+    unsigned char program_inner_type;
+    unsigned char program_inner_type_speed;
 
     //-- Para Modo Slave ----                  //4
     unsigned short dmx_first_channel;
