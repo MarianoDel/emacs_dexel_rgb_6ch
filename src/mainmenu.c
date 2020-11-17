@@ -35,11 +35,11 @@ static main_menu_state_e mm_state = MAIN_MENU_INIT;
 unsigned char mm_selected = 0;
 unsigned char mm_need_display_update = 0;
 
-const char line1 [] = {"DMX1"};
-const char line2 [] = {"DMX2"};
-const char line3 [] = {"MASTER/SLAVE"};
-const char line4 [] = {"MANUAL"};
-const char line5 [] = {"RESET"};
+const char mm_line1 [] = {"DMX1"};
+const char mm_line2 [] = {"DMX2"};
+const char mm_line3 [] = {"MASTER/SLAVE"};
+const char mm_line4 [] = {"MANUAL"};
+const char mm_line5 [] = {"RESET"};
 
 const char * opt_lines [5];
 // Module Private Functions ----------------------------------------------------
@@ -62,11 +62,11 @@ resp_t MainMenu (parameters_typedef * mem, sw_actions_t actions)
         Display_StartLines ();
         Display_ClearLines();
 
-        opt_lines[0] = line1;
-        opt_lines[1] = line2;
-        opt_lines[2] = line3;
-        opt_lines[3] = line4;
-        opt_lines[4] = line5;
+        opt_lines[0] = mm_line1;
+        opt_lines[1] = mm_line2;
+        opt_lines[2] = mm_line3;
+        opt_lines[3] = mm_line4;
+        opt_lines[4] = mm_line5;
         
         Display_SetLine1(opt_lines[0]);
         Display_SetLine2(opt_lines[1]);

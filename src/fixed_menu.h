@@ -19,8 +19,9 @@
     
 
 // Module Exported Functions ---------------------------------------------------
-resp_t FixedMenu (parameters_typedef *, sw_actions_t);
+void FixedMenu_UpdateTimer (void);
 void FixedMenuReset (void);
+resp_t FixedMenu (parameters_typedef *, sw_actions_t);
 
 
 #endif    /* _FIXED_MENU_H_ */

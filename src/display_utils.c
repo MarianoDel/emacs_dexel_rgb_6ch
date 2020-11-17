@@ -94,4 +94,26 @@ void Display_SetOptions (unsigned char line, const char * s)
 }
 
 
+void Display_FloatingOptions (options_st * op)
+{
+    //change text type
+    if (op->set_or_reset)
+    {
+        gfx_setTextColor(0);
+        gfx_setTextBg(1);
+    }
+
+    //clean the box
+    gfx_fillRect(op->startx, op->starty, op->box_width, op->box_height, 0);
+    gfx_setCursor(op->startx, op->starty);
+    gfx_print(op->s);
+
+    //back to normal text type
+    if (op->set_or_reset)
+    {
+        gfx_setTextColor(1);
+        gfx_setTextBg(0);
+    }
+}
+
 //--- end of file ---//

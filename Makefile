@@ -78,8 +78,8 @@ SRC += ./src/i2c.c
 SRC += ./src/dmx_transceiver.c
 SRC += ./src/dmx1_mode.c
 SRC += ./src/dmx2_mode.c
-SRC += ./src/master_mode.c
-SRC += ./src/programs_mode.c
+# SRC += ./src/master_mode.c
+# SRC += ./src/programs_mode.c
 SRC += ./src/flash_program.c
 SRC += ./src/programs_functions.c
 SRC += ./src/ssd1306_display.c
@@ -91,6 +91,7 @@ SRC += ./src/test_functions.c
 SRC += ./src/dmx_menu.c
 SRC += ./src/display_utils.c
 SRC += ./src/manual_menu.c
+SRC += ./src/fixed_menu.c
 
 ## Core Support
 SRC += $(CORELIBDIR)/core_cm0.c

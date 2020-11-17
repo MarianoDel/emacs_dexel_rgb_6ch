@@ -10,6 +10,16 @@
 
 
 // Module Exported Types Constants and Macros ----------------------------------
+typedef struct {
+    unsigned char set_or_reset;
+    unsigned char startx;
+    unsigned char starty;
+    unsigned char box_width;
+    unsigned char box_height;
+    char * s;
+    
+} options_st;
+
 #define Display_BlankLine1()    Display_BlankLine(1)
 #define Display_BlankLine2()    Display_BlankLine(2)
 #define Display_BlankLine3()    Display_BlankLine(3)
@@ -41,6 +51,7 @@ void Display_BlankLine (unsigned char);
 void Display_SetLine (unsigned char, const char *);
 void Display_SetOptions (unsigned char, const char *);
 
+void Display_FloatingOptions (options_st *);
 
 #endif    /* _DISPLAY_UTILS_H_ */
 

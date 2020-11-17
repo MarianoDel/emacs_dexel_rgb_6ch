@@ -29,6 +29,8 @@
 #include "programs_functions.h"
 #include "test_functions.h"
 
+#include "fixed_menu.h"
+
 #include "flash_program.h"
 #include "i2c.h"
 #include "mainmenu.h"
@@ -239,7 +241,7 @@ int main(void)
     else
     {
         //memory empty use some defaults
-        mem_conf.program_type = DMX1_MODE;
+        mem_conf.program_type = MANUAL_FIXED_MODE;
         mem_conf.master_send_dmx_enable = 0;
         mem_conf.last_program_in_flash = 9;
         mem_conf.last_program_deep_in_flash = 0;
@@ -282,6 +284,7 @@ int main(void)
             Wait_ms(100);
 #endif
 
+            mem_conf.program_type = MANUAL_FIXED_MODE;
             // Init Program Screen
             switch (mem_conf.program_type)
             {
@@ -294,6 +297,11 @@ int main(void)
             case 3:
                 strcpy(s_to_send, "Programs ");
                 break;
+
+            case MANUAL_FIXED_MODE:
+                strcpy(s_to_send, "Fixed Mode");
+                break;
+                
             }
             
             SCREEN_ShowText2(
@@ -311,20 +319,20 @@ int main(void)
             break;
 
         case MAIN_GET_CONF:
-            if (mem_conf.program_type == MASTER_MODE)
-            {
-                //habilito transmisiones
-                SW_RX_TX_DE;
-                DMX_Ena();
+//             if (mem_conf.program_type == MASTER_MODE)
+//             {
+//                 //habilito transmisiones
+//                 SW_RX_TX_DE;
+//                 DMX_Ena();
 
-#ifdef CHECK_FILTERS_BY_INT
-                //habilito salidas si estoy con int                
-                enable_outputs_by_int = 1;
-#endif
+// #ifdef CHECK_FILTERS_BY_INT
+//                 //habilito salidas si estoy con int                
+//                 enable_outputs_by_int = 1;
+// #endif
 
-                MasterModeMenuReset();
-                main_state = MAIN_IN_MASTER_MODE;             
-            }                
+//                 MasterModeMenuReset();
+//                 main_state = MAIN_IN_MASTER_MODE;             
+//             }                
                         
             if (mem_conf.program_type == DMX1_MODE)
             {
@@ -346,15 +354,18 @@ int main(void)
                 main_state = MAIN_IN_DMX1_MODE;
             }
 
-            if (mem_conf.program_type == PROGRAMS_MODE)
+            if (mem_conf.program_type == MANUAL_FIXED_MODE)
             {
 #ifdef CHECK_FILTERS_BY_INT
                 //habilito salidas si estoy con int
                 enable_outputs_by_int = 1;
 #endif
+                FixedMenuReset();
                 
-                main_state = MAIN_IN_PROGRAMS_MODE;
+                main_state = MAIN_IN_MANUAL_FIXED_MODE;
             }
+
+            
 
             //default state no debiera estar nunca aca!
             if (main_state == MAIN_GET_CONF)
@@ -365,28 +376,28 @@ int main(void)
             break;
 
         case MAIN_IN_MASTER_MODE:    //por ahora programs mode
-            action = do_nothing;
+            // action = do_nothing;
 
-            // Check encoder first
-            if (CheckCCW())
-                action = selection_dwn;
+            // // Check encoder first
+            // if (CheckCCW())
+            //     action = selection_dwn;
 
-            if (CheckCW())
-                action = selection_up;
+            // if (CheckCW())
+            //     action = selection_up;
 
-            FuncsMasterMode(ch_values, action);
-            CheckFiltersAndOffsets (ch_values);
+            // FuncsMasterMode(ch_values, action);
+            // CheckFiltersAndOffsets (ch_values);
 
-            if (CheckSET() > SW_NO)
-                main_state = MAIN_ENTERING_MAIN_MENU;
+            // if (CheckSET() > SW_NO)
+            //     main_state = MAIN_ENTERING_MAIN_MENU;
 
-            UpdateEncoder();
+            // UpdateEncoder();
             
-            if ((mem_conf.master_send_dmx_enable) && (!timer_standby))
-            {
-                timer_standby = 40;
-                SendDMXPacket (PCKT_INIT);
-            }
+            // if ((mem_conf.master_send_dmx_enable) && (!timer_standby))
+            // {
+            //     timer_standby = 40;
+            //     SendDMXPacket (PCKT_INIT);
+            // }
             break;
             
         case MAIN_IN_DMX1_MODE:
@@ -445,7 +456,7 @@ int main(void)
             
             break;
 
-        case MAIN_IN_PROGRAMS_MODE:
+        case MAIN_IN_MANUAL_FIXED_MODE:
             action = do_nothing;
 
             // Check encoder first
@@ -454,17 +465,53 @@ int main(void)
 
             if (CheckCW())
                 action = selection_up;
-            
-            FuncsProgramsMode(ch_values, action);
-            CheckFiltersAndOffsets (ch_values);
 
             if (CheckSET() > SW_NO)
+                action = selection_enter;
+
+            resp = FixedMenu(&mem_conf, action);
+
+            if (resp == resp_change)
+            {
+                for (unsigned char n = 0; n < sizeof(ch_values); n++)
+                    ch_values[n] = mem_conf.fixed_channels[n];
+
+#ifdef CHECK_FILTERS_BY_INT
+                for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
+                    channels_values_int[n] = ch_values[n];
+
+#else
+                CheckFiltersAndOffsets (ch_values);
+#endif
+            }
+
+            if (CheckSET() > SW_MIN)
                 main_state = MAIN_ENTERING_MAIN_MENU;
 
             UpdateEncoder();
             
             break;
 
+        case MAIN_IN_PROGRAMS_MODE:
+            // action = do_nothing;
+
+            // // Check encoder first
+            // if (CheckCCW())
+            //     action = selection_dwn;
+
+            // if (CheckCW())
+            //     action = selection_up;
+            
+            // FuncsProgramsMode(ch_values, action);
+            // CheckFiltersAndOffsets (ch_values);
+
+            // if (CheckSET() > SW_NO)
+            //     main_state = MAIN_ENTERING_MAIN_MENU;
+
+            // UpdateEncoder();
+            
+            break;
+            
         case MAIN_IN_OVERTEMP:
             SW_RX_TX_DE;            
             DMX_Disa();
@@ -582,7 +629,7 @@ int main(void)
             //reseteo canales
             PWMChannelsReset();
 
-            MainMenu_Init();
+            MainMenuReset();
             main_state++;
             break;
 
@@ -599,7 +646,7 @@ int main(void)
             if (CheckCW())
                 action = selection_up;
 
-            resp = MainMenu_Update(action);
+            resp = MainMenu(&mem_conf, action);
 
             if (resp == resp_need_to_save)
             {
@@ -727,11 +774,14 @@ void TimingDelay_Decrement(void)
     DMX1ModeUpdateTimer();
 
     //para programas
-    UpdateProgTimers ();
+    // UpdateProgTimers ();
 
     //para main menu
     // UpdateTimerModeMenu ();
 
+    //para fixed menu
+    FixedMenu_UpdateTimer ();
+    
     //para funciones en hard
     HARD_Timeouts();
 
