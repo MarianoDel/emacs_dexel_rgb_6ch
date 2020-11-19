@@ -265,4 +265,12 @@ tests_colors_menu:
 	gcc src/tests_colors_menu.c colors_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
 	./a.out
 
+tests_master_slave_menu:
+	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
+	gcc -c src/master_slave_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	gcc src/tests_master_slave_menu.c master_slave_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
+	./a.out
+
 # *** EOF ***
