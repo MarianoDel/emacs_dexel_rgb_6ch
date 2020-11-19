@@ -140,6 +140,17 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
             break;
         }
 
+        if (!fading_timer)
+        {
+            ch_val = mem->fixed_channels;
+
+            resp = Colors_Fading_Pallete (ch_val);
+            if (resp == resp_finish)
+                resp = resp_continue;
+
+            fading_timer = 10 - mem->program_inner_type_speed;
+            resp = resp_change;
+        }
         break;
 
     case MANUAL_MODE_IN_COLORS_GRADUAL:
@@ -159,7 +170,7 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
         {
             ch_val = mem->fixed_channels;
 
-            resp = Colors_Fading_Pallete (ch_val);
+            resp = Colors_Fading_Shuffle_Pallete (ch_val);
             if (resp == resp_finish)
                 resp = resp_continue;
 
