@@ -21,7 +21,7 @@
 // Module Exported Functions ---------------------------------------------------
 resp_t ManualMode (parameters_typedef *, sw_actions_t);
 void ManualModeReset (void);
-
+void ManualMode_UpdateTimer (void);
 
 #endif    /* _MANUAL_MODE_H_ */
 

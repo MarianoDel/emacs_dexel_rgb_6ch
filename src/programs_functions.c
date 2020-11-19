@@ -1198,4 +1198,298 @@ resp_t Func_Fading(unsigned char * ch_val, unsigned char which_ch)
     return resp;
 }
 
+#define CH1_EFFECT    0x01
+#define CH2_EFFECT    0x02
+#define CH3_EFFECT    0x04
+#define CH4_EFFECT    0x08
+#define CH5_EFFECT    0x10
+#define CH6_EFFECT    0x20
+
+#define FADING_RISING    0
+#define FADING_FALLING    1
+unsigned char fading_state = FADING_RISING;
+unsigned char fading_step = 0;
+resp_t Colors_Fading (unsigned char * ch_val, unsigned char fade_ch)
+{
+    resp_t resp = resp_continue;
+    
+    switch (fading_state)
+    {
+    case FADING_RISING:
+        if (fading_step < 255)
+            fading_step++;
+        else
+            fading_state = FADING_FALLING;
+
+        break;
+
+    case FADING_FALLING:
+        if (fading_step)
+            fading_step--;
+        else
+        {
+            fading_state = FADING_RISING;
+            resp = resp_finish;
+        }
+        break;
+
+    default:
+        fading_state = FADING_RISING;
+        break;
+    }
+
+    if (fade_ch & CH1_EFFECT)
+        *(ch_val + 0) = fading_step;
+
+    if (fade_ch & CH2_EFFECT)
+        *(ch_val + 1) = fading_step;
+
+    if (fade_ch & CH3_EFFECT)
+        *(ch_val + 2) = fading_step;
+
+    if (fade_ch & CH4_EFFECT)
+        *(ch_val + 3) = fading_step;
+
+    if (fade_ch & CH5_EFFECT)
+        *(ch_val + 4) = fading_step;
+            
+    if (fade_ch & CH6_EFFECT)
+        *(ch_val + 5) = fading_step;
+
+    return resp;
+}
+
+// variables re-use
+#define strobe_state    fading_state
+#define STROBE_IN_ON    0
+#define STROBE_IN_OFF    1
+resp_t Colors_Strobe (unsigned char * ch_val, unsigned char strobe_ch)
+{
+    resp_t resp = resp_continue;
+    unsigned char how_many_channels = 0;
+    unsigned char calc = 1;
+        
+    switch (strobe_state)
+    {
+    case STROBE_IN_ON:
+        for (unsigned char i = 0; i < 8; i++)
+        {
+            calc = 1;
+            calc <<= i;
+            if (calc & strobe_ch)
+                how_many_channels++;
+        }
+
+        if (!how_many_channels)
+            break;
+        
+        calc = 255 / how_many_channels;
+        strobe_state = STROBE_IN_OFF;
+        break;
+
+    case STROBE_IN_OFF:
+        calc = 0;
+        strobe_state = STROBE_IN_ON;
+        resp = resp_finish;
+        break;
+
+    default:
+        strobe_state = STROBE_IN_ON;
+        break;
+    }
+
+    if (strobe_ch & CH1_EFFECT)
+        *(ch_val + 0) = calc;
+
+    if (strobe_ch & CH2_EFFECT)
+        *(ch_val + 1) = calc;
+
+    if (strobe_ch & CH3_EFFECT)
+        *(ch_val + 2) = calc;
+
+    if (strobe_ch & CH4_EFFECT)
+        *(ch_val + 3) = calc;
+
+    if (strobe_ch & CH5_EFFECT)
+        *(ch_val + 4) = calc;
+            
+    if (strobe_ch & CH6_EFFECT)
+        *(ch_val + 5) = calc;
+
+    return resp;
+}
+
+
+typedef enum {
+    RED_COLOR = 0,
+    GREEN_COLOR,
+    BLUE_COLOR,
+    WHITE_COLOR,
+    PURPLE_COLOR,
+    YELLOW_COLOR,    
+    CYAN_COLOR
+    
+    
+} fading_pallete_colors_t;
+
+#define RED_FLAG    0x01
+#define GREEN_FLAG    0x02
+#define BLUE_FLAG    0x04
+#define PURPLE_FLAG    (RED_FLAG | BLUE_FLAG)
+#define YELLOW_FLAG    (RED_FLAG | GREEN_FLAG)
+#define CYAN_FLAG    (GREEN_FLAG | BLUE_FLAG)
+#define WHITE_FLAG    (RED_FLAG | GREEN_FLAG | BLUE_FLAG)
+
+fading_pallete_colors_t which_color = 0;
+resp_t Colors_Fading_Pallete (unsigned char * ch_val)
+{
+    resp_t resp = resp_continue;
+    
+    switch (which_color)
+    {
+    case RED_COLOR:
+        resp = Colors_Fading(ch_val, RED_FLAG);
+        if (resp == resp_finish)
+        {
+            which_color++;
+            resp = resp_continue;
+        }
+        break;
+
+    case GREEN_COLOR:
+        resp = Colors_Fading(ch_val, GREEN_FLAG);
+        if (resp == resp_finish)
+        {
+            which_color++;
+            resp = resp_continue;
+        }
+        break;
+
+    case BLUE_COLOR:
+        resp = Colors_Fading(ch_val, BLUE_FLAG);
+        if (resp == resp_finish)
+        {
+            which_color++;
+            resp = resp_continue;
+        }
+        break;
+
+    case WHITE_COLOR:
+        resp = Colors_Fading(ch_val, WHITE_FLAG);
+        if (resp == resp_finish)
+        {
+            which_color++;
+            resp = resp_continue;
+        }
+        break;
+
+    case PURPLE_COLOR:
+        resp = Colors_Fading(ch_val, PURPLE_FLAG);
+        if (resp == resp_finish)
+        {
+            which_color++;
+            resp = resp_continue;
+        }
+        break;
+
+    case YELLOW_COLOR:
+        resp = Colors_Fading(ch_val, YELLOW_FLAG);
+        if (resp == resp_finish)
+        {
+            which_color++;
+            resp = resp_continue;
+        }
+        break;
+
+    case CYAN_COLOR:
+        resp = Colors_Fading(ch_val, CYAN_FLAG);
+        if (resp == resp_finish)
+            which_color = RED_COLOR;
+
+        break;
+
+    default:
+        which_color = RED_COLOR;
+        break;
+    }
+
+    return resp;
+}
+
+
+resp_t Colors_Strobe_Pallete (unsigned char * ch_val)
+{
+    resp_t resp = resp_continue;
+    
+    switch (which_color)
+    {
+    case RED_COLOR:
+        resp = Colors_Strobe(ch_val, RED_FLAG);
+        if (resp == resp_finish)
+        {
+            which_color++;
+            resp = resp_continue;
+        }
+        break;
+
+    case GREEN_COLOR:
+        resp = Colors_Strobe(ch_val, GREEN_FLAG);
+        if (resp == resp_finish)
+        {
+            which_color++;
+            resp = resp_continue;
+        }
+        break;
+
+    case BLUE_COLOR:
+        resp = Colors_Strobe(ch_val, BLUE_FLAG);
+        if (resp == resp_finish)
+        {
+            which_color++;
+            resp = resp_continue;
+        }
+        break;
+
+    case WHITE_COLOR:
+        resp = Colors_Strobe(ch_val, WHITE_FLAG);
+        if (resp == resp_finish)
+        {
+            which_color++;
+            resp = resp_continue;
+        }
+        break;
+
+    case PURPLE_COLOR:
+        resp = Colors_Strobe(ch_val, PURPLE_FLAG);
+        if (resp == resp_finish)
+        {
+            which_color++;
+            resp = resp_continue;
+        }
+        break;
+
+    case YELLOW_COLOR:
+        resp = Colors_Strobe(ch_val, YELLOW_FLAG);
+        if (resp == resp_finish)
+        {
+            which_color++;
+            resp = resp_continue;
+        }
+        break;
+
+    case CYAN_COLOR:
+        resp = Colors_Strobe(ch_val, CYAN_FLAG);
+        if (resp == resp_finish)
+            which_color = RED_COLOR;
+
+        break;
+
+    default:
+        which_color = RED_COLOR;
+        break;
+    }
+
+    return resp;
+}
+
 //--- end of file ---//

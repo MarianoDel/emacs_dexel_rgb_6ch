@@ -140,7 +140,7 @@ resp_t ColorsMenu (parameters_typedef * mem, sw_actions_t actions)
             if (colors_selected > 0)
             {
                 // clean last option
-                sprintf(s_temp, "%3d", mem->program_inner_type_speed);
+                sprintf(s_temp, "%d", mem->program_inner_type_speed);
                 ColorsMenu_Options(0, colors_selected, s_temp);
 
                 colors_selected--;
@@ -162,7 +162,7 @@ resp_t ColorsMenu (parameters_typedef * mem, sw_actions_t actions)
                 colors_selected++;
 
                 // set new option                
-                sprintf(s_temp, "%3d", mem->program_inner_type_speed);
+                sprintf(s_temp, "%d", mem->program_inner_type_speed);
                 ColorsMenu_Options(1, colors_selected, s_temp);
 
                 colors_need_display_update = 1;
@@ -175,7 +175,7 @@ resp_t ColorsMenu (parameters_typedef * mem, sw_actions_t actions)
                 colors_state = COLORS_MENU_WAIT_FREE;
             else
             {
-                sprintf(s_temp, "%3d", mem->program_inner_type_speed);
+                sprintf(s_temp, "%d", mem->program_inner_type_speed);
                 ColorsMenu_Options(0, colors_selected, s_temp);
                 colors_state++;
             }
@@ -203,7 +203,7 @@ resp_t ColorsMenu (parameters_typedef * mem, sw_actions_t actions)
             if (*p_speed)
             {
                 *p_speed -= 1;
-                sprintf(s_temp, "%3d", *p_speed);
+                sprintf(s_temp, "%d", *p_speed);
                 ColorsMenu_Options(0, colors_selected, s_temp);
 
                 resp = resp_change;
@@ -218,10 +218,10 @@ resp_t ColorsMenu (parameters_typedef * mem, sw_actions_t actions)
         {
             unsigned char * p_speed = &mem->program_inner_type_speed;
 
-            if (*p_speed < 255)
+            if (*p_speed < 9)
             {
                 *p_speed += 1;
-                sprintf(s_temp, "%3d", *p_speed);
+                sprintf(s_temp, "%d", *p_speed);
                 ColorsMenu_Options(0, colors_selected, s_temp);
 
                 resp = resp_change;                
@@ -250,7 +250,7 @@ resp_t ColorsMenu (parameters_typedef * mem, sw_actions_t actions)
                 
                 colors_selection_show = 1;
                 colors_menu_timer = TT_SHOW;
-                sprintf(s_temp, "%3d", *p_speed);
+                sprintf(s_temp, "%d", *p_speed);
                 ColorsMenu_Options(0, colors_selected, s_temp);
                 colors_need_display_update = 1;
             }
@@ -260,7 +260,7 @@ resp_t ColorsMenu (parameters_typedef * mem, sw_actions_t actions)
         {
             unsigned char * p_speed = &mem->program_inner_type_speed;            
 
-            sprintf(s_temp, "%3d", *p_speed);
+            sprintf(s_temp, "%d", *p_speed);
             ColorsMenu_Options(1, colors_selected, s_temp);
             
             colors_need_display_update = 1;
@@ -281,8 +281,11 @@ resp_t ColorsMenu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case COLORS_MENU_WAIT_FREE:
-        resp = resp_finish;
-        colors_state = COLORS_MENU_INIT;
+        if (actions == do_nothing)
+        {
+            colors_state = COLORS_MENU_INIT;
+            resp = resp_finish;            
+        }
         break;
         
     default:
@@ -305,28 +308,28 @@ resp_t ColorsMenu (parameters_typedef * mem, sw_actions_t actions)
 #define LINE_HEIGHT    8
 
 #define SRT_X_OP0    0
-#define SRT_X_OP1    (6 * 5)
-#define SRT_X_OP2    (6 * 5)
-#define SRT_X_OP3    (6 * 5)
-#define SRT_X_OP4    (6 * 18)
-#define SRT_X_OP5    (6 * 18)
-#define SRT_X_OP6    (6 * 18)
+#define SRT_X_OP1    (6 * 7)
+// #define SRT_X_OP2    (6 * 5)
+// #define SRT_X_OP3    (6 * 5)
+// #define SRT_X_OP4    (6 * 18)
+// #define SRT_X_OP5    (6 * 18)
+// #define SRT_X_OP6    (6 * 18)
 
 #define SRT_Y_OP0    0
-#define SRT_Y_OP1    (LINE_HEIGHT * 2)
-#define SRT_Y_OP2    (LINE_HEIGHT * 3)
-#define SRT_Y_OP3    (LINE_HEIGHT * 4)
-#define SRT_Y_OP4    (LINE_HEIGHT * 2)
-#define SRT_Y_OP5    (LINE_HEIGHT * 3)
-#define SRT_Y_OP6    (LINE_HEIGHT * 4)
+#define SRT_Y_OP1    (LINE_HEIGHT * 3)
+// #define SRT_Y_OP2    (LINE_HEIGHT * 3)
+// #define SRT_Y_OP3    (LINE_HEIGHT * 4)
+// #define SRT_Y_OP4    (LINE_HEIGHT * 2)
+// #define SRT_Y_OP5    (LINE_HEIGHT * 3)
+// #define SRT_Y_OP6    (LINE_HEIGHT * 4)
 
 #define WIDTH_OP0    (6 * 4)
-#define WIDTH_OP1    (6 * 3)
-#define WIDTH_OP2    (6 * 3)
-#define WIDTH_OP3    (6 * 3)
-#define WIDTH_OP4    (6 * 3)
-#define WIDTH_OP5    (6 * 3)
-#define WIDTH_OP6    (6 * 3)
+#define WIDTH_OP1    (6 * 1)
+// #define WIDTH_OP2    (6 * 3)
+// #define WIDTH_OP3    (6 * 3)
+// #define WIDTH_OP4    (6 * 3)
+// #define WIDTH_OP5    (6 * 3)
+// #define WIDTH_OP6    (6 * 3)
 
 void Colors_Selected_To_Line_Init (unsigned char colors,
                                   unsigned char * line_x,
@@ -347,35 +350,35 @@ void Colors_Selected_To_Line_Init (unsigned char colors,
         *line_w = WIDTH_OP1;
         break;
 
-    case 2:
-        *line_x = SRT_X_OP2;
-        *line_y = SRT_Y_OP2;
-        *line_w = WIDTH_OP2;        
-        break;
+    // case 2:
+    //     *line_x = SRT_X_OP2;
+    //     *line_y = SRT_Y_OP2;
+    //     *line_w = WIDTH_OP2;        
+    //     break;
 
-    case 3:
-        *line_x = SRT_X_OP3;
-        *line_y = SRT_Y_OP3;
-        *line_w = WIDTH_OP3;        
-        break;
+    // case 3:
+    //     *line_x = SRT_X_OP3;
+    //     *line_y = SRT_Y_OP3;
+    //     *line_w = WIDTH_OP3;        
+    //     break;
 
-    case 4:
-        *line_x = SRT_X_OP4;
-        *line_y = SRT_Y_OP4;
-        *line_w = WIDTH_OP4;        
-        break;
+    // case 4:
+    //     *line_x = SRT_X_OP4;
+    //     *line_y = SRT_Y_OP4;
+    //     *line_w = WIDTH_OP4;        
+    //     break;
 
-    case 5:
-        *line_x = SRT_X_OP5;
-        *line_y = SRT_Y_OP5;
-        *line_w = WIDTH_OP5;        
-        break;
+    // case 5:
+    //     *line_x = SRT_X_OP5;
+    //     *line_y = SRT_Y_OP5;
+    //     *line_w = WIDTH_OP5;        
+    //     break;
 
-    case 6:
-        *line_x = SRT_X_OP6;
-        *line_y = SRT_Y_OP6;
-        *line_w = WIDTH_OP6;        
-        break;
+    // case 6:
+    //     *line_x = SRT_X_OP6;
+    //     *line_y = SRT_Y_OP6;
+    //     *line_w = WIDTH_OP6;        
+    //     break;
     }
 }
 

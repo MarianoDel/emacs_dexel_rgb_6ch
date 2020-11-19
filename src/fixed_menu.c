@@ -285,8 +285,11 @@ resp_t FixedMenu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case FIXED_MENU_WAIT_FREE:
-        resp = resp_finish;
-        fixed_state = FIXED_MENU_INIT;
+        if (actions == do_nothing)
+        {
+            fixed_state = FIXED_MENU_INIT;
+            resp = resp_finish;            
+        }
         break;
         
     default:

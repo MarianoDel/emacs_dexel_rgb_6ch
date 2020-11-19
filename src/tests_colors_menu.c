@@ -141,18 +141,12 @@ int main(int argc, char *argv[])
 
         resp = ColorsMenu(&mem_conf, action);
 
-        if (resp == resp_need_to_save)
+        if (resp == resp_finish)
         {
             mvwprintw(ggram_win,1,1, "ended config");
             
             char s_temp [100] = { 0 };            
-            sprintf(s_temp, "CH1: %03d CH2: %03d CH3: %03d CH4: %03d CH5: %03d CH6: %03d",
-                    mem_conf.fixed_channels[0],
-                    mem_conf.fixed_channels[1],
-                    mem_conf.fixed_channels[2],
-                    mem_conf.fixed_channels[3],
-                    mem_conf.fixed_channels[4],
-                    mem_conf.fixed_channels[5]);
+            sprintf(s_temp, "selected SPEED: %d", mem_conf.program_inner_type_speed);
 
             mvwprintw(ggram_win,2,1, s_temp);
             wrefresh(ggram_win);

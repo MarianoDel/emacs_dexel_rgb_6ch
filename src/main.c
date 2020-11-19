@@ -26,10 +26,11 @@
 #include "dmx1_mode.h"
 #include "master_mode.h"
 #include "programs_mode.h"
-#include "programs_functions.h"
+#include "manual_mode.h"
+// #include "programs_functions.h"
 #include "test_functions.h"
 
-#include "fixed_menu.h"
+// #include "fixed_menu.h"
 
 #include "flash_program.h"
 #include "i2c.h"
@@ -287,6 +288,7 @@ int main(void)
 
             //TODO: solo por el programador de ST que no borra la memoria
             mem_conf.program_type = MANUAL_MODE;
+            mem_conf.program_inner_type = MANUAL_NO_INNER_MODE;
             
             // Init Program Screen
             switch (mem_conf.program_type)
@@ -362,7 +364,7 @@ int main(void)
                 //habilito salidas si estoy con int
                 enable_outputs_by_int = 1;
 #endif
-                FixedMenuReset();
+                ManualModeReset();
                 
                 main_state = MAIN_IN_MANUAL_MODE;
             }
@@ -781,8 +783,8 @@ void TimingDelay_Decrement(void)
     //para main menu
     // UpdateTimerModeMenu ();
 
-    //para fixed menu
-    FixedMenu_UpdateTimer ();
+    //for ManualMode
+    ManualMode_UpdateTimer ();
     
     //para funciones en hard
     HARD_Timeouts();
