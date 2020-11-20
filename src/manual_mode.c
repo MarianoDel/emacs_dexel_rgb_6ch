@@ -48,6 +48,8 @@ volatile unsigned short manual_effect_timer = 0;
 // Module Funtions -------------------------------------------------------------
 void ManualMode_UpdateTimer (void)
 {
+    //TODO: ESTO ESTA LLAMANDO DOS VECES A LA MISMA VARIABLE DE TIMER
+    //DESCUENTA DE A 2!!!!!
     FixedMenu_UpdateTimer();
 
     ColorsMenu_UpdateTimer();

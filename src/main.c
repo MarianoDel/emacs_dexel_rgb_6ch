@@ -804,6 +804,9 @@ void TimingDelay_Decrement(void)
 
     //for ManualMode
     ManualMode_UpdateTimer ();
+
+    //for ManualMode
+    MasterSlaveMode_UpdateTimer ();
     
     //para funciones en hard
     HARD_Timeouts();
