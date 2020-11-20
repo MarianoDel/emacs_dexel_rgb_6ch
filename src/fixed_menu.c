@@ -33,16 +33,24 @@ typedef enum {
 #define TT_SHOW    500
 #define TT_NOT_SHOW    500
 
+// variables re-use
+#define fixed_state    menu_state
+#define fixed_selected    menu_selected
+#define fixed_need_display_update    menu_need_display_update
+#define fixed_selection_show    menu_selection_show
+#define fixed_menu_timer    menu_menu_timer
+
+
 // Externals -------------------------------------------------------------------
+extern unsigned char menu_state;
+extern unsigned char menu_selected;
+extern unsigned char menu_need_display_update;
+extern unsigned char menu_selection_show;
+extern volatile unsigned short menu_menu_timer;
 
 
 // Globals ---------------------------------------------------------------------
-static fixed_menu_state_e fixed_state = FIXED_MENU_INIT;
-unsigned char fixed_selected = 0;
-unsigned char fixed_need_display_update = 0;
 
-unsigned char fixed_selection_show = 0;
-volatile unsigned short fixed_menu_timer = 0;
 
 // Module Private Functions ----------------------------------------------------
 void Fixed_Selected_To_Line_Init (unsigned char, unsigned char *, unsigned char *, unsigned char *);

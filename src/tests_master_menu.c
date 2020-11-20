@@ -8,7 +8,7 @@
 //---------------------------------------------
 
 // Includes Modules for tests --------------------------------------------------
-#include "master_slave_menu.h"
+#include "master_menu.h"
 #include "options_menu.h"
 
 #include "font.h"
@@ -139,11 +139,11 @@ int main(int argc, char *argv[])
     ////////////////////////////////////////////
     
     resp_t resp = resp_continue;
-    MasterSlaveMenuReset();
+    MasterMenuReset();
 
     do {
 
-        resp = MasterSlaveMenu(&mem_conf, action);
+        resp = MasterMenu(&mem_conf, action);
 
         if (resp == resp_finish)
         {

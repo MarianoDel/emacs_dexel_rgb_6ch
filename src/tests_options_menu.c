@@ -8,7 +8,6 @@
 //---------------------------------------------
 
 // Includes Modules for tests --------------------------------------------------
-#include "master_slave_menu.h"
 #include "options_menu.h"
 
 #include "font.h"
@@ -30,11 +29,6 @@
 parameters_typedef mem_conf;
 extern uint8_t* _displaybuf;
 extern uint16_t _displaybuf_size;
-
-
-unsigned char menu_state = 0;
-options_menu_st mem_options;
-
 
 // Globals ---------------------------------------------------------------------
 typedef unsigned short uint16_t;
@@ -130,75 +124,36 @@ int main(int argc, char *argv[])
     // THIS IS THE RAM MEMORY GETTED FROM FLASH (SAVED OR EMPTY) //
     ///////////////////////////////////////////////////////////////
     //memory empty use some defaults
-    mem_conf.program_type = MASTER_SLAVE_MODE;
+    mem_conf.program_type = DMX1_MODE;
 
     gfx_init(DISPLAYWIDTH, DISPLAYHEIGHT);    
 
     ////////////////////////////////////////////
     // THIS IS THE RAM DATA FOR THE DMX1 MODE //
     ////////////////////////////////////////////
-    
+    char s_temp[100] = { 0 };
     resp_t resp = resp_continue;
-    MasterSlaveMenuReset();
+    options_menu_st mem_options;
+    mem_options.argv[0] = "Linea 1";
+    mem_options.argv[1] = "Linea 2";
+    mem_options.options_qtty = 2;
+    // mem_options.argv[7] = "    New Advanced Menu";      
+
+    
+    OptionsMenuReset();
 
     do {
 
-        resp = MasterSlaveMenu(&mem_conf, action);
+        resp = OptionsMenu(&mem_options, action);
 
         if (resp == resp_finish)
         {
             mvwprintw(ggram_win,1,1, "ended selections");
-            
-            switch (mem_conf.program_type)
-            {
-            case DMX1_MODE:
-                mvwprintw(ggram_win,2,1, "DMX1 MODE SELECTED");
-                break;
+            sprintf(s_temp, "option was: %d", mem_options.options_selected);
+            mvwprintw(ggram_win,2,1, s_temp);
+            sprintf(s_temp, "%s", mem_options.argv[mem_options.options_selected]);
+            mvwprintw(ggram_win,3,1, s_temp);
 
-            case DMX2_MODE:
-                mvwprintw(ggram_win,2,1, "DMX2 MODE SELECTED");                
-                break;
-
-            case MASTER_SLAVE_MODE:
-                mvwprintw(ggram_win,2,1, "MASTER/SLAVE MODE SELECTED");
-                break;
-
-            case MANUAL_MODE:
-                mvwprintw(ggram_win,2,1, "MANUAL MODE SELECTED");
-                break;
-
-            case RESET_MODE:
-                mvwprintw(ggram_win,2,1, "RESET MODE SELECTED");
-                break;
-            }
-
-            switch (mem_conf.program_inner_type)
-            {
-            case MASTER_NO_INNER_MODE:
-                mvwprintw(ggram_win,3,1, "MASTER NO INNER MODE");
-                break;
-
-            case MASTER_INNER_FIXED_MODE:
-                mvwprintw(ggram_win,3,1, "MASTER INNER FIXED MODE");                
-                break;
-
-            case MASTER_INNER_SKIPPING_MODE:
-                mvwprintw(ggram_win,3,1, "MASTER INNER SKIPPING MODE");
-                break;
-
-            case MASTER_INNER_GRADUAL_MODE:
-                mvwprintw(ggram_win,3,1, "MASTER INNER GRADUAL MODE");
-                break;
-
-            case MASTER_INNER_STROBE_MODE:
-                mvwprintw(ggram_win,3,1, "MASTER INNER STROBE MODE");
-                break;
-                
-            case MASTER_INNER_SLAVE:
-                mvwprintw(ggram_win,3,1, "MASTER INNER SLAVE");
-                break;
-            }
-            
             wrefresh(ggram_win);
             sleep(3);
         }

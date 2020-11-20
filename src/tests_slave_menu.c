@@ -8,8 +8,7 @@
 //---------------------------------------------
 
 // Includes Modules for tests --------------------------------------------------
-#include "master_slave_menu.h"
-#include "options_menu.h"
+#include "slave_menu.h"
 
 #include "font.h"
 #include "parameters.h"
@@ -33,7 +32,9 @@ extern uint16_t _displaybuf_size;
 
 
 unsigned char menu_state = 0;
-options_menu_st mem_options;
+unsigned char menu_selected = 0;
+unsigned char menu_need_display_update = 0;
+unsigned short menu_menu_timer = 0;
 
 
 // Globals ---------------------------------------------------------------------
@@ -139,11 +140,11 @@ int main(int argc, char *argv[])
     ////////////////////////////////////////////
     
     resp_t resp = resp_continue;
-    MasterSlaveMenuReset();
+    SlaveMenuReset();
 
     do {
 
-        resp = MasterSlaveMenu(&mem_conf, action);
+        resp = SlaveMenu(&mem_conf, action);
 
         if (resp == resp_finish)
         {

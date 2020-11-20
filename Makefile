@@ -88,6 +88,7 @@ SRC += ./src/pwm.c
 SRC += ./src/test_functions.c
 
 SRC += ./src/mainmenu.c
+SRC += ./src/options_menu.c
 
 SRC += ./src/dmx1_mode.c
 SRC += ./src/dmx2_mode.c
@@ -98,6 +99,11 @@ SRC += ./src/manual_menu.c
 SRC += ./src/fixed_menu.c
 SRC += ./src/colors_menu.c
 SRC += ./src/colors_functions.c
+
+SRC += ./src/master_slave_mode.c
+SRC += ./src/master_slave_menu.c
+SRC += ./src/master_menu.c
+SRC += ./src/slave_menu.c
 
 ## Core Support
 SRC += $(CORELIBDIR)/core_cm0.c
@@ -265,12 +271,40 @@ tests_colors_menu:
 	gcc src/tests_colors_menu.c colors_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
 	./a.out
 
+tests_options_menu:
+	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
+	gcc -c src/options_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	gcc src/tests_options_menu.c options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
+	./a.out
+
 tests_master_slave_menu:
 	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
 	gcc -c src/master_slave_menu.c -I. $(INCDIR)
+	gcc -c src/options_menu.c -I. $(INCDIR)
 	gcc -c src/display_utils.c -I. $(INCDIR)
 	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
-	gcc src/tests_master_slave_menu.c master_slave_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
+	gcc src/tests_master_slave_menu.c master_slave_menu.o options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
 	./a.out
+
+tests_master_menu:
+	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
+	gcc -c src/master_slave_menu.c -I. $(INCDIR)
+	gcc -c src/options_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	gcc src/tests_master_slave_menu.c master_slave_menu.o options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
+	./a.out
+
+tests_slave_menu:
+	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
+	gcc -c src/slave_menu.c -I. $(INCDIR)
+	gcc -c src/options_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	gcc src/tests_slave_menu.c slave_menu.o options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
+	./a.out
+
 
 # *** EOF ***

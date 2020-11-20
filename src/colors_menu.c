@@ -33,16 +33,24 @@ typedef enum {
 #define TT_SHOW    500
 #define TT_NOT_SHOW    500
 
+// variable re-use
+#define colors_selected    menu_selected
+#define colors_state    menu_state
+#define colors_need_display_update    menu_need_display_update
+#define colors_selection_show    menu_selection_show
+#define colors_menu_timer    menu_menu_timer
+
 // Externals -------------------------------------------------------------------
+extern unsigned char menu_selected;
+extern unsigned char menu_state;
+extern unsigned char menu_need_display_update;
+extern unsigned char menu_selection_show;
+extern volatile unsigned short menu_menu_timer;
 
 
 // Globals ---------------------------------------------------------------------
-static colors_menu_state_e colors_state = COLORS_MENU_INIT;
-unsigned char colors_selected = 0;
-unsigned char colors_need_display_update = 0;
 
-unsigned char colors_selection_show = 0;
-volatile unsigned short colors_menu_timer = 0;
+
 
 // Module Private Functions ----------------------------------------------------
 void Colors_Selected_To_Line_Init (unsigned char, unsigned char *, unsigned char *, unsigned char *);
@@ -78,18 +86,22 @@ resp_t ColorsMenu (parameters_typedef * mem, sw_actions_t actions)
         switch (mem->program_inner_type)
         {
         case MANUAL_INNER_FIXED_MODE:
+        case MASTER_INNER_FIXED_MODE:
             return resp_finish;
             break;
 
         case MANUAL_INNER_SKIPPING_MODE:
+        case MASTER_INNER_SKIPPING_MODE:            
             Display_SetLine3("COLORS SKIPPING");            
             break;
 
         case MANUAL_INNER_GRADUAL_MODE:
+        case MASTER_INNER_GRADUAL_MODE:
             Display_SetLine3("COLORS GRADUAL");            
             break;
 
         case MANUAL_INNER_STROBE_MODE:
+        case MASTER_INNER_STROBE_MODE:            
             Display_SetLine3("COLORS STROBE");            
             break;
 
@@ -109,7 +121,7 @@ resp_t ColorsMenu (parameters_typedef * mem, sw_actions_t actions)
 
         if (mem->program_type == MASTER_SLAVE_MODE)
         {
-            Display_SetLine8("          Master Menu");
+            Display_SetLine8("    Master/Slave Menu");
         }
 
         colors_need_display_update = 1;

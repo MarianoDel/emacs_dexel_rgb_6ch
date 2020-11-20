@@ -15,7 +15,7 @@
 #include "colors_menu.h"
 #include "display_utils.h"
 
-#include "programs_functions.h"
+#include "colors_functions.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -33,16 +33,14 @@ typedef enum {
     
 } manual_mode_state_e;
 
+// variables re-use
+#define manual_state    mode_state
 
 // Externals -------------------------------------------------------------------
-
+extern unsigned char mode_state;
 
 // Globals ---------------------------------------------------------------------
-//TODO: hacer esto con defines de variables generales para rehuso
-static manual_mode_state_e manual_state = MANUAL_MODE_INIT;
-// unsigned char manual_selected = 0;
-// unsigned char manual_need_display_update = 0;
-volatile unsigned short fading_timer = 0;
+volatile unsigned short manual_effect_timer = 0;
 
 // Module Private Functions ----------------------------------------------------
 
@@ -54,8 +52,8 @@ void ManualMode_UpdateTimer (void)
 
     ColorsMenu_UpdateTimer();
 
-    if (fading_timer)
-        fading_timer--;
+    if (manual_effect_timer)
+        manual_effect_timer--;
 }
 
 
@@ -140,7 +138,7 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
             break;
         }
 
-        if (!fading_timer)
+        if (!manual_effect_timer)
         {
             ch_val = mem->fixed_channels;
 
@@ -148,7 +146,7 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
             if (resp == resp_finish)
                 resp = resp_continue;
 
-            fading_timer = 10 - mem->program_inner_type_speed;
+            manual_effect_timer = 10 - mem->program_inner_type_speed;
             resp = resp_change;
         }
         break;
@@ -166,7 +164,7 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
             break;
         }
 
-        if (!fading_timer)
+        if (!manual_effect_timer)
         {
             ch_val = mem->fixed_channels;
 
@@ -174,7 +172,7 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
             if (resp == resp_finish)
                 resp = resp_continue;
 
-            fading_timer = 10 - mem->program_inner_type_speed;
+            manual_effect_timer = 10 - mem->program_inner_type_speed;
             resp = resp_change;
         }
 
@@ -193,7 +191,7 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
             break;
         }
 
-        if (!fading_timer)
+        if (!manual_effect_timer)
         {
             ch_val = mem->fixed_channels;
 
@@ -201,7 +199,7 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
             if (resp == resp_finish)
                 resp = resp_continue;
 
-            fading_timer = 2000 - mem->program_inner_type_speed * 200;
+            manual_effect_timer = 2000 - mem->program_inner_type_speed * 200;
             resp = resp_change;
         }
         

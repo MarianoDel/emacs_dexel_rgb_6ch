@@ -23,14 +23,16 @@
 #include "dsp.h"
 
 #include "dmx_transceiver.h"
+
+// modes of operation
 #include "dmx1_mode.h"
-#include "master_mode.h"
-#include "programs_mode.h"
+#include "master_slave_mode.h"
 #include "manual_mode.h"
-// #include "programs_functions.h"
+
+// hardware tests functions
 #include "test_functions.h"
 
-// #include "fixed_menu.h"
+#include "options_menu.h"
 
 #include "flash_program.h"
 #include "i2c.h"
@@ -50,6 +52,20 @@
 // --------- Externals de la Memoria y los modos -------
 parameters_typedef * pmem = (parameters_typedef *) (unsigned int *) FLASH_PAGE_FOR_BKP;	//en flash
 parameters_typedef mem_conf;
+
+// -- Externals for the modes
+unsigned char mode_state = 0;
+
+// -- Externals for the menues
+unsigned char menu_state = 0;
+unsigned char menu_selected = 0;
+unsigned char menu_need_display_update = 0;
+unsigned char menu_selection_show = 0;
+volatile unsigned short menu_menu_timer = 0;
+
+
+options_menu_st mem_options;
+
 
 // --------- Externals del ADC ---------
 volatile unsigned short adc_ch [ADC_CHANNEL_QUANTITY];
@@ -287,8 +303,8 @@ int main(void)
 #endif
 
             //TODO: solo por el programador de ST que no borra la memoria
-            mem_conf.program_type = MANUAL_MODE;
-            mem_conf.program_inner_type = MANUAL_NO_INNER_MODE;
+            mem_conf.program_type = MASTER_SLAVE_MODE;
+            mem_conf.program_inner_type = MASTER_NO_INNER_MODE;
             
             // Init Program Screen
             switch (mem_conf.program_type)
@@ -369,6 +385,17 @@ int main(void)
                 main_state = MAIN_IN_MANUAL_MODE;
             }
 
+            if (mem_conf.program_type == MASTER_SLAVE_MODE)
+            {
+#ifdef CHECK_FILTERS_BY_INT
+                //habilito salidas si estoy con int
+                enable_outputs_by_int = 1;
+#endif
+                MasterSlaveModeReset();
+                
+                main_state = MAIN_IN_MASTER_SLAVE_MODE;
+            }
+            
             
 
             //default state no debiera estar nunca aca!
@@ -379,31 +406,6 @@ int main(void)
             }                
             break;
 
-        case MAIN_IN_MASTER_SLAVE_MODE:    //por ahora programs mode
-            // action = do_nothing;
-
-            // // Check encoder first
-            // if (CheckCCW())
-            //     action = selection_dwn;
-
-            // if (CheckCW())
-            //     action = selection_up;
-
-            // FuncsMasterMode(ch_values, action);
-            // CheckFiltersAndOffsets (ch_values);
-
-            // if (CheckSET() > SW_NO)
-            //     main_state = MAIN_ENTERING_MAIN_MENU;
-
-            // UpdateEncoder();
-            
-            // if ((mem_conf.master_send_dmx_enable) && (!timer_standby))
-            // {
-            //     timer_standby = 40;
-            //     SendDMXPacket (PCKT_INIT);
-            // }
-            break;
-            
         case MAIN_IN_DMX1_MODE:
             action = do_nothing;
             
@@ -496,25 +498,42 @@ int main(void)
             
             break;
 
-        // case MAIN_IN_PROGRAMS_MODE:
-            // action = do_nothing;
 
-            // // Check encoder first
-            // if (CheckCCW())
-            //     action = selection_dwn;
+        case MAIN_IN_MASTER_SLAVE_MODE:
+            action = do_nothing;
 
-            // if (CheckCW())
-            //     action = selection_up;
+            // Check encoder first
+            if (CheckCCW())
+                action = selection_dwn;
+
+            if (CheckCW())
+                action = selection_up;
+
+            if (CheckSET() > SW_NO)
+                action = selection_enter;
+
+            resp = MasterSlaveMode (&mem_conf, action);
+
+            if (resp == resp_change)
+            {
+                for (unsigned char n = 0; n < sizeof(ch_values); n++)
+                    ch_values[n] = mem_conf.fixed_channels[n];
+
+#ifdef CHECK_FILTERS_BY_INT
+                for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
+                    channels_values_int[n] = ch_values[n];
+
+#else
+                CheckFiltersAndOffsets (ch_values);
+#endif
+            }
+
+            if (CheckSET() > SW_MIN)
+                main_state = MAIN_ENTERING_MAIN_MENU;
+
+            UpdateEncoder();
             
-            // FuncsProgramsMode(ch_values, action);
-            // CheckFiltersAndOffsets (ch_values);
-
-            // if (CheckSET() > SW_NO)
-            //     main_state = MAIN_ENTERING_MAIN_MENU;
-
-            // UpdateEncoder();
-            
-            // break;
+            break;
             
         case MAIN_IN_OVERTEMP:
             SW_RX_TX_DE;            
