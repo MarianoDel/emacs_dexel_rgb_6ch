@@ -20,10 +20,9 @@
 #include "i2c.h"
 #include "ssd1306_gfx.h"
 #include "screen.h"
-#include "mainmenu.h"
+#include "main_menu.h"
 #include "dmx1_mode.h"
-#include "master_mode.h"
-#include "programs_mode.h"
+
 
 #include <stdio.h>
 // Externals -------------------------------------------------------------------

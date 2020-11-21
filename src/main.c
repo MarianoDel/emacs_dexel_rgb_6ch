@@ -24,19 +24,24 @@
 
 #include "dmx_transceiver.h"
 
+// principal menues
+#include "main_menu.h"
+#include "options_menu.h"
+
 // modes of operation
 #include "dmx1_mode.h"
 #include "master_slave_mode.h"
 #include "manual_mode.h"
+// #include "reset_mode.h"
 
 // hardware tests functions
 #include "test_functions.h"
 
-#include "options_menu.h"
+
 
 #include "flash_program.h"
 #include "i2c.h"
-#include "mainmenu.h"
+
 #include "screen.h"
 #include "ssd1306_display.h"
 #include "ssd1306_gfx.h"
@@ -305,6 +310,8 @@ int main(void)
 #endif
 
             // Init Program Screen
+            strcpy(s_to_send, "         ");
+            strcpy(s_to_send + 20, "         ");
             switch (mem_conf.program_type)
             {
             case DMX1_MODE:
@@ -314,8 +321,8 @@ int main(void)
                 strcpy(s_to_send, "  DMX2 ");
                 break;
             case MASTER_SLAVE_MODE:
-                //TODO: agregar segundo renglon Slave
                 strcpy(s_to_send, "  Master ");
+                strcpy(s_to_send + 20, "    Slave");                
                 break;
             case MANUAL_MODE:
                 strcpy(s_to_send, "  Manual ");
@@ -327,7 +334,7 @@ int main(void)
                 " Running ",
                 " on      ",
                 s_to_send,
-                "         "
+                s_to_send + 20
                 );
             timer_standby = 500;
     

@@ -75,11 +75,9 @@ SRC += ./src/dsp.c
 SRC += ./src/hard.c
 SRC += ./src/utils.c
 SRC += ./src/i2c.c
-SRC += ./src/dmx_transceiver.c
-# SRC += ./src/master_mode.c
-# SRC += ./src/programs_mode.c
-# SRC += ./src/programs_functions.c
 SRC += ./src/flash_program.c
+
+SRC += ./src/dmx_transceiver.c
 SRC += ./src/pwm.c
 
 SRC += ./src/ssd1306_display.c
@@ -89,7 +87,7 @@ SRC += ./src/screen.c
 
 SRC += ./src/test_functions.c
 
-SRC += ./src/mainmenu.c
+SRC += ./src/main_menu.c
 SRC += ./src/options_menu.c
 
 SRC += ./src/dmx1_mode.c
@@ -243,10 +241,10 @@ tests_dmx1:
 
 tests_main_menu:
 	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
-	gcc -c src/mainmenu.c -I. $(INCDIR)
+	gcc -c src/main_menu.c -I. $(INCDIR)
 	gcc -c src/display_utils.c -I. $(INCDIR)
 	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
-	gcc src/tests_main_menu.c mainmenu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
+	gcc src/tests_main_menu.c main_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
 	./a.out
 
 tests_manual_menu:
