@@ -78,13 +78,15 @@ SRC += ./src/i2c.c
 SRC += ./src/dmx_transceiver.c
 # SRC += ./src/master_mode.c
 # SRC += ./src/programs_mode.c
-SRC += ./src/flash_program.c
 # SRC += ./src/programs_functions.c
+SRC += ./src/flash_program.c
+SRC += ./src/pwm.c
+
 SRC += ./src/ssd1306_display.c
 SRC += ./src/ssd1306_gfx.c
 SRC += ./src/display_utils.c
 SRC += ./src/screen.c
-SRC += ./src/pwm.c
+
 SRC += ./src/test_functions.c
 
 SRC += ./src/mainmenu.c

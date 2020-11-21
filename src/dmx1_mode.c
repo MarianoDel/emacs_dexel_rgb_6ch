@@ -70,7 +70,7 @@ volatile unsigned short dmx1_mode_dmx_receiving_timer = 0;
 
 
 // Module Functions ------------------------------------------------------------
-void DMX1ModeUpdateTimer (void)
+void DMX1Mode_UpdateTimers (void)
 {
     if (dmx1_mode_enable_menu_timer)
         dmx1_mode_enable_menu_timer--;

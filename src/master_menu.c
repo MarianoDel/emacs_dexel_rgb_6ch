@@ -11,7 +11,6 @@
 // Includes --------------------------------------------------------------------
 #include "master_menu.h"
 #include "options_menu.h"
-// #include "display_utils.h"
 
 #include <string.h>
 #include <stdio.h>

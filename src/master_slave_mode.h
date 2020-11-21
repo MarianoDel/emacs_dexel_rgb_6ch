@@ -21,7 +21,7 @@
 // Module Exported Functions ---------------------------------------------------
 resp_t MasterSlaveMode (parameters_typedef *, sw_actions_t);
 void MasterSlaveModeReset (void);
-void MasterSlaveMode_UpdateTimer (void);
+void MasterSlaveMode_UpdateTimers (void);
 
 #endif    /* _MASTER_SLAVE_MODE_H_ */
 

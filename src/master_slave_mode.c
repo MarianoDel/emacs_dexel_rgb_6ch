@@ -46,18 +46,16 @@ extern unsigned char mode_state;
 
 // Globals ---------------------------------------------------------------------
 volatile unsigned short master_effect_timer = 0;
+void (* ptFMasterMenuTT ) (void) = NULL;
 
 // Module Private Functions ----------------------------------------------------
 
 
 // Module Funtions -------------------------------------------------------------
-void MasterSlaveMode_UpdateTimer (void)
+void MasterSlaveMode_UpdateTimers (void)
 {
-    //TODO: ESTO ESTA LLAMANDO DOS VECES A LA MISMA VARIABLE DE TIMER
-    //DESCUENTA DE A 2!!!!!
-    FixedMenu_UpdateTimer();
-
-    ColorsMenu_UpdateTimer();
+    if (ptFMasterMenuTT != NULL)
+        ptFMasterMenuTT();
 
     if (master_effect_timer)
         master_effect_timer--;
@@ -73,7 +71,6 @@ void MasterSlaveModeReset (void)
 resp_t MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
 {
     resp_t resp = resp_continue;
-
     unsigned char * ch_val;
 
     switch (master_slave_state)
@@ -83,30 +80,37 @@ resp_t MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
         switch (mem->program_inner_type)
         {
         case MASTER_INNER_FIXED_MODE:
+            ptFMasterMenuTT = &FixedMenu_UpdateTimer;            
             FixedMenuReset();
             master_slave_state = MASTER_SLAVE_MODE_IN_COLORS_FIXED;
             break;
 
         case MASTER_INNER_SKIPPING_MODE:
+            ptFMasterMenuTT = &ColorsMenu_UpdateTimer;
             ColorsMenuReset();
             master_slave_state = MASTER_SLAVE_MODE_IN_COLORS_SKIPPING;
             break;
             
         case MASTER_INNER_GRADUAL_MODE:
+            ptFMasterMenuTT = &ColorsMenu_UpdateTimer;
             ColorsMenuReset();
             master_slave_state = MASTER_SLAVE_MODE_IN_COLORS_GRADUAL;
             break;
             
         case MASTER_INNER_STROBE_MODE:
+            ptFMasterMenuTT = &ColorsMenu_UpdateTimer;
             ColorsMenuReset();
             master_slave_state = MASTER_SLAVE_MODE_IN_COLORS_STROBE;
             break;
 
         case MASTER_INNER_SLAVE:
+            // ptFMasterMenuTT = &SlaveMenu_UpdateTimer;    //this is not nedded
+            SlaveMenuReset();
             master_slave_state = MASTER_SLAVE_MODE_IN_SLAVE;
             break;
             
         default:
+            ptFMasterMenuTT = NULL;
             MasterSlaveMenuReset ();
             master_slave_state = MASTER_SLAVE_MODE_CHECK_INNER_MODE_0;
             break;
@@ -119,10 +123,7 @@ resp_t MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
         if (resp == resp_finish)
         {
             if (mem->program_inner_type == MASTER_INNER_SLAVE)
-            {
-                SlaveMenuReset();
                 master_slave_state = MASTER_SLAVE_MODE_INIT;
-            }
             else
             {
                 MasterMenuReset();

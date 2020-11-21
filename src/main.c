@@ -119,7 +119,7 @@ ma16_u16_data_obj_t st_sp6;
 
 // Globals ---------------------------------------------------------------------
 // -- for the ms timers ----------------
-volatile unsigned short timer_standby;
+volatile unsigned short timer_standby = 0;
 volatile unsigned short wait_ms_var = 0;
 volatile unsigned short need_to_save_timer = 0;
 #ifdef USE_OVERTEMP_PROT
@@ -128,6 +128,8 @@ volatile unsigned char temp_sample_timer = 0;
 #if (defined USE_OVERVOLTAGE_PROT) || (defined USE_UNDERVOLTAGE_PROT)
 volatile unsigned char voltage_sample_timer = 0;
 #endif
+// -- for the timeouts in the modes ----
+void (* ptFTT ) (void) = NULL;
 
 // -- for the memory -------------------
 unsigned char need_to_save = 0;
@@ -356,12 +358,15 @@ int main(void)
                         
             if (mem_conf.program_type == DMX1_MODE)
             {
-                //variables de recepcion
+                //reception variables
                 Packet_Detected_Flag = 0;
                 DMX_channel_selected = mem_conf.dmx_first_channel;
                 DMX_channel_quantity = mem_conf.dmx_channel_quantity;
 
-                //habilito recepcion
+                //Mode Timeout enable
+                ptFTT = &DMX1Mode_UpdateTimers;
+
+                //packet reception enable
                 SW_RX_TX_RE_NEG;
                 DMX_Ena();
 
@@ -380,6 +385,9 @@ int main(void)
                 //habilito salidas si estoy con int
                 enable_outputs_by_int = 1;
 #endif
+                //Mode Timeout enable
+                ptFTT = &ManualMode_UpdateTimers;
+                
                 ManualModeReset();
                 
                 main_state = MAIN_IN_MANUAL_MODE;
@@ -391,6 +399,9 @@ int main(void)
                 //habilito salidas si estoy con int
                 enable_outputs_by_int = 1;
 #endif
+                //Mode Timeout enable
+                ptFTT = &MasterSlaveMode_UpdateTimers;
+                
                 MasterSlaveModeReset();
                 
                 main_state = MAIN_IN_MASTER_SLAVE_MODE;
@@ -787,26 +798,20 @@ void TimingDelay_Decrement(void)
     if (voltage_sample_timer)
         voltage_sample_timer--;
 #endif
-    
+
+    //TODO: pasar esto al modo master/slave
     if (dmx_timeout_timer)
         dmx_timeout_timer--;
     else
         EXTIOn();    //dejo 20ms del paquete sin INT
 
-    //para dmx1_mode
-    DMX1ModeUpdateTimer();
-
-    //para programas
-    // UpdateProgTimers ();
-
-    //para main menu
-    // UpdateTimerModeMenu ();
-
-    //for ManualMode
-    ManualMode_UpdateTimer ();
-
-    //for ManualMode
-    MasterSlaveMode_UpdateTimer ();
+    //Timeouts for the modes with a function pointer
+    // DMX1Mode_UpdateTimers();    //for DMX1_MODE
+    // UpdateTimerModeMenu ();    //for the MainMenu
+    // ManualMode_UpdateTimers ();    //for ManualMode
+    // MasterSlaveMode_UpdateTimers ();    //for MasterSlave mode
+    if (ptFTT != NULL)
+        ptFTT();
     
     //para funciones en hard
     HARD_Timeouts();

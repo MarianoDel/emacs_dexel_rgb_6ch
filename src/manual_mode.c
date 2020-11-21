@@ -39,21 +39,21 @@ typedef enum {
 // Externals -------------------------------------------------------------------
 extern unsigned char mode_state;
 
+
 // Globals ---------------------------------------------------------------------
 volatile unsigned short manual_effect_timer = 0;
+void (* ptFManualMenuTT ) (void) = NULL;
+
 
 // Module Private Functions ----------------------------------------------------
 
 
 // Module Funtions -------------------------------------------------------------
-void ManualMode_UpdateTimer (void)
+void ManualMode_UpdateTimers (void)
 {
-    //TODO: ESTO ESTA LLAMANDO DOS VECES A LA MISMA VARIABLE DE TIMER
-    //DESCUENTA DE A 2!!!!!
-    FixedMenu_UpdateTimer();
-
-    ColorsMenu_UpdateTimer();
-
+    if (ptFManualMenuTT != NULL)
+        ptFManualMenuTT();
+    
     if (manual_effect_timer)
         manual_effect_timer--;
 }
@@ -68,10 +68,7 @@ void ManualModeReset (void)
 resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
 {
     resp_t resp = resp_continue;
-
     unsigned char * ch_val;
-    // unsigned char prog = 0;
-    // unsigned char speed = 0;
 
     switch (manual_state)
     {
@@ -80,26 +77,31 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
         switch (mem->program_inner_type)
         {
         case MANUAL_INNER_FIXED_MODE:
+            ptFManualMenuTT = &FixedMenu_UpdateTimer;
             FixedMenuReset();
             manual_state = MANUAL_MODE_IN_COLORS_FIXED;
             break;
 
         case MANUAL_INNER_SKIPPING_MODE:
+            ptFManualMenuTT = &ColorsMenu_UpdateTimer;
             ColorsMenuReset();
             manual_state = MANUAL_MODE_IN_COLORS_SKIPPING;
             break;
             
         case MANUAL_INNER_GRADUAL_MODE:
+            ptFManualMenuTT = &ColorsMenu_UpdateTimer;            
             ColorsMenuReset();
             manual_state = MANUAL_MODE_IN_COLORS_GRADUAL;
             break;
             
         case MANUAL_INNER_STROBE_MODE:
+            ptFManualMenuTT = &ColorsMenu_UpdateTimer;
             ColorsMenuReset();
             manual_state = MANUAL_MODE_IN_COLORS_STROBE;
             break;
 
         default:
+            ptFManualMenuTT = NULL;
             ManualMenuReset ();
             manual_state = MANUAL_MODE_CHECK_INNER_MODE;
             break;
