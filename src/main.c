@@ -304,10 +304,6 @@ int main(void)
             Wait_ms(100);
 #endif
 
-            //TODO: solo por el programador de ST que no borra la memoria
-            mem_conf.program_type = MASTER_SLAVE_MODE;
-            mem_conf.program_inner_type = MASTER_NO_INNER_MODE;
-            
             // Init Program Screen
             switch (mem_conf.program_type)
             {
@@ -318,6 +314,7 @@ int main(void)
                 strcpy(s_to_send, "  DMX2 ");
                 break;
             case MASTER_SLAVE_MODE:
+                //TODO: agregar segundo renglon Slave
                 strcpy(s_to_send, "  Master ");
                 break;
             case MANUAL_MODE:
@@ -341,21 +338,7 @@ int main(void)
             break;
 
         case MAIN_GET_CONF:
-//             if (mem_conf.program_type == MASTER_MODE)
-//             {
-//                 //habilito transmisiones
-//                 SW_RX_TX_DE;
-//                 DMX_Ena();
 
-// #ifdef CHECK_FILTERS_BY_INT
-//                 //habilito salidas si estoy con int                
-//                 enable_outputs_by_int = 1;
-// #endif
-
-//                 MasterModeMenuReset();
-//                 main_state = MAIN_IN_MASTER_MODE;             
-//             }                
-                        
             if (mem_conf.program_type == DMX1_MODE)
             {
                 //reception variables
@@ -379,6 +362,20 @@ int main(void)
                 main_state = MAIN_IN_DMX1_MODE;
             }
 
+            if (mem_conf.program_type == MASTER_SLAVE_MODE)
+            {
+#ifdef CHECK_FILTERS_BY_INT
+                //habilito salidas si estoy con int
+                enable_outputs_by_int = 1;
+#endif
+                //Mode Timeout enable
+                ptFTT = &MasterSlaveMode_UpdateTimers;
+                
+                MasterSlaveModeReset();
+                
+                main_state = MAIN_IN_MASTER_SLAVE_MODE;
+            }
+
             if (mem_conf.program_type == MANUAL_MODE)
             {
 #ifdef CHECK_FILTERS_BY_INT
@@ -393,19 +390,6 @@ int main(void)
                 main_state = MAIN_IN_MANUAL_MODE;
             }
 
-            if (mem_conf.program_type == MASTER_SLAVE_MODE)
-            {
-#ifdef CHECK_FILTERS_BY_INT
-                //habilito salidas si estoy con int
-                enable_outputs_by_int = 1;
-#endif
-                //Mode Timeout enable
-                ptFTT = &MasterSlaveMode_UpdateTimers;
-                
-                MasterSlaveModeReset();
-                
-                main_state = MAIN_IN_MASTER_SLAVE_MODE;
-            }
             
             
 
@@ -664,9 +648,24 @@ int main(void)
             PWMChannelsReset();
 
             MainMenuReset();
+
+            SCREEN_ShowText2(
+                "Entering ",
+                " Main    ",
+                "  Menu   ",
+                "         "
+                );
+            
             main_state++;
             break;
 
+        case MAIN_ENTERING_MAIN_MENU_WAIT_FREE:
+            if (CheckSET() == SW_NO)
+            {
+                main_state++;
+            }
+            break;
+            
         case MAIN_IN_MAIN_MENU:
             action = do_nothing;
 

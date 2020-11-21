@@ -33,7 +33,6 @@ typedef enum {
     MANUAL_INNER_GRADUAL_MODE,
     MANUAL_INNER_STROBE_MODE,
     
-    SLAVE_MODE,
     WIFI_MODE
     
 } programs_type_e;
