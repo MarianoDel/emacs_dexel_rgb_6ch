@@ -34,6 +34,8 @@
 #include "master_slave_mode.h"
 #include "manual_mode.h"
 #include "reset_mode.h"
+#include "hardware_mode.h"
+
 
 // hardware tests functions
 #include "test_functions.h"
@@ -799,6 +801,63 @@ int main(void)
                 action = selection_up;
 
             resp = MainMenu(&mem_conf, action);
+
+            if (resp == resp_need_to_save)
+            {
+#ifdef SAVE_FLASH_IMMEDIATE
+                need_to_save_timer = 0;
+#endif
+#ifdef SAVE_FLASH_WITH_TIMEOUT
+                need_to_save_timer = 10000;
+#endif
+                need_to_save = 1;
+                main_state = MAIN_HARDWARE_INIT;
+            }
+            
+            if (resp == resp_finish)
+                main_state = MAIN_HARDWARE_INIT;
+
+            UpdateEncoder();
+
+            if (CheckSET() > SW_HALF)
+                main_state = MAIN_ENTERING_HARDWARE_MENU;
+            
+            break;
+
+        case MAIN_ENTERING_HARDWARE_MENU:
+            HardwareMenuReset();
+
+            SCREEN_ShowText2(
+                "Entering ",
+                " Hardware",
+                "  Menu   ",
+                "         "
+                );
+            
+            main_state++;
+            break;
+
+        case MAIN_ENTERING_HARDWARE_MENU_WAIT_FREE:
+            if (CheckSET() == SW_NO)
+            {
+                main_state++;
+            }
+            break;
+            
+        case MAIN_IN_HARDWARE_MENU:
+            action = do_nothing;
+
+            // Check encoder first
+            if (CheckSET() > SW_NO)
+                action = selection_enter;
+
+            if (CheckCCW())
+                action = selection_dwn;
+
+            if (CheckCW())
+                action = selection_up;
+
+            resp = HardwareMenu(&mem_conf, action);
 
             if (resp == resp_need_to_save)
             {

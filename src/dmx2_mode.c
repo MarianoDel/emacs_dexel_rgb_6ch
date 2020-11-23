@@ -11,6 +11,7 @@
 // Includes --------------------------------------------------------------------
 #include "dmx2_mode.h"
 #include "dmx_menu.h"
+#include "colors_functions.h"
 #include "flash_program.h"
 
 #include <stdio.h>
