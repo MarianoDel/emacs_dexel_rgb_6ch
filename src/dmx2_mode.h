@@ -23,7 +23,7 @@
 // Exported Module Functions ---------------------------------------------------
 void DMX2Mode (unsigned char *, sw_actions_t);
 void DMX2ModeReset (void);
-void DMX2ModeUpdateTimer (void);
+void DMX2Mode_UpdateTimers (void);
 
 
 #endif    /* _DMX1_MODE_H_ */

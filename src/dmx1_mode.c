@@ -45,9 +45,18 @@ typedef enum {
 #define TT_MENU_TIMEOUT    30000
 #define TT_DMX_RECEIVING    1000
 
+// variables re-use
+#define dmx1_mode_state    mode_state
+#define dmx1_mode_enable_menu_timer    mode_effect_timer
+
 
 // Externals -------------------------------------------------------------------
 extern volatile unsigned char data11[];
+
+// -- externals re-used
+extern unsigned char mode_state;
+extern volatile unsigned short mode_effect_timer;
+
 
 //del main para dmx
 extern volatile unsigned char Packet_Detected_Flag;
@@ -57,13 +66,12 @@ extern parameters_typedef mem_conf;
 
 
 // Globals ---------------------------------------------------------------------
-dmx1_mode_e dmx1_mode_state = DMX1_MODE_INIT;
 unsigned char dmx1_end_of_packet_update = 0;
 
 
 //-- timers del modulo --------------------
-volatile unsigned short dmx1_mode_enable_menu_timer = 0;
-volatile unsigned short dmx1_mode_dmx_receiving_timer = 0;
+// volatile unsigned short dmx1_mode_enable_menu_timer = 0;
+// volatile unsigned short dmx1_mode_dmx_receiving_timer = 0;
 
 
 // Module Private Functions ----------------------------------------------------
@@ -75,8 +83,8 @@ void DMX1Mode_UpdateTimers (void)
     if (dmx1_mode_enable_menu_timer)
         dmx1_mode_enable_menu_timer--;
 
-    if (dmx1_mode_dmx_receiving_timer)
-        dmx1_mode_dmx_receiving_timer--;
+    // if (dmx1_mode_dmx_receiving_timer)
+    //     dmx1_mode_dmx_receiving_timer--;
 
 }
 
@@ -113,7 +121,7 @@ void DMX1Mode (unsigned char * ch_val, sw_actions_t action)
             Packet_Detected_Flag = 0;
 
             //le aviso al menu que se estan recibiendo paquetes dmx
-            dmx1_mode_dmx_receiving_timer = TT_DMX_RECEIVING;            
+            // dmx1_mode_dmx_receiving_timer = TT_DMX_RECEIVING;            
 
             if (data11[DMX1_PKT_TYPE] == 0x00)    //dmx packet
             {

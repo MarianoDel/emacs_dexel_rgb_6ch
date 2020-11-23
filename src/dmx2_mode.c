@@ -50,9 +50,18 @@ typedef enum {
 #define TT_MENU_TIMEOUT    30000
 #define TT_DMX_RECEIVING    1000
 
+// variables re-use
+#define dmx2_mode_state    mode_state
+#define dmx2_mode_effect_timer    mode_effect_timer
+
 
 // Externals -------------------------------------------------------------------
 extern volatile unsigned char data11[];
+
+// -- externals re-used
+extern unsigned char mode_state;
+extern volatile unsigned short mode_effect_timer;
+
 
 //del main para dmx
 extern volatile unsigned char Packet_Detected_Flag;
@@ -62,26 +71,32 @@ extern parameters_typedef mem_conf;
 
 
 // Globals ---------------------------------------------------------------------
-dmx2_mode_e dmx2_mode_state = DMX2_MODE_INIT;
 unsigned char dmx2_end_of_packet_update = 0;
 
 
 //-- timers del modulo --------------------
 volatile unsigned short dmx2_mode_enable_menu_timer = 0;
-volatile unsigned short dmx2_mode_dmx_receiving_timer = 0;
+// volatile unsigned short dmx2_mode_dmx_receiving_timer = 0;
 
 
 // Module Private Functions ----------------------------------------------------
-
+void DMX2Mode_ChannelsDimmer (unsigned char *, unsigned char *);
+// void DMX2Mode_ChannelsStrobe (unsigned char *, unsigned char *);
+// void DMX2Mode_ChannelsEffect (unsigned char *, unsigned char *);
+unsigned char DMX2Mode_MapEffect (unsigned char);
+unsigned char DMX2Mode_MapSpeed (unsigned char);
 
 // Module Functions ------------------------------------------------------------
-void DMX2ModeUpdateTimer (void)
+void DMX2Mode_UpdateTimers (void)
 {
     if (dmx2_mode_enable_menu_timer)
         dmx2_mode_enable_menu_timer--;
 
-    if (dmx2_mode_dmx_receiving_timer)
-        dmx2_mode_dmx_receiving_timer--;
+    if (dmx2_mode_effect_timer)
+        dmx2_mode_effect_timer--;
+    
+    // if (dmx2_mode_dmx_receiving_timer)
+    //     dmx2_mode_dmx_receiving_timer--;
 
 }
 
@@ -105,7 +120,8 @@ void DMX2Mode (unsigned char * ch_val, sw_actions_t action)
     {
     case DMX2_MODE_INIT:
         DMXModeMenuReset();
-        dmx2_address_show = 1;
+        mem_conf.program_inner_type = DMX2_INNER_DIMMER_MODE;
+        dmx2_address_show = 1;        
         dmx2_mode_state++;
         break;
 
@@ -118,19 +134,45 @@ void DMX2Mode (unsigned char * ch_val, sw_actions_t action)
             Packet_Detected_Flag = 0;
 
             //le aviso al menu que se estan recibiendo paquetes dmx
-            dmx2_mode_dmx_receiving_timer = TT_DMX_RECEIVING;            
+            // dmx2_mode_dmx_receiving_timer = TT_DMX_RECEIVING;            
 
             if (data11[DMX2_PKT_TYPE] == 0x00)    //dmx packet
             {
-                //update the colors channels
-                *(ch_val + 0) = data11[DMX2_CLR_CH1];
-                *(ch_val + 1) = data11[DMX2_CLR_CH2];
-                *(ch_val + 2) = data11[DMX2_CLR_CH3];
-                *(ch_val + 3) = data11[DMX2_CLR_CH4];
-                *(ch_val + 4) = data11[DMX2_CLR_CH5];
-                *(ch_val + 5) = data11[DMX2_CLR_CH6];
+                if (data11[DMX2_ECT_CH] != 0)    // check if we have an effect
+                {
+                    // map the effect in this mode
+                    if (DMX2Mode_MapEffect(data11[DMX2_ECT_CH]))
+                    {
+                        if (mem_conf.program_inner_type != DMX2_INNER_GRADUAL_MODE)
+                            mem_conf.program_inner_type = DMX2_INNER_GRADUAL_MODE;
+                    }
+                    else
+                    {
+                        if (mem_conf.program_inner_type != DMX2_INNER_SKIPPING_MODE)
+                            mem_conf.program_inner_type = DMX2_INNER_SKIPPING_MODE;
+                    }
+
+                    // map the speed in this mode
+                    mem_conf.program_inner_type_speed = DMX2Mode_MapSpeed(data11[DMX2_SPD_CH]);
+                }
+                else if (data11[DMX2_STB_CH])    // check if we are in strobe
+                {
+                    if (mem_conf.program_inner_type != DMX2_INNER_STROBE_MODE)
+                        mem_conf.program_inner_type = DMX2_INNER_STROBE_MODE;
+                    
+                    // map the speed in this mode
+                    mem_conf.program_inner_type_speed = DMX2Mode_MapSpeed(data11[DMX2_SPD_CH]);
+                }
+                else    // we are in DMX mode with grandmaster
+                {
+                    if (mem_conf.program_inner_type != DMX2_INNER_DIMMER_MODE)
+                        mem_conf.program_inner_type = DMX2_INNER_DIMMER_MODE;
+                    
+                    DMX2Mode_ChannelsDimmer(ch_val, data11);
+                }
 
                 dmx2_end_of_packet_update = 1;
+                    
             }
 
 #ifdef WITH_POWER_CONTROL
@@ -161,6 +203,48 @@ void DMX2Mode (unsigned char * ch_val, sw_actions_t action)
 
     default:
         dmx2_mode_state = DMX2_MODE_INIT;
+        break;
+    }
+
+
+    //Effects in modes
+    switch (mem_conf.program_inner_type)
+    {
+    case DMX2_INNER_SKIPPING_MODE:
+        if (!dmx2_mode_effect_timer)
+        {
+            resp = Colors_Fading_Pallete (ch_val);
+            if (resp == resp_finish)
+                resp = resp_continue;
+
+            dmx2_mode_effect_timer = 10 - mem_conf.program_inner_type_speed;
+        }
+        break;
+
+    case DMX2_INNER_GRADUAL_MODE:
+        if (!dmx2_mode_effect_timer)
+        {
+            resp = Colors_Fading_Shuffle_Pallete (ch_val);
+            if (resp == resp_finish)
+                resp = resp_continue;
+
+            dmx2_mode_effect_timer = 10 - mem_conf.program_inner_type_speed;
+        }
+        break;
+
+    case DMX2_INNER_STROBE_MODE:
+        if (!dmx2_mode_effect_timer)
+        {
+            resp = Colors_Strobe_Pallete (ch_val);
+            if (resp == resp_finish)
+                resp = resp_continue;
+
+            dmx2_mode_effect_timer = 2000 - mem_conf.program_inner_type_speed * 200;
+        }
+        break;
+
+    default:
+        // do nothing in here
         break;
     }
 
@@ -257,5 +341,53 @@ void DMX2Mode (unsigned char * ch_val, sw_actions_t action)
             
 }
             
+
+void DMX2Mode_ChannelsDimmer (unsigned char * ch_out, unsigned char * ch_in)
+{
+    unsigned short calc = 0;
+
+    for (unsigned char i = 0; i < 6; i++)
+    {
+        calc = ch_in[DMX2_DIM_CH] * ch_in[DMX2_CLR_CH1 + i];
+        calc >>= 8;
+        *(ch_out + i) = (unsigned char) calc;
+    }
+}
+
+
+unsigned char DMX2Mode_MapEffect (unsigned char eff)
+{
+    if (eff < 127)
+        return 0;
+    else
+        return 1;
+}
+
+
+unsigned char DMX2Mode_MapSpeed (unsigned char speed)
+{
+    unsigned char out_speed = 0;
+    
+    if (speed > 230)
+        out_speed = 9;
+    else if (speed > 205)
+        out_speed = 8;
+    else if (speed > 180)
+        out_speed = 7;
+    else if (speed > 155)
+        out_speed = 6;
+    else if (speed > 130)
+        out_speed = 5;
+    else if (speed > 105)
+        out_speed = 4;
+    else if (speed > 80)
+        out_speed = 3;
+    else if (speed > 55)
+        out_speed = 2;
+    else if (speed > 20)
+        out_speed = 1;
+
+    return out_speed;
+}
 
 //--- end of file ---//

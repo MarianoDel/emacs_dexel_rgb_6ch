@@ -35,13 +35,14 @@ typedef enum {
 
 // variables re-use
 #define manual_state    mode_state
+#define manual_effect_timer    mode_effect_timer
 
 // Externals -------------------------------------------------------------------
 extern unsigned char mode_state;
-
+extern volatile unsigned short mode_effect_timer;
 
 // Globals ---------------------------------------------------------------------
-volatile unsigned short manual_effect_timer = 0;
+
 void (* ptFManualMenuTT ) (void) = NULL;
 
 

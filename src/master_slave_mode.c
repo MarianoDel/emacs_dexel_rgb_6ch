@@ -40,13 +40,17 @@ typedef enum {
 
 // variables re-use
 #define master_slave_state    mode_state
+#define master_effect_timer    mode_effect_timer
+
 
 // Externals -------------------------------------------------------------------
 extern unsigned char mode_state;
+extern volatile unsigned short mode_effect_timer;
+
 
 // Globals ---------------------------------------------------------------------
-volatile unsigned short master_effect_timer = 0;
 void (* ptFMasterMenuTT ) (void) = NULL;
+
 
 // Module Private Functions ----------------------------------------------------
 

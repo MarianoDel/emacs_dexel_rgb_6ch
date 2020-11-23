@@ -30,6 +30,7 @@
 
 // modes of operation
 #include "dmx1_mode.h"
+#include "dmx2_mode.h"
 #include "master_slave_mode.h"
 #include "manual_mode.h"
 #include "reset_mode.h"
@@ -60,6 +61,7 @@ parameters_typedef mem_conf;
 
 // -- Externals for the modes
 unsigned char mode_state = 0;
+volatile unsigned short mode_effect_timer = 0;
 
 // -- Externals for the menues
 unsigned char menu_state = 0;
@@ -366,6 +368,29 @@ int main(void)
                 main_state = MAIN_IN_DMX1_MODE;
             }
 
+            if (mem_conf.program_type == DMX2_MODE)
+            {
+                //reception variables
+                Packet_Detected_Flag = 0;
+                DMX_channel_selected = mem_conf.dmx_first_channel;
+                DMX_channel_quantity = mem_conf.dmx_channel_quantity;
+
+                //Mode Timeout enable
+                ptFTT = &DMX2Mode_UpdateTimers;
+
+                //packet reception enable
+                SW_RX_TX_RE_NEG;
+                DMX_Ena();
+
+#ifdef CHECK_FILTERS_BY_INT
+                //habilito salidas si estoy con int
+                enable_outputs_by_int = 1;
+#endif
+                
+                DMX2ModeReset();
+                main_state = MAIN_IN_DMX2_MODE;
+            }
+            
             if (mem_conf.program_type == MASTER_SLAVE_MODE)
             {
 #ifdef CHECK_FILTERS_BY_INT
@@ -465,6 +490,62 @@ int main(void)
             
             break;
 
+        case MAIN_IN_DMX2_MODE:
+            action = do_nothing;
+            
+            // Check encoder first
+            if (CheckCCW())
+                action = selection_dwn;
+
+            if (CheckCW())
+                action = selection_up;
+
+            if (CheckSET() > SW_NO)
+                action = selection_enter;
+            
+            DMX2Mode (ch_values, action);
+            
+#ifdef CHECK_FILTERS_BY_INT
+            for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
+                channels_values_int[n] = ch_values[n];
+
+#else
+            CheckFiltersAndOffsets (ch_values);
+#endif
+
+            if (CheckSET() > SW_MIN)
+                main_state = MAIN_ENTERING_MAIN_MENU;
+            
+            UpdateEncoder();            
+
+            
+#ifdef USART2_DEBUG_MODE
+            if (!timer_standby)
+            {
+                timer_standby = 1000;
+
+                sprintf(s_to_send, "c1: %d, c2: %d, c3: %d, c4: %d, c5: %d, c6: %d\n",
+                        *(ch_values + 0),
+                        *(ch_values + 1),
+                        *(ch_values + 2),
+                        *(ch_values + 3),
+                        *(ch_values + 4),
+                        *(ch_values + 5));
+                Usart2Send(s_to_send);
+                
+                sprintf(s_to_send, "d1: %d, d2: %d, d3: %d, d4: %d, d5: %d, d6: %d\n",
+                    ch1_pwm,
+                    ch2_pwm,
+                    ch3_pwm,
+                    ch4_pwm,
+                    ch5_pwm,
+                    ch6_pwm);
+                Usart2Send(s_to_send);                
+            }
+#endif
+            
+            break;
+            
         case MAIN_IN_MANUAL_MODE:
             action = do_nothing;
 
