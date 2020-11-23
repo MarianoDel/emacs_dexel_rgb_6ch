@@ -32,7 +32,7 @@
 #include "dmx1_mode.h"
 #include "master_slave_mode.h"
 #include "manual_mode.h"
-// #include "reset_mode.h"
+#include "reset_mode.h"
 
 // hardware tests functions
 #include "test_functions.h"
@@ -265,14 +265,7 @@ int main(void)
     else
     {
         //memory empty use some defaults
-        mem_conf.program_type = MANUAL_MODE;
-        mem_conf.master_send_dmx_enable = 0;
-        // mem_conf.last_program_in_flash = 9;
-        mem_conf.program_inner_type = MANUAL_INNER_FIXED_MODE;
-        mem_conf.program_inner_type_speed = 0;
-        mem_conf.dmx_first_channel = 1;
-        mem_conf.dmx_channel_quantity = 6;
-        mem_conf.max_power = 200;
+        ResetMode_Factory_Defaults(&mem_conf);
     }
 
     //--- Test for ADC Channels ---//
@@ -326,6 +319,10 @@ int main(void)
                 break;
             case MANUAL_MODE:
                 strcpy(s_to_send, "  Manual ");
+                break;
+
+            case RESET_MODE:
+                strcpy(s_to_send, "   Reset ");
                 break;
                 
             }
@@ -397,7 +394,11 @@ int main(void)
                 main_state = MAIN_IN_MANUAL_MODE;
             }
 
-            
+            if (mem_conf.program_type == RESET_MODE)
+            {                
+                ResetModeReset();                
+                main_state = MAIN_IN_RESET_MODE;
+            }
             
 
             //default state no debiera estar nunca aca!
@@ -528,6 +529,36 @@ int main(void)
 #else
                 CheckFiltersAndOffsets (ch_values);
 #endif
+            }
+
+            if (CheckSET() > SW_MIN)
+                main_state = MAIN_ENTERING_MAIN_MENU;
+
+            UpdateEncoder();
+            
+            break;
+
+        case MAIN_IN_RESET_MODE:
+            action = do_nothing;
+
+            // Check encoder first
+            if (CheckCCW())
+                action = selection_dwn;
+
+            if (CheckCW())
+                action = selection_up;
+
+            if (CheckSET() > SW_NO)
+                action = selection_enter;
+
+            resp = ResetMode (&mem_conf, action);
+
+            if (resp == resp_finish)
+            {
+                if (mem_conf.program_type == RESET_MODE)    //not save, go to main menu again
+                    main_state = MAIN_ENTERING_MAIN_MENU;
+                else
+                    main_state = MAIN_HARDWARE_INIT;
             }
 
             if (CheckSET() > SW_MIN)

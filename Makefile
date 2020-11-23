@@ -105,6 +105,8 @@ SRC += ./src/master_slave_menu.c
 SRC += ./src/master_menu.c
 SRC += ./src/slave_menu.c
 
+SRC += ./src/reset_mode.c
+
 ## Core Support
 SRC += $(CORELIBDIR)/core_cm0.c
 
