@@ -55,6 +55,8 @@ extern volatile unsigned short menu_menu_timer;
 // Module Private Functions ----------------------------------------------------
 void Limits_Selected_To_Line_Init (unsigned char, unsigned char *, unsigned char *, unsigned char *);
 void LimitsMenu_Options(unsigned char, unsigned char, char *);
+unsigned char LimitsMenu_MapCurrentToInt (unsigned short);
+unsigned short LimitsMenu_MapCurrentToDmx (unsigned char);
 
 
 // Module Funtions -------------------------------------------------------------
@@ -87,10 +89,10 @@ resp_t LimitsMenu (parameters_typedef * mem, sw_actions_t actions)
         Display_SetLine3("LIMIT TOTAL CURRENT");
 
         total_curr = LimitsMenu_MapCurrentToInt(mem->max_power);
-        sprintf(s_temp, "CURRENT: %2d", total_curr);
+        sprintf(s_temp, "CURRENT: %2dA", total_curr);
         Display_SetLine4(s_temp);
 
-        Display_SetLine8("        Hardware Mode");
+        Display_SetLine8("   Limit Current Menu");
 
         limits_need_display_update = 1;
         limits_state++;
@@ -120,8 +122,7 @@ resp_t LimitsMenu (parameters_typedef * mem, sw_actions_t actions)
             if (limits_selected > 0)
             {
                 // clean last option
-                sprintf(s_temp, "%2d", total_curr);
-                // sprintf(s_temp, "%d", mem->program_inner_type_speed);
+                sprintf(s_temp, "%2dA", total_curr);
                 LimitsMenu_Options(0, limits_selected, s_temp);
 
                 limits_selected--;
@@ -143,8 +144,7 @@ resp_t LimitsMenu (parameters_typedef * mem, sw_actions_t actions)
                 limits_selected++;
 
                 // set new option
-                sprintf(s_temp, "%2d", total_curr);
-                // sprintf(s_temp, "%d", mem->program_inner_type_speed);
+                sprintf(s_temp, "%2dA", total_curr);
                 LimitsMenu_Options(1, limits_selected, s_temp);
 
                 limits_need_display_update = 1;
@@ -157,8 +157,7 @@ resp_t LimitsMenu (parameters_typedef * mem, sw_actions_t actions)
                 limits_state = LIMITS_MENU_WAIT_FREE;
             else
             {
-                sprintf(s_temp, "%2d", total_curr);
-                // sprintf(s_temp, "%d", mem->program_inner_type_speed);
+                sprintf(s_temp, "%2dA", total_curr);
                 LimitsMenu_Options(0, limits_selected, s_temp);
                 limits_state++;
             }
@@ -181,12 +180,10 @@ resp_t LimitsMenu (parameters_typedef * mem, sw_actions_t actions)
     case LIMITS_MENU_CHANGING:
         if (actions == selection_dwn)
         {
-            unsigned char * p_speed = &mem->program_inner_type_speed;
-
-            if (*p_speed)
+            if (total_curr)
             {
-                *p_speed -= 1;
-                sprintf(s_temp, "%d", *p_speed);
+                total_curr -= 1;
+                sprintf(s_temp, "%2dA", total_curr);
                 LimitsMenu_Options(0, limits_selected, s_temp);
 
                 resp = resp_change;
@@ -199,12 +196,10 @@ resp_t LimitsMenu (parameters_typedef * mem, sw_actions_t actions)
         
         if (actions == selection_up)
         {
-            unsigned char * p_speed = &mem->program_inner_type_speed;
-
-            if (*p_speed < 9)
+            if (total_curr < 12)
             {
-                *p_speed += 1;
-                sprintf(s_temp, "%d", *p_speed);
+                total_curr += 1;
+                sprintf(s_temp, "%2dA", total_curr);
                 LimitsMenu_Options(0, limits_selected, s_temp);
 
                 resp = resp_change;                
@@ -229,11 +224,9 @@ resp_t LimitsMenu (parameters_typedef * mem, sw_actions_t actions)
         {
             if (!limits_menu_timer)
             {
-                unsigned char * p_speed = &mem->program_inner_type_speed;
-                
                 limits_selection_show = 1;
                 limits_menu_timer = TT_SHOW;
-                sprintf(s_temp, "%d", *p_speed);
+                sprintf(s_temp, "%2dA", total_curr);
                 LimitsMenu_Options(0, limits_selected, s_temp);
                 limits_need_display_update = 1;
             }
@@ -241,9 +234,7 @@ resp_t LimitsMenu (parameters_typedef * mem, sw_actions_t actions)
 
         if (actions == selection_enter)
         {
-            unsigned char * p_speed = &mem->program_inner_type_speed;            
-
-            sprintf(s_temp, "%d", *p_speed);
+            sprintf(s_temp, "%2dA", total_curr);
             LimitsMenu_Options(1, limits_selected, s_temp);
             
             limits_need_display_update = 1;
@@ -266,6 +257,9 @@ resp_t LimitsMenu (parameters_typedef * mem, sw_actions_t actions)
     case LIMITS_MENU_WAIT_FREE:
         if (actions == do_nothing)
         {
+            // push values to memory
+            mem->max_power = LimitsMenu_MapCurrentToDmx (total_curr);
+            
             limits_state = LIMITS_MENU_INIT;
             resp = resp_finish;            
         }
@@ -291,7 +285,7 @@ resp_t LimitsMenu (parameters_typedef * mem, sw_actions_t actions)
 #define LINE_HEIGHT    8
 
 #define SRT_X_OP0    0
-#define SRT_X_OP1    (6 * 7)
+#define SRT_X_OP1    (6 * 9)
 // #define SRT_X_OP2    (6 * 5)
 // #define SRT_X_OP3    (6 * 5)
 // #define SRT_X_OP4    (6 * 18)
@@ -307,7 +301,7 @@ resp_t LimitsMenu (parameters_typedef * mem, sw_actions_t actions)
 // #define SRT_Y_OP6    (LINE_HEIGHT * 4)
 
 #define WIDTH_OP0    (6 * 4)
-#define WIDTH_OP1    (6 * 1)
+#define WIDTH_OP1    (6 * 3)
 // #define WIDTH_OP2    (6 * 3)
 // #define WIDTH_OP3    (6 * 3)
 // #define WIDTH_OP4    (6 * 3)
@@ -399,8 +393,7 @@ unsigned char LimitsMenu_MapCurrentToInt (unsigned short curr_val)
         return 12;
     
     c_int = curr_val * 12;
-    c_int >>= 8;
-    c_int = c_int / 6;
+    c_int = c_int / 1530;
 
     return (unsigned char) c_int;
 }
@@ -410,8 +403,12 @@ unsigned short LimitsMenu_MapCurrentToDmx (unsigned char curr_val)
 {
     unsigned int c_dmx = 0;
 
-    c_dmx = curr_val * 255;
-    c_dmx = c_dmx * 6;
+    if (!curr_val)
+        return 0;
+    
+    c_dmx = curr_val * 1530;
+    c_dmx = c_dmx / 12;
+    c_dmx += 1;    
 
     return (unsigned short) c_dmx;
 }
