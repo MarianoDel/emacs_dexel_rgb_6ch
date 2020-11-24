@@ -11,6 +11,10 @@
 // Includes --------------------------------------------------------------------
 #include "hardware_mode.h"
 #include "current_menu.h"
+#include "limits_menu.h"
+#include "channels_menu.h"
+#include "temp_menu.h"
+#include "version_menu.h"
 #include "options_menu.h"
 
 #include <string.h>
@@ -86,18 +90,22 @@ resp_t HardwareMode (parameters_typedef * mem, sw_actions_t actions)
 
             case 1:
                 hardware_mode_state = HARDWARE_MODE_LIMIT;
+                LimitsMenuReset();
                 break;
 
             case 2:
                 hardware_mode_state = HARDWARE_MODE_CHANNELS;
+                ChannelsMenuReset();
                 break;
 
             case 3:
                 hardware_mode_state = HARDWARE_MODE_TEMP;
+                TempMenuReset();
                 break;
 
             case 4:
                 hardware_mode_state = HARDWARE_MODE_VERSION;
+                VersionMenuReset();
                 break;
 
             case 5:
@@ -124,15 +132,44 @@ resp_t HardwareMode (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case HARDWARE_MODE_LIMIT:
+        resp = LimitsMenu(mem, actions);
+
+        if (resp == resp_finish)
+        {
+            hardware_mode_state = HARDWARE_MODE_INIT;
+            resp = resp_continue;
+        }
+        
         break;
 
     case HARDWARE_MODE_CHANNELS:
+        resp = ChannelsMenu(mem, actions);
+
+        if (resp == resp_finish)
+        {
+            hardware_mode_state = HARDWARE_MODE_INIT;
+            resp = resp_continue;
+        }
         break;
 
     case HARDWARE_MODE_TEMP:
+        resp = TempMenu(mem, actions);
+
+        if (resp == resp_finish)
+        {
+            hardware_mode_state = HARDWARE_MODE_INIT;
+            resp = resp_continue;
+        }
         break;
 
     case HARDWARE_MODE_VERSION:
+        resp = VersionMenu(mem, actions);
+
+        if (resp == resp_finish)
+        {
+            hardware_mode_state = HARDWARE_MODE_INIT;
+            resp = resp_continue;
+        }
         break;
         
     default:
