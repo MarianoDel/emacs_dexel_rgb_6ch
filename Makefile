@@ -229,13 +229,14 @@ clean:
 	rm -f *.out
 
 tests:
-	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
-	gcc -c src/colors_functions.c -I. $(INCDIR)
-	gcc src/tests.c colors_functions.o
+	# simple functions tests, copy functions to test into main
+	gcc src/tests.c 
 	./a.out
-	# sino copiar funcion a testear al main de tests.c
-	# gcc src/tests.c
-	# ./a.out
+
+tests_colors_functions:
+	gcc -c src/colors_functions.c -I. $(INCDIR)
+	gcc src/tests_colors_functions.c colors_functions.o
+	./a.out
 
 tests_dmx1:
 	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard

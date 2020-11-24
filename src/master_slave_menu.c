@@ -57,7 +57,6 @@ resp_t MasterSlaveMenu (parameters_typedef * mem, sw_actions_t actions)
         mem_options.argv[0] = "MASTER";
         mem_options.argv[1] = "SLAVE";
         mem_options.options_qtty = 2;
-        // mem_options.argv[7] = "    New Advanced Menu";
         mem_options.argv[7] = "    Master/Slave Mode";
         OptionsMenuReset();
 

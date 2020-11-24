@@ -8,8 +8,6 @@
 //---------------------------------------------
 
 // Includes Modules for tests --------------------------------------------------
-#include "colors_functions.h"
-
 #include "parameters.h"
 #include "switches_answers.h"
 
@@ -27,93 +25,112 @@ sw_actions_t action = do_nothing;
 
 // Module Functions to Test ----------------------------------------------------
 
-    
+// Other Tests Functions -------------------------------------------------------
+void Test_Current_Mapping (void);
+void Test_Current_Mapping_Fixed (unsigned char value);
+unsigned char CurrentMenu_MapCurrentToDmx (unsigned char ch_val);
+unsigned char CurrentMenu_MapCurrentToInt (unsigned char curr_val);
+
 
 // Module Functions ------------------------------------------------------------
 
 
 int main(int argc, char *argv[])
 {
-
-    // unsigned char fade_ch_up = 0x30;
-    // unsigned char fade_ch_dwn = 0x01;
+    Test_Current_Mapping ();
+    Test_Current_Mapping_Fixed (255);
+    Test_Current_Mapping_Fixed (25);
+    Test_Current_Mapping_Fixed (12);
+    Test_Current_Mapping_Fixed (1);
+    Test_Current_Mapping_Fixed (0);    
     
-    // unsigned char calc_up;
-    // unsigned char calc_dwn;
-    // unsigned char how_many_channels_up = 0;    
-    // unsigned char how_many_channels_dwn = 0;    
-    
-    // for (unsigned char i = 0; i < 8; i++)
-    // {
-    //     calc_up = 1;
-    //     calc_up <<= i;
-    //     if (calc_up & fade_ch_up)
-    //         how_many_channels_up++;
-
-    //     if (calc_up & fade_ch_dwn)
-    //         how_many_channels_dwn++;
-    // }
-    // printf("channel up: %d channel dwn: %d\n",
-    //        how_many_channels_up,
-    //        how_many_channels_dwn);
-    
-    int sequence = 0;
-    printf("Start seq: %03d CH1: %03d CH2: %03d CH3: %03d\n",
-           sequence,
-           mem_conf.fixed_channels[0],
-           mem_conf.fixed_channels[1],
-           mem_conf.fixed_channels[2]);
-    
-
-    resp_t resp = resp_continue;
-
-    unsigned char * ch_val = mem_conf.fixed_channels;
-
-    for (int i = 0; i < 511; i++)
-    {
-        resp = Colors_Fading_Shuffle_Pallete (ch_val);
-        sequence++;
-
-        if (resp == resp_continue)
-        {
-            printf("index: %3d seq: %3d\t\tCH1: %3d CH2: %3d CH3: %3d\tup: %d dwn: %d\n",
-                   i,
-                   sequence,
-                   mem_conf.fixed_channels[0],
-                   mem_conf.fixed_channels[1],
-                   mem_conf.fixed_channels[2],
-                   mem_conf.fixed_channels[4],
-                   mem_conf.fixed_channels[5]);
-            
-        }
-        
-        if (resp == resp_finish)
-            printf("finish on seq: %d\n", sequence);
-        
-    }
-    printf("finish on seq: %d\n", sequence);
-    
-    // while (resp == resp_continue)
-    // {
-    //     resp = Colors_Fading_Shuffle_Pallete (ch_val);
-    //     sequence++;
-
-    //     if (resp == resp_continue)
-    //     {
-    //         printf("seq: %3d CH1: %d CH2: %d CH3: %d\n",
-    //                sequence,
-    //                mem_conf.fixed_channels[0],
-    //                mem_conf.fixed_channels[1],
-    //                mem_conf.fixed_channels[2]);
-            
-    //     }
-        
-    //     if (resp == resp_finish)
-    //         printf("finish on seq: %d\n", sequence);
-    // }
 }
 
 
+
+/////////////////
+// OTHER TESTS //
+/////////////////
+void Test_Current_Mapping (void)
+{
+    unsigned char curr = 0;
+    
+    printf("Map DMX to int current\n");
+    for (int i = 0; i <= 255; i++)
+    {
+        curr = CurrentMenu_MapCurrentToInt(i);
+        printf("dmx: %03d current: %2d\n", i, curr);
+        
+    }
+
+    printf("\nMap int current to DMX\n");
+    for (int i = 0; i <= 20; i++)
+    {
+        curr = CurrentMenu_MapCurrentToDmx(i);
+        printf("current: %2d dmx: %03d\n", i, curr);
+    }
+}
+
+
+void Test_Current_Mapping_Fixed (unsigned char value)
+{
+    unsigned char curr = 0;
+
+    curr = CurrentMenu_MapCurrentToInt(value);
+    printf("value: %d to current: %d\n", value, curr);
+
+    value = CurrentMenu_MapCurrentToDmx(curr);
+    printf("current: %d to value: %d\n", curr, value);
+}
+
+
+unsigned char CurrentMenu_MapCurrentToInt (unsigned char curr_val)
+{
+    unsigned short c_int = 0;
+
+    if (!curr_val)
+        return 0;
+    
+    c_int = curr_val * 20;
+    c_int >>= 8;
+    c_int += 1;
+
+    return (unsigned char) c_int;
+}
+
+
+unsigned char CurrentMenu_MapCurrentToDmx (unsigned char ch_val)
+{
+    unsigned short c_dmx = 0;
+
+    c_dmx = ch_val * 256;
+    c_dmx = c_dmx / 20;
+
+    if (c_dmx > 255)
+        c_dmx = 255;
+
+    return (unsigned char) c_dmx;
+    
+}
+
+
+void CurrentMenu_MapCurrentIntToDec (unsigned char * curr_int,
+                                     unsigned char * curr_dec,
+                                     unsigned char curr_val)
+{
+    unsigned char orig_curr = curr_val;
+    unsigned char tens = 0;
+    
+    while (curr_val >= 10)
+    {
+        tens++;
+        curr_val -= 10;
+    }
+
+    *curr_int = tens;
+    *curr_dec = orig_curr - 10 * tens;
+    
+}
 
 
 //--- end of file ---//

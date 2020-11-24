@@ -65,7 +65,7 @@ void ShowDisplay (WINDOW *, GGRAM_displayed_st *, unsigned char *);
 
 
 void * KeyboardInput (void * arg);
-    
+
 
 // Globals for module test -----------------------------------------------------
 unsigned char menu_state;
@@ -384,6 +384,7 @@ void display_update(void)
 {
     ShowDisplay(ggram_win, &ggram_displayed, _displaybuf);
 }
+
 
 
 //--- end of file ---//

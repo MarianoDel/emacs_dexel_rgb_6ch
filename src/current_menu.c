@@ -458,8 +458,12 @@ unsigned char CurrentMenu_MapCurrentToInt (unsigned char curr_val)
 {
     unsigned short c_int = 0;
 
+    if (!curr_val)
+        return 0;
+    
     c_int = curr_val * 20;
-    c_int = c_int / 255;
+    c_int >>= 8;
+    c_int += 1;
 
     return (unsigned char) c_int;
 }
@@ -469,8 +473,11 @@ unsigned char CurrentMenu_MapCurrentToDmx (unsigned char ch_val)
 {
     unsigned short c_dmx = 0;
 
-    c_dmx = ch_val * 255;
+    c_dmx = ch_val * 256;
     c_dmx = c_dmx / 20;
+
+    if (c_dmx > 255)
+        c_dmx = 255;
 
     return (unsigned char) c_dmx;
     

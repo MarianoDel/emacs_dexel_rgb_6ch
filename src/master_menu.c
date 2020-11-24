@@ -59,7 +59,7 @@ resp_t MasterMenu (parameters_typedef * mem, sw_actions_t actions)
         mem_options.argv[3] = "COLORS STROBE";
         mem_options.argv[4] = "EXIT";
         mem_options.options_qtty = 5;
-        mem_options.argv[7] = "    Master/Slave Mode";
+        mem_options.argv[7] = "          Master Mode";        
         OptionsMenuReset();
 
         master_menu_state++;
