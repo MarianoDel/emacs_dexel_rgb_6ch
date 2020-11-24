@@ -108,6 +108,7 @@ SRC += ./src/slave_menu.c
 SRC += ./src/reset_mode.c
 
 SRC += ./src/hardware_mode.c
+SRC += ./src/current_menu.c
 
 
 ## Core Support
@@ -309,6 +310,15 @@ tests_slave_menu:
 	gcc -c src/display_utils.c -I. $(INCDIR)
 	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
 	gcc src/tests_slave_menu.c slave_menu.o options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
+	./a.out
+
+tests_current_menu:
+	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
+	gcc -c src/current_menu.c -I. $(INCDIR)
+	gcc -c src/options_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	gcc src/tests_current_menu.c current_menu.o options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
 	./a.out
 
 

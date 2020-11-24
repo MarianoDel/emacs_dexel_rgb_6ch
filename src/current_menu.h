@@ -5,32 +5,26 @@
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### DMX_MENU.C ################################
+// #### CURRENT_MENU.H ############################
 //-------------------------------------------------
 
 // Prevent recursive inclusion -------------------------------------------------
-#ifndef _DMX_MENU_H_
-#define _DMX_MENU_H_
+#ifndef _CURRENT_MENU_H_
+#define _CURRENT_MENU_H_
 
 //-- includes to help configurations --//
 #include "switches_answers.h"
+#include "parameters.h"
 
-
-// Module Exported Types Constants and Macros ----------------------------------
-typedef struct {
-    const unsigned short * dmx_first_chnl;
-    const unsigned char * pchannels;
-    unsigned char show_addres;
-    unsigned char mode;
     
-} dmx_menu_data_t;
-
 
 // Module Exported Functions ---------------------------------------------------
-void DMXModeMenuReset (void);
-resp_t DMXModeMenu (dmx_menu_data_t *);
+void CurrentMenu_UpdateTimer (void);
+void CurrentMenuReset (void);
+resp_t CurrentMenu (parameters_typedef *, sw_actions_t);
 
 
-#endif    /* _DMX_MENU_H_ */
+#endif    /* _CURRENT_MENU_H_ */
 
 //--- end of file ---//
+

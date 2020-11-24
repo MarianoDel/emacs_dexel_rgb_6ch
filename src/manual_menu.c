@@ -56,8 +56,7 @@ resp_t ManualMenu (parameters_typedef * mem, sw_actions_t actions)
         mem_options.argv[1] = "COLORS SKIPPING";
         mem_options.argv[2] = "COLORS GRADUAL";
         mem_options.argv[3] = "COLORS STROBE";
-        mem_options.argv[4] = "EXIT";
-        mem_options.options_qtty = 5;
+        mem_options.options_qtty = 4;
         mem_options.argv[7] = "          Manual Mode";
         OptionsMenuReset();
 
@@ -87,12 +86,9 @@ resp_t ManualMenu (parameters_typedef * mem, sw_actions_t actions)
                 mem->program_inner_type = MANUAL_INNER_STROBE_MODE;
                 break;
 
-            case 4:
-                mem->program_inner_type = MANUAL_NO_INNER_MODE;
-                break;
-
             default:
                 resp = resp_continue;
+                mem->program_inner_type = MANUAL_NO_INNER_MODE;                
                 manual_menu_state = MANUAL_MENU_INIT;
                 break;
                 

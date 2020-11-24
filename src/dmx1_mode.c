@@ -146,7 +146,7 @@ void DMX1Mode (unsigned char * ch_val, sw_actions_t action)
         {
             dmx_menu_data_t dmx1_st;
             dmx1_st.dmx_first_chnl = &mem_conf.dmx_first_channel;
-            // dmx1_st.pchannels = ch;
+            dmx1_st.mode = DMX1_MODE;
             dmx1_st.pchannels = ch_val;
             if (dmx1_address_show)
                 dmx1_st.show_addres = 1;

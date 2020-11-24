@@ -5,11 +5,11 @@
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### COLORS_MENU.C #############################
+// #### LIMITS_MENU.C #############################
 //-------------------------------------------------
 
 // Includes --------------------------------------------------------------------
-#include "colors_menu.h"
+#include "limits_menu.h"
 #include "display_utils.h"
 
 #include <string.h>
@@ -18,27 +18,27 @@
 
 // Module Private Types Constants and Macros -----------------------------------
 typedef enum {
-    COLORS_MENU_INIT = 0,
-    COLORS_MENU_CHECK_OPTIONS,
-    COLORS_MENU_CHECK_OPTIONS_WAIT_FREE,    
-    COLORS_MENU_SELECTING,
-    COLORS_MENU_SELECTING_WAIT_FREE,    
-    COLORS_MENU_CHANGING,
-    COLORS_MENU_CHANGING_WAIT_FREE,    
-    COLORS_MENU_SELECTED,
-    COLORS_MENU_WAIT_FREE
+    LIMITS_MENU_INIT = 0,
+    LIMITS_MENU_CHECK_OPTIONS,
+    LIMITS_MENU_CHECK_OPTIONS_WAIT_FREE,    
+    LIMITS_MENU_SELECTING,
+    LIMITS_MENU_SELECTING_WAIT_FREE,    
+    LIMITS_MENU_CHANGING,
+    LIMITS_MENU_CHANGING_WAIT_FREE,    
+    LIMITS_MENU_SELECTED,
+    LIMITS_MENU_WAIT_FREE
     
-} colors_menu_state_e;
+} limits_menu_state_e;
 
 #define TT_SHOW    500
 #define TT_NOT_SHOW    500
 
 // variable re-use
-#define colors_selected    menu_selected
-#define colors_state    menu_state
-#define colors_need_display_update    menu_need_display_update
-#define colors_selection_show    menu_selection_show
-#define colors_menu_timer    menu_menu_timer
+#define limits_selected    menu_selected
+#define limits_state    menu_state
+#define limits_need_display_update    menu_need_display_update
+#define limits_selection_show    menu_selection_show
+#define limits_menu_timer    menu_menu_timer
 
 // Externals -------------------------------------------------------------------
 extern unsigned char menu_selected;
@@ -53,161 +53,132 @@ extern volatile unsigned short menu_menu_timer;
 
 
 // Module Private Functions ----------------------------------------------------
-void Colors_Selected_To_Line_Init (unsigned char, unsigned char *, unsigned char *, unsigned char *);
-void ColorsMenu_Options(unsigned char, unsigned char, char *);
+void Limits_Selected_To_Line_Init (unsigned char, unsigned char *, unsigned char *, unsigned char *);
+void LimitsMenu_Options(unsigned char, unsigned char, char *);
 
 
 // Module Funtions -------------------------------------------------------------
-void ColorsMenu_UpdateTimer (void)
+void LimitsMenu_UpdateTimer (void)
 {
-    if (colors_menu_timer)
-        colors_menu_timer--;
+    if (limits_menu_timer)
+        limits_menu_timer--;
 }
 
-void ColorsMenuReset (void)
+void LimitsMenuReset (void)
 {
-    colors_state = COLORS_MENU_INIT;
+    limits_state = LIMITS_MENU_INIT;
 }
 
 
-resp_t ColorsMenu (parameters_typedef * mem, sw_actions_t actions)
+unsigned char total_curr = 0;
+resp_t LimitsMenu (parameters_typedef * mem, sw_actions_t actions)
 {
     resp_t resp = resp_continue;
     char s_temp[ALL_LINE_LENGTH_NULL];
 
-    switch (colors_state)
+    switch (limits_state)
     {
-    case COLORS_MENU_INIT:
+    case LIMITS_MENU_INIT:
         Display_StartLines ();
         Display_ClearLines();
 
         Display_SetLine1("EXIT");
 
-        switch (mem->program_inner_type)
-        {
-        case MANUAL_INNER_FIXED_MODE:
-        case MASTER_INNER_FIXED_MODE:
-            return resp_finish;
-            break;
+        Display_SetLine3("LIMIT TOTAL CURRENT");
 
-        case MANUAL_INNER_SKIPPING_MODE:
-        case MASTER_INNER_SKIPPING_MODE:            
-            Display_SetLine3("COLORS SKIPPING");            
-            break;
-
-        case MANUAL_INNER_GRADUAL_MODE:
-        case MASTER_INNER_GRADUAL_MODE:
-            Display_SetLine3("COLORS GRADUAL");            
-            break;
-
-        case MANUAL_INNER_STROBE_MODE:
-        case MASTER_INNER_STROBE_MODE:            
-            Display_SetLine3("COLORS STROBE");            
-            break;
-
-        default:
-            return resp_finish;
-            break;
-
-        }
-
-        sprintf(s_temp, "SPEED: %d", mem->program_inner_type_speed);
+        total_curr = LimitsMenu_MapCurrentToInt(mem->max_power);
+        sprintf(s_temp, "CURRENT: %2d", total_curr);
         Display_SetLine4(s_temp);
 
-        if (mem->program_type == MANUAL_MODE)
-        {
-            Display_SetLine8("          Manual Mode");
-        }
+        Display_SetLine8("        Hardware Mode");
 
-        if (mem->program_type == MASTER_SLAVE_MODE)
-        {
-            Display_SetLine8("          Master Mode");
-        }
-
-        colors_need_display_update = 1;
-        colors_state++;
+        limits_need_display_update = 1;
+        limits_state++;
         break;
 
-    case COLORS_MENU_CHECK_OPTIONS:
+    case LIMITS_MENU_CHECK_OPTIONS:
         if (actions == selection_enter)
         {
-            colors_selected = 0;
-            ColorsMenu_Options(1, colors_selected, "EXIT");
+            limits_selected = 0;
+            LimitsMenu_Options(1, limits_selected, "EXIT");
 
-            colors_need_display_update = 1;
-            colors_state++;
+            limits_need_display_update = 1;
+            limits_state++;
         }
         break;
 
-    case COLORS_MENU_CHECK_OPTIONS_WAIT_FREE:
+    case LIMITS_MENU_CHECK_OPTIONS_WAIT_FREE:
         if (actions == do_nothing)
         {
-            colors_state++;
+            limits_state++;
         }
         break;
         
-    case COLORS_MENU_SELECTING:
+    case LIMITS_MENU_SELECTING:
         if (actions == selection_dwn)
         {
-            if (colors_selected > 0)
+            if (limits_selected > 0)
             {
                 // clean last option
-                sprintf(s_temp, "%d", mem->program_inner_type_speed);
-                ColorsMenu_Options(0, colors_selected, s_temp);
+                sprintf(s_temp, "%2d", total_curr);
+                // sprintf(s_temp, "%d", mem->program_inner_type_speed);
+                LimitsMenu_Options(0, limits_selected, s_temp);
 
-                colors_selected--;
+                limits_selected--;
 
                 // set new option
-                ColorsMenu_Options(1, colors_selected, "EXIT");
+                LimitsMenu_Options(1, limits_selected, "EXIT");
 
-                colors_need_display_update = 1;
+                limits_need_display_update = 1;
             }
         }
         
         if (actions == selection_up)
         {
-            if (colors_selected < 1)
+            if (limits_selected < 1)
             {
                 // clean last option
-                ColorsMenu_Options(0, colors_selected, "EXIT");
+                LimitsMenu_Options(0, limits_selected, "EXIT");
                 
-                colors_selected++;
+                limits_selected++;
 
-                // set new option                
-                sprintf(s_temp, "%d", mem->program_inner_type_speed);
-                ColorsMenu_Options(1, colors_selected, s_temp);
+                // set new option
+                sprintf(s_temp, "%2d", total_curr);
+                // sprintf(s_temp, "%d", mem->program_inner_type_speed);
+                LimitsMenu_Options(1, limits_selected, s_temp);
 
-                colors_need_display_update = 1;
+                limits_need_display_update = 1;
             }
         }
 
         if (actions == selection_enter)
         {
-            if (!colors_selected)
-                colors_state = COLORS_MENU_WAIT_FREE;
+            if (!limits_selected)
+                limits_state = LIMITS_MENU_WAIT_FREE;
             else
             {
-                sprintf(s_temp, "%d", mem->program_inner_type_speed);
-                ColorsMenu_Options(0, colors_selected, s_temp);
-                colors_state++;
+                sprintf(s_temp, "%2d", total_curr);
+                // sprintf(s_temp, "%d", mem->program_inner_type_speed);
+                LimitsMenu_Options(0, limits_selected, s_temp);
+                limits_state++;
             }
 
-            colors_need_display_update = 1;
+            limits_need_display_update = 1;
         }
         
         break;
 
-    case COLORS_MENU_SELECTING_WAIT_FREE:
+    case LIMITS_MENU_SELECTING_WAIT_FREE:
         if (actions == do_nothing)
         {
-            colors_selection_show = 1;
-            colors_menu_timer = TT_SHOW;            
-            colors_state++;
+            limits_selection_show = 1;
+            limits_menu_timer = TT_SHOW;            
+            limits_state++;
         }
         
         break;
 
-    case COLORS_MENU_CHANGING:
+    case LIMITS_MENU_CHANGING:
         if (actions == selection_dwn)
         {
             unsigned char * p_speed = &mem->program_inner_type_speed;
@@ -216,13 +187,13 @@ resp_t ColorsMenu (parameters_typedef * mem, sw_actions_t actions)
             {
                 *p_speed -= 1;
                 sprintf(s_temp, "%d", *p_speed);
-                ColorsMenu_Options(0, colors_selected, s_temp);
+                LimitsMenu_Options(0, limits_selected, s_temp);
 
                 resp = resp_change;
 
-                colors_selection_show = 1;
-                colors_menu_timer = TT_SHOW;
-                colors_need_display_update = 1;
+                limits_selection_show = 1;
+                limits_menu_timer = TT_SHOW;
+                limits_need_display_update = 1;
             }
         }
         
@@ -234,37 +205,37 @@ resp_t ColorsMenu (parameters_typedef * mem, sw_actions_t actions)
             {
                 *p_speed += 1;
                 sprintf(s_temp, "%d", *p_speed);
-                ColorsMenu_Options(0, colors_selected, s_temp);
+                LimitsMenu_Options(0, limits_selected, s_temp);
 
                 resp = resp_change;                
 
-                colors_selection_show = 1;
-                colors_menu_timer = TT_SHOW;
-                colors_need_display_update = 1;
+                limits_selection_show = 1;
+                limits_menu_timer = TT_SHOW;
+                limits_need_display_update = 1;
             }
         }
 
-        if (colors_selection_show)
+        if (limits_selection_show)
         {
-            if (!colors_menu_timer)
+            if (!limits_menu_timer)
             {
-                colors_selection_show = 0;
-                colors_menu_timer = TT_NOT_SHOW;
-                ColorsMenu_Options(0, colors_selected, "");
-                colors_need_display_update = 1;
+                limits_selection_show = 0;
+                limits_menu_timer = TT_NOT_SHOW;
+                LimitsMenu_Options(0, limits_selected, "");
+                limits_need_display_update = 1;
             }
         }
         else
         {
-            if (!colors_menu_timer)
+            if (!limits_menu_timer)
             {
                 unsigned char * p_speed = &mem->program_inner_type_speed;
                 
-                colors_selection_show = 1;
-                colors_menu_timer = TT_SHOW;
+                limits_selection_show = 1;
+                limits_menu_timer = TT_SHOW;
                 sprintf(s_temp, "%d", *p_speed);
-                ColorsMenu_Options(0, colors_selected, s_temp);
-                colors_need_display_update = 1;
+                LimitsMenu_Options(0, limits_selected, s_temp);
+                limits_need_display_update = 1;
             }
         }
 
@@ -273,42 +244,42 @@ resp_t ColorsMenu (parameters_typedef * mem, sw_actions_t actions)
             unsigned char * p_speed = &mem->program_inner_type_speed;            
 
             sprintf(s_temp, "%d", *p_speed);
-            ColorsMenu_Options(1, colors_selected, s_temp);
+            LimitsMenu_Options(1, limits_selected, s_temp);
             
-            colors_need_display_update = 1;
-            colors_state++;
+            limits_need_display_update = 1;
+            limits_state++;
         }        
         break;
 
-    case COLORS_MENU_CHANGING_WAIT_FREE:
+    case LIMITS_MENU_CHANGING_WAIT_FREE:
         if (actions == do_nothing)
         {
-            colors_state = COLORS_MENU_SELECTING;            
+            limits_state = LIMITS_MENU_SELECTING;            
 
         }
         break;
 
-    case COLORS_MENU_SELECTED:
-        colors_state++;
+    case LIMITS_MENU_SELECTED:
+        limits_state++;
         break;
 
-    case COLORS_MENU_WAIT_FREE:
+    case LIMITS_MENU_WAIT_FREE:
         if (actions == do_nothing)
         {
-            colors_state = COLORS_MENU_INIT;
+            limits_state = LIMITS_MENU_INIT;
             resp = resp_finish;            
         }
         break;
         
     default:
-        colors_state = COLORS_MENU_INIT;
+        limits_state = LIMITS_MENU_INIT;
         break;
     }
 
-    if (colors_need_display_update)
+    if (limits_need_display_update)
     {
         display_update();
-        colors_need_display_update = 0;
+        limits_need_display_update = 0;
     }
 
     return resp;
@@ -343,12 +314,12 @@ resp_t ColorsMenu (parameters_typedef * mem, sw_actions_t actions)
 // #define WIDTH_OP5    (6 * 3)
 // #define WIDTH_OP6    (6 * 3)
 
-void Colors_Selected_To_Line_Init (unsigned char colors,
+void Limits_Selected_To_Line_Init (unsigned char limits,
                                   unsigned char * line_x,
                                   unsigned char * line_y,
                                   unsigned char * line_w)
 {
-    switch (colors)
+    switch (limits)
     {
     case 0:
         *line_x = SRT_X_OP0;
@@ -395,14 +366,14 @@ void Colors_Selected_To_Line_Init (unsigned char colors,
 }
 
 
-void ColorsMenu_Options(unsigned char enable, unsigned char selection, char * s)
+void LimitsMenu_Options(unsigned char enable, unsigned char selection, char * s)
 {
     options_st options;
     unsigned char line_x = 0;
     unsigned char line_y = 0;
     unsigned char line_w = 0;
     
-    Colors_Selected_To_Line_Init(colors_selected, &line_x, &line_y, &line_w);
+    Limits_Selected_To_Line_Init(limits_selected, &line_x, &line_y, &line_w);
 
     if (enable)
         options.set_or_reset = 1;
@@ -416,6 +387,33 @@ void ColorsMenu_Options(unsigned char enable, unsigned char selection, char * s)
     options.s = s;
     Display_FloatingOptions(&options);
     
+}
+
+
+// total current is 255 * 6
+unsigned char LimitsMenu_MapCurrentToInt (unsigned short curr_val)
+{
+    unsigned int c_int = 0;
+
+    if (curr_val >= 1530)
+        return 12;
+    
+    c_int = curr_val * 12;
+    c_int >>= 8;
+    c_int = c_int / 6;
+
+    return (unsigned char) c_int;
+}
+
+
+unsigned short LimitsMenu_MapCurrentToDmx (unsigned char curr_val)
+{
+    unsigned int c_dmx = 0;
+
+    c_dmx = curr_val * 255;
+    c_dmx = c_dmx * 6;
+
+    return (unsigned short) c_dmx;
 }
 
 

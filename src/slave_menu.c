@@ -75,7 +75,7 @@ resp_t SlaveMenu (parameters_typedef * mem, sw_actions_t actions)
 
         Display_SetLine1("EXIT");
         Display_SetLine3("SLAVE RUNNING");
-        Display_SetLine8("    Master/Slave Menu");
+        Display_SetLine8("           Slave Mode");
 
         slave_need_display_update = 1;
         slave_state++;

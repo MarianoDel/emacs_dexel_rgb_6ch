@@ -375,7 +375,7 @@ int main(void)
                 //reception variables
                 Packet_Detected_Flag = 0;
                 DMX_channel_selected = mem_conf.dmx_first_channel;
-                DMX_channel_quantity = mem_conf.dmx_channel_quantity;
+                DMX_channel_quantity = 4 + mem_conf.dmx_channel_quantity;
 
                 //Mode Timeout enable
                 ptFTT = &DMX2Mode_UpdateTimers;
@@ -825,7 +825,7 @@ int main(void)
             break;
 
         case MAIN_ENTERING_HARDWARE_MENU:
-            HardwareMenuReset();
+            HardwareModeReset();
 
             SCREEN_ShowText2(
                 "Entering ",
@@ -857,7 +857,7 @@ int main(void)
             if (CheckCW())
                 action = selection_up;
 
-            resp = HardwareMenu(&mem_conf, action);
+            resp = HardwareMode(&mem_conf, action);
 
             if (resp == resp_need_to_save)
             {

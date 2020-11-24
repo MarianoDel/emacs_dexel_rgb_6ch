@@ -103,12 +103,12 @@ resp_t FixedMenu (parameters_typedef * mem, sw_actions_t actions)
         
         if (mem->program_type == MANUAL_MODE)
         {
-            Display_SetLine8("          Manual Menu");
+            Display_SetLine8("          Manual Mode");
         }
 
         if (mem->program_type == MASTER_SLAVE_MODE)
         {
-            Display_SetLine8("          Master Menu");
+            Display_SetLine8("          Master Mode");
         }
 
         fixed_need_display_update = 1;

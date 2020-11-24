@@ -42,6 +42,7 @@ typedef enum {
     
 } programs_type_e;
 
+
 //-- Memory Struct to Save --------------------
 typedef struct parameters {
 
@@ -65,12 +66,15 @@ typedef struct parameters {
     //-- For Fixed colors settings ----   //9
     unsigned char fixed_channels [6];    //15
 
+    //-- For Max Current Channels settings ----   //15
+    unsigned char max_current_channels [6];    //21
+    
     
     unsigned char dummy1;
-    // unsigned char dummy2;          
-    // unsigned char dummy3;       
+    unsigned char dummy2;          
+    unsigned char dummy3;       
 
-    //-- End of Struct check alignment ---- //16
+    //-- End of Struct check alignment ---- //24
 
 } parameters_typedef;
 

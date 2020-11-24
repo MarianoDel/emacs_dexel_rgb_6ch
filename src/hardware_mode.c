@@ -10,6 +10,7 @@
 
 // Includes --------------------------------------------------------------------
 #include "hardware_mode.h"
+#include "current_menu.h"
 #include "options_menu.h"
 
 #include <string.h>
@@ -64,13 +65,13 @@ resp_t HardwareMode (parameters_typedef * mem, sw_actions_t actions)
         mem_options.argv[5] = "EXIT";        
         mem_options.options_qtty = 6;
         mem_options.argv[7] = "        Hardware Mode";
-        OptionsModeReset();
+        OptionsMenuReset();
 
         hardware_mode_state++;
         break;
 
     case HARDWARE_MODE_SELECT:
-        resp = OptionsMode(&mem_options, actions);
+        resp = OptionsMenu(&mem_options, actions);
         
         if (resp == resp_finish)
         {
@@ -80,6 +81,7 @@ resp_t HardwareMode (parameters_typedef * mem, sw_actions_t actions)
             {
             case 0:
                 hardware_mode_state = HARDWARE_MODE_CURRENTS;
+                CurrentMenuReset();
                 break;
 
             case 1:
@@ -112,6 +114,13 @@ resp_t HardwareMode (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case HARDWARE_MODE_CURRENTS:
+        resp = CurrentMenu(mem, actions);
+
+        if (resp == resp_finish)
+        {
+            hardware_mode_state = HARDWARE_MODE_INIT;
+            resp = resp_continue;
+        }
         break;
 
     case HARDWARE_MODE_LIMIT:

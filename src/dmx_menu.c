@@ -11,6 +11,7 @@
 // Includes --------------------------------------------------------------------
 #include "dmx_menu.h"
 #include "display_utils.h"
+#include "parameters.h"
 #include "ssd1306_gfx.h"
 
 #include <stdio.h>
@@ -67,7 +68,13 @@ resp_t DMXModeMenu (dmx_menu_data_t * pmenu_data)
             strcpy(s_temp, "ADDR:");
         
         Display_SetLine1(s_temp);
-        Display_SetLine8("            DMX Mode");
+
+        if (pmenu_data->mode == DMX1_MODE)
+            Display_SetLine8("           DMX1 Mode");
+        else if (pmenu_data->mode == DMX2_MODE)
+            Display_SetLine8("           DMX2 Mode");
+        else
+            Display_SetLine8("            DMX Mode");
 
         dmx_mode_menu_state++;
         break;
