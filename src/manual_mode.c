@@ -41,8 +41,8 @@ typedef enum {
 extern unsigned char mode_state;
 extern volatile unsigned short mode_effect_timer;
 
-// Globals ---------------------------------------------------------------------
 
+// Globals ---------------------------------------------------------------------
 void (* ptFManualMenuTT ) (void) = NULL;
 
 

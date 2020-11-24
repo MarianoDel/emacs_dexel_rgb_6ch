@@ -42,12 +42,20 @@ extern options_menu_st mem_options;
 
 
 // Globals ---------------------------------------------------------------------
-
+void (* ptFHardMenuTT ) (void) = NULL;
 
 // Module Private Functions ----------------------------------------------------
 
 
 // Module Funtions -------------------------------------------------------------
+void HardwareMode_UpdateTimers (void)
+{
+    if (ptFHardMenuTT != NULL)
+        ptFHardMenuTT();
+    
+}
+
+
 void HardwareModeReset (void)
 {
     hardware_mode_state = HARDWARE_MODE_INIT;
@@ -85,36 +93,43 @@ resp_t HardwareMode (parameters_typedef * mem, sw_actions_t actions)
             {
             case 0:
                 hardware_mode_state = HARDWARE_MODE_CURRENTS;
+                ptFHardMenuTT = &CurrentMenu_UpdateTimer;
                 CurrentMenuReset();
                 break;
 
             case 1:
                 hardware_mode_state = HARDWARE_MODE_LIMIT;
+                ptFHardMenuTT = &LimitsMenu_UpdateTimer;                
                 LimitsMenuReset();
                 break;
 
             case 2:
                 hardware_mode_state = HARDWARE_MODE_CHANNELS;
+                ptFHardMenuTT = &ChannelsMenu_UpdateTimer;                
                 ChannelsMenuReset();
                 break;
 
             case 3:
                 hardware_mode_state = HARDWARE_MODE_TEMP;
+                ptFHardMenuTT = &TempMenu_UpdateTimer;                
                 TempMenuReset();
                 break;
 
             case 4:
                 hardware_mode_state = HARDWARE_MODE_VERSION;
+                ptFHardMenuTT = &VersionMenu_UpdateTimer;                
                 VersionMenuReset();
                 break;
 
             case 5:
                 hardware_mode_state = HARDWARE_MODE_INIT;
+                ptFHardMenuTT = NULL;
                 resp = resp_finish;
                 break;
                 
             default:
                 hardware_mode_state = HARDWARE_MODE_INIT;
+                ptFHardMenuTT = NULL;
                 break;
                 
             }
@@ -139,7 +154,6 @@ resp_t HardwareMode (parameters_typedef * mem, sw_actions_t actions)
             hardware_mode_state = HARDWARE_MODE_INIT;
             resp = resp_continue;
         }
-        
         break;
 
     case HARDWARE_MODE_CHANNELS:

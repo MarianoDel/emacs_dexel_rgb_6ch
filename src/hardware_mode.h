@@ -19,6 +19,7 @@
     
 
 // Module Exported Functions ---------------------------------------------------
+void HardwareMode_UpdateTimers (void);
 resp_t HardwareMode (parameters_typedef *, sw_actions_t);
 void HardwareModeReset (void);
 

@@ -827,6 +827,10 @@ int main(void)
         case MAIN_ENTERING_HARDWARE_MENU:
             HardwareModeReset();
 
+            //Mode Timeout enable
+            ptFTT = &HardwareMode_UpdateTimers;
+            
+
             SCREEN_ShowText2(
                 "Entering ",
                 " Hardware",
@@ -984,6 +988,7 @@ void TimingDelay_Decrement(void)
 
     //Timeouts for the modes with a function pointer
     // DMX1Mode_UpdateTimers();    //for DMX1_MODE
+    // DMX2Mode_UpdateTimers();    //for DMX2_MODE    
     // UpdateTimerModeMenu ();    //for the MainMenu
     // ManualMode_UpdateTimers ();    //for ManualMode
     // MasterSlaveMode_UpdateTimers ();    //for MasterSlave mode
