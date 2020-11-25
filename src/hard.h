@@ -85,18 +85,8 @@
 
 #define VOLTS_20    730
 #define VOLTS_50    1825
-//---- LM335 measurement Temperatures
-//37	2,572V
-//40	2,600V
-//45	2,650V
-//50	2,681V
-//55	2,725V
-//60	2,765V
-#define TEMP_IN_30		3226
-#define TEMP_IN_35		3279
-#define TEMP_IN_50		3434
-#define TEMP_IN_65		3591
-#define TEMP_DISCONECT		4000
+//---- LM335 measurement Temperatures (8.2mV/C in this circuit)
+#include "temperatures.h"
 
 
 //-- End Of Defines For Configuration ---------------

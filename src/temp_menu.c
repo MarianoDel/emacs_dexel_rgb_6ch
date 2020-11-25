@@ -11,6 +11,7 @@
 // Includes --------------------------------------------------------------------
 #include "temp_menu.h"
 #include "display_utils.h"
+#include "temperatures.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -55,6 +56,8 @@ extern volatile unsigned short menu_menu_timer;
 // Module Private Functions ----------------------------------------------------
 void Temp_Selected_To_Line_Init (unsigned char, unsigned char *, unsigned char *, unsigned char *);
 void TempMenu_Options(unsigned char, unsigned char, char *);
+unsigned char TempMenu_TempToDegrees (unsigned short temp);
+unsigned short TempMenu_DegreesToTemp (unsigned char deg);
 
 
 // Module Funtions -------------------------------------------------------------
@@ -86,7 +89,7 @@ resp_t TempMenu (parameters_typedef * mem, sw_actions_t actions)
 
         Display_SetLine3("TEMP PROTECTION");
 
-        total_temp = mem->temp_prot;
+        total_temp = TempMenu_TempToDegrees(mem->temp_prot);
         sprintf(s_temp, "TEMP: %2ddeg", total_temp);
         Display_SetLine4(s_temp);
 
@@ -178,7 +181,7 @@ resp_t TempMenu (parameters_typedef * mem, sw_actions_t actions)
     case TEMP_MENU_CHANGING:
         if (actions == selection_dwn)
         {
-            if (total_temp > 50)
+            if (total_temp > TEMP_DEG_MIN)
             {
                 total_temp -= 1;
                 sprintf(s_temp, "%2d", total_temp);
@@ -194,7 +197,7 @@ resp_t TempMenu (parameters_typedef * mem, sw_actions_t actions)
         
         if (actions == selection_up)
         {
-            if (total_temp < 85)
+            if (total_temp < TEMP_DEG_MAX)
             {
                 total_temp += 1;
                 sprintf(s_temp, "%2d", total_temp);
@@ -256,7 +259,7 @@ resp_t TempMenu (parameters_typedef * mem, sw_actions_t actions)
         if (actions == do_nothing)
         {
             // push values to memory
-            mem->dmx_channel_quantity = total_temp;
+            mem->temp_prot = TempMenu_DegreesToTemp(total_temp);
             
             temp_state = TEMP_MENU_INIT;
             resp = resp_finish;            
@@ -382,6 +385,47 @@ void TempMenu_Options(unsigned char enable, unsigned char selection, char * s)
 }
 
 
+unsigned char TempMenu_TempToDegrees (unsigned short temp)
+{
+    if (temp < TEMP_IN_MIN)
+        return TEMP_DEG_MIN;
 
+    if (temp > TEMP_IN_MAX)
+        return TEMP_DEG_MAX;
+    
+    unsigned int calc = 0;
+    unsigned short dx = TEMP_IN_MAX - TEMP_IN_MIN;
+    unsigned short dy = TEMP_DEG_MAX - TEMP_DEG_MIN;
+
+    calc = temp * dy;
+    calc = calc / dx;
+
+    calc = calc - TEMP_DEG_OFFSET;
+
+    return (unsigned char) calc;
+    
+}
+
+
+unsigned short TempMenu_DegreesToTemp (unsigned char deg)
+{
+    if (deg < TEMP_DEG_MIN)
+        return TEMP_IN_MIN;
+
+    if (deg > TEMP_DEG_MAX)
+        return TEMP_IN_MAX;
+    
+    unsigned int calc = 0;
+    unsigned short dx = TEMP_DEG_MAX - TEMP_DEG_MIN;
+    unsigned short dy = TEMP_IN_MAX - TEMP_IN_MIN;
+
+    calc = deg * dy;
+    calc = calc / dx;
+
+    calc = calc + TEMP_IN_OFFSET;
+
+    return (unsigned short) calc;
+    
+}
 
 //--- end of file ---//

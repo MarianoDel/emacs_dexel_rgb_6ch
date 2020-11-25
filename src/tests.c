@@ -39,6 +39,11 @@ unsigned char CurrentMenu_MapCurrentToInt (unsigned char curr_val);
 unsigned char LimitsMenu_MapCurrentToInt (unsigned short curr_val);
 unsigned short LimitsMenu_MapCurrentToDmx (unsigned char curr_val);
 
+//////////////////////////////////////
+// Functions to Test from Temp Menu //
+//////////////////////////////////////
+unsigned char TempMenu_TempToDegrees (unsigned short temp);
+unsigned short TempMenu_DegreesToTemp (unsigned char deg);
 
 /////////////////////////////////////////////
 // Tests applied to Current Menu Functions //
@@ -52,6 +57,13 @@ void Test_Current_Mapping_Fixed (unsigned char value);
 void Test_Limits_Mapping_Fixed (unsigned short value);
 void Test_Limits_Mapping (void);
 
+//////////////////////////////////////////
+// Tests applied to Temp Menu Functions //
+//////////////////////////////////////////
+void Test_Temp_Mapping_Fixed (unsigned short value);
+void Test_Temp_Mapping (void);
+
+
 // Module Functions ------------------------------------------------------------
 int main(int argc, char *argv[])
 {
@@ -62,15 +74,19 @@ int main(int argc, char *argv[])
     // Test_Current_Mapping_Fixed (1);
     // Test_Current_Mapping_Fixed (0);
 
-    Test_Limits_Mapping_Fixed (1402);
-    Test_Limits_Mapping_Fixed (512);
-    Test_Limits_Mapping_Fixed (511);
-    Test_Limits_Mapping_Fixed (510);    
-    Test_Limits_Mapping_Fixed (256);
-    Test_Limits_Mapping_Fixed (255);
+    // Test_Limits_Mapping_Fixed (1402);
+    // Test_Limits_Mapping_Fixed (512);
+    // Test_Limits_Mapping_Fixed (511);
+    // Test_Limits_Mapping_Fixed (510);    
+    // Test_Limits_Mapping_Fixed (256);
+    // Test_Limits_Mapping_Fixed (255);
+    // Test_Limits_Mapping ();
 
-    Test_Limits_Mapping ();
-    
+    Test_Temp_Mapping_Fixed(3434);    //50 deg
+    Test_Temp_Mapping_Fixed(3591);    //65 deg
+    Test_Temp_Mapping_Fixed(3642);    //70 deg
+    Test_Temp_Mapping_Fixed(3795);    //85 deg        
+    Test_Temp_Mapping();
 }
 
 
@@ -226,6 +242,94 @@ unsigned short LimitsMenu_MapCurrentToDmx (unsigned char curr_val)
     c_dmx += 1;    
 
     return (unsigned short) c_dmx;
+}
+
+
+//////////////////////////////////////////
+// Tests applied to Temp Menu Functions //
+//////////////////////////////////////////
+#include "temperatures.h"
+
+void Test_Temp_Mapping_Fixed (unsigned short value)
+{
+    unsigned char deg = 0;
+
+    deg = TempMenu_TempToDegrees(value);
+    printf("value: %d to degrees: %d\n", value, deg);
+
+    value = TempMenu_DegreesToTemp(deg);
+    printf("degrees: %d to value: %d\n", deg, value);
+}
+
+
+void Test_Temp_Mapping (void)
+{
+    unsigned short curr = 0;
+    
+
+    printf("\nMap Temp to Degrees\n");
+    for (int i = TEMP_IN_MIN; i <= TEMP_IN_MAX; i+= 10)
+    {
+        curr = TempMenu_TempToDegrees(i);
+        printf("value: %d degrees: %d \n", i, curr);
+    }
+
+    printf("\nMap Degrees to temp\n");
+    for (int i = TEMP_DEG_MIN; i <= TEMP_DEG_MAX; i++)
+    {
+        curr = TempMenu_DegreesToTemp(i);
+        printf("degrees: %d value: %d\n", i, curr);
+    }
+    
+}
+
+
+
+
+//////////////////////////////////////
+// Functions to Test from Temp Menu //
+//////////////////////////////////////
+unsigned char TempMenu_TempToDegrees (unsigned short temp)
+{
+    if (temp < TEMP_IN_MIN)
+        return TEMP_DEG_MIN;
+
+    if (temp > TEMP_IN_MAX)
+        return TEMP_DEG_MAX;
+    
+    unsigned int calc = 0;
+    unsigned short dx = TEMP_IN_MAX - TEMP_IN_MIN;
+    unsigned short dy = TEMP_DEG_MAX - TEMP_DEG_MIN;
+
+    calc = temp * dy;
+    calc = calc / dx;
+
+    calc = calc - TEMP_DEG_OFFSET;
+
+    return (unsigned char) calc;
+    
+}
+
+
+unsigned short TempMenu_DegreesToTemp (unsigned char deg)
+{
+    if (deg < TEMP_DEG_MIN)
+        return TEMP_IN_MIN;
+
+    if (deg > TEMP_DEG_MAX)
+        return TEMP_IN_MAX;
+    
+    unsigned int calc = 0;
+    unsigned short dx = TEMP_DEG_MAX - TEMP_DEG_MIN;
+    unsigned short dy = TEMP_IN_MAX - TEMP_IN_MIN;
+
+    calc = deg * dy;
+    calc = calc / dx;
+
+    calc = calc + TEMP_IN_OFFSET;
+
+    return (unsigned short) calc;
+    
 }
 
 //--- end of file ---//
