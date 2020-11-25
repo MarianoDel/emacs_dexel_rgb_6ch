@@ -10,6 +10,7 @@
 
 // Includes --------------------------------------------------------------------
 #include "version_menu.h"
+#include "version.h"
 #include "display_utils.h"
 
 #include <string.h>
@@ -34,8 +35,6 @@ typedef enum {
 #define version_selection_show    menu_selection_show
 #define version_menu_timer    menu_menu_timer
 
-#define HARD    "Hardware Version: 2.2"
-#define SOFT    "Software Version: 2.2"
 
 // Externals -------------------------------------------------------------------
 extern unsigned char menu_selected;
@@ -81,11 +80,13 @@ resp_t VersionMenu (parameters_typedef * mem, sw_actions_t actions)
 
         Display_SetLine1("EXIT");
 
-        sprintf(s_version, "%s", HARD);
-        Display_SetLine3(s_version);
+        Display_SetLine3("HARD VERSION:");
+        sprintf(s_version, " %s", HARD_VER);
+        Display_SetLine4(s_version);
 
-        sprintf(s_version, "%s", SOFT);
-        Display_SetLine5(s_version);
+        Display_SetLine5("SOFT VERSION:");
+        sprintf(s_version, " %s", SOFT_VER);
+        Display_SetLine6(s_version);
 
         Display_SetLine8("         Version Menu");        
 

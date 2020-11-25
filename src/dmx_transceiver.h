@@ -12,11 +12,6 @@
 #include "hard.h"
 
 //-- Mode Configurations ----------
-
-#ifdef WITH_GRANDMASTER
-#define DMX_WITH_GRANDMASTER
-#endif
-
 #ifdef WITH_BIDIRECTIONAL
 #define DMX_BIDIRECTIONAL
 #endif

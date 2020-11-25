@@ -16,16 +16,9 @@
 
 //-- Defines For Configuration -------------------
 //---- Configuration for Hardware Versions -------
-// #define HARDWARE_VERSION_1_0    //prototipos 2018 4 unidades
-// #define HARDWARE_VERSION_2_0    //prototipos 2020 4 unidades
-#define HARDWARE_VERSION_2_2    //prototipos 2020 4 unidades
-
-
-#define SOFTWARE_VERSION_1_0
-// #define SOFTWARE_VERSION_1_1
+#include "version.h"
 
 //---- Features Configuration ----------------
-// #define WITH_GRANDMASTER
 #define WITH_BIDIRECTIONAL
 // #define USE_FILTER_LENGHT_8
 #define USE_FILTER_LENGHT_16
@@ -104,29 +97,6 @@
 #define TEMP_IN_50		3434
 #define TEMP_IN_65		3591
 #define TEMP_DISCONECT		4000
-
-
-//--- Hardware Welcome Code ------------------//
-#ifdef HARDWARE_VERSION_2_2
-#define HARD "Hardware Version: 2.2\n"
-#endif
-#ifdef HARDWARE_VERSION_2_0
-#define HARD "Hardware Version: 2.0\n"
-#endif
-#ifdef HARDWARE_VERSION_1_0
-#define HARD "Hardware Version: 1.0\n"
-#endif
-
-//--- Software Welcome Code ------------------//
-#ifdef SOFTWARE_VERSION_1_2
-#define SOFT "Software Version: 1.2\n"
-#endif
-#ifdef SOFTWARE_VERSION_1_1
-#define SOFT "Software Version: 1.1\n"
-#endif
-#ifdef SOFTWARE_VERSION_1_0
-#define SOFT "Software Version: 1.0\n"
-#endif
 
 
 //-- End Of Defines For Configuration ---------------
