@@ -26,9 +26,21 @@ typedef struct {
 } dmx_menu_data_t;
 
 
+typedef struct {
+    unsigned short dmx_address;
+    unsigned char dmx_channels_qtty;
+    sw_actions_t actions;
+    unsigned short * timer;
+    unsigned char * address_show;
+    
+} dmx_menu_address_data_t;
+
+
 // Module Exported Functions ---------------------------------------------------
 void DMXModeMenuReset (void);
 resp_t DMXModeMenu (dmx_menu_data_t *);
+void DMXModeMenu_ChangeAddressReset (void);
+resp_t DMXModeMenu_ChangeAddress (dmx_menu_address_data_t *);
 
 
 #endif    /* _DMX_MENU_H_ */

@@ -456,15 +456,24 @@ int main(void)
             if (CheckSET() > SW_NO)
                 action = selection_enter;
             
-            DMX1Mode (ch_values, action);
-            
+            resp = DMX1Mode (ch_values, action);
+
+            if (resp == resp_change)
+            {
 #ifdef CHECK_FILTERS_BY_INT
-            for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
-                channels_values_int[n] = ch_values[n];
+                for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
+                    channels_values_int[n] = ch_values[n];
 
 #else
-            CheckFiltersAndOffsets (ch_values);
+                CheckFiltersAndOffsets (ch_values);
 #endif
+            }
+
+            if (resp == resp_need_to_save)
+            {
+                need_to_save_timer = 10000;
+                need_to_save = 1;
+            }
 
             if (CheckSET() > SW_MIN)
                 main_state = MAIN_ENTERING_MAIN_MENU;
@@ -512,15 +521,24 @@ int main(void)
             if (CheckSET() > SW_NO)
                 action = selection_enter;
             
-            DMX2Mode (ch_values, action);
-            
+            resp = DMX2Mode (ch_values, action);
+
+            if (resp == resp_change)
+            {
 #ifdef CHECK_FILTERS_BY_INT
-            for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
-                channels_values_int[n] = ch_values[n];
+                for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
+                    channels_values_int[n] = ch_values[n];
 
 #else
-            CheckFiltersAndOffsets (ch_values);
+                CheckFiltersAndOffsets (ch_values);                
 #endif
+            }
+
+            if (resp == resp_need_to_save)
+            {
+                need_to_save_timer = 10000;
+                need_to_save = 1;
+            }
 
             if (CheckSET() > SW_MIN)
                 main_state = MAIN_ENTERING_MAIN_MENU;

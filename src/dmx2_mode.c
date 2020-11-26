@@ -25,15 +25,6 @@ typedef enum {
 
 } dmx2_mode_e;
 
-typedef enum {
-    DO_NOTHING = 0,
-    TO_CHANGE_WAIT_FREE,
-    CHANGING,
-    TO_DO_NOTHING_WAIT_FREE,
-    TO_CLEAN_OUT
-    
-} dmx2_mode_address_e;
-
 
 #define DMX2_PKT_TYPE    0
 #define DMX2_DIM_CH    1
@@ -106,13 +97,9 @@ void DMX2ModeReset (void)
     dmx2_mode_state = DMX2_MODE_INIT;
 }
 
-#define TT_SHOW_ADDRESS    500
-#define CNTR_TO_OUT    16
 #define timer_address    dmx2_mode_enable_menu_timer
 unsigned char dmx2_address_show = 0;
-unsigned char dmx2_address_cntr_out = 0;
-dmx2_mode_address_e dmx2_mode_address = DO_NOTHING;
-void DMX2Mode (unsigned char * ch_val, sw_actions_t action)
+resp_t DMX2Mode (unsigned char * ch_val, sw_actions_t action)
 {
     resp_t resp = resp_continue;
     
@@ -122,8 +109,8 @@ void DMX2Mode (unsigned char * ch_val, sw_actions_t action)
     case DMX2_MODE_INIT:
         DMXModeMenuReset();
         mem_conf.program_inner_type = DMX2_INNER_DIMMER_MODE;
+        DMXModeMenu_ChangeAddressReset();
         dmx2_address_show = 1;
-        dmx2_mode_address = DO_NOTHING;
         dmx2_mode_state++;
         break;
 
@@ -171,15 +158,13 @@ void DMX2Mode (unsigned char * ch_val, sw_actions_t action)
                         mem_conf.program_inner_type = DMX2_INNER_DIMMER_MODE;
                     
                     DMX2Mode_ChannelsDimmer(ch_val, data11);
+                    dmx2_end_of_packet_update = 1;
+                    resp = resp_change;
+                    break;
                 }
 
                 dmx2_end_of_packet_update = 1;
-                    
             }
-
-#ifdef WITH_POWER_CONTROL
-            PWM_Set_PwrCtrl(ch_val, mem_conf.dmx_channel_quantity);
-#endif
         }
 
 #ifndef NO_DISPLAY_UPDATE_ON_DMX
@@ -216,9 +201,10 @@ void DMX2Mode (unsigned char * ch_val, sw_actions_t action)
         if (!dmx2_mode_effect_timer)
         {
             resp = Colors_Fading_Pallete (ch_val);
-            if (resp == resp_finish)
-                resp = resp_continue;
+            // if (resp == resp_finish)
+            //     resp = resp_continue;
 
+            resp = resp_change;
             dmx2_mode_effect_timer = 10 - mem_conf.program_inner_type_speed;
         }
         break;
@@ -227,9 +213,10 @@ void DMX2Mode (unsigned char * ch_val, sw_actions_t action)
         if (!dmx2_mode_effect_timer)
         {
             resp = Colors_Fading_Shuffle_Pallete (ch_val);
-            if (resp == resp_finish)
-                resp = resp_continue;
+            // if (resp == resp_finish)
+            //     resp = resp_continue;
 
+            resp = resp_change;
             dmx2_mode_effect_timer = 10 - mem_conf.program_inner_type_speed;
         }
         break;
@@ -238,9 +225,10 @@ void DMX2Mode (unsigned char * ch_val, sw_actions_t action)
         if (!dmx2_mode_effect_timer)
         {
             resp = Colors_Strobe_Pallete (ch_val);
-            if (resp == resp_finish)
-                resp = resp_continue;
+            // if (resp == resp_finish)
+            //     resp = resp_continue;
 
+            resp = resp_change;            
             dmx2_mode_effect_timer = 2000 - mem_conf.program_inner_type_speed * 200;
         }
         break;
@@ -250,97 +238,37 @@ void DMX2Mode (unsigned char * ch_val, sw_actions_t action)
         break;
     }
 
-    
-    //check for a change in address
-    switch (dmx2_mode_address)
+
+    //look for a change in address if we are not changing colors
+    if (resp != resp_change)
     {
-    case DO_NOTHING:
-        if (action == selection_enter)
-            dmx2_mode_address++;
-        
-        break;
+        dmx_menu_address_data_t dmx2_addr_st;
+        dmx2_addr_st.dmx_address = mem_conf.dmx_first_channel;
+        dmx2_addr_st.dmx_channels_qtty = mem_conf.dmx_channel_quantity + 4;
+        dmx2_addr_st.actions = action;
+        dmx2_addr_st.timer = &timer_address;
+        dmx2_addr_st.address_show = &dmx2_address_show;
+        resp = DMXModeMenu_ChangeAddress(&dmx2_addr_st);
 
-    case TO_CHANGE_WAIT_FREE:
-        if (action == do_nothing)
+        if (resp == resp_change)
         {
-            dmx2_address_cntr_out = CNTR_TO_OUT;
-            dmx2_mode_address++;
-        }
-        break;
-            
-    case CHANGING:
+            // change the DMX address
+            DMX_channel_selected = dmx2_addr_st.dmx_address;
+            mem_conf.dmx_first_channel = DMX_channel_selected;
         
-        if (action == selection_up)
-        {
-            if (DMX_channel_selected < (512 - 6))
-            {
-                DMX_channel_selected++;
-                mem_conf.dmx_first_channel = DMX_channel_selected;
-
-                //force the display change
-                dmx2_end_of_packet_update = 1;
-                dmx2_address_show = 1;
-                timer_address = TT_SHOW_ADDRESS;
-                dmx2_address_cntr_out = CNTR_TO_OUT;
-
-                // resp = resp_need_to_save;            
-            }
-        }
-        
-        if (action == selection_dwn)
-        {
-            if (DMX_channel_selected > 1)
-            {
-                DMX_channel_selected--;
-                mem_conf.dmx_first_channel = DMX_channel_selected;            
-
-                //force the display change
-                dmx2_end_of_packet_update = 1;
-                dmx2_address_show = 1;
-                timer_address = TT_SHOW_ADDRESS;
-                dmx2_address_cntr_out = CNTR_TO_OUT;                
-
-                // resp = resp_need_to_save;
-            }
+            // force a display update
+            dmx2_end_of_packet_update = 1;
         }
 
-        if (action == selection_enter)
-            dmx2_mode_address++;
-
-        if (!timer_address)
+        if (resp == resp_finish)
         {
-            if (dmx2_address_show)
-                dmx2_address_show = 0;
-            else
-                dmx2_address_show = 1;
-
-            if (dmx2_address_cntr_out)
-                dmx2_address_cntr_out--;
-            
-            timer_address = TT_SHOW_ADDRESS;
+            //end of changing ask for a memory save
+            resp = resp_need_to_save;
+        
         }
-
-        if (!dmx2_address_cntr_out)
-            dmx2_mode_address = TO_CLEAN_OUT;
-        
-        break;
-
-    case TO_DO_NOTHING_WAIT_FREE:
-        if (action == do_nothing)
-            dmx2_mode_address++;
-        
-        break;
-
-    case TO_CLEAN_OUT:
-        dmx2_address_show = 1;
-        dmx2_mode_address = DO_NOTHING;
-        break;
-        
-    default:
-        dmx2_mode_address = DO_NOTHING;
-        break;            
     }
-            
+    return resp;
+    
 }
             
 

@@ -24,14 +24,6 @@ typedef enum {
 
 } dmx1_mode_e;
 
-typedef enum {
-    DO_NOTHING = 0,
-    TO_CHANGE_WAIT_FREE,
-    CHANGING,
-    TO_DO_NOTHING_WAIT_FREE,
-    TO_CLEAN_OUT
-    
-} dmx1_mode_address_e;
 
 #define DMX1_PKT_TYPE    0
 #define DMX1_CLR_CH1    1
@@ -93,23 +85,19 @@ void DMX1ModeReset (void)
     dmx1_mode_state = DMX1_MODE_INIT;
 }
 
-#define TT_SHOW_ADDRESS    500
-#define CNTR_TO_OUT    16
+
 #define timer_address    dmx1_mode_enable_menu_timer
 unsigned char dmx1_address_show = 0;
-unsigned char dmx1_address_cntr_out = 0;
-dmx1_mode_address_e dmx1_mode_address = DO_NOTHING;
-void DMX1Mode (unsigned char * ch_val, sw_actions_t action)
+resp_t DMX1Mode (unsigned char * ch_val, sw_actions_t action)
 {
     resp_t resp = resp_continue;
-    
     
     switch (dmx1_mode_state)
     {
     case DMX1_MODE_INIT:
         DMXModeMenuReset();
+        DMXModeMenu_ChangeAddressReset();
         dmx1_address_show = 1;
-        dmx1_mode_address = DO_NOTHING;
         dmx1_mode_state++;
         break;
 
@@ -135,11 +123,9 @@ void DMX1Mode (unsigned char * ch_val, sw_actions_t action)
                 *(ch_val + 5) = data11[DMX1_CLR_CH6];
 
                 dmx1_end_of_packet_update = 1;
+                resp = resp_change;
+                break;
             }
-
-#ifdef WITH_POWER_CONTROL
-            PWM_Set_PwrCtrl(ch_val, mem_conf.dmx_channel_quantity);
-#endif
         }
 
 #ifndef NO_DISPLAY_UPDATE_ON_DMX
@@ -169,95 +155,32 @@ void DMX1Mode (unsigned char * ch_val, sw_actions_t action)
     }
 
     
-    //check for a change in address
-    switch (dmx1_mode_address)
+    //look for a change in address
+    dmx_menu_address_data_t dmx1_addr_st;
+    dmx1_addr_st.dmx_address = mem_conf.dmx_first_channel;
+    dmx1_addr_st.dmx_channels_qtty = mem_conf.dmx_channel_quantity;
+    dmx1_addr_st.actions = action;
+    dmx1_addr_st.timer = &timer_address;
+    dmx1_addr_st.address_show = &dmx1_address_show;
+    resp = DMXModeMenu_ChangeAddress(&dmx1_addr_st);
+
+    if (resp == resp_change)
     {
-    case DO_NOTHING:
-        if (action == selection_enter)
-            dmx1_mode_address++;
+        // change the DMX address
+        DMX_channel_selected = dmx1_addr_st.dmx_address;
+        mem_conf.dmx_first_channel = DMX_channel_selected;
         
-        break;
-
-    case TO_CHANGE_WAIT_FREE:
-        if (action == do_nothing)
-        {
-            dmx1_address_cntr_out = CNTR_TO_OUT;
-            dmx1_mode_address++;
-        }
-        break;
-            
-    case CHANGING:
-        
-        if (action == selection_up)
-        {
-            if (DMX_channel_selected < (512 - 6))
-            {
-                DMX_channel_selected++;
-                mem_conf.dmx_first_channel = DMX_channel_selected;
-
-                //force the display change
-                dmx1_end_of_packet_update = 1;
-                dmx1_address_show = 1;
-                timer_address = TT_SHOW_ADDRESS;
-                dmx1_address_cntr_out = CNTR_TO_OUT;
-
-                // resp = resp_need_to_save;            
-            }
-        }
-        
-        if (action == selection_dwn)
-        {
-            if (DMX_channel_selected > 1)
-            {
-                DMX_channel_selected--;
-                mem_conf.dmx_first_channel = DMX_channel_selected;            
-
-                //force the display change
-                dmx1_end_of_packet_update = 1;
-                dmx1_address_show = 1;
-                timer_address = TT_SHOW_ADDRESS;
-                dmx1_address_cntr_out = CNTR_TO_OUT;                
-
-                // resp = resp_need_to_save;
-            }
-        }
-
-        if (action == selection_enter)
-            dmx1_mode_address++;
-
-        if (!timer_address)
-        {
-            if (dmx1_address_show)
-                dmx1_address_show = 0;
-            else
-                dmx1_address_show = 1;
-
-            if (dmx1_address_cntr_out)
-                dmx1_address_cntr_out--;
-            
-            timer_address = TT_SHOW_ADDRESS;
-        }
-
-        if (!dmx1_address_cntr_out)
-            dmx1_mode_address = TO_CLEAN_OUT;
-        
-        break;
-
-    case TO_DO_NOTHING_WAIT_FREE:
-        if (action == do_nothing)
-            dmx1_mode_address++;
-        
-        break;
-
-    case TO_CLEAN_OUT:
-        dmx1_address_show = 1;
-        dmx1_mode_address = DO_NOTHING;
-        break;
-        
-    default:
-        dmx1_mode_address = DO_NOTHING;
-        break;            
+        // force a display update
+        dmx1_end_of_packet_update = 1;
     }
+
+    if (resp == resp_finish)
+    {
+        //end of changing ask for a memory save
+        resp = resp_need_to_save;
+        
+    }
+    return resp;
             
 }
             
