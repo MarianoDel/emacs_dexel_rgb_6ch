@@ -80,13 +80,11 @@ resp_t VersionMenu (parameters_typedef * mem, sw_actions_t actions)
 
         Display_SetLine1("EXIT");
 
-        Display_SetLine3("HARD VERSION:");
-        sprintf(s_version, " %s", HARD_VER);
-        Display_SetLine4(s_version);
+        sprintf(s_version, "HARD VERSION: %s", HARD_VER);
+        Display_SetLine3(s_version);
 
-        Display_SetLine5("SOFT VERSION:");
-        sprintf(s_version, " %s", SOFT_VER);
-        Display_SetLine6(s_version);
+        sprintf(s_version, "SOFT VERSION: %s", SOFT_VER);
+        Display_SetLine5(s_version);
 
         Display_SetLine8("         Version Menu");        
 
