@@ -70,10 +70,10 @@ typedef struct parameters {
     unsigned char max_current_channels [6];    //21
     
     //-- For Temperature Protection ----    
-    unsigned char temp_prot;        //22
+    unsigned short temp_prot;        //23
     
     unsigned char dummy1;
-    unsigned char dummy2;          
+    // unsigned char dummy2;          
     // unsigned char dummy3;       
 
     //-- End of Struct check alignment ---- //24

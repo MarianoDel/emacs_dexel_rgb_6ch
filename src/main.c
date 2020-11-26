@@ -131,11 +131,8 @@ ma16_u16_data_obj_t st_sp6;
 volatile unsigned short timer_standby = 0;
 volatile unsigned short wait_ms_var = 0;
 volatile unsigned short need_to_save_timer = 0;
-#ifdef USE_OVERTEMP_PROT
-volatile unsigned char temp_sample_timer = 0;
-#endif
-#if (defined USE_OVERVOLTAGE_PROT) || (defined USE_UNDERVOLTAGE_PROT)
-volatile unsigned char voltage_sample_timer = 0;
+#if (defined USE_OVERTEMP_PROT) || (defined USE_VOLTAGE_PROT)
+volatile unsigned char protections_sample_timer = 0;
 #endif
 // -- for the timeouts in the modes ----
 void (* ptFTT ) (void) = NULL;
@@ -151,6 +148,7 @@ void CheckFiltersAndOffsets (unsigned char *);
 void CheckFiltersAndOffsets_NoTimed (volatile unsigned char *, unsigned char);
 void UpdateFiltersTest_Reset (void);
 void SysTickError (void);
+unsigned char CheckTempReconnet (unsigned short, unsigned short);
 
 
 // Module Functions ------------------------------------------------------------
@@ -270,6 +268,15 @@ int main(void)
     {
         //memory empty use some defaults
         ResetMode_Factory_Defaults(&mem_conf);
+
+        //hardware defaults
+        mem_conf.temp_prot = TEMP_IN_70;    //70 degrees
+
+        for (unsigned char i = 0; i < 6; i++)
+            mem_conf.max_current_channels[i] = 255;
+
+        mem_conf.max_power = 1530;
+        mem_conf.dmx_channel_quantity = 6;
     }
 
     //--- Test for ADC Channels ---//
@@ -679,12 +686,11 @@ int main(void)
             break;
 
         case MAIN_IN_OVERTEMP_B:
-            if (Temp_Channel < TEMP_IN_50)
+            if (CheckTempReconnet (Temp_Channel, mem_conf.temp_prot))
             {
-                //reconecto
+                //reconnect
                 main_state = MAIN_HARDWARE_INIT;
             }
-            
             break;
 
         case MAIN_IN_OVERVOLTAGE:
@@ -716,7 +722,7 @@ int main(void)
         case MAIN_IN_OVERVOLTAGE_B:
             if (V_Sense_48V < MAX_PWR_SUPPLY)
             {
-                //reconecto
+                //reconnect
                 main_state = MAIN_HARDWARE_INIT;
             }
             
@@ -863,23 +869,15 @@ int main(void)
 
             resp = HardwareMode(&mem_conf, action);
 
-            if (resp == resp_need_to_save)
+            if ((resp == resp_need_to_save) ||
+                (resp == resp_finish))
             {
-#ifdef SAVE_FLASH_IMMEDIATE
-                need_to_save_timer = 0;
-#endif
-#ifdef SAVE_FLASH_WITH_TIMEOUT
-                need_to_save_timer = 10000;
-#endif
+                //hardware config its saved instantly
                 need_to_save = 1;
                 main_state = MAIN_HARDWARE_INIT;
             }
-            
-            if (resp == resp_finish)
-                main_state = MAIN_HARDWARE_INIT;
 
             UpdateEncoder();
-            
             break;
             
         default:
@@ -894,11 +892,12 @@ int main(void)
         display_update_int_state_machine();
 
         
-#if (defined USE_OVERVOLTAGE_PROT) || (defined USE_UNDERVOLTAGE_PROT)
-        if (!voltage_sample_timer)
+#if (defined USE_VOLTAGE_PROT) || (defined USE_OVERTEMP_PROT)
+        if (!protections_sample_timer)
         {
-            voltage_sample_timer = 10;	//tomo muestra cada 10ms
+            protections_sample_timer = 10;    //samples time are 10ms
 
+#ifdef USE_VOLTAGE_PROT
             if ((main_state != MAIN_IN_OVERVOLTAGE) &&
                 (main_state != MAIN_IN_OVERVOLTAGE_B) &&
                 (main_state != MAIN_IN_UNDERVOLTAGE_B) &&
@@ -909,31 +908,28 @@ int main(void)
                 else if (V_Sense_48V < MIN_PWR_SUPPLY)
                     main_state = MAIN_IN_UNDERVOLTAGE;
             }
-        }
 #endif
-        
-        //sensado de temperatura
+            
 #ifdef USE_OVERTEMP_PROT
-        if (!temp_sample_timer)
-        {
-            temp_sample_timer = 10;	//tomo muestra cada 10ms
-
-            if ((main_state != MAIN_IN_OVERTEMP) && (main_state != MAIN_IN_OVERTEMP_B))
+            if ((main_state != MAIN_IN_OVERTEMP) &&
+                (main_state != MAIN_IN_OVERTEMP_B))
             {
-                if (Temp_Channel > TEMP_IN_65)
+                if (Temp_Channel > mem_conf.temp_prot)
                 {
-                    //corto los leds	ver si habia DMX cortar y poner nuevamente
+                    //stop LEDs outputs
                     main_state = MAIN_IN_OVERTEMP;
                 }
+#ifndef USE_CTRL_FAN_FOR_INT_FILTERS_UPDATE
                 else if (Temp_Channel > TEMP_IN_35)
                     CTRL_FAN_ON;
-#ifndef USE_CTRL_FAN_FOR_INT_FILTERS_UPDATE
                 else if (Temp_Channel < TEMP_IN_30)
                     CTRL_FAN_OFF;
 #endif
             }
+#endif    //USE_OVERTEMP_PROT
         }
 #endif
+        
 
         //grabado de memoria luego de configuracion
         if ((need_to_save) && (!need_to_save_timer))
@@ -970,14 +966,9 @@ void TimingDelay_Decrement(void)
     if (need_to_save_timer)
         need_to_save_timer--;
 
-#ifdef USE_OVERTEMP_PROT
-    if (temp_sample_timer)
-        temp_sample_timer--;
-#endif
-
-#if (defined USE_OVERVOLTAGE_PROT) || (defined USE_UNDERVOLTAGE_PROT)
-    if (voltage_sample_timer)
-        voltage_sample_timer--;
+#if (defined USE_VOLTAGE_PROT) || (defined USE_OVERTEMP_PROT)
+    if (protections_sample_timer)
+        protections_sample_timer--;
 #endif
 
     //For dmx_transceiver
@@ -1264,7 +1255,19 @@ void SysTickError (void)
     }
 }
 
+unsigned char CheckTempReconnet (unsigned short temp_sample, unsigned short temp_prot)
+{
+    unsigned char reconnet = 0;
+    unsigned int calc = 0;
 
+    calc = temp_prot * 8;
+    calc = calc / 10;
+
+    if (temp_sample < calc)
+        reconnet = 1;
+
+    return reconnet;
+}
 
 //--- end of file ---//
 

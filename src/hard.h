@@ -27,8 +27,8 @@
 #define USE_OVERTEMP_PROT
 
 //--- Check the voltage sensor ---//
-#define USE_OVERVOLTAGE_PROT
-#define USE_UNDERVOLTAGE_PROT
+#define USE_VOLTAGE_PROT
+
 
 // --- How to control the PWM generation, select only one --- //
 #define USE_PWM_DIRECT    //mapea lo que llega en el dmx al PWM directo

@@ -86,6 +86,7 @@ resp_t ChannelsMenu (parameters_typedef * mem, sw_actions_t actions)
 
         Display_SetLine3("USED CHANNELS");
 
+        total_channels = mem->dmx_channel_quantity;
         sprintf(s_temp, "TOTAL: %d", total_channels);
         Display_SetLine4(s_temp);
 
