@@ -122,7 +122,8 @@ void DMX2Mode (unsigned char * ch_val, sw_actions_t action)
     case DMX2_MODE_INIT:
         DMXModeMenuReset();
         mem_conf.program_inner_type = DMX2_INNER_DIMMER_MODE;
-        dmx2_address_show = 1;        
+        dmx2_address_show = 1;
+        dmx2_mode_address = DO_NOTHING;
         dmx2_mode_state++;
         break;
 

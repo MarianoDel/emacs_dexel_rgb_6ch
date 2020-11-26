@@ -107,10 +107,10 @@ void DmxInt_Serial_Handler_Receiver (unsigned char dummy)
     }
 }
 
-//el paquete empieza desde idle (valor alto) llendo a 0
-//el tiempo en 0 es la senial break (de 87us a 4800us) es valido
-//el tiempo en 1 es la senial mark (de 8us aprox.) no se controla el tiempo
-//despues ya llegan los bytes serie a 250Kbits y pueden tener tiempo idle entre ellos
+//the dmx line is high when idle, going to zero on the start of packet
+//the time that remains in zero is the signal break (87us to 4800us) are valid times
+//the time in one is the signal mark (8us aprox.) this time its not checked
+//after that the serial bytes start to comming on 250Kbits, can have idle times between them
 void DmxInt_Break_Handler (void)
 {
     unsigned short aux;

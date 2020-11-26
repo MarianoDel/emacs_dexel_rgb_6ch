@@ -109,6 +109,7 @@ void DMX1Mode (unsigned char * ch_val, sw_actions_t action)
     case DMX1_MODE_INIT:
         DMXModeMenuReset();
         dmx1_address_show = 1;
+        dmx1_mode_address = DO_NOTHING;
         dmx1_mode_state++;
         break;
 

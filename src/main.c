@@ -980,11 +980,12 @@ void TimingDelay_Decrement(void)
         voltage_sample_timer--;
 #endif
 
-    //TODO: pasar esto al modo master/slave
+    //For dmx_transceiver
+    //after a start of pck rx, leave 20ms the int in off
     if (dmx_timeout_timer)
         dmx_timeout_timer--;
     else
-        EXTIOn();    //dejo 20ms del paquete sin INT
+        EXTIOn();    
 
     //Timeouts for the modes with a function pointer
     // DMX1Mode_UpdateTimers();    //for DMX1_MODE
@@ -992,6 +993,7 @@ void TimingDelay_Decrement(void)
     // UpdateTimerModeMenu ();    //for the MainMenu
     // ManualMode_UpdateTimers ();    //for ManualMode
     // MasterSlaveMode_UpdateTimers ();    //for MasterSlave mode
+    // HardwareMode_UpdateTimers();    //for Hardware mode
     if (ptFTT != NULL)
         ptFTT();
     
