@@ -155,30 +155,33 @@ resp_t DMX1Mode (unsigned char * ch_val, sw_actions_t action)
     }
 
     
-    //look for a change in address
-    dmx_menu_address_data_t dmx1_addr_st;
-    dmx1_addr_st.dmx_address = mem_conf.dmx_first_channel;
-    dmx1_addr_st.dmx_channels_qtty = mem_conf.dmx_channel_quantity;
-    dmx1_addr_st.actions = action;
-    dmx1_addr_st.timer = &timer_address;
-    dmx1_addr_st.address_show = &dmx1_address_show;
-    resp = DMXModeMenu_ChangeAddress(&dmx1_addr_st);
-
-    if (resp == resp_change)
+    //look for a change in address if we are not changing colors
+    if (resp != resp_change)
     {
-        // change the DMX address
-        DMX_channel_selected = dmx1_addr_st.dmx_address;
-        mem_conf.dmx_first_channel = DMX_channel_selected;
-        
-        // force a display update
-        dmx1_end_of_packet_update = 1;
-    }
+        dmx_menu_address_data_t dmx1_addr_st;
+        dmx1_addr_st.dmx_address = mem_conf.dmx_first_channel;
+        dmx1_addr_st.dmx_channels_qtty = mem_conf.dmx_channel_quantity;
+        dmx1_addr_st.actions = action;
+        dmx1_addr_st.timer = &timer_address;
+        dmx1_addr_st.address_show = &dmx1_address_show;
+        resp = DMXModeMenu_ChangeAddress(&dmx1_addr_st);
 
-    if (resp == resp_finish)
-    {
-        //end of changing ask for a memory save
-        resp = resp_need_to_save;
+        if (resp == resp_change)
+        {
+            // change the DMX address
+            DMX_channel_selected = dmx1_addr_st.dmx_address;
+            mem_conf.dmx_first_channel = DMX_channel_selected;
         
+            // force a display update
+            dmx1_end_of_packet_update = 1;
+        }
+
+        if (resp == resp_finish)
+        {
+            //end of changing ask for a memory save
+            resp = resp_need_to_save;
+        
+        }
     }
     return resp;
             

@@ -127,7 +127,10 @@ resp_t MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
         if (resp == resp_finish)
         {
             if (mem->program_inner_type == MASTER_INNER_SLAVE)
+            {
                 master_slave_state = MASTER_SLAVE_MODE_INIT;
+                resp = resp_need_to_save;
+            }
             else
             {
                 MasterMenuReset();
@@ -140,35 +143,54 @@ resp_t MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
         resp = MasterMenu (mem, actions);
 
         if (resp == resp_finish)
+        {
             master_slave_state = MASTER_SLAVE_MODE_INIT;
-
+            resp = resp_need_to_save;
+        }
         break;
         
     case MASTER_SLAVE_MODE_IN_COLORS_FIXED:
         
-        //resp_change goes strait up, resp_finish end of this mode
-        resp = FixedMenu(mem, actions);    
+        //resp_change translates to resp_change_all_up in this mode, resp_finish end of this mode
+        resp = FixedMenu(mem, actions);
+
+        if (resp == resp_change)
+            resp = resp_change_all_up;
 
         if (resp == resp_finish)
         {
             mem->program_inner_type = MASTER_NO_INNER_MODE;
             master_slave_state = MASTER_SLAVE_MODE_INIT;
-            resp = resp_continue;
+
+            //colors reset
+            for (unsigned char i = 0; i < 6; i++)
+                mem->fixed_channels[i] = 0;
+            
+            resp = resp_change;
         }
         break;
 
     case MASTER_SLAVE_MODE_IN_COLORS_SKIPPING:
 
-        //resp_change do nothing, resp_finish end of this mode
+        //resp_change do nothing, resp_finish end of this mode, resp_need_to_save goes straight up
         resp = ColorsMenu (mem, actions);
 
         if (resp == resp_finish)
         {
             mem->program_inner_type = MASTER_NO_INNER_MODE;
             master_slave_state = MASTER_SLAVE_MODE_INIT;
-            resp = resp_continue;
+
+            //colors reset
+            for (unsigned char i = 0; i < 6; i++)
+                mem->fixed_channels[i] = 0;
+            
+            resp = resp_change;
             break;
         }
+
+        // speed change, save it
+        if (resp == resp_need_to_save)
+            break;
 
         if (!master_effect_timer)
         {
@@ -185,17 +207,26 @@ resp_t MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
 
     case MASTER_SLAVE_MODE_IN_COLORS_GRADUAL:
 
-        //resp_change do nothing, resp_finish end of this mode
+        //resp_change do nothing, resp_finish end of this mode, resp_need_to_save goes straight up
         resp = ColorsMenu (mem, actions);
 
         if (resp == resp_finish)
         {
             mem->program_inner_type = MASTER_NO_INNER_MODE;
             master_slave_state = MASTER_SLAVE_MODE_INIT;
-            resp = resp_continue;
+
+            //colors reset
+            for (unsigned char i = 0; i < 6; i++)
+                mem->fixed_channels[i] = 0;
+            
+            resp = resp_change;
             break;
         }
 
+        // speed change, save it
+        if (resp == resp_need_to_save)
+            break;
+        
         if (!master_effect_timer)
         {
             ch_val = mem->fixed_channels;
@@ -212,16 +243,25 @@ resp_t MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
 
     case MASTER_SLAVE_MODE_IN_COLORS_STROBE:
 
-        //resp_change do nothing, resp_finish end of this mode
+        //resp_change do nothing, resp_finish end of this mode, resp_need_to_save goes straight up
         resp = ColorsMenu (mem, actions);
 
         if (resp == resp_finish)
         {
             mem->program_inner_type = MASTER_NO_INNER_MODE;
             master_slave_state = MASTER_SLAVE_MODE_INIT;
-            resp = resp_continue;
+
+            //colors reset
+            for (unsigned char i = 0; i < 6; i++)
+                mem->fixed_channels[i] = 0;
+            
+            resp = resp_change;
             break;
         }
+
+        // speed change, save it
+        if (resp == resp_need_to_save)
+            break;
 
         if (!master_effect_timer)
         {
@@ -234,8 +274,6 @@ resp_t MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
             master_effect_timer = 2000 - mem->program_inner_type_speed * 200;
             resp = resp_change;
         }
-        
-
         break;
 
     case MASTER_SLAVE_MODE_IN_SLAVE:
@@ -245,7 +283,12 @@ resp_t MasterSlaveMode (parameters_typedef * mem, sw_actions_t actions)
         {
             mem->program_inner_type = MASTER_NO_INNER_MODE;
             master_slave_state = MASTER_SLAVE_MODE_INIT;
-            resp = resp_continue;
+
+            //colors reset
+            for (unsigned char i = 0; i < 6; i++)
+                mem->fixed_channels[i] = 0;
+            
+            resp = resp_change;
         }
         break;
         

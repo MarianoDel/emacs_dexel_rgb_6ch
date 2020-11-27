@@ -284,7 +284,7 @@ resp_t ColorsMenu (parameters_typedef * mem, sw_actions_t actions)
         if (actions == do_nothing)
         {
             colors_state = COLORS_MENU_SELECTING;            
-
+            resp = resp_need_to_save;
         }
         break;
 

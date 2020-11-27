@@ -113,35 +113,54 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
         resp = ManualMenu (mem, actions);
 
         if (resp == resp_finish)
+        {
             manual_state = MANUAL_MODE_INIT;
-
+            resp = resp_need_to_save;
+        }
         break;
         
     case MANUAL_MODE_IN_COLORS_FIXED:
         
-        //resp_change goes strait up, resp_finish end of this mode
-        resp = FixedMenu(mem, actions);    
+        //resp_change translates to resp_change_all_up in this mode, resp_finish end of this mode
+        resp = FixedMenu(mem, actions);
+
+        if (resp == resp_change)
+            resp = resp_change_all_up;
 
         if (resp == resp_finish)
         {
             mem->program_inner_type = MANUAL_NO_INNER_MODE;
             manual_state = MANUAL_MODE_INIT;
-            resp = resp_continue;
+
+            //colors reset
+            for (unsigned char i = 0; i < 6; i++)
+                mem->fixed_channels[i] = 0;
+            
+            resp = resp_change;
         }
         break;
 
     case MANUAL_MODE_IN_COLORS_SKIPPING:
 
-        //resp_change do nothing, resp_finish end of this mode
+        //resp_change do nothing, resp_finish end of this mode, resp_need_to_save goes straight up
         resp = ColorsMenu (mem, actions);
 
         if (resp == resp_finish)
         {
             mem->program_inner_type = MANUAL_NO_INNER_MODE;
             manual_state = MANUAL_MODE_INIT;
-            resp = resp_continue;
+
+            //colors reset
+            for (unsigned char i = 0; i < 6; i++)
+                mem->fixed_channels[i] = 0;
+            
+            resp = resp_change;
             break;
         }
+
+        // speed change, save it
+        if (resp == resp_need_to_save)
+            break;
 
         if (!manual_effect_timer)
         {
@@ -158,16 +177,25 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
 
     case MANUAL_MODE_IN_COLORS_GRADUAL:
 
-        //resp_change do nothing, resp_finish end of this mode
+        //resp_change do nothing, resp_finish end of this mode, resp_need_to_save goes straight up
         resp = ColorsMenu (mem, actions);
 
         if (resp == resp_finish)
         {
             mem->program_inner_type = MANUAL_NO_INNER_MODE;
             manual_state = MANUAL_MODE_INIT;
-            resp = resp_continue;
+
+            //colors reset
+            for (unsigned char i = 0; i < 6; i++)
+                mem->fixed_channels[i] = 0;
+            
+            resp = resp_change;
             break;
         }
+
+        // speed change, save it
+        if (resp == resp_need_to_save)
+            break;
 
         if (!manual_effect_timer)
         {
@@ -185,16 +213,25 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
 
     case MANUAL_MODE_IN_COLORS_STROBE:
 
-        //resp_change do nothing, resp_finish end of this mode
+        //resp_change do nothing, resp_finish end of this mode, resp_need_to_save goes straight up
         resp = ColorsMenu (mem, actions);
 
         if (resp == resp_finish)
         {
             mem->program_inner_type = MANUAL_NO_INNER_MODE;
             manual_state = MANUAL_MODE_INIT;
-            resp = resp_continue;
+
+            //colors reset
+            for (unsigned char i = 0; i < 6; i++)
+                mem->fixed_channels[i] = 0;
+            
+            resp = resp_change;
             break;
         }
+
+        // speed change, save it
+        if (resp == resp_need_to_save)
+            break;
 
         if (!manual_effect_timer)
         {
@@ -207,8 +244,6 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
             manual_effect_timer = 2000 - mem->program_inner_type_speed * 200;
             resp = resp_change;
         }
-        
-
         break;
         
     default:

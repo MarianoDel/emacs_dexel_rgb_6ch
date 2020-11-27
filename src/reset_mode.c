@@ -72,6 +72,7 @@ resp_t ResetMode (parameters_typedef * mem, sw_actions_t actions)
 
             case 1:
                 ResetMode_Factory_Defaults(mem);
+                resp = resp_need_to_save;
                 break;
 
             default:

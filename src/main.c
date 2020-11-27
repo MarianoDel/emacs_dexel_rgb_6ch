@@ -573,43 +573,6 @@ int main(void)
             
             break;
             
-        case MAIN_IN_MANUAL_MODE:
-            action = do_nothing;
-
-            // Check encoder first
-            if (CheckCCW())
-                action = selection_dwn;
-
-            if (CheckCW())
-                action = selection_up;
-
-            if (CheckSET() > SW_NO)
-                action = selection_enter;
-
-            resp = ManualMode (&mem_conf, action);
-
-            if (resp == resp_change)
-            {
-                for (unsigned char n = 0; n < sizeof(ch_values); n++)
-                    ch_values[n] = mem_conf.fixed_channels[n];
-
-#ifdef CHECK_FILTERS_BY_INT
-                for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
-                    channels_values_int[n] = ch_values[n];
-
-#else
-                CheckFiltersAndOffsets (ch_values);
-#endif
-            }
-
-            if (CheckSET() > SW_MIN)
-                main_state = MAIN_ENTERING_MAIN_MENU;
-
-            UpdateEncoder();
-            
-            break;
-
-
         case MAIN_IN_MASTER_SLAVE_MODE:
             action = do_nothing;
 
@@ -625,7 +588,8 @@ int main(void)
 
             resp = MasterSlaveMode (&mem_conf, action);
 
-            if (resp == resp_change)
+            if ((resp == resp_change) ||
+                (resp == resp_change_all_up))    //fixed mode save and change
             {
                 for (unsigned char n = 0; n < sizeof(ch_values); n++)
                     ch_values[n] = mem_conf.fixed_channels[n];
@@ -637,6 +601,14 @@ int main(void)
 #else
                 CheckFiltersAndOffsets (ch_values);
 #endif
+                if (resp == resp_change_all_up)
+                    resp = resp_need_to_save;                
+            }
+
+            if (resp == resp_need_to_save)
+            {
+                need_to_save_timer = 10000;
+                need_to_save = 1;
             }
 
             if (CheckSET() > SW_MIN)
@@ -645,6 +617,52 @@ int main(void)
             UpdateEncoder();
             
             break;
+
+        case MAIN_IN_MANUAL_MODE:
+            action = do_nothing;
+
+            // Check encoder first
+            if (CheckCCW())
+                action = selection_dwn;
+
+            if (CheckCW())
+                action = selection_up;
+
+            if (CheckSET() > SW_NO)
+                action = selection_enter;
+
+            resp = ManualMode (&mem_conf, action);
+
+            if ((resp == resp_change) ||
+                (resp == resp_change_all_up))    //fixed mode save and change
+            {
+                for (unsigned char n = 0; n < sizeof(ch_values); n++)
+                    ch_values[n] = mem_conf.fixed_channels[n];
+
+#ifdef CHECK_FILTERS_BY_INT
+                for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
+                    channels_values_int[n] = ch_values[n];
+
+#else
+                CheckFiltersAndOffsets (ch_values);
+#endif
+                if (resp == resp_change_all_up)
+                    resp = resp_need_to_save;
+            }
+
+            if (resp == resp_need_to_save)
+            {
+                need_to_save_timer = 10000;
+                need_to_save = 1;
+            }
+
+            if (CheckSET() > SW_MIN)
+                main_state = MAIN_ENTERING_MAIN_MENU;
+
+            UpdateEncoder();
+            
+            break;
+
 
         case MAIN_IN_RESET_MODE:
             action = do_nothing;
@@ -663,10 +681,15 @@ int main(void)
 
             if (resp == resp_finish)
             {
-                if (mem_conf.program_type == RESET_MODE)    //not save, go to main menu again
+                // if (mem_conf.program_type == RESET_MODE)    //not save, go to main menu again
                     main_state = MAIN_ENTERING_MAIN_MENU;
-                else
-                    main_state = MAIN_HARDWARE_INIT;
+            }
+
+            if (resp == resp_need_to_save)
+            {
+                need_to_save_timer = 100;    //save almost instantly
+                need_to_save = 1;
+                main_state = MAIN_HARDWARE_INIT;
             }
 
             if (CheckSET() > SW_MIN)
