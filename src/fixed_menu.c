@@ -112,6 +112,7 @@ resp_t FixedMenu (parameters_typedef * mem, sw_actions_t actions)
         }
 
         fixed_need_display_update = 1;
+        resp = resp_change;    //first update
         fixed_state++;
         break;
 

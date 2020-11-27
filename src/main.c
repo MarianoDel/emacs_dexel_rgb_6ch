@@ -1188,6 +1188,94 @@ void CheckFiltersAndOffsets (unsigned char * ch_dmx_val)
 }
 
 
+typedef enum {
+    FILTERS_BKP_CHANNELS,
+    FILTERS_LIMIT_EACH_CHANNEL,
+    FILTERS_LIMIT_ALL_CHANNELS,
+    FILTERS_OUTPUTS_CH1_CH3,
+    FILTERS_OUTPUTS_CH4_CH6
+    
+} filters_and_offsets_e;
+
+filters_and_offsets_e filters_sm = FILTERS_BKP_CHANNELS;
+unsigned char limit_output [6] = { 0 };
+void CheckFiltersAndOffsets_SM (volatile unsigned char * ch_dmx_val)
+{
+#ifdef USE_CTRL_FAN_FOR_TIMED_INT
+    CTRL_FAN_ON;
+#endif
+    unsigned short calc = 0;    
+    
+    switch (filters_sm)
+    {
+    case FILTERS_BKP_CHANNELS:
+        limit_output[0] = *(ch_dmx_val + 0);
+        limit_output[1] = *(ch_dmx_val + 1);
+        limit_output[2] = *(ch_dmx_val + 2);
+        limit_output[3] = *(ch_dmx_val + 3);
+        limit_output[4] = *(ch_dmx_val + 4);
+        limit_output[5] = *(ch_dmx_val + 5);
+        filters_sm++;
+        break;
+
+    case FILTERS_LIMIT_EACH_CHANNEL:
+        calc = limit_output[0] * mem_conf.max_current_channels[0];
+        calc >>= 8;
+        limit_output[0] = (unsigned char) calc;
+
+        calc = limit_output[1] * mem_conf.max_current_channels[1];
+        calc >>= 8;
+        limit_output[1] = (unsigned char) calc;
+
+        calc = limit_output[2] * mem_conf.max_current_channels[2];
+        calc >>= 8;
+        limit_output[2] = (unsigned char) calc;
+
+        calc = limit_output[3] * mem_conf.max_current_channels[3];
+        calc >>= 8;
+        limit_output[3] = (unsigned char) calc;
+
+        calc = limit_output[4] * mem_conf.max_current_channels[4];
+        calc >>= 8;
+        limit_output[4] = (unsigned char) calc;
+
+        calc = limit_output[5] * mem_conf.max_current_channels[5];
+        calc >>= 8;
+        limit_output[5] = (unsigned char) calc;
+
+        filters_sm++;
+        break;
+
+    case FILTERS_LIMIT_ALL_CHANNELS:
+        for (unsigned char i = 0; i < 6; i++)
+            calc += limit_output[i];
+
+        if (calc < mem_conf.max_power)
+            filters_sm++;
+        else
+        {
+            
+        }
+        break;
+
+
+    default:
+        filters_sm = FILTERS_BKP_CHANNELS;
+        break;
+    }
+
+#ifdef USE_CTRL_FAN_FOR_INT_FILTERS_UPDATE
+    if (CTRL_FAN)
+        CTRL_FAN_OFF;
+    else
+        CTRL_FAN_ON;
+#endif
+#ifdef USE_CTRL_FAN_FOR_TIMED_INT
+    CTRL_FAN_OFF;
+#endif
+}
+
+
 void CheckFiltersAndOffsets_NoTimed (volatile unsigned char * ch_dmx_val, unsigned char which_channel)
 {
     switch (which_channel)
