@@ -47,7 +47,7 @@
 // Exported Functions ----------------------------------------------------------
 void PWMChannelsReset (void);
 unsigned short PWM_Map_From_Dmx (unsigned char);
-void PWM_Set_PwrCtrl (unsigned char *, unsigned char);
+void PWM_Set_PwrCtrl (unsigned char *, unsigned char, unsigned short);
 
 
 #endif    /* __PWM_H_ */

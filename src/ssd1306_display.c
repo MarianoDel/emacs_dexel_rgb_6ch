@@ -309,7 +309,15 @@ void display_update_int_state_machine (void)
     case DISPLAY_UPDATE_INIT:
         d_update_page = 0;
         d_update_st++;
+#ifdef USE_CTRL_FAN_FOR_DISPLAY_SM_UPDATE_ON_INIT
+        if (CTRL_FAN)
+            CTRL_FAN_OFF;
+        else
+            CTRL_FAN_ON;
+#endif
+#ifdef USE_CTRL_FAN_FOR_DISPLAY_SM_UPDATE_ON_START_END
         CTRL_FAN_ON;
+#endif
         break;
 
     case DISPLAY_UPDATE_SET_PAGE_CMD_0:
@@ -387,12 +395,23 @@ void display_update_int_state_machine (void)
 
     case DISPLAY_UPDATE_ENDED:
     default:
-        CTRL_FAN_OFF;        
+#ifdef USE_CTRL_FAN_FOR_DISPLAY_SM_UPDATE_ON_START_END
+        CTRL_FAN_OFF;
+#endif
         break;
     }
 #endif
 }
 
+
+unsigned char display_is_free (void)
+{
+    if (d_update_st == DISPLAY_UPDATE_ENDED)
+        return 1;
+
+    return 0;
+    
+}
 
 void display_update (void)
 {

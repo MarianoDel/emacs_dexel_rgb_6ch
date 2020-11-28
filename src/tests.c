@@ -14,7 +14,7 @@
 #include <stdio.h>
 // #include <stdlib.h>
 #include <string.h>
-
+#include <time.h>       // for clock_t, clock(), CLOCKS_PER_SEC
 
 // Externals -------------------------------------------------------------------
 parameters_typedef mem_conf;
@@ -63,6 +63,11 @@ void Test_Limits_Mapping (void);
 void Test_Temp_Mapping_Fixed (unsigned short value);
 void Test_Temp_Mapping (void);
 
+/////////////////////////////////////
+// Tests applied to Main Functions //
+/////////////////////////////////////
+void Test_Individual_Limits_Shift (unsigned char limit);
+void Test_Individual_Limits_Divider (unsigned char limit);
 
 // Module Functions ------------------------------------------------------------
 int main(int argc, char *argv[])
@@ -82,11 +87,28 @@ int main(int argc, char *argv[])
     // Test_Limits_Mapping_Fixed (255);
     // Test_Limits_Mapping ();
 
-    Test_Temp_Mapping_Fixed(3434);    //50 deg
-    Test_Temp_Mapping_Fixed(3591);    //65 deg
-    Test_Temp_Mapping_Fixed(3642);    //70 deg
-    Test_Temp_Mapping_Fixed(3795);    //85 deg        
-    Test_Temp_Mapping();
+    // Test_Temp_Mapping_Fixed(3434);    //50 deg
+    // Test_Temp_Mapping_Fixed(3591);    //65 deg
+    // Test_Temp_Mapping_Fixed(3642);    //70 deg
+    // Test_Temp_Mapping_Fixed(3795);    //85 deg        
+    // Test_Temp_Mapping();
+
+    double time_spent = 0.0;
+    clock_t begin = clock();
+ 
+    // do some stuff here
+    Test_Individual_Limits_Shift (127);
+    clock_t end = clock();
+    // calculate elapsed time by finding difference (end - begin) and
+    // dividing the difference by CLOCKS_PER_SEC to convert to seconds
+    time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Time elpased is %f seconds\n", time_spent);
+
+    begin = clock();
+    Test_Individual_Limits_Divider (127);
+    end = clock();
+    time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("Time elpased is %f seconds\n", time_spent);    
 }
 
 
@@ -332,6 +354,104 @@ unsigned short TempMenu_DegreesToTemp (unsigned char deg)
     
 }
 
+////////////////////////////
+// To Test Main Functions //
+////////////////////////////
+unsigned char limit_output[6] = { 0 };
+void Test_Individual_Limits_Shift (unsigned char limit)
+{
+    unsigned short calc = 0;
+    for (int j = 0; j < 6; j++)
+        mem_conf.max_current_channels[j] = limit;
+    
+    for (int i = 0; i < 256; i++)
+    {
+        for (int j = 0; j < 6; j++)
+            limit_output[j] = i;
+
+        calc = limit_output[0] * mem_conf.max_current_channels[0];
+        calc >>= 8;
+        limit_output[0] = (unsigned char) calc;
+
+        calc = limit_output[1] * mem_conf.max_current_channels[1];
+        calc >>= 8;
+        limit_output[1] = (unsigned char) calc;
+
+        calc = limit_output[2] * mem_conf.max_current_channels[2];
+        calc >>= 8;
+        limit_output[2] = (unsigned char) calc;
+
+        calc = limit_output[3] * mem_conf.max_current_channels[3];
+        calc >>= 8;
+        limit_output[3] = (unsigned char) calc;
+
+        calc = limit_output[4] * mem_conf.max_current_channels[4];
+        calc >>= 8;
+        limit_output[4] = (unsigned char) calc;
+
+        calc = limit_output[5] * mem_conf.max_current_channels[5];
+        calc >>= 8;
+        limit_output[5] = (unsigned char) calc;
+
+        printf("index: %3d\t %3d %3d %3d %3d %3d %3d\n",
+               i,
+               limit_output[0],
+               limit_output[1],
+               limit_output[2],
+               limit_output[3],
+               limit_output[4],
+               limit_output[5]);
+    }
+    
+}
+
+
+void Test_Individual_Limits_Divider (unsigned char limit)
+{
+    unsigned short calc = 0;
+    for (int j = 0; j < 6; j++)
+        mem_conf.max_current_channels[j] = limit;
+    
+    for (int i = 0; i < 256; i++)
+    {
+        for (int j = 0; j < 6; j++)
+            limit_output[j] = i;
+
+        calc = limit_output[0] * mem_conf.max_current_channels[0];
+        calc = calc/255;
+        limit_output[0] = (unsigned char) calc;
+
+        calc = limit_output[1] * mem_conf.max_current_channels[1];
+        calc = calc/255;
+        limit_output[1] = (unsigned char) calc;
+
+        calc = limit_output[2] * mem_conf.max_current_channels[2];
+        calc = calc/255;
+        limit_output[2] = (unsigned char) calc;
+
+        calc = limit_output[3] * mem_conf.max_current_channels[3];
+        calc = calc/255;
+        limit_output[3] = (unsigned char) calc;
+
+        calc = limit_output[4] * mem_conf.max_current_channels[4];
+        calc = calc/255;
+        limit_output[4] = (unsigned char) calc;
+
+        calc = limit_output[5] * mem_conf.max_current_channels[5];
+        calc = calc/255;
+        limit_output[5] = (unsigned char) calc;
+
+        printf("index: %3d\t %3d %3d %3d %3d %3d %3d\n",
+               i,
+               limit_output[0],
+               limit_output[1],
+               limit_output[2],
+               limit_output[3],
+               limit_output[4],
+               limit_output[5]);
+    }
+    
+}
 //--- end of file ---//
 
 

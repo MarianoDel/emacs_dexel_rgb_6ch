@@ -65,7 +65,7 @@ unsigned short PWM_Map_From_Dmx (unsigned char dmx_val)
 }
 
 
-void PWM_Set_PwrCtrl (unsigned char * ch_dmx_val, unsigned char chnls_qtty)
+void PWM_Set_PwrCtrl (unsigned char * ch_dmx_val, unsigned char chnls_qtty, unsigned short max_power)
 {
     unsigned short total_dmx = 0;
 
@@ -73,7 +73,7 @@ void PWM_Set_PwrCtrl (unsigned char * ch_dmx_val, unsigned char chnls_qtty)
     for (unsigned char i = 0; i < chnls_qtty; i++)
         total_dmx += *(ch_dmx_val + i);
 
-    if (total_dmx > POWER_CONTROL_GENERAL_THRESHOLD)
+    if (total_dmx > max_power)
     {
         unsigned int new = 0;
         for (unsigned char i = 0; i < chnls_qtty; i++)
@@ -81,7 +81,7 @@ void PWM_Set_PwrCtrl (unsigned char * ch_dmx_val, unsigned char chnls_qtty)
             // si el canal tiene algo
             if (*(ch_dmx_val + i))
             {
-                new = *(ch_dmx_val + i) * (POWER_CONTROL_GENERAL_THRESHOLD);
+                new = *(ch_dmx_val + i) * max_power;
                 new = new / total_dmx;
 
                 // no dejo que se apaguen los canales

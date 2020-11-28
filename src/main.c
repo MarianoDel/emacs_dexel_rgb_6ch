@@ -146,6 +146,7 @@ extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
 void CheckFiltersAndOffsets (unsigned char *);
 void CheckFiltersAndOffsets_NoTimed (volatile unsigned char *, unsigned char);
+void CheckFiltersAndOffsets_SM(volatile unsigned char *);
 void UpdateFiltersTest_Reset (void);
 void SysTickError (void);
 unsigned char CheckTempReconnet (unsigned short, unsigned short);
@@ -960,7 +961,7 @@ int main(void)
                     //stop LEDs outputs
                     main_state = MAIN_IN_OVERTEMP;
                 }
-#ifndef USE_CTRL_FAN_FOR_INT_FILTERS_UPDATE
+#ifdef USE_CTRL_FAN_FOR_TEMP_CTRL
                 else if (Temp_Channel > TEMP_IN_35)
                     CTRL_FAN_ON;
                 else if (Temp_Channel < TEMP_IN_30)
@@ -1034,14 +1035,21 @@ void TimingDelay_Decrement(void)
 
     //para filtros y offset DMX
 #ifdef CHECK_FILTERS_BY_INT
-    if (enable_outputs_by_int)
-        CheckFiltersAndOffsets_NoTimed(channels_values_int, dmx_filters_timer);
 
-    if (dmx_filters_timer < 5)
-        dmx_filters_timer++;
-    else
-        dmx_filters_timer = 0;
+    // the third one, state machine, do something on each ms
+    if (enable_outputs_by_int)    
+        CheckFiltersAndOffsets_SM(channels_values_int);
     
+    // the second one, outputs on each ms
+    // if (enable_outputs_by_int)
+    //     CheckFiltersAndOffsets_NoTimed(channels_values_int, dmx_filters_timer);
+
+    // if (dmx_filters_timer < 5)
+    //     dmx_filters_timer++;
+    // else
+    //     dmx_filters_timer = 0;
+
+    // the first one wait 5 and calc all in one
     // if (dmx_filters_timer)
     //     dmx_filters_timer--;
     // else
@@ -1247,18 +1255,62 @@ void CheckFiltersAndOffsets_SM (volatile unsigned char * ch_dmx_val)
         break;
 
     case FILTERS_LIMIT_ALL_CHANNELS:
-        for (unsigned char i = 0; i < 6; i++)
-            calc += limit_output[i];
-
-        if (calc < mem_conf.max_power)
-            filters_sm++;
-        else
-        {
-            
-        }
+        PWM_Set_PwrCtrl(limit_output,
+                        mem_conf.dmx_channel_quantity,
+                        mem_conf.max_power);
+        filters_sm++;
         break;
 
+    case FILTERS_OUTPUTS_CH1_CH3:
+        // channel 1
+        ch1_pwm = MA16_U16Circular (
+            &st_sp1,
+            PWM_Map_From_Dmx(*(limit_output + CH1_VAL_OFFSET))
+            );
+        PWM_Update_CH1(ch1_pwm);
 
+        // channel 2
+        ch2_pwm = MA16_U16Circular (
+            &st_sp2,
+            PWM_Map_From_Dmx(*(limit_output + CH2_VAL_OFFSET))
+            );
+        PWM_Update_CH2(ch2_pwm);
+
+        // channel 3
+        ch3_pwm = MA16_U16Circular (
+            &st_sp3,
+            PWM_Map_From_Dmx(*(limit_output + CH3_VAL_OFFSET))
+            );
+        PWM_Update_CH3(ch3_pwm);
+
+        filters_sm++;
+        break;
+
+    case FILTERS_OUTPUTS_CH4_CH6:
+        // channel 4
+        ch4_pwm = MA16_U16Circular (
+            &st_sp4,
+            PWM_Map_From_Dmx(*(limit_output + CH4_VAL_OFFSET))
+            );
+        PWM_Update_CH4(ch4_pwm);
+
+        // channel 5
+        ch5_pwm = MA16_U16Circular (
+            &st_sp5,
+            PWM_Map_From_Dmx(*(limit_output + CH5_VAL_OFFSET))
+            );
+        PWM_Update_CH5(ch5_pwm);
+
+        // channel 6
+        ch6_pwm = MA16_U16Circular (
+            &st_sp6,
+            PWM_Map_From_Dmx(*(limit_output + CH6_VAL_OFFSET))
+            );
+        PWM_Update_CH6(ch6_pwm);
+
+        filters_sm = FILTERS_BKP_CHANNELS;
+        break;
+        
     default:
         filters_sm = FILTERS_BKP_CHANNELS;
         break;

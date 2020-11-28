@@ -167,7 +167,6 @@ resp_t DMX2Mode (unsigned char * ch_val, sw_actions_t action)
             }
         }
 
-#ifndef NO_DISPLAY_UPDATE_ON_DMX
         if (dmx2_end_of_packet_update)
         {
             dmx_menu_data_t dmx2_st;
@@ -184,8 +183,6 @@ resp_t DMX2Mode (unsigned char * ch_val, sw_actions_t action)
                 dmx2_end_of_packet_update = 0;
             
         }
-#endif
-        
         break;
 
     default:

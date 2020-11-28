@@ -57,6 +57,7 @@ void display_stopscroll(void);
 void display_scroll( SCROLL_AREA start, SCROLL_AREA end, SCROLL_DIR dir, SCROLL_SPEED speed );
 void display_update_int_state_machine (void);
 void display_update(void);
+unsigned char display_is_free (void);
 unsigned char display_update_int_contrast (unsigned char);
 
 ////////////////////////////////////////////////

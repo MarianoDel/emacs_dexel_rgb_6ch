@@ -24,26 +24,25 @@
 #define USE_FILTER_LENGHT_16
 
 //--- Check the temp sensor ---//
-#define USE_OVERTEMP_PROT
+// #define USE_OVERTEMP_PROT
 
 //--- Check the voltage sensor ---//
 #define USE_VOLTAGE_PROT
 
 
-// --- How to control the PWM generation, select only one --- //
+//--- How to control the PWM generation, select only one ---//
 #define USE_PWM_DIRECT    //mapea lo que llega en el dmx al PWM directo
 // #define USE_PWM_WITH_DELTA    //mapea la corriente pero la busca punto a punto
 
-// --- Apply Power Control on DMX1 Mode ---//
-// #define WITH_POWER_CONTROL
-// #define WITH_POWER_CONTROL_SHOW_IN_DISPLAY
-
-// --- Filters checked by int on DMX ---//
+//--- Filters checked by int on DMX ---//
 #define CHECK_FILTERS_BY_INT
-// #define USE_CTRL_FAN_FOR_INT_FILTERS_UPDATE
 
-// --- Update the display OLED on DMX? ---//
-// #define NO_DISPLAY_UPDATE_ON_DMX
+//--- Uses of CTRL_FAN Ouput as FAN or signaling ---//
+// #define USE_CTRL_FAN_FOR_TEMP_CTRL
+// #define USE_CTRL_FAN_FOR_INT_FILTERS_UPDATE
+// #define USE_CTRL_FAN_FOR_TIMED_INT    //show the speed as resolves the int filters SM
+// #define USE_CTRL_FAN_FOR_DISPLAY_SM_UPDATE_ON_INIT
+#define USE_CTRL_FAN_FOR_DISPLAY_SM_UPDATE_ON_START_END
 
 // --- How often we update the PWM outputs --- //
 #define DMX_UPDATE_TIMER_WITH_DELTA    3    //tick en 1ms

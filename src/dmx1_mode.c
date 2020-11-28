@@ -13,6 +13,8 @@
 #include "dmx_menu.h"
 #include "flash_program.h"
 
+#include "hard.h"    //for no display update defines
+
 #include <stdio.h>
 #include <string.h>
 
@@ -128,8 +130,7 @@ resp_t DMX1Mode (unsigned char * ch_val, sw_actions_t action)
             }
         }
 
-#ifndef NO_DISPLAY_UPDATE_ON_DMX
-        if (dmx1_end_of_packet_update)
+        if (dmx1_end_of_packet_update)            
         {
             dmx_menu_data_t dmx1_st;
             dmx1_st.dmx_first_chnl = &mem_conf.dmx_first_channel;
@@ -145,8 +146,6 @@ resp_t DMX1Mode (unsigned char * ch_val, sw_actions_t action)
                 dmx1_end_of_packet_update = 0;
             
         }
-#endif
-        
         break;
 
     default:

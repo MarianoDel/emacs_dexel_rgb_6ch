@@ -59,24 +59,27 @@ resp_t DMXModeMenu (dmx_menu_data_t * pmenu_data)
     switch (dmx_mode_menu_state)
     {
     case DMX_MODE_MENU_INIT:
-        Display_StartLines ();
-        Display_ClearLines();
+        if (display_is_free())
+        {
+            Display_StartLines ();
+            Display_ClearLines();
 
-        if (pmenu_data->show_addres)
-            sprintf(s_temp, "ADDR: %03d", *pmenu_data->dmx_first_chnl);
-        else
-            strcpy(s_temp, "ADDR:");
+            if (pmenu_data->show_addres)
+                sprintf(s_temp, "ADDR: %03d", *pmenu_data->dmx_first_chnl);
+            else
+                strcpy(s_temp, "ADDR:");
         
-        Display_SetLine1(s_temp);
+            Display_SetLine1(s_temp);
 
-        if (pmenu_data->mode == DMX1_MODE)
-            Display_SetLine8("           DMX1 Mode");
-        else if (pmenu_data->mode == DMX2_MODE)
-            Display_SetLine8("           DMX2 Mode");
-        else
-            Display_SetLine8("            DMX Mode");
+            if (pmenu_data->mode == DMX1_MODE)
+                Display_SetLine8("           DMX1 Mode");
+            else if (pmenu_data->mode == DMX2_MODE)
+                Display_SetLine8("           DMX2 Mode");
+            else
+                Display_SetLine8("            DMX Mode");
 
-        dmx_mode_menu_state++;
+            dmx_mode_menu_state++;
+        }
         break;
 
     case DMX_MODE_MENU_CHECK_CH1_CH4:
