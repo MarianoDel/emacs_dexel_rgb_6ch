@@ -362,5 +362,10 @@ tests_version_menu:
 	gcc src/tests_version_menu.c version_menu.o options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
 	./a.out
 
+tests_limit_simulation:
+	# simulate the limits functions
+	gcc -c src/dsp.c -I. $(INCDIR)
+	gcc src/tests_simul.c dsp.o
+	./a.out
 
 # *** EOF ***

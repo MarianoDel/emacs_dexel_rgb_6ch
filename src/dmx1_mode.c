@@ -13,8 +13,6 @@
 #include "dmx_menu.h"
 #include "flash_program.h"
 
-#include "hard.h"    //for no display update defines
-
 #include <stdio.h>
 #include <string.h>
 

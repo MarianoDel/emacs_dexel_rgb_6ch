@@ -24,7 +24,7 @@
 #define USE_FILTER_LENGHT_16
 
 //--- Check the temp sensor ---//
-// #define USE_OVERTEMP_PROT
+#define USE_OVERTEMP_PROT
 
 //--- Check the voltage sensor ---//
 #define USE_VOLTAGE_PROT
@@ -38,19 +38,15 @@
 #define CHECK_FILTERS_BY_INT
 
 //--- Uses of CTRL_FAN Ouput as FAN or signaling ---//
-// #define USE_CTRL_FAN_FOR_TEMP_CTRL
+#define USE_CTRL_FAN_FOR_TEMP_CTRL
 // #define USE_CTRL_FAN_FOR_INT_FILTERS_UPDATE
 // #define USE_CTRL_FAN_FOR_TIMED_INT    //show the speed as resolves the int filters SM
 // #define USE_CTRL_FAN_FOR_DISPLAY_SM_UPDATE_ON_INIT
-#define USE_CTRL_FAN_FOR_DISPLAY_SM_UPDATE_ON_START_END
+// #define USE_CTRL_FAN_FOR_DISPLAY_SM_UPDATE_ON_START_END
 
 // --- How often we update the PWM outputs --- //
 #define DMX_UPDATE_TIMER_WITH_DELTA    3    //tick en 1ms
 #define DMX_UPDATE_TIMER    5    //si pongo esto en 2 se ven saltos en el blanco incluso con delta-single-step
-
-// --- After configuration what to do with the flash --- //
-#define SAVE_FLASH_IMMEDIATE
-// #define SAVE_FLASH_WITH_TIMEOUT
 
 // --- PWM Frequency --- //
 // #define USE_FREQ_48KHZ
