@@ -52,19 +52,22 @@ d3 = fl[4]
 d3 = d3.strip('\n')
 max_power = int(fl[5])
 print(f"data: {d3} value: {max_power}")
-close(file)
+
+file.close()
 ###########################
 # Armo la senial temporal #
 ###########################
 t = np.linspace(0, dmx_data.size, num=dmx_data.size)
+vmax_power = np.ones(t.size) * max_power
 
 fig, ax = plt.subplots()
 ax.set_title('Mapeo de PWM como f(dmx_data)')
 ax.set_ylabel('PWM')
 ax.set_xlabel('Tiempo en muestras [ms]')
 ax.grid()
-ax.plot(t, dmx_data, 'y')
+ax.plot(t, dmx_data*6, 'y')
 ax.plot(t, pwm1_data, 'b')
+ax.plot(t, vmax_power, 'g')
 plt.tight_layout()
 plt.show()
 

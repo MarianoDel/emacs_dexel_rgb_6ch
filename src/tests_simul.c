@@ -163,7 +163,10 @@ int main(void)
         fwrite(str, 1, len, file);
     }
     fwrite("\n", 1, sizeof("\n") - 1, file);
-    
+
+    fwrite("max_power\n", 1, sizeof("max_power\n") - 1, file);
+    len = sprintf(str, "%d\n", mem_conf.max_power);
+    fwrite(str, 1, len, file);
     
     fclose(file);
 
