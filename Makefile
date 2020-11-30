@@ -367,5 +367,6 @@ tests_limit_simulation:
 	gcc -c src/dsp.c -I. $(INCDIR)
 	gcc src/tests_simul.c dsp.o
 	./a.out
+	# execute by hand python3 simul_limits.py
 
 # *** EOF ***

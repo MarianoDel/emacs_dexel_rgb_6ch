@@ -64,7 +64,10 @@ void PWM_Update_CH3 (unsigned short pwm);
 void PWM_Update_CH4 (unsigned short pwm);
 void PWM_Update_CH5 (unsigned short pwm);
 void PWM_Update_CH6 (unsigned short pwm);
-    
+void Vector_UShort_To_File (FILE * f, char * v_name, unsigned short * v_data, int v_len);
+void Vector_UChar_To_File (FILE * f, char * v_name, unsigned char * v_data, int v_len);
+void Variable_UShort_To_File (FILE * f, char * v_name, unsigned short data);
+void Variable_UChar_To_File (FILE * f, char * v_name, unsigned char data);
     
 
 // Module Private Functions to Test --------------------------------------------
@@ -91,12 +94,12 @@ int main(void)
     mem_conf.dmx_channel_quantity = 6;
     
     //set the individual current limits
-    mem_conf.max_current_channels[0] = 255;
-    mem_conf.max_current_channels[1] = 255;
-    mem_conf.max_current_channels[2] = 255;
-    mem_conf.max_current_channels[3] = 255;
-    mem_conf.max_current_channels[4] = 255;
-    mem_conf.max_current_channels[5] = 255;
+    mem_conf.max_current_channels[0] = 127;
+    mem_conf.max_current_channels[1] = 127;
+    mem_conf.max_current_channels[2] = 127;
+    mem_conf.max_current_channels[3] = 0;
+    mem_conf.max_current_channels[4] = 0;
+    mem_conf.max_current_channels[5] = 0;
 
     //set the total current limit
     mem_conf.max_power = 255;
@@ -145,28 +148,16 @@ int main(void)
         return 0;
     }
 
-    char str [100] = { 0 };
-    int len = 0;
-    
-    fwrite("dmx_data\n", 1, sizeof("dmx_data\n") - 1, file);
-    for (int i = 0; i < SIMUL_LENGTH_MS; i++)
-    {
-        len = sprintf(str, "%d ", dmx_data[i]);
-        fwrite(str, 1, len, file);
-    }
-    fwrite("\n", 1, sizeof("\n") - 1, file);
+    Vector_UChar_To_File(file, "dmx_data", dmx_data, SIMUL_LENGTH_MS);
 
-    fwrite("pwm1\n", 1, sizeof("pwm1\n") - 1, file);
-    for (int i = 0; i < SIMUL_LENGTH_MS; i++)
-    {
-        len = sprintf(str, "%d ", pwm1[i]);
-        fwrite(str, 1, len, file);
-    }
-    fwrite("\n", 1, sizeof("\n") - 1, file);
+    Vector_UShort_To_File(file, "pwm1", pwm1, SIMUL_LENGTH_MS);
+    // Vector_UShort_To_File(file, "pwm2", pwm2, SIMUL_LENGTH_MS);
+    // Vector_UShort_To_File(file, "pwm3", pwm3, SIMUL_LENGTH_MS);
+    // Vector_UShort_To_File(file, "pwm4", pwm4, SIMUL_LENGTH_MS);
+    // Vector_UShort_To_File(file, "pwm5", pwm5, SIMUL_LENGTH_MS);
+    // Vector_UShort_To_File(file, "pwm6", pwm6, SIMUL_LENGTH_MS);
 
-    fwrite("max_power\n", 1, sizeof("max_power\n") - 1, file);
-    len = sprintf(str, "%d\n", mem_conf.max_power);
-    fwrite(str, 1, len, file);
+    Variable_UShort_To_File(file, "max_power", mem_conf.max_power);
     
     fclose(file);
 
@@ -543,6 +534,74 @@ void PWM_Update_CH6 (unsigned short pwm)
     pwm6[index_pwm6] = pwm;
     if (index_pwm6 < SIMUL_LENGTH_MS)
         index_pwm6++;
+}
+
+
+void Vector_UShort_To_File (FILE * f, char * v_name, unsigned short * v_data, int v_len)
+{
+    int len = 0;
+    char str [100] = { 0 };
+    
+    len = strlen(v_name);    
+    fwrite(v_name, 1, len, f);
+    fwrite("\n", 1, sizeof("\n") - 1, f);
+    
+    for (int i = 0; i < v_len; i++)
+    {
+        len = sprintf(str, "%d ", v_data[i]);
+        fwrite(str, 1, len, f);
+    }
+    fwrite("\n", 1, sizeof("\n") - 1, f);
+    
+}
+
+
+void Vector_UChar_To_File (FILE * f, char * v_name, unsigned char * v_data, int v_len)
+{
+    int len = 0;
+    char str [100] = { 0 };
+    
+    len = strlen(v_name);    
+    fwrite(v_name, 1, len, f);
+    fwrite("\n", 1, sizeof("\n") - 1, f);
+    
+    for (int i = 0; i < v_len; i++)
+    {
+        len = sprintf(str, "%d ", v_data[i]);
+        fwrite(str, 1, len, f);
+    }
+    fwrite("\n", 1, sizeof("\n") - 1, f);
+    
+}
+
+
+void Variable_UShort_To_File (FILE * f, char * v_name, unsigned short data)
+{
+    int len = 0;
+    char str [100] = { 0 };
+    
+    len = strlen(v_name);    
+    fwrite(v_name, 1, len, f);
+    fwrite("\n", 1, sizeof("\n") - 1, f);
+
+    len = sprintf(str, "%d\n", data);
+    fwrite(str, 1, len, f);
+    
+}
+
+
+void Variable_UChar_To_File (FILE * f, char * v_name, unsigned char data)
+{
+    int len = 0;
+    char str [100] = { 0 };
+    
+    len = strlen(v_name);    
+    fwrite(v_name, 1, len, f);
+    fwrite("\n", 1, sizeof("\n") - 1, f);
+
+    len = sprintf(str, "%d\n", data);
+    fwrite(str, 1, len, f);
+    
 }
 
 //--- end of file ---//
