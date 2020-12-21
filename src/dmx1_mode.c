@@ -134,6 +134,7 @@ resp_t DMX1Mode (unsigned char * ch_val, sw_actions_t action)
             dmx1_st.dmx_first_chnl = &mem_conf.dmx_first_channel;
             dmx1_st.mode = DMX1_MODE;
             dmx1_st.pchannels = ch_val;
+            dmx1_st.chnls_qtty = mem_conf.dmx_channel_quantity;
             if (dmx1_address_show)
                 dmx1_st.show_addres = 1;
             else

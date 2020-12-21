@@ -83,11 +83,20 @@ resp_t DMXModeMenu (dmx_menu_data_t * pmenu_data)
         break;
 
     case DMX_MODE_MENU_CHECK_CH1_CH4:
+        memset(s_temp, 0, sizeof(s_temp));
 
-        sprintf(s_temp, "CH1: %3d     CH4: %3d",
-        // sprintf(s_temp, "CH1: %3d CH4: %3d",
-                *((pmenu_data->pchannels) + 0),
-                *((pmenu_data->pchannels) + 3));
+        if (pmenu_data->chnls_qtty >= 4 )
+        {
+            sprintf(s_temp, "CH1: %3d     CH4: %3d",
+                    *((pmenu_data->pchannels) + 0),
+                    *((pmenu_data->pchannels) + 3));
+        }
+        else
+        {
+            sprintf(s_temp, "CH1: %3d",
+                    *((pmenu_data->pchannels) + 0));
+        }
+        
         Display_BlankLine3();
         Display_SetLine3(s_temp);
             
@@ -95,11 +104,20 @@ resp_t DMXModeMenu (dmx_menu_data_t * pmenu_data)
         break;
 
     case DMX_MODE_MENU_CHECK_CH2_CH5:
+        memset(s_temp, 0, sizeof(s_temp));
 
-        sprintf(s_temp, "CH2: %3d     CH5: %3d",        
-        // sprintf(s_temp, "CH2: %3d CH5: %3d",
-                *((pmenu_data->pchannels) + 1),
-                *((pmenu_data->pchannels) + 4));
+        if ((pmenu_data->chnls_qtty >= 2) && (pmenu_data->chnls_qtty >= 5))
+        {
+            sprintf(s_temp, "CH2: %3d     CH5: %3d",        
+                    *((pmenu_data->pchannels) + 1),
+                    *((pmenu_data->pchannels) + 4));
+        }
+        else if (pmenu_data->chnls_qtty >= 2)
+        {
+            sprintf(s_temp, "CH2: %3d",        
+                    *((pmenu_data->pchannels) + 1));
+
+        }
         Display_BlankLine4();
         Display_SetLine4(s_temp);
                     
@@ -107,11 +125,20 @@ resp_t DMXModeMenu (dmx_menu_data_t * pmenu_data)
         break;
 
     case DMX_MODE_MENU_CHECK_CH3_CH6:
+        memset(s_temp, 0, sizeof(s_temp));
 
-        sprintf(s_temp, "CH3: %3d     CH6: %3d",        
-        // sprintf(s_temp, "CH3: %3d CH6: %3d",
-                *((pmenu_data->pchannels) + 2),
-                *((pmenu_data->pchannels) + 5));
+        if ((pmenu_data->chnls_qtty >= 3) && (pmenu_data->chnls_qtty >= 6))
+        {
+            sprintf(s_temp, "CH3: %3d     CH6: %3d",        
+                    *((pmenu_data->pchannels) + 2),
+                    *((pmenu_data->pchannels) + 5));
+        }
+        else if (pmenu_data->chnls_qtty >= 3)
+        {
+            sprintf(s_temp, "CH3: %3d",        
+                    *((pmenu_data->pchannels) + 2));
+        }
+        
         Display_BlankLine5();
         Display_SetLine5(s_temp);
             

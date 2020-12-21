@@ -178,6 +178,7 @@ resp_t DMX2Mode (unsigned char * ch_val, sw_actions_t action)
             dmx2_st.dmx_first_chnl = &mem_conf.dmx_first_channel;
             dmx2_st.mode = DMX2_MODE;
             dmx2_st.pchannels = ch_val;
+            dmx2_st.chnls_qtty = mem_conf.dmx_channel_quantity;
             if (dmx2_address_show)
                 dmx2_st.show_addres = 1;
             else

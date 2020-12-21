@@ -20,6 +20,7 @@
 typedef struct {
     const unsigned short * dmx_first_chnl;
     const unsigned char * pchannels;
+    unsigned char chnls_qtty;    
     unsigned char show_addres;
     unsigned char mode;
     
