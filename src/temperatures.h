@@ -23,12 +23,14 @@
 //60	2,765V
 #define TEMP_IN_30    3226
 #define TEMP_IN_35    3279
+#define TEMP_IN_48    3412
 #define TEMP_IN_50    3434
 #define TEMP_IN_65    3591
 #define TEMP_IN_70    3642
 #define TEMP_IN_85    3795
 
 #define TEMP_DISCONECT    TEMP_IN_85
+#define TEMP_RECONNECT    TEMP_IN_48
 
 #define TEMP_IN_MIN    TEMP_IN_50
 #define TEMP_IN_MAX    TEMP_IN_85

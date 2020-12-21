@@ -149,7 +149,7 @@ void CheckFiltersAndOffsets_NoTimed (volatile unsigned char *, unsigned char);
 void CheckFiltersAndOffsets_SM(volatile unsigned char *);
 void UpdateFiltersTest_Reset (void);
 void SysTickError (void);
-unsigned char CheckTempReconnet (unsigned short, unsigned short);
+unsigned char CheckTempReconnect (unsigned short, unsigned short);
 
 
 // Module Functions ------------------------------------------------------------
@@ -728,7 +728,7 @@ int main(void)
             break;
 
         case MAIN_IN_OVERTEMP_B:
-            if (CheckTempReconnet (Temp_Channel, mem_conf.temp_prot))
+            if (CheckTempReconnect (Temp_Channel, mem_conf.temp_prot))
             {
                 //reconnect
                 main_state = MAIN_HARDWARE_INIT;
@@ -1442,18 +1442,21 @@ void SysTickError (void)
     }
 }
 
-unsigned char CheckTempReconnet (unsigned short temp_sample, unsigned short temp_prot)
+unsigned char CheckTempReconnect (unsigned short temp_sample, unsigned short temp_prot)
 {
-    unsigned char reconnet = 0;
-    unsigned int calc = 0;
+    unsigned char reconnect = 0;
+    // unsigned int calc = 0;
 
-    calc = temp_prot * 8;
-    calc = calc / 10;
+    // calc = temp_prot * 8;
+    // calc = calc / 10;
 
-    if (temp_sample < calc)
-        reconnet = 1;
+    // if (temp_sample < calc)
+    //     reconnet = 1;
 
-    return reconnet;
+    if (temp_sample < TEMP_RECONNECT)
+        reconnect = 1;
+    
+    return reconnect;
 }
 
 
