@@ -26,9 +26,11 @@ BIN  = $(CP) -O binary -S
 MCU  = cortex-m0
 
 # List all default C defines here, like -D_DEBUG=1
-#para el micro STM32F051C8T6
+# for STM32F103RCT6 micro
+# DDEFS = -DSTM32F10X_HD
+# for STM32F051C8T6 micro
 # DDEFS = -DSTM32F051
-#para el micro STM32F030K6T6
+# for STM32F030K6T6 micro
 DDEFS = -DSTM32F030
 
 # List all default ASM defines here, like -D_DEBUG=1
@@ -53,7 +55,7 @@ DLIBS =
 
 #
 # Define project name here
-PROJECT        = Template_F030
+PROJECT = Template_F030
 
 # List C source files here
 CORELIBDIR = ./cmsis_core
@@ -61,6 +63,7 @@ BOOTDIR = ./cmsis_boot
 
 LINKER = ./cmsis_boot/startup
 
+# Sources Files
 SRC  = ./src/main.c
 SRC += $(BOOTDIR)/system_stm32f0xx.c
 SRC += $(BOOTDIR)/syscalls/syscalls.c
@@ -225,8 +228,8 @@ clean:
 	rm -f $(FULL_PRJ).map
 	rm -f $(FULL_PRJ).hex
 	rm -f $(FULL_PRJ).bin
-#	rm $(SRC:.c=.c.bak)
 	rm -f $(SRC:.c=.lst)
+	rm -f $(SRC:.c=.su)
 #   rm $(ASRC:.s=.s.bak)
 	rm -f $(ASRC:.s=.lst)
 	rm -f *.o

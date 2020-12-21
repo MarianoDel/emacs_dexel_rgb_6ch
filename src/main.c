@@ -813,6 +813,12 @@ int main(void)
             SW_RX_TX_DE;            
             DMX_Disa();
 
+#ifdef CHECK_FILTERS_BY_INT
+            enable_outputs_by_int = 0;
+            for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
+                channels_values_int[n] = 0;
+            
+#endif
             //reseteo canales
             PWMChannelsReset();
 

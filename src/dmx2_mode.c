@@ -73,10 +73,12 @@ volatile unsigned short dmx2_mode_enable_menu_timer = 0;
 
 // Module Private Functions ----------------------------------------------------
 void DMX2Mode_ChannelsDimmer (unsigned char *, unsigned char *);
-// void DMX2Mode_ChannelsStrobe (unsigned char *, unsigned char *);
+void DMX2Mode_ChannelsStrobe (unsigned char *);
+void DMX2Mode_ChannelsStrobeSet (unsigned char *);
 // void DMX2Mode_ChannelsEffect (unsigned char *, unsigned char *);
 unsigned char DMX2Mode_MapEffect (unsigned char);
 unsigned char DMX2Mode_MapSpeed (unsigned char);
+
 
 // Module Functions ------------------------------------------------------------
 void DMX2Mode_UpdateTimers (void)
@@ -148,9 +150,12 @@ resp_t DMX2Mode (unsigned char * ch_val, sw_actions_t action)
                 {
                     if (mem_conf.program_inner_type != DMX2_INNER_STROBE_MODE)
                         mem_conf.program_inner_type = DMX2_INNER_STROBE_MODE;
+
+                    // map the channels values to strobe
+                    DMX2Mode_ChannelsStrobeSet(&data11[DMX2_CLR_CH1]);
                     
                     // map the speed in this mode
-                    mem_conf.program_inner_type_speed = DMX2Mode_MapSpeed(data11[DMX2_SPD_CH]);
+                    mem_conf.program_inner_type_speed = DMX2Mode_MapSpeed(data11[DMX2_STB_CH]);
                 }
                 else    // we are in DMX mode with grandmaster
                 {
@@ -221,9 +226,7 @@ resp_t DMX2Mode (unsigned char * ch_val, sw_actions_t action)
     case DMX2_INNER_STROBE_MODE:
         if (!dmx2_mode_effect_timer)
         {
-            resp = Colors_Strobe_Pallete (ch_val);
-            // if (resp == resp_finish)
-            //     resp = resp_continue;
+            DMX2Mode_ChannelsStrobe(ch_val);
 
             resp = resp_change;            
             dmx2_mode_effect_timer = 2000 - mem_conf.program_inner_type_speed * 200;
@@ -278,6 +281,32 @@ void DMX2Mode_ChannelsDimmer (unsigned char * ch_out, unsigned char * ch_in)
         calc = ch_in[DMX2_DIM_CH] * ch_in[DMX2_CLR_CH1 + i];
         calc >>= 8;
         *(ch_out + i) = (unsigned char) calc;
+    }
+}
+
+
+unsigned char ch_strobe_ref [6] = { 0 };
+void DMX2Mode_ChannelsStrobeSet (unsigned char * ch_in)
+{
+    for (unsigned char i = 0; i < 6; i++)
+        ch_strobe_ref[i] = ch_in[i];
+}
+
+
+unsigned char last_strobe_was_on = 0;
+void DMX2Mode_ChannelsStrobe (unsigned char * ch_out)
+{
+    if (last_strobe_was_on)
+    {
+        last_strobe_was_on = 0;
+        for (unsigned char i = 0; i < 6; i++)
+            ch_out[i] = 0;
+    }
+    else
+    {
+        last_strobe_was_on = 1;
+        for (unsigned char i = 0; i < 6; i++)
+            ch_out[i] = ch_strobe_ref[i];
     }
 }
 
