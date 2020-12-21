@@ -30,6 +30,7 @@ parameters_typedef mem_conf;
 extern uint8_t* _displaybuf;
 extern uint16_t _displaybuf_size;
 
+
 // Globals ---------------------------------------------------------------------
 typedef unsigned short uint16_t;
 typedef unsigned char uint8_t;
@@ -66,6 +67,13 @@ void ShowDisplay (WINDOW *, GGRAM_displayed_st *, unsigned char *);
 
 void * KeyboardInput (void * arg);
     
+// Globals for module test -----------------------------------------------------
+unsigned char menu_state;
+unsigned char menu_selected;
+unsigned char menu_need_display_update;
+unsigned char menu_selection_show;
+volatile unsigned short menu_menu_timer;
+
 
 // Module Functions ------------------------------------------------------------
 sw_actions_t action = do_nothing;
@@ -126,13 +134,15 @@ int main(int argc, char *argv[])
     //memory empty use some defaults
     // programs_type_e program_type_to_test = MASTER_SLAVE_MODE;
     // programs_type_e program_type_to_test = MANUAL_MODE;    
-    mem_conf.program_type = MANUAL_FIXED_MODE;
+    mem_conf.program_type = MANUAL_MODE;
+    mem_conf.program_inner_type = MANUAL_INNER_FIXED_MODE;    
     mem_conf.fixed_channels[0] = 0;
     mem_conf.fixed_channels[1] = 0;
     mem_conf.fixed_channels[2] = 0;
     mem_conf.fixed_channels[3] = 0;
     mem_conf.fixed_channels[4] = 0;
     mem_conf.fixed_channels[5] = 0;
+    mem_conf.dmx_channel_quantity = 1;
 
 
     gfx_init(DISPLAYWIDTH, DISPLAYHEIGHT);    

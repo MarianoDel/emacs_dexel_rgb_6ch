@@ -90,7 +90,7 @@ resp_t TempMenu (parameters_typedef * mem, sw_actions_t actions)
         Display_SetLine3("TEMP PROTECTION");
 
         total_temp = TempMenu_TempToDegrees(mem->temp_prot);
-        sprintf(s_temp, "TEMP: %2ddeg", total_temp);
+        sprintf(s_temp, "TEMP: %2d", total_temp);
         Display_SetLine4(s_temp);
 
         Display_SetLine8("       Temp Prot Menu");        

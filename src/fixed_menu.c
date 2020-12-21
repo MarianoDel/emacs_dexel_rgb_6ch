@@ -83,21 +83,47 @@ resp_t FixedMenu (parameters_typedef * mem, sw_actions_t actions)
 
         Display_SetLine1("EXIT");
 
-        sprintf(s_temp, "CH1: %3d     CH4: %3d",
-                *((mem->fixed_channels) + 0),
-                *((mem->fixed_channels) + 3));
+        if (mem->dmx_channel_quantity >= 4)
+        {
+            sprintf(s_temp, "CH1: %3d     CH4: %3d",
+                    *((mem->fixed_channels) + 0),
+                    *((mem->fixed_channels) + 3));
+        }
+        else
+        {
+            sprintf(s_temp, "CH1: %3d",
+                    *((mem->fixed_channels) + 0));
+        }
         Display_BlankLine3();
         Display_SetLine3(s_temp);
 
-        sprintf(s_temp, "CH2: %3d     CH5: %3d",        
-                *((mem->fixed_channels) + 1),
-                *((mem->fixed_channels) + 4));
+        memset(s_temp, 0, sizeof(s_temp));
+        if (mem->dmx_channel_quantity >= 5)
+        {
+            sprintf(s_temp, "CH2: %3d     CH5: %3d",        
+                    *((mem->fixed_channels) + 1),
+                    *((mem->fixed_channels) + 4));
+        }
+        else if (mem->dmx_channel_quantity >= 2)
+        {
+            sprintf(s_temp, "CH2: %3d",        
+                    *((mem->fixed_channels) + 1));
+        }
         Display_BlankLine4();
         Display_SetLine4(s_temp);
 
-        sprintf(s_temp, "CH3: %3d     CH6: %3d",        
-                *((mem->fixed_channels) + 2),
-                *((mem->fixed_channels) + 5));
+        memset(s_temp, 0, sizeof(s_temp));
+        if (mem->dmx_channel_quantity >= 6)
+        {
+            sprintf(s_temp, "CH3: %3d     CH6: %3d",        
+                    *((mem->fixed_channels) + 2),
+                    *((mem->fixed_channels) + 5));
+        }
+        else if (mem->dmx_channel_quantity >= 3)
+        {
+            sprintf(s_temp, "CH3: %3d",        
+                    *((mem->fixed_channels) + 2));
+        }
         Display_BlankLine5();
         Display_SetLine5(s_temp);
         
@@ -162,7 +188,8 @@ resp_t FixedMenu (parameters_typedef * mem, sw_actions_t actions)
         
         if (actions == selection_up)
         {
-            if (fixed_selected < 6)
+            // if (fixed_selected < 6)
+            if (fixed_selected < mem->dmx_channel_quantity)                
             {
                 // clean last option
                 if (!fixed_selected)
