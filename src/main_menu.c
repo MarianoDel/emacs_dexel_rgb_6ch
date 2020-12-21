@@ -72,10 +72,12 @@ resp_t MainMenu (parameters_typedef * mem, sw_actions_t actions)
             {
             case 0:
                 mem->program_type = DMX1_MODE;
+                resp = resp_need_to_save;
                 break;
 
             case 1:
                 mem->program_type = DMX2_MODE;
+                resp = resp_need_to_save;                
                 break;
 
             case 2:
