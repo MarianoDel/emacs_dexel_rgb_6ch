@@ -241,7 +241,8 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
             if (resp == resp_finish)
                 resp = resp_continue;
 
-            manual_effect_timer = 2000 - mem->program_inner_type_speed * 200;
+            // manual_effect_timer = 2000 - mem->program_inner_type_speed * 200;
+            manual_effect_timer = 1000 - mem->program_inner_type_speed * 100;            
             resp = resp_change;
         }
         break;
