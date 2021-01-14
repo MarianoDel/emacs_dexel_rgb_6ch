@@ -229,8 +229,21 @@ resp_t DMX2Mode (unsigned char * ch_val, sw_actions_t action)
         {
             DMX2Mode_ChannelsStrobe(ch_val);
 
-            resp = resp_change;            
-            dmx2_mode_effect_timer = 1000 - mem_conf.program_inner_type_speed * 100;
+            resp = resp_change;
+
+            if (mem_conf.program_inner_type_speed > 4)
+            {
+                //from 128ms to 60ms
+                //     5        9
+                unsigned char fast = mem_conf.program_inner_type_speed - 5;
+                dmx2_mode_effect_timer = 128 - fast * 17;
+            }
+            else
+            {
+                //from 728ms to 144ms
+                //     0        4
+                dmx2_mode_effect_timer = 800 - mem_conf.program_inner_type_speed * 164;
+            }
         }
         break;
 

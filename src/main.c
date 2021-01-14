@@ -1268,51 +1268,87 @@ void CheckFiltersAndOffsets_SM (volatile unsigned char * ch_dmx_val)
         break;
 
     case FILTERS_OUTPUTS_CH1_CH3:
-        // channel 1
-        ch1_pwm = MA16_U16Circular (
-            &st_sp1,
-            PWM_Map_From_Dmx(*(limit_output + CH1_VAL_OFFSET))
-            );
-        PWM_Update_CH1(ch1_pwm);
+        if (mem_conf.program_inner_type == DMX2_INNER_STROBE_MODE)
+        {
+            //outputs without filter
+            // channel 1
+            ch1_pwm = PWM_Map_From_Dmx(*(limit_output + CH1_VAL_OFFSET));
+            PWM_Update_CH1(ch1_pwm);
 
-        // channel 2
-        ch2_pwm = MA16_U16Circular (
-            &st_sp2,
-            PWM_Map_From_Dmx(*(limit_output + CH2_VAL_OFFSET))
-            );
-        PWM_Update_CH2(ch2_pwm);
+            // channel 2
+            ch2_pwm = PWM_Map_From_Dmx(*(limit_output + CH2_VAL_OFFSET));
+            PWM_Update_CH2(ch2_pwm);
 
-        // channel 3
-        ch3_pwm = MA16_U16Circular (
-            &st_sp3,
-            PWM_Map_From_Dmx(*(limit_output + CH3_VAL_OFFSET))
-            );
-        PWM_Update_CH3(ch3_pwm);
+            // channel 3
+            ch3_pwm = PWM_Map_From_Dmx(*(limit_output + CH3_VAL_OFFSET));
+            PWM_Update_CH3(ch3_pwm);
+        }
+        else
+        {
+            // channel 1
+            ch1_pwm = MA16_U16Circular (
+                &st_sp1,
+                PWM_Map_From_Dmx(*(limit_output + CH1_VAL_OFFSET))
+                );
+            PWM_Update_CH1(ch1_pwm);
+
+            // channel 2
+            ch2_pwm = MA16_U16Circular (
+                &st_sp2,
+                PWM_Map_From_Dmx(*(limit_output + CH2_VAL_OFFSET))
+                );
+            PWM_Update_CH2(ch2_pwm);
+
+            // channel 3
+            ch3_pwm = MA16_U16Circular (
+                &st_sp3,
+                PWM_Map_From_Dmx(*(limit_output + CH3_VAL_OFFSET))
+                );
+            PWM_Update_CH3(ch3_pwm);
+        }
 
         filters_sm++;
         break;
 
     case FILTERS_OUTPUTS_CH4_CH6:
-        // channel 4
-        ch4_pwm = MA16_U16Circular (
-            &st_sp4,
-            PWM_Map_From_Dmx(*(limit_output + CH4_VAL_OFFSET))
-            );
-        PWM_Update_CH4(ch4_pwm);
+        if (mem_conf.program_inner_type == DMX2_INNER_STROBE_MODE)
+        {
+            //outputs without filter
+            // channel 4
+            ch4_pwm = PWM_Map_From_Dmx(*(limit_output + CH4_VAL_OFFSET));
+            PWM_Update_CH4(ch4_pwm);
 
-        // channel 5
-        ch5_pwm = MA16_U16Circular (
-            &st_sp5,
-            PWM_Map_From_Dmx(*(limit_output + CH5_VAL_OFFSET))
-            );
-        PWM_Update_CH5(ch5_pwm);
+            // channel 5
+            ch5_pwm = PWM_Map_From_Dmx(*(limit_output + CH5_VAL_OFFSET));
+            PWM_Update_CH5(ch5_pwm);
 
-        // channel 6
-        ch6_pwm = MA16_U16Circular (
-            &st_sp6,
-            PWM_Map_From_Dmx(*(limit_output + CH6_VAL_OFFSET))
-            );
-        PWM_Update_CH6(ch6_pwm);
+            // channel 6
+            ch6_pwm = PWM_Map_From_Dmx(*(limit_output + CH6_VAL_OFFSET));
+            PWM_Update_CH6(ch6_pwm);
+        }
+        else
+        {
+            // channel 4
+            ch4_pwm = MA16_U16Circular (
+                &st_sp4,
+                PWM_Map_From_Dmx(*(limit_output + CH4_VAL_OFFSET))
+                );
+            PWM_Update_CH4(ch4_pwm);
+
+            // channel 5
+            ch5_pwm = MA16_U16Circular (
+                &st_sp5,
+                PWM_Map_From_Dmx(*(limit_output + CH5_VAL_OFFSET))
+                );
+            PWM_Update_CH5(ch5_pwm);
+
+            // channel 6
+            ch6_pwm = MA16_U16Circular (
+                &st_sp6,
+                PWM_Map_From_Dmx(*(limit_output + CH6_VAL_OFFSET))
+                );
+            PWM_Update_CH6(ch6_pwm);
+        }
 
         filters_sm = FILTERS_BKP_CHANNELS;
         break;
