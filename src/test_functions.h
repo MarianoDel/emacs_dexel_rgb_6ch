@@ -21,6 +21,9 @@
 
 
 // Exported Functions ----------------------------------------------------------
+void TF_Usart1_Tx_Single (void);
+void TF_Usart1_Tx_Int (void);
+void TF_Usart1_Tx_Dmx (void);
 void TF_Voltage_Temperature (void);
 void TF_Control_Fan (void);
 void TF_Oled_Screen (void);

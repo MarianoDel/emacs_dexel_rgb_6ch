@@ -23,6 +23,8 @@
 #include "main_menu.h"
 #include "dmx1_mode.h"
 
+#include "dmx_transceiver.h"
+
 
 #include <stdio.h>
 // Externals -------------------------------------------------------------------
@@ -41,6 +43,52 @@ extern volatile unsigned char Packet_Detected_Flag;
 
 
 // Module Functions ------------------------------------------------------------
+void TF_Usart1_Tx_Single (void)
+{
+    USART1Config();
+
+    while (1)
+    {
+        if (!timer_standby)
+        {
+            timer_standby = 100;
+            USART1->TDR = 'M';
+        }
+    }
+}
+
+
+void TF_Usart1_Tx_Int (void)
+{
+    USART1Config();
+
+    while (1)
+    {
+        if (!timer_standby)
+        {
+            timer_standby = 100;
+            UsartSendDMX();
+        }
+    }
+}
+
+
+void TF_Usart1_Tx_Dmx (void)
+{
+    TIM_16_Init();    //para tx dmx OneShoot
+    USART1Config();
+
+    while (1)
+    {
+        if (!timer_standby)
+        {
+            timer_standby = 100;
+            SendDMXPacket (PCKT_INIT);            
+        }
+    }
+}
+
+
 void TF_Voltage_Temperature (void)
 {
     char s_to_send [100];

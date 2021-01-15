@@ -129,6 +129,7 @@ ma16_u16_data_obj_t st_sp6;
 // Globals ---------------------------------------------------------------------
 // -- for the ms timers ----------------
 volatile unsigned short timer_standby = 0;
+volatile unsigned char timer_send_pckt = 0;
 volatile unsigned short wait_ms_var = 0;
 volatile unsigned short need_to_save_timer = 0;
 #if (defined USE_OVERTEMP_PROT) || (defined USE_VOLTAGE_PROT)
@@ -178,6 +179,9 @@ int main(void)
     PWMChannelsReset();
 
     // Tests Functions
+    // TF_Usart1_Tx_Single ();
+    // TF_Usart1_Tx_Int ();
+    // TF_Usart1_Tx_Dmx ();        
     // TF_Control_Fan ();
     // TF_Oled_Screen ();
     // TF_Oled_and_Main_Menu ();
@@ -285,7 +289,7 @@ int main(void)
     TEST_Voltage_Temperature();
 #endif
     //--- End of Test for ADC Channels ---//
-    
+
     while (1)
     {
         switch (main_state)
@@ -300,7 +304,7 @@ int main(void)
             //reseteo hardware
             //DMX en RX
             SW_RX_TX_RE_NEG;
-            DMX_Disa();
+            DMX_Disable();
 
             //reseteo canales
             PWMChannelsReset();
@@ -367,7 +371,7 @@ int main(void)
 
                 //packet reception enable
                 SW_RX_TX_RE_NEG;
-                DMX_Ena();
+                DMX_EnableRx();
 
 #ifdef CHECK_FILTERS_BY_INT
                 //habilito salidas si estoy con int
@@ -390,7 +394,7 @@ int main(void)
 
                 //packet reception enable
                 SW_RX_TX_RE_NEG;
-                DMX_Ena();
+                DMX_EnableRx();
 
 #ifdef CHECK_FILTERS_BY_INT
                 //habilito salidas si estoy con int
@@ -403,6 +407,10 @@ int main(void)
             
             if (mem_conf.program_type == MASTER_SLAVE_MODE)
             {
+                //packet transmision enable
+                SW_RX_TX_DE;
+                DMX_EnableTx();
+                
 #ifdef CHECK_FILTERS_BY_INT
                 //habilito salidas si estoy con int
                 enable_outputs_by_int = 1;
@@ -437,11 +445,11 @@ int main(void)
             
 
             //default state no debiera estar nunca aca!
-            if (main_state == MAIN_GET_CONF)
-            {
-                mem_conf.program_type = DMX1_MODE;
-                main_state = MAIN_IN_DMX1_MODE;
-            }                
+            // if (main_state == MAIN_GET_CONF)
+            // {
+            //     mem_conf.program_type = DMX1_MODE;
+            //     main_state = MAIN_IN_DMX1_MODE;
+            // }                
             break;
 
         case MAIN_IN_DMX1_MODE:
@@ -592,8 +600,12 @@ int main(void)
             if ((resp == resp_change) ||
                 (resp == resp_change_all_up))    //fixed mode save and change
             {
+                data512[0] = 0;
                 for (unsigned char n = 0; n < sizeof(ch_values); n++)
+                {
                     ch_values[n] = mem_conf.fixed_channels[n];
+                    data512[n + 1] = ch_values[n];
+                }
 
 #ifdef CHECK_FILTERS_BY_INT
                 for (unsigned char n = 0; n < sizeof(channels_values_int); n++)
@@ -601,9 +613,21 @@ int main(void)
 
 #else
                 CheckFiltersAndOffsets (ch_values);
-#endif
+#endif                
                 if (resp == resp_change_all_up)
                     resp = resp_need_to_save;                
+            }
+
+            if (!timer_send_pckt)
+            {
+                if ((mem_conf.program_inner_type == MASTER_INNER_FIXED_MODE) ||
+                    (mem_conf.program_inner_type == MASTER_INNER_SKIPPING_MODE) ||
+                    (mem_conf.program_inner_type == MASTER_INNER_GRADUAL_MODE) ||
+                    (mem_conf.program_inner_type == MASTER_INNER_STROBE_MODE))
+                {
+                    timer_send_pckt = 40;
+                    SendDMXPacket (PCKT_INIT);
+                }
             }
 
             if (resp == resp_need_to_save)
@@ -702,7 +726,7 @@ int main(void)
             
         case MAIN_IN_OVERTEMP:
             SW_RX_TX_DE;            
-            DMX_Disa();
+            DMX_Disable();
 
 #ifdef CHECK_FILTERS_BY_INT
             //deshabilito salidas si estoy con int
@@ -737,7 +761,7 @@ int main(void)
 
         case MAIN_IN_OVERVOLTAGE:
             SW_RX_TX_DE;            
-            DMX_Disa();
+            DMX_Disable();
 #ifdef CHECK_FILTERS_BY_INT
             //deshabilito salidas si estoy con int
             enable_outputs_by_int = 0;
@@ -772,7 +796,7 @@ int main(void)
 
         case MAIN_IN_UNDERVOLTAGE:
             SW_RX_TX_DE;            
-            DMX_Disa();
+            DMX_Disable();
 
 #ifdef CHECK_FILTERS_BY_INT
             //deshabilito salidas si estoy con int
@@ -811,7 +835,7 @@ int main(void)
             //deshabilitar salidas hardware
             // SW_RX_TX_RE_NEG;
             SW_RX_TX_DE;            
-            DMX_Disa();
+            DMX_Disable();
 
 #ifdef CHECK_FILTERS_BY_INT
             enable_outputs_by_int = 0;
@@ -1011,6 +1035,9 @@ void TimingDelay_Decrement(void)
     if (timer_standby)
         timer_standby--;
 
+    if (timer_send_pckt)
+        timer_send_pckt--;
+    
     if (need_to_save_timer)
         need_to_save_timer--;
 

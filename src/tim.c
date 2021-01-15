@@ -248,6 +248,7 @@ void TIM16_IRQHandler (void)	//es one shoot
 
 void OneShootTIM16 (unsigned short a)
 {
+    // TIM16->CNT = 0;
     TIM16->ARR = a;
     TIM16->CR1 |= TIM_CR1_CEN;
 }

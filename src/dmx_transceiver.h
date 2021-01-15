@@ -57,13 +57,15 @@ typedef enum {
     PCKT_RX_LOOK_FOR_START
 } pckt_rx_t;
 
-//--- FUNCIONES DEL MODULO ---//
+
+// Module Exported Functions ---------------------------------------------------
 void DmxInt_Break_Handler (void);
 void DmxInt_Serial_Handler_Receiver (unsigned char);
 void DmxInt_Serial_Handler_Transmitter (void);
 
-void DMX_Ena(void);
-void DMX_Disa(void);
+void DMX_EnableTx (void);
+void DMX_EnableRx (void);
+void DMX_Disable (void);
 
 void SendDMXPacket (unsigned char);
 void UpdateRDMResponder(void);

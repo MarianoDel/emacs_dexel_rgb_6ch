@@ -41,29 +41,36 @@ extern parameters_typedef mem_conf;
 
 
 // Globals ---------------------------------------------------------------------
-volatile unsigned char dmx_state = 0;
 volatile pckt_rx_t dmx_signal_state = PCKT_RX_IDLE;
 volatile unsigned short current_channel_index = 0;
 
-//-- Private Functions ----------
+
+// Module Private Functions ----------------------------------------------------
 // extern inline void UsartSendDMX (void);
 inline void UsartSendDMX (void);
 // void UsartSendDMX (void);
 
 
 //--- FUNCIONES DEL MODULO ---//
-void DMX_Ena (void)
+void DMX_EnableRx (void)
 {
-    //habilito la interrupción
+    //enable the Rx int break detect
     EXTIOn ();
-    USART1->CR1 |= (USART_CR1_RXNEIE | USART_CR1_UE);
+    USART1->CR1 |= USART_CR1_RXNEIE | USART_CR1_UE;
 }
 
-void DMX_Disa (void)
+
+void DMX_EnableTx (void)
 {
-    //deshabilito la interrupción
+    USART1->CR1 |= USART_CR1_UE;
+}
+
+
+void DMX_Disable (void)
+{
+    //disable the Rx int break detect
     EXTIOff ();
-    USART1->CR1 &= ~(USART_CR1_RXNEIE | USART_CR1_UE);
+    USART1->CR1 &= ~(USART_CR1_TXEIE | USART_CR1_RXNEIE | USART_CR1_UE);
 }
 
 void UpdatePackets (void)
@@ -225,6 +232,7 @@ void UpdateRDMResponder(void)
 //recibe PCKT_INIT por el usuario
 //recibe PCKT_UPDATE desde su propia maquina de estados
 //una vez que la llama el usuario, se llama sola con OneShoot y USARt1 hasta terminar
+volatile unsigned char dmx_state = PCKT_INIT;
 void SendDMXPacket (unsigned char new_func)
 {
     if ((new_func == PCKT_INIT) &&
@@ -240,28 +248,30 @@ void SendDMXPacket (unsigned char new_func)
     {
     case PCKT_INIT:
         SW_RX_TX_DE;    //TODO: ver de cambiar sw nuevamente
-        DMX_TX_PIN_OFF;
         PB6_to_PushPull();
-        dmx_state++;
+        DMX_TX_PIN_OFF;
+        OneShootTIM16(200);
+        // OneShootTIM16(2000);        
         // OneShootTIM16(88);
-        OneShootTIM16(200);        
+        dmx_state++;
         break;
 
     case PCKT_END_BREAK:
         DMX_TX_PIN_ON;	//
+        OneShootTIM16(8);        
         dmx_state++;
-        OneShootTIM16(8);
         break;
 
     case PCKT_END_MARK:
         PB6_to_Alternative();
         UsartSendDMX();
-        dmx_state++;        
+        dmx_state++;
+        // dmx_state = PCKT_END_TX;
         break;
 
     case PCKT_TRANSMITING:	//se deben haber transmitido el start code + los 512 canales
         dmx_state = PCKT_END_TX;	//se a llama al terminar de transmitir con la USART con UPDATE
-        DMX_TX_PIN_OFF;
+        // DMX_TX_PIN_OFF;
         break;
 
     case PCKT_END_TX:	//estado de espera luego de transmitir
@@ -269,7 +279,7 @@ void SendDMXPacket (unsigned char new_func)
 
     default:
         dmx_state = PCKT_END_TX;
-        DMX_TX_PIN_OFF;
+        // DMX_TX_PIN_OFF;
         break;
     }
 }
@@ -282,5 +292,5 @@ __attribute__((always_inline)) void UsartSendDMX (void)
     USART1->CR1 |= USART_CR1_TXEIE;
 }
 
-#endif //DMX_WITH_TX
+#endif //DMX_BIDIRECTIONAL
 
