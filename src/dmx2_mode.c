@@ -152,7 +152,7 @@ resp_t DMX2Mode (unsigned char * ch_val, sw_actions_t action)
                         mem_conf.program_inner_type = DMX2_INNER_STROBE_MODE;
 
                     // map the channels values to strobe
-                    DMX2Mode_ChannelsStrobeSet(&data11[DMX2_CLR_CH1]);
+                    DMX2Mode_ChannelsStrobeSet((unsigned char *) &data11[DMX2_CLR_CH1]);
                     
                     // map the speed in this mode
                     mem_conf.program_inner_type_speed = DMX2Mode_MapSpeed(data11[DMX2_STB_CH]);
@@ -162,7 +162,7 @@ resp_t DMX2Mode (unsigned char * ch_val, sw_actions_t action)
                     if (mem_conf.program_inner_type != DMX2_INNER_DIMMER_MODE)
                         mem_conf.program_inner_type = DMX2_INNER_DIMMER_MODE;
                     
-                    DMX2Mode_ChannelsDimmer(ch_val, data11);
+                    DMX2Mode_ChannelsDimmer(ch_val, (unsigned char *) data11);
                     dmx2_end_of_packet_update = 1;
                     resp = resp_change;
                     break;
@@ -260,7 +260,7 @@ resp_t DMX2Mode (unsigned char * ch_val, sw_actions_t action)
         dmx2_addr_st.dmx_address = mem_conf.dmx_first_channel;
         dmx2_addr_st.dmx_channels_qtty = mem_conf.dmx_channel_quantity + 4;
         dmx2_addr_st.actions = action;
-        dmx2_addr_st.timer = &timer_address;
+        dmx2_addr_st.timer = (unsigned short *) &timer_address;
         dmx2_addr_st.address_show = &dmx2_address_show;
         resp = DMXModeMenu_ChangeAddress(&dmx2_addr_st);
 

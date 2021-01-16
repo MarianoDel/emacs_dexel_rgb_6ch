@@ -160,7 +160,7 @@ resp_t DMX1Mode (unsigned char * ch_val, sw_actions_t action)
         dmx1_addr_st.dmx_address = mem_conf.dmx_first_channel;
         dmx1_addr_st.dmx_channels_qtty = mem_conf.dmx_channel_quantity;
         dmx1_addr_st.actions = action;
-        dmx1_addr_st.timer = &timer_address;
+        dmx1_addr_st.timer = (unsigned short *) &timer_address;
         dmx1_addr_st.address_show = &dmx1_address_show;
         resp = DMXModeMenu_ChangeAddress(&dmx1_addr_st);
 

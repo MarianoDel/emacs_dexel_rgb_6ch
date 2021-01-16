@@ -185,10 +185,6 @@ int main(void)
     // TF_Usart1_Tx_Dmx ();        
     // TF_Control_Fan ();
     // TF_Oled_Screen ();
-    // TF_Oled_and_Main_Menu ();
-    // TF_Oled_and_DMX1_Mode ();
-    // TF_Oled_and_Programs_Mode ();
-    // TF_Oled_and_Master_Mode ();    
 
 
     ///////////////////////////////////
@@ -284,12 +280,6 @@ int main(void)
         mem_conf.max_power = 1530;
         mem_conf.dmx_channel_quantity = 6;
     }
-
-    //--- Test for ADC Channels ---//
-#ifdef HARD_TEST_MODE_VOLTS_TEMP
-    TEST_Voltage_Temperature();
-#endif
-    //--- End of Test for ADC Channels ---//
 
     while (1)
     {
@@ -951,13 +941,7 @@ void TimingDelay_Decrement(void)
     else
         EXTIOn();    
 
-    //Timeouts for the modes with a function pointer
-    // DMX1Mode_UpdateTimers();    //for DMX1_MODE
-    // DMX2Mode_UpdateTimers();    //for DMX2_MODE    
-    // UpdateTimerModeMenu ();    //for the MainMenu
-    // ManualMode_UpdateTimers ();    //for ManualMode
-    // MasterSlaveMode_UpdateTimers ();    //for MasterSlave mode
-    // HardwareMode_UpdateTimers();    //for Hardware mode
+    // Modes Menus Timers
     if (ptFTT != NULL)
         ptFTT();
     
@@ -966,30 +950,9 @@ void TimingDelay_Decrement(void)
 
     //para filtros y offset DMX
 #ifdef CHECK_FILTERS_BY_INT
-
     // the third one, state machine, do something on each ms
     if (enable_outputs_by_int)    
         CheckFiltersAndOffsets_SM(channels_values_int);
-    
-    // the second one, outputs on each ms
-    // if (enable_outputs_by_int)
-    //     CheckFiltersAndOffsets_NoTimed(channels_values_int, dmx_filters_timer);
-
-    // if (dmx_filters_timer < 5)
-    //     dmx_filters_timer++;
-    // else
-    //     dmx_filters_timer = 0;
-
-    // the first one wait 5 and calc all in one
-    // if (dmx_filters_timer)
-    //     dmx_filters_timer--;
-    // else
-    // {
-    //     dmx_filters_timer = DMX_UPDATE_TIMER;
-    //     if (enable_outputs_by_int)
-    //         CheckFiltersAndOffsets_NoTimed(channels_values_int);
-    // }
-    
 #else
     if (dmx_filters_timer)
         dmx_filters_timer--;

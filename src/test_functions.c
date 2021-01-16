@@ -18,10 +18,7 @@
 #include "tim.h"
 
 #include "i2c.h"
-#include "ssd1306_gfx.h"
 #include "screen.h"
-#include "main_menu.h"
-#include "dmx1_mode.h"
 
 #include "dmx_transceiver.h"
 
@@ -31,6 +28,8 @@
 extern volatile unsigned short adc_ch [];
 extern volatile unsigned short timer_standby;
 extern volatile unsigned char Packet_Detected_Flag;
+extern volatile unsigned char data512[];
+extern volatile unsigned char * pdmx;
 
 
 // Globals ---------------------------------------------------------------------
@@ -61,13 +60,14 @@ void TF_Usart1_Tx_Single (void)
 void TF_Usart1_Tx_Int (void)
 {
     USART1Config();
-
+    pdmx = &data512[0];
+    
     while (1)
     {
         if (!timer_standby)
         {
             timer_standby = 100;
-            UsartSendDMX();
+            USART1->CR1 |= USART_CR1_TXEIE;
         }
     }
 }
@@ -135,6 +135,7 @@ void TF_Control_Fan (void)
 }
 
 
+extern void display_update_int_state_machine (void);
 void TF_Oled_Screen (void)
 {
     I2C2_Init();
@@ -184,116 +185,6 @@ void TF_Oled_Screen (void)
         //         CTRL_FAN_ON;
             
         // }
-    }
-}
-
-
-void TF_Oled_and_Main_Menu (void)
-{
-    // resp_t resp = resp_continue;
-    sw_actions_t action = do_nothing;
-    
-    // resp = resp_ok;
-    I2C2_Init();
-    Wait_ms(100);
-
-    MainMenu_Init();
-
-    while (1)
-    {
-        action = do_nothing;
-
-        // Check switches first
-        action = CheckCW();
-        // resp = MainMenu_Update(action);
-        MainMenu_Update(action);        
-
-        UpdateSwitches();
-    }
-}
-
-
-void TF_Oled_and_DMX1_Mode (void)
-{
-    unsigned char ch_values [6] = { 0 };
-    sw_actions_t action = do_nothing;
-    
-    I2C2_Init();
-    Wait_ms(100);
-
-    //primer pantalla
-    SCREEN_Init();
-    SCREEN_ShowText2(
-        "Slave    ",
-        "     Mode",
-        "         ",
-        "         "
-        );
-
-    DMX1ModeReset();
-
-    while (1)
-    {
-        DMX1Mode(ch_values, action);
-
-        //simulate dmx packets arrivals
-        if (!timer_standby)
-        {
-            timer_standby = 100;
-            Packet_Detected_Flag = 1;
-        }
-    }
-}
-
-
-void TF_Oled_and_Programs_Mode (void)
-{
-    unsigned char ch_values [6] = { 0 };
-    sw_actions_t action = do_nothing;
-    
-    I2C2_Init();
-    Wait_ms(100);
-
-    //primer pantalla
-    SCREEN_Init();
-    SCREEN_ShowText2(
-        "Programs ",
-        "     Mode",
-        "         ",
-        "         "
-        );
-
-    ProgramsModeMenuReset();
-
-    while (1)
-    {
-        FuncsProgramsMode(ch_values, action);
-    }
-}
-
-
-void TF_Oled_and_Master_Mode (void)
-{
-    unsigned char ch_values [6] = { 0 };
-    sw_actions_t action = do_nothing;
-    
-    I2C2_Init();
-    Wait_ms(100);
-
-    //primer pantalla
-    SCREEN_Init();
-    SCREEN_ShowText2(
-        "Master   ",
-        "     Mode",
-        "         ",
-        "         "
-        );
-    
-    MasterModeMenuReset();
-
-    while (1)
-    {
-        FuncsMasterMode(ch_values, action);
     }
 }
 
