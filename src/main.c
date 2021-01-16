@@ -129,7 +129,6 @@ ma16_u16_data_obj_t st_sp6;
 // Globals ---------------------------------------------------------------------
 // -- for the ms timers ----------------
 volatile unsigned short timer_standby = 0;
-volatile unsigned char timer_send_pckt = 0;
 volatile unsigned short wait_ms_var = 0;
 volatile unsigned short need_to_save_timer = 0;
 #if (defined USE_OVERTEMP_PROT) || (defined USE_VOLTAGE_PROT)
@@ -582,14 +581,14 @@ int main(void)
                     resp = resp_need_to_save;                
             }
 
-            if (!timer_send_pckt)
+            if (!timer_standby)
             {
                 if ((mem_conf.program_inner_type == MASTER_INNER_FIXED_MODE) ||
                     (mem_conf.program_inner_type == MASTER_INNER_SKIPPING_MODE) ||
                     (mem_conf.program_inner_type == MASTER_INNER_GRADUAL_MODE) ||
                     (mem_conf.program_inner_type == MASTER_INNER_STROBE_MODE))
                 {
-                    timer_send_pckt = 40;
+                    timer_standby = 40;
                     SendDMXPacket (PCKT_INIT);
                 }
             }
@@ -937,9 +936,6 @@ void TimingDelay_Decrement(void)
     if (timer_standby)
         timer_standby--;
 
-    if (timer_send_pckt)
-        timer_send_pckt--;
-    
     if (need_to_save_timer)
         need_to_save_timer--;
 
