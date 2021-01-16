@@ -47,7 +47,7 @@ void (* ptFManualMenuTT ) (void) = NULL;
 
 
 // Module Private Functions ----------------------------------------------------
-
+void ManualResetInnerMode (parameters_typedef *);
 
 // Module Funtions -------------------------------------------------------------
 void ManualMode_UpdateTimers (void)
@@ -129,13 +129,7 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
 
         if (resp == resp_finish)
         {
-            mem->program_inner_type = MANUAL_NO_INNER_MODE;
-            manual_state = MANUAL_MODE_INIT;
-
-            //colors reset
-            for (unsigned char i = 0; i < 6; i++)
-                mem->fixed_channels[i] = 0;
-            
+            ManualResetInnerMode(mem);
             resp = resp_change;
         }
         break;
@@ -147,13 +141,7 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
 
         if (resp == resp_finish)
         {
-            mem->program_inner_type = MANUAL_NO_INNER_MODE;
-            manual_state = MANUAL_MODE_INIT;
-
-            //colors reset
-            for (unsigned char i = 0; i < 6; i++)
-                mem->fixed_channels[i] = 0;
-            
+            ManualResetInnerMode(mem);
             resp = resp_change;
             break;
         }
@@ -182,13 +170,7 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
 
         if (resp == resp_finish)
         {
-            mem->program_inner_type = MANUAL_NO_INNER_MODE;
-            manual_state = MANUAL_MODE_INIT;
-
-            //colors reset
-            for (unsigned char i = 0; i < 6; i++)
-                mem->fixed_channels[i] = 0;
-            
+            ManualResetInnerMode(mem);
             resp = resp_change;
             break;
         }
@@ -218,13 +200,7 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
 
         if (resp == resp_finish)
         {
-            mem->program_inner_type = MANUAL_NO_INNER_MODE;
-            manual_state = MANUAL_MODE_INIT;
-
-            //colors reset
-            for (unsigned char i = 0; i < 6; i++)
-                mem->fixed_channels[i] = 0;
-            
+            ManualResetInnerMode(mem);
             resp = resp_change;
             break;
         }
@@ -257,4 +233,13 @@ resp_t ManualMode (parameters_typedef * mem, sw_actions_t actions)
 }
 
 
+void ManualResetInnerMode (parameters_typedef * mem)
+{
+    mem->program_inner_type = MANUAL_NO_INNER_MODE;
+    manual_state = MANUAL_MODE_INIT;
+
+    //colors reset
+    for (unsigned char i = 0; i < 6; i++)
+        mem->fixed_channels[i] = 0;
+}
 //--- end of file ---//

@@ -151,6 +151,8 @@ void CheckFiltersAndOffsets_SM(volatile unsigned char *);
 void UpdateFiltersTest_Reset (void);
 void SysTickError (void);
 unsigned char CheckTempReconnect (unsigned short, unsigned short);
+sw_actions_t CheckActions (void);
+void DisconnectByVoltage (void);
 
 
 // Module Functions ------------------------------------------------------------
@@ -302,8 +304,6 @@ int main(void)
         case MAIN_HARDWARE_INIT:
 
             //reseteo hardware
-            //DMX en RX
-            SW_RX_TX_RE_NEG;
             DMX_Disable();
 
             //reseteo canales
@@ -370,7 +370,6 @@ int main(void)
                 ptFTT = &DMX1Mode_UpdateTimers;
 
                 //packet reception enable
-                SW_RX_TX_RE_NEG;
                 DMX_EnableRx();
 
 #ifdef CHECK_FILTERS_BY_INT
@@ -393,7 +392,6 @@ int main(void)
                 ptFTT = &DMX2Mode_UpdateTimers;
 
                 //packet reception enable
-                SW_RX_TX_RE_NEG;
                 DMX_EnableRx();
 
 #ifdef CHECK_FILTERS_BY_INT
@@ -407,10 +405,11 @@ int main(void)
             
             if (mem_conf.program_type == MASTER_SLAVE_MODE)
             {
-                //packet transmision enable
-                SW_RX_TX_DE;
-                DMX_EnableTx();
-                
+                //reception variables for slave mode
+                Packet_Detected_Flag = 0;
+                DMX_channel_selected = mem_conf.dmx_first_channel;
+                DMX_channel_quantity = mem_conf.dmx_channel_quantity;
+
 #ifdef CHECK_FILTERS_BY_INT
                 //habilito salidas si estoy con int
                 enable_outputs_by_int = 1;
@@ -442,28 +441,11 @@ int main(void)
                 ResetModeReset();                
                 main_state = MAIN_IN_RESET_MODE;
             }
-            
-
-            //default state no debiera estar nunca aca!
-            // if (main_state == MAIN_GET_CONF)
-            // {
-            //     mem_conf.program_type = DMX1_MODE;
-            //     main_state = MAIN_IN_DMX1_MODE;
-            // }                
             break;
 
         case MAIN_IN_DMX1_MODE:
-            action = do_nothing;
-            
             // Check encoder first
-            if (CheckCCW())
-                action = selection_dwn;
-
-            if (CheckCW())
-                action = selection_up;
-
-            if (CheckSET() > SW_NO)
-                action = selection_enter;
+            action = CheckActions();
             
             resp = DMX1Mode (ch_values, action);
 
@@ -518,17 +500,8 @@ int main(void)
             break;
 
         case MAIN_IN_DMX2_MODE:
-            action = do_nothing;
-            
             // Check encoder first
-            if (CheckCCW())
-                action = selection_dwn;
-
-            if (CheckCW())
-                action = selection_up;
-
-            if (CheckSET() > SW_NO)
-                action = selection_enter;
+            action = CheckActions();
             
             resp = DMX2Mode (ch_values, action);
 
@@ -583,17 +556,8 @@ int main(void)
             break;
             
         case MAIN_IN_MASTER_SLAVE_MODE:
-            action = do_nothing;
-
             // Check encoder first
-            if (CheckCCW())
-                action = selection_dwn;
-
-            if (CheckCW())
-                action = selection_up;
-
-            if (CheckSET() > SW_NO)
-                action = selection_enter;
+            action = CheckActions();
 
             resp = MasterSlaveMode (&mem_conf, action);
 
@@ -614,7 +578,7 @@ int main(void)
 #else
                 CheckFiltersAndOffsets (ch_values);
 #endif                
-                if (resp == resp_change_all_up)
+                if (resp == resp_change_all_up)    //fixed mode changes will be saved
                     resp = resp_need_to_save;                
             }
 
@@ -644,17 +608,8 @@ int main(void)
             break;
 
         case MAIN_IN_MANUAL_MODE:
-            action = do_nothing;
-
             // Check encoder first
-            if (CheckCCW())
-                action = selection_dwn;
-
-            if (CheckCW())
-                action = selection_up;
-
-            if (CheckSET() > SW_NO)
-                action = selection_enter;
+            action = CheckActions();
 
             resp = ManualMode (&mem_conf, action);
 
@@ -690,17 +645,8 @@ int main(void)
 
 
         case MAIN_IN_RESET_MODE:
-            action = do_nothing;
-
             // Check encoder first
-            if (CheckCCW())
-                action = selection_dwn;
-
-            if (CheckCW())
-                action = selection_up;
-
-            if (CheckSET() > SW_NO)
-                action = selection_enter;
+            action = CheckActions();
 
             resp = ResetMode (&mem_conf, action);
 
@@ -725,17 +671,6 @@ int main(void)
             break;
             
         case MAIN_IN_OVERTEMP:
-            SW_RX_TX_DE;            
-            DMX_Disable();
-
-#ifdef CHECK_FILTERS_BY_INT
-            //deshabilito salidas si estoy con int
-            enable_outputs_by_int = 0;
-#endif
-            
-            CTRL_FAN_ON;
-            PWMChannelsReset();
-            
             SCREEN_ShowText2(
                 "LEDs     ",
                 "Overtemp ",
@@ -760,16 +695,6 @@ int main(void)
             break;
 
         case MAIN_IN_OVERVOLTAGE:
-            SW_RX_TX_DE;            
-            DMX_Disable();
-#ifdef CHECK_FILTERS_BY_INT
-            //deshabilito salidas si estoy con int
-            enable_outputs_by_int = 0;
-#endif
-
-            CTRL_FAN_OFF;
-            PWMChannelsReset();
-            
             SCREEN_ShowText2(
                 "Power    ",
                 "   Over  ",
@@ -781,31 +706,10 @@ int main(void)
             sprintf(s_to_send, "overvoltage: %d\n", V_Sense_48V);
             Usart2Send(s_to_send);
 #endif
-
-            main_state = MAIN_IN_OVERVOLTAGE_B;
-            break;
-
-        case MAIN_IN_OVERVOLTAGE_B:
-            if (V_Sense_48V < MAX_PWR_SUPPLY)
-            {
-                //reconnect
-                main_state = MAIN_HARDWARE_INIT;
-            }
-            
+            main_state = MAIN_IN_VOLTAGE_PROTECTION;
             break;
 
         case MAIN_IN_UNDERVOLTAGE:
-            SW_RX_TX_DE;            
-            DMX_Disable();
-
-#ifdef CHECK_FILTERS_BY_INT
-            //deshabilito salidas si estoy con int
-            enable_outputs_by_int = 0;
-#endif
-            
-            CTRL_FAN_OFF;
-            PWMChannelsReset();
-            
             SCREEN_ShowText2(
                 "Power    ",
                 " is Too  ",
@@ -817,24 +721,20 @@ int main(void)
             sprintf(s_to_send, "undervoltage: %d\n", V_Sense_48V);
             Usart2Send(s_to_send);
 #endif
-
-            main_state = MAIN_IN_UNDERVOLTAGE_B;
+            main_state = MAIN_IN_VOLTAGE_PROTECTION;
             break;
 
-        case MAIN_IN_UNDERVOLTAGE_B:
-            if (V_Sense_48V > MIN_PWR_SUPPLY)
+        case MAIN_IN_VOLTAGE_PROTECTION:
+            if ((V_Sense_48V < MAX_PWR_SUPPLY) &&
+                (V_Sense_48V > MIN_PWR_SUPPLY))
             {
-                //reconecto
+                //reconnect
                 main_state = MAIN_HARDWARE_INIT;
             }
-            
             break;
-            
-            
+
         case MAIN_ENTERING_MAIN_MENU:
             //deshabilitar salidas hardware
-            // SW_RX_TX_RE_NEG;
-            SW_RX_TX_DE;            
             DMX_Disable();
 
 #ifdef CHECK_FILTERS_BY_INT
@@ -866,17 +766,8 @@ int main(void)
             break;
             
         case MAIN_IN_MAIN_MENU:
-            action = do_nothing;
-
             // Check encoder first
-            if (CheckSET() > SW_NO)
-                action = selection_enter;
-
-            if (CheckCCW())
-                action = selection_dwn;
-
-            if (CheckCW())
-                action = selection_up;
+            action = CheckActions();
 
             resp = MainMenu(&mem_conf, action);
 
@@ -927,17 +818,8 @@ int main(void)
             break;
             
         case MAIN_IN_HARDWARE_MENU:
-            action = do_nothing;
-
             // Check encoder first
-            if (CheckSET() > SW_NO)
-                action = selection_enter;
-
-            if (CheckCCW())
-                action = selection_dwn;
-
-            if (CheckCW())
-                action = selection_up;
+            action = CheckActions();
 
             resp = HardwareMode(&mem_conf, action);
 
@@ -971,14 +853,19 @@ int main(void)
 
 #ifdef USE_VOLTAGE_PROT
             if ((main_state != MAIN_IN_OVERVOLTAGE) &&
-                (main_state != MAIN_IN_OVERVOLTAGE_B) &&
-                (main_state != MAIN_IN_UNDERVOLTAGE_B) &&
-                (main_state != MAIN_IN_UNDERVOLTAGE_B))
+                (main_state != MAIN_IN_UNDERVOLTAGE) &&
+                (main_state != MAIN_IN_VOLTAGE_PROTECTION))
             {
                 if (V_Sense_48V > MAX_PWR_SUPPLY)
+                {
+                    DisconnectByVoltage();
                     main_state = MAIN_IN_OVERVOLTAGE;
+                }
                 else if (V_Sense_48V < MIN_PWR_SUPPLY)
+                {
+                    DisconnectByVoltage();
                     main_state = MAIN_IN_UNDERVOLTAGE;
+                }
             }
 #endif
             
@@ -989,6 +876,8 @@ int main(void)
                 if (Temp_Channel > mem_conf.temp_prot)
                 {
                     //stop LEDs outputs
+                    DisconnectByVoltage();
+                    CTRL_FAN_ON;
                     main_state = MAIN_IN_OVERTEMP;
                 }
 #ifdef USE_CTRL_FAN_FOR_TEMP_CTRL
@@ -1025,6 +914,19 @@ int main(void)
     return 0;
 }
 //--- End of Main ---//
+
+
+void DisconnectByVoltage (void)
+{
+    DMX_Disable();
+
+#ifdef CHECK_FILTERS_BY_INT
+    //deshabilito salidas si estoy con int
+    enable_outputs_by_int = 0;
+#endif
+    CTRL_FAN_OFF;
+    PWMChannelsReset();
+}
 
 
 void TimingDelay_Decrement(void)
@@ -1523,6 +1425,20 @@ unsigned char CheckTempReconnect (unsigned short temp_sample, unsigned short tem
 }
 
 
+sw_actions_t CheckActions (void)
+{
+    sw_actions_t a = do_nothing;
 
+    if (CheckCCW())
+        a = selection_dwn;
+
+    if (CheckCW())
+        a = selection_up;
+
+    if (CheckSET() > SW_NO)
+        a = selection_enter;
+
+    return a;
+}
 //--- end of file ---//
 

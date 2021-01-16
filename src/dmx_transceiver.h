@@ -34,15 +34,9 @@
 //};
 
 
-//--- ESTADOS DE TRANSMISION DE PAQUETES DMX512
-#define PCKT_INIT			0
-#define PCKT_END_BREAK		1
-#define PCKT_END_MARK		2
-#define PCKT_TRANSMITING	3
-#define PCKT_END_TX			4
-
-
-#define PCKT_UPDATE			10
+// Packet Transmision Commands
+#define PCKT_INIT    0
+#define PCKT_UPDATE    1
 
 #define SIZEOF_DMX_DATA11       11
 #define SIZEOF_DMX_DATA512       512
