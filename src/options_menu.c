@@ -45,6 +45,7 @@ void OptionsMenuReset (void)
 }
 
 
+extern void display_update (void);
 resp_t OptionsMenu (options_menu_st * opt, sw_actions_t actions)
 {
     resp_t resp = resp_continue;

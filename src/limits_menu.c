@@ -72,6 +72,7 @@ void LimitsMenuReset (void)
 }
 
 
+extern void display_update (void);
 unsigned char total_curr = 0;
 resp_t LimitsMenu (parameters_typedef * mem, sw_actions_t actions)
 {

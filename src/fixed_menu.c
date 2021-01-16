@@ -70,6 +70,7 @@ void FixedMenuReset (void)
 }
 
 
+extern void display_update (void);
 resp_t FixedMenu (parameters_typedef * mem, sw_actions_t actions)
 {
     resp_t resp = resp_continue;

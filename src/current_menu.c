@@ -72,6 +72,7 @@ void CurrentMenuReset (void)
     current_state = CURRENT_MENU_INIT;
 }
 
+extern void display_update (void);
 unsigned char v_curr [6] = { 0 };
 resp_t CurrentMenu (parameters_typedef * mem, sw_actions_t actions)
 {

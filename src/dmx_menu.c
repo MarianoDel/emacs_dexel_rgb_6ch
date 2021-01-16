@@ -51,6 +51,8 @@ void DMXModeMenuReset (void)
 }
 
 
+extern unsigned char display_is_free (void);
+extern void display_update (void);
 resp_t DMXModeMenu (dmx_menu_data_t * pmenu_data)
 {
     resp_t resp = resp_continue;

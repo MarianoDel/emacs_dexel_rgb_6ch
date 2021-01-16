@@ -62,7 +62,7 @@ void SlaveMenuReset (void)
     slave_state = SLAVE_MENU_INIT;
 }
 
-
+extern void display_update (void);
 resp_t SlaveMenu (parameters_typedef * mem, sw_actions_t actions)
 {
     resp_t resp = resp_continue;

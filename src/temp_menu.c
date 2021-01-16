@@ -73,6 +73,7 @@ void TempMenuReset (void)
 }
 
 
+extern void display_update (void);
 unsigned char total_temp = 0;
 resp_t TempMenu (parameters_typedef * mem, sw_actions_t actions)
 {
