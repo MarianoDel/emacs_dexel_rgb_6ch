@@ -138,8 +138,10 @@ void TF_Control_Fan (void)
 extern void display_update_int_state_machine (void);
 void TF_Oled_Screen (void)
 {
+    // OLED Init
+    Wait_ms(500);    //for supply stability
     I2C2_Init();
-    Wait_ms(100);
+    Wait_ms(10);
 
     //primer pantalla
     SCREEN_Init();
@@ -185,6 +187,66 @@ void TF_Oled_Screen (void)
         //         CTRL_FAN_ON;
             
         // }
+    }
+}
+
+
+extern resp_t Colors_Strobe (unsigned char * ch_val, unsigned char strobe_ch);
+void TF_Oled_Screen_And_Strobe2s (void)
+{
+    // OLED Init
+    Wait_ms(500);    //for supply stability
+    I2C2_Init();
+    Wait_ms(10);
+
+    //primer pantalla
+    SCREEN_Init();
+
+    SCREEN_ShowText2(
+        "Testeo de",
+        " Placas  ",
+        "  RGB6CH ",
+        "  KIRNO  "
+        );
+
+    timer_standby = 1300;
+    
+    while (timer_standby)
+        display_update_int_state_machine();
+
+    //two seconds strobe
+    resp_t resp = resp_continue;
+    unsigned char which_color = 1;
+
+    TIM_16_Init();    //para tx dmx OneShoot
+    USART1Config();
+    
+    while (1)
+    {
+        if (!timer_standby)
+        {
+            unsigned char ch_val [6] = { 0 };
+            resp = Colors_Strobe (ch_val, which_color);
+
+            if (resp == resp_finish)    //end of seted color sequence
+            {
+                if (which_color & 0x20)
+                    which_color = 1;
+                else
+                    which_color <<= 1;
+            }
+
+            data512[0] = 0;
+            data512[1] = *(ch_val + 0);
+            data512[2] = *(ch_val + 1);
+            data512[3] = *(ch_val + 2);
+            data512[4] = *(ch_val + 3);
+            data512[5] = *(ch_val + 4);
+            data512[6] = *(ch_val + 5);
+            
+            SendDMXPacket (PCKT_INIT);
+            timer_standby = 2000;
+        }
     }
 }
 
