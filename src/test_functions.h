@@ -27,7 +27,7 @@ void TF_Usart1_Tx_Dmx (void);
 void TF_Voltage_Temperature (void);
 void TF_Control_Fan (void);
 void TF_Oled_Screen (void);
-void TF_Oled_Screen_And_Strobe2s (void);
+void TF_Oled_Screen_And_Strobe4s (void);
 
 
 #endif    /* _TEST_FUNTIONS_H_ */

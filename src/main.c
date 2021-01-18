@@ -185,7 +185,7 @@ int main(void)
     // TF_Usart1_Tx_Dmx ();        
     // TF_Control_Fan ();
     // TF_Oled_Screen ();
-    TF_Oled_Screen_And_Strobe2s ();
+    // TF_Oled_Screen_And_Strobe4s ();
 
 
     ///////////////////////////////////
