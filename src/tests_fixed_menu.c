@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
     mem_conf.fixed_channels[3] = 0;
     mem_conf.fixed_channels[4] = 0;
     mem_conf.fixed_channels[5] = 0;
-    mem_conf.dmx_channel_quantity = 1;
+    mem_conf.dmx_channel_quantity = 6;
 
 
     gfx_init(DISPLAYWIDTH, DISPLAYHEIGHT);    

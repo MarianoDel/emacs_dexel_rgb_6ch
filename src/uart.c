@@ -68,6 +68,7 @@ unsigned char ReadUsart1Buffer (unsigned char * bout, unsigned short max_len)
     return (unsigned char) len;
 }
 
+
 unsigned char ReadUsart2Buffer (unsigned char * bout, unsigned short max_len)
 {
     unsigned int len;
@@ -76,8 +77,7 @@ unsigned char ReadUsart2Buffer (unsigned char * bout, unsigned short max_len)
 
     if (len < max_len)
     {
-        //el prx2 siempre llega adelantado desde la int, lo corto con un 0
-        *prx2 = '\0';
+        //prx2 points to the '\0' end of line                
         len += 1;
         memcpy(bout, (unsigned char *) rx2buff, len);
     }
@@ -87,10 +87,11 @@ unsigned char ReadUsart2Buffer (unsigned char * bout, unsigned short max_len)
         len = max_len;
     }
 
-    //ajusto punteros de rx luego de la copia
+    //fix pointers positions
     prx2 = rx2buff;
     return (unsigned char) len;
 }
+
 
 void USART1_IRQHandler(void)
 {

@@ -50,6 +50,8 @@
 #include "ssd1306_gfx.h"
 #include "pwm.h"
 
+#include "comm.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -834,6 +836,9 @@ int main(void)
 
         // update de LCD
         display_update_int_state_machine();
+
+        // colors commands update from comms
+        UpdateCommunications();
 
         
 #if (defined USE_VOLTAGE_PROT) || (defined USE_OVERTEMP_PROT)

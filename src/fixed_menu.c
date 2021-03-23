@@ -448,5 +448,11 @@ void FixedMenu_Options(unsigned char enable, unsigned char selection, char * s)
 }
 
 
+unsigned char fixed_colors_from_comms = 0;
+void FixedMenu_SetColors (unsigned char color)
+{
+    fixed_colors_from_comms |= color;
+}
+
 
 //--- end of file ---//

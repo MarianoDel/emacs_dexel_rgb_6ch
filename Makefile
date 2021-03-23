@@ -30,7 +30,7 @@ MCU  = cortex-m0
 # DDEFS = -DSTM32F10X_HD
 # for STM32F051C8T6 micro
 # DDEFS = -DSTM32F051
-# for STM32F030K6T6 micro
+# for STM32F030K6T6 micro or STM32F030R8T6
 DDEFS = -DSTM32F030
 
 # List all default ASM defines here, like -D_DEBUG=1
@@ -116,6 +116,8 @@ SRC += ./src/limits_menu.c
 SRC += ./src/channels_menu.c
 SRC += ./src/temp_menu.c
 SRC += ./src/version_menu.c
+
+SRC += ./src/comm.c
 
 
 ## Core Support
@@ -371,5 +373,13 @@ tests_limit_simulation:
 	gcc src/tests_simul.c dsp.o
 	./a.out
 	# execute by hand python3 simul_limits.py
+
+tests_comm:
+	# first module objects to test
+	gcc -c src/comm.c -I. $(INCDIR)
+	# second auxiliary helper modules
+	gcc -c src/tests_ok.c -I $(INCDIR)
+	gcc src/tests_comm.c comm.o tests_ok.o
+	./a.out
 
 # *** EOF ***
