@@ -110,7 +110,8 @@ int main(int argc, char *argv[])
     wrefresh(help_win);	
 
     draw_box_tittle(help_win, "Help Menu");    
-    mvwprintw(help_win,1,1, "u -> up  d -> dwn  s -> select F1 -> quit");
+    // mvwprintw(help_win,1,1, "u -> up  d -> dwn  s -> select F1 -> quit");
+    mvwprintw(help_win,1,1, "u -> up  d -> dwn  s -> select or (rgbwc) F1 -> quit");    
     wrefresh(help_win);
 
     ggram_displayed.first_line = 0;
@@ -142,7 +143,7 @@ int main(int argc, char *argv[])
     mem_conf.fixed_channels[3] = 0;
     mem_conf.fixed_channels[4] = 0;
     mem_conf.fixed_channels[5] = 0;
-    mem_conf.dmx_channel_quantity = 6;
+    mem_conf.dmx_channel_quantity = 4;
 
 
     gfx_init(DISPLAYWIDTH, DISPLAYHEIGHT);    
@@ -319,8 +320,28 @@ void * KeyboardInput (void * arg)
             action = selection_enter;
             break;
 
+        // case 'b':
+        //     action = selection_back;
+        //     break;
+
+        case 'r':
+            FixedMenu_SetColors(FIXED_RED);
+            break;
+
+        case 'g':
+            FixedMenu_SetColors(FIXED_GREEN);            
+            break;
+
         case 'b':
-            action = selection_back;
+            FixedMenu_SetColors(FIXED_BLUE);
+            break;
+
+        case 'w':
+            FixedMenu_SetColors(FIXED_WARM);
+            break;
+
+        case 'c':
+            FixedMenu_SetColors(FIXED_COLD);
             break;
 
         }

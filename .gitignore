@@ -12,4 +12,7 @@ GTAGS
 *.zip
 *.pdf
 *.txt
+*.gcov
+*.gcda
+*.gcno
 

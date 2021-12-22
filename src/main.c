@@ -546,7 +546,6 @@ int main(void)
 #endif
             
             break;
-            
         case MAIN_IN_MASTER_SLAVE_MODE:
             // Check encoder first
             action = CheckActions();

@@ -47,7 +47,8 @@ void Test_Comms (void);
 int main(int argc, char *argv[])
 {
 
-    Test_Comms ();
+    for (int i = 0; i < 500000; i++)
+        Test_Comms ();
     
 }
 
@@ -128,6 +129,22 @@ void Test_Comms (void)
     if (!(strcmp(last_uart_sended, "ok\n")))        
     {
         if ((usart2_have_data == 0) && (fixed_colors_from_comms == 0x10))
+            PrintOK();
+        else
+            PrintERR();
+            
+    }
+    
+    // An error Test
+    fixed_colors_from_comms = 0;
+    usart2_have_data = 1;
+    strcpy(new_uart_msg, "brown dog\n");
+
+    UpdateCommunications();
+    
+    if (!(strcmp(last_uart_sended, "nok\n")))        
+    {
+        if ((usart2_have_data == 0) && (fixed_colors_from_comms == 0))
             PrintOK();
         else
             PrintERR();

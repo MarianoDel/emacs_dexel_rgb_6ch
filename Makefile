@@ -382,4 +382,29 @@ tests_comm:
 	gcc src/tests_comm.c comm.o tests_ok.o
 	./a.out
 
+tests_comm_coverage:
+	# first module objects to test and coverage
+	gcc -c --coverage src/comm.c -I. $(INCDIR)
+	# second auxiliary helper modules
+	gcc -c src/tests_ok.c -I $(INCDIR)
+	# compile the test and link with modules
+	gcc --coverage src/tests_comm.c comm.o tests_ok.o
+	# test execution
+	./a.out
+	# process coverage
+	gcov comm.c -m
+
+
+tests_comm_profiling:
+	# first module objects to test and profiling
+	gcc -c -pg src/comm.c -I. $(INCDIR)
+	# second auxiliary helper modules
+	gcc -c -pg src/tests_ok.c -I $(INCDIR)
+	# compile the test and link with modules
+	gcc -pg src/tests_comm.c comm.o tests_ok.o
+	# test execution
+	./a.out
+	# process profiling
+	gprof a.out gmon.out > gprof.txt
+
 # *** EOF ***

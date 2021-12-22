@@ -55,7 +55,7 @@ extern volatile unsigned short menu_menu_timer;
 // Module Private Functions ----------------------------------------------------
 void Fixed_Selected_To_Line_Init (unsigned char, unsigned char *, unsigned char *, unsigned char *);
 void FixedMenu_Options(unsigned char, unsigned char, char *);
-
+resp_t FixedMenu_CheckColors (parameters_typedef * mem);
 
 // Module Funtions -------------------------------------------------------------
 void FixedMenu_UpdateTimer (void)
@@ -231,7 +231,7 @@ resp_t FixedMenu (parameters_typedef * mem, sw_actions_t actions)
         if (actions == do_nothing)
         {
             fixed_selection_show = 1;
-            fixed_menu_timer = TT_SHOW;            
+            fixed_menu_timer = TT_SHOW;
             fixed_state++;
         }
         
@@ -338,6 +338,15 @@ resp_t FixedMenu (parameters_typedef * mem, sw_actions_t actions)
     {
         display_update();
         fixed_need_display_update = 0;
+    }
+
+    //comm interface
+    if (fixed_state >= FIXED_MENU_CHECK_OPTIONS)
+    {
+        if (FixedMenu_CheckColors(mem) == resp_change)
+        {
+            fixed_state = FIXED_MENU_INIT;
+        }
     }
 
     return resp;
@@ -452,6 +461,45 @@ unsigned char fixed_colors_from_comms = 0;
 void FixedMenu_SetColors (unsigned char color)
 {
     fixed_colors_from_comms |= color;
+}
+
+
+resp_t FixedMenu_CheckColors (parameters_typedef * mem)
+{
+    resp_t resp = resp_continue;
+    
+    if (fixed_colors_from_comms)
+    {
+        //check if channel is active
+        unsigned char ch = fixed_colors_from_comms;
+
+        for (unsigned char i = 0; i < 6; i++)
+        {
+            if (ch & 0x01)
+            {
+                if (i < mem->dmx_channel_quantity)
+                {
+                    //change the colors and update interface
+                    mem->fixed_channels[0] = 0;
+                    mem->fixed_channels[1] = 0;
+                    mem->fixed_channels[2] = 0;
+                    mem->fixed_channels[3] = 0;
+                    mem->fixed_channels[4] = 0;
+                    mem->fixed_channels[5] = 0;
+                    
+                    mem->fixed_channels[i] = 255;
+                    i = 6;
+                    resp = resp_change;
+                }
+            }
+            else
+                ch >>= 1;
+
+        }
+        fixed_colors_from_comms = 0;
+    }
+
+    return resp;
 }
 
 
