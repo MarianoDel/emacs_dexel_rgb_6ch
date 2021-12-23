@@ -19,7 +19,22 @@
 #define DUTY_ALWAYS       (DUTY_100_PERCENT + 1)
 
 #ifdef USE_FREQ_16KHZ
-#define DUTY_TRANSISTORS_ON	28
+#define DUTY_100_PERCENT	3000
+#endif
+
+#ifdef USE_FREQ_12KHZ
+#define DUTY_100_PERCENT	4000
+#endif
+
+#ifdef USE_FREQ_8KHZ
+#define DUTY_100_PERCENT	3000
+#endif
+
+#ifdef USE_FREQ_6KHZ
+#define DUTY_100_PERCENT	4000
+#endif
+
+#ifdef USE_FREQ_4KHZ
 #define DUTY_100_PERCENT	4000
 #endif
 

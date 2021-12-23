@@ -106,11 +106,11 @@ void TIM_1_Init (void)
     TIM1->ARR = DUTY_100_PERCENT;
     TIM1->CNT = 0;
 
-#if defined USE_FREQ_48KHZ
+#if (defined USE_FREQ_16KHZ) || (defined USE_FREQ_12KHZ)
     TIM1->PSC = 0;
-#elif defined USE_FREQ_24KHZ
+#elif (defined USE_FREQ_8KHZ) || (defined USE_FREQ_6KHZ)
     TIM1->PSC = 1;
-#elif defined USE_FREQ_16KHZ
+#elif defined USE_FREQ_4KHZ
     TIM1->PSC = 2;
 #elif defined USE_FREQ_4_8KHZ
     TIM1->PSC = 9;
@@ -173,11 +173,11 @@ void TIM_3_Init (void)
     TIM3->ARR = DUTY_100_PERCENT;        //tick cada 20.83us --> 48KHz
     TIM3->CNT = 0;
 
-#if defined USE_FREQ_48KHZ
+#if (defined USE_FREQ_16KHZ) || (defined USE_FREQ_12KHZ)
     TIM3->PSC = 0;
-#elif defined USE_FREQ_24KHZ
+#elif (defined USE_FREQ_8KHZ) || (defined USE_FREQ_6KHZ)
     TIM3->PSC = 1;
-#elif defined USE_FREQ_16KHZ
+#elif defined USE_FREQ_4KHZ
     TIM3->PSC = 2;
 #elif defined USE_FREQ_4_8KHZ
     TIM3->PSC = 9;

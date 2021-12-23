@@ -38,7 +38,7 @@ void PWMChannelsReset (void)
 }
 
 
-//TODO: esto mapea a un pwm maximo de 1000
+// maps 255 to the correspondig duty_100_percent value
 unsigned short PWM_Map_From_Dmx (unsigned char dmx_val)
 {
     unsigned int pwm = 0;
@@ -50,14 +50,29 @@ unsigned short PWM_Map_From_Dmx (unsigned char dmx_val)
         pwm = pwm / 100;
         pwm += 4;
     }
-#endif
-#if (DUTY_100_PERCENT == 4000)
+#elif (DUTY_100_PERCENT == 2000)
+    if (dmx_val)
+    {
+        pwm = dmx_val * 78;
+        pwm = pwm / 10;
+        pwm += 11;
+    }
+#elif (DUTY_100_PERCENT == 3000)
+    if (dmx_val)
+    {
+        pwm = dmx_val * 117;
+        pwm = pwm / 10;
+        pwm += 7;
+    }
+#elif (DUTY_100_PERCENT == 4000)
     if (dmx_val)
     {
         pwm = dmx_val * 157;
         pwm = pwm / 10;
         pwm += 13;
     }
+#else
+#error "no duty selected in pwm.c from hard.h"
 #endif
 
     return (unsigned short) pwm;

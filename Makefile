@@ -82,6 +82,7 @@ SRC += ./src/flash_program.c
 
 SRC += ./src/dmx_transceiver.c
 SRC += ./src/pwm.c
+SRC += ./src/filters_and_offsets.c
 
 SRC += ./src/ssd1306_display.c
 SRC += ./src/ssd1306_gfx.c

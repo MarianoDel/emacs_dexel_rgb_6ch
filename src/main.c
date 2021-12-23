@@ -49,6 +49,7 @@
 #include "ssd1306_display.h"
 #include "ssd1306_gfx.h"
 #include "pwm.h"
+#include "filters_and_offsets.h"
 
 #include "comm.h"
 
@@ -85,7 +86,7 @@ volatile unsigned char seq_ready;
 // --------- Externals de los timers ---------
 volatile unsigned char timer_1seg = 0;
 
-
+// for debug mode on usart2
 unsigned short ch1_pwm = 0;
 unsigned short ch2_pwm = 0;
 unsigned short ch3_pwm = 0;
@@ -117,15 +118,6 @@ volatile unsigned char channels_values_int [6] = { 0 };
 volatile unsigned char enable_outputs_by_int = 0;
 #endif
 
-#ifdef USE_FILTER_LENGHT_16
-ma16_u16_data_obj_t st_sp1;
-ma16_u16_data_obj_t st_sp2;
-ma16_u16_data_obj_t st_sp3;
-ma16_u16_data_obj_t st_sp4;
-ma16_u16_data_obj_t st_sp5;
-ma16_u16_data_obj_t st_sp6;
-#endif
-
 
 
 // Globals ---------------------------------------------------------------------
@@ -146,10 +138,6 @@ unsigned char need_to_save = 0;
 // Module Private Functions ----------------------------------------------------
 extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
-void CheckFiltersAndOffsets (unsigned char *);
-void CheckFiltersAndOffsets_NoTimed (volatile unsigned char *, unsigned char);
-void CheckFiltersAndOffsets_SM(volatile unsigned char *);
-void UpdateFiltersTest_Reset (void);
 void SysTickError (void);
 unsigned char CheckTempReconnect (unsigned short, unsigned short);
 sw_actions_t CheckActions (void);
@@ -295,14 +283,14 @@ int main(void)
 
         case MAIN_HARDWARE_INIT:
 
-            //reseteo hardware
+            // hardware reset
             DMX_Disable();
 
-            //reseteo canales
+            // channels reset
             PWMChannelsReset();
 
-            //limpio los filtros
-            UpdateFiltersTest_Reset();
+            // start and clean filters
+            FiltersAndOffsets_Filters_Reset();
 
 #ifdef USART2_DEBUG_MODE            
             sprintf(s_to_send, "prog type: %d\n", mem_conf.program_type);
@@ -417,7 +405,7 @@ int main(void)
             if (mem_conf.program_type == MANUAL_MODE)
             {
 #ifdef CHECK_FILTERS_BY_INT
-                //habilito salidas si estoy con int
+                // enable outputs if we are using ints
                 enable_outputs_by_int = 1;
 #endif
                 //Mode Timeout enable
@@ -957,7 +945,7 @@ void TimingDelay_Decrement(void)
 #ifdef CHECK_FILTERS_BY_INT
     // the third one, state machine, do something on each ms
     if (enable_outputs_by_int)    
-        CheckFiltersAndOffsets_SM(channels_values_int);
+        FiltersAndOffsets_Calc_SM (channels_values_int);
 #else
     if (dmx_filters_timer)
         dmx_filters_timer--;
@@ -973,382 +961,6 @@ void EXTI4_15_IRQHandler (void)    //nueva detecta el primer 0 en usart Consola 
         DmxInt_Break_Handler();
         EXTI->PR |= 0x0100;
     }
-}
-
-
-#ifdef USE_PWM_WITH_DELTA
-unsigned short last_ch1_pwm = 0;
-unsigned short last_ch2_pwm = 0;
-unsigned short last_ch3_pwm = 0;
-unsigned short last_ch4_pwm = 0;
-unsigned short last_ch5_pwm = 0;
-unsigned short last_ch6_pwm = 0;
-#endif
-
-
-//asi como esta demora 20us aprox.
-void CheckFiltersAndOffsets (unsigned char * ch_dmx_val)
-{
-    //dmx filters - generaly 8 points at 200Hz -
-#ifdef USE_PWM_DIRECT
-    if (!dmx_filters_timer)    //asi como esta demora 20us aprox.
-    {
-        dmx_filters_timer = DMX_UPDATE_TIMER;
-        for (unsigned char i = 0; i < 5; i++)
-            CheckFiltersAndOffsets_NoTimed (ch_dmx_val, i);
-    }
-#endif
-#ifdef USE_PWM_WITH_DELTA
-    if (!dmx_filters_timer)
-    {
-        unsigned int pwm_value = 0;
-        
-        dmx_filters_timer = DMX_UPDATE_TIMER_WITH_DELTA;
-
-        // channel 1
-        pwm_value = *(ch_dmx_val + CH1_VAL_OFFSET) * DUTY_100_PERCENT;
-        pwm_value = pwm_value / 255;
-        if (last_ch1_pwm > (unsigned short) pwm_value)
-        {
-            last_ch1_pwm--;
-            PWM_Update_CH1(last_ch1_pwm);
-        }
-        else if (last_ch1_pwm < (unsigned short) pwm_value)
-        {
-            last_ch1_pwm++;
-            PWM_Update_CH1(last_ch1_pwm);
-        }
-
-        // channel 2
-        pwm_value = *(ch_dmx_val + CH2_VAL_OFFSET) * DUTY_100_PERCENT;
-        pwm_value = pwm_value / 255;
-        if (last_ch2_pwm > (unsigned short) pwm_value)
-        {
-            last_ch2_pwm--;
-            PWM_Update_CH2(last_ch2_pwm);
-        }
-        else if (last_ch2_pwm < (unsigned short) pwm_value)
-        {
-            last_ch2_pwm++;
-            PWM_Update_CH2(last_ch2_pwm);
-        }
-
-        // channel 3
-        pwm_value = *(ch_dmx_val + CH3_VAL_OFFSET) * DUTY_100_PERCENT;
-        pwm_value = pwm_value / 255;
-        if (last_ch3_pwm > (unsigned short) pwm_value)
-        {
-            last_ch3_pwm--;
-            PWM_Update_CH3(last_ch3_pwm);
-        }
-        else if (last_ch3_pwm < (unsigned short) pwm_value)
-        {
-            last_ch3_pwm++;
-            PWM_Update_CH3(last_ch3_pwm);
-        }
-
-        // channel 4
-        pwm_value = *(ch_dmx_val + CH4_VAL_OFFSET) * DUTY_100_PERCENT;
-        pwm_value = pwm_value / 255;
-        if (last_ch4_pwm > (unsigned short) pwm_value)
-        {
-            last_ch4_pwm--;
-            PWM_Update_CH4(last_ch4_pwm);
-        }
-        else if (last_ch4_pwm < (unsigned short) pwm_value)
-        {
-            last_ch4_pwm++;
-            PWM_Update_CH4(last_ch4_pwm);
-        }
-
-        // channel 5
-        pwm_value = *(ch_dmx_val + CH5_VAL_OFFSET) * DUTY_100_PERCENT;
-        pwm_value = pwm_value / 255;
-        if (last_ch5_pwm > (unsigned short) pwm_value)
-        {
-            last_ch5_pwm--;
-            PWM_Update_CH5(last_ch5_pwm);
-        }
-        else if (last_ch5_pwm < (unsigned short) pwm_value)
-        {
-            last_ch5_pwm++;
-            PWM_Update_CH5(last_ch5_pwm);
-        }
-
-        // channel 6
-        pwm_value = *(ch_dmx_val + CH6_VAL_OFFSET) * DUTY_100_PERCENT;
-        pwm_value = pwm_value / 255;
-        if (last_ch6_pwm > (unsigned short) pwm_value)
-        {
-            last_ch6_pwm--;
-            PWM_Update_CH6(last_ch6_pwm);
-        }
-        else if (last_ch6_pwm < (unsigned short) pwm_value)
-        {
-            last_ch6_pwm++;
-            PWM_Update_CH6(last_ch6_pwm);
-        }
-        
-    }
-    
-#endif    //USE_PWM_WITH_DELTA
-}
-
-
-typedef enum {
-    FILTERS_BKP_CHANNELS,
-    FILTERS_LIMIT_EACH_CHANNEL,
-    FILTERS_LIMIT_ALL_CHANNELS,
-    FILTERS_OUTPUTS_CH1_CH3,
-    FILTERS_OUTPUTS_CH4_CH6
-    
-} filters_and_offsets_e;
-
-filters_and_offsets_e filters_sm = FILTERS_BKP_CHANNELS;
-unsigned char limit_output [6] = { 0 };
-void CheckFiltersAndOffsets_SM (volatile unsigned char * ch_dmx_val)
-{
-#ifdef USE_CTRL_FAN_FOR_TIMED_INT
-    CTRL_FAN_ON;
-#endif
-    unsigned short calc = 0;    
-    
-    switch (filters_sm)
-    {
-    case FILTERS_BKP_CHANNELS:
-        limit_output[0] = *(ch_dmx_val + 0);
-        limit_output[1] = *(ch_dmx_val + 1);
-        limit_output[2] = *(ch_dmx_val + 2);
-        limit_output[3] = *(ch_dmx_val + 3);
-        limit_output[4] = *(ch_dmx_val + 4);
-        limit_output[5] = *(ch_dmx_val + 5);
-        filters_sm++;
-        break;
-
-    case FILTERS_LIMIT_EACH_CHANNEL:
-        calc = limit_output[0] * mem_conf.max_current_channels[0];
-        calc >>= 8;
-        limit_output[0] = (unsigned char) calc;
-
-        calc = limit_output[1] * mem_conf.max_current_channels[1];
-        calc >>= 8;
-        limit_output[1] = (unsigned char) calc;
-
-        calc = limit_output[2] * mem_conf.max_current_channels[2];
-        calc >>= 8;
-        limit_output[2] = (unsigned char) calc;
-
-        calc = limit_output[3] * mem_conf.max_current_channels[3];
-        calc >>= 8;
-        limit_output[3] = (unsigned char) calc;
-
-        calc = limit_output[4] * mem_conf.max_current_channels[4];
-        calc >>= 8;
-        limit_output[4] = (unsigned char) calc;
-
-        calc = limit_output[5] * mem_conf.max_current_channels[5];
-        calc >>= 8;
-        limit_output[5] = (unsigned char) calc;
-
-        filters_sm++;
-        break;
-
-    case FILTERS_LIMIT_ALL_CHANNELS:
-        PWM_Set_PwrCtrl(limit_output,
-                        mem_conf.dmx_channel_quantity,
-                        mem_conf.max_power);
-        filters_sm++;
-        break;
-
-    case FILTERS_OUTPUTS_CH1_CH3:
-        if (mem_conf.program_inner_type == DMX2_INNER_STROBE_MODE)
-        {
-            //outputs without filter
-            // channel 1
-            ch1_pwm = PWM_Map_From_Dmx(*(limit_output + CH1_VAL_OFFSET));
-            PWM_Update_CH1(ch1_pwm);
-
-            // channel 2
-            ch2_pwm = PWM_Map_From_Dmx(*(limit_output + CH2_VAL_OFFSET));
-            PWM_Update_CH2(ch2_pwm);
-
-            // channel 3
-            ch3_pwm = PWM_Map_From_Dmx(*(limit_output + CH3_VAL_OFFSET));
-            PWM_Update_CH3(ch3_pwm);
-        }
-        else
-        {
-            // channel 1
-            ch1_pwm = MA16_U16Circular (
-                &st_sp1,
-                PWM_Map_From_Dmx(*(limit_output + CH1_VAL_OFFSET))
-                );
-            PWM_Update_CH1(ch1_pwm);
-
-            // channel 2
-            ch2_pwm = MA16_U16Circular (
-                &st_sp2,
-                PWM_Map_From_Dmx(*(limit_output + CH2_VAL_OFFSET))
-                );
-            PWM_Update_CH2(ch2_pwm);
-
-            // channel 3
-            ch3_pwm = MA16_U16Circular (
-                &st_sp3,
-                PWM_Map_From_Dmx(*(limit_output + CH3_VAL_OFFSET))
-                );
-            PWM_Update_CH3(ch3_pwm);
-        }
-
-        filters_sm++;
-        break;
-
-    case FILTERS_OUTPUTS_CH4_CH6:
-        if (mem_conf.program_inner_type == DMX2_INNER_STROBE_MODE)
-        {
-            //outputs without filter
-            // channel 4
-            ch4_pwm = PWM_Map_From_Dmx(*(limit_output + CH4_VAL_OFFSET));
-            PWM_Update_CH4(ch4_pwm);
-
-            // channel 5
-            ch5_pwm = PWM_Map_From_Dmx(*(limit_output + CH5_VAL_OFFSET));
-            PWM_Update_CH5(ch5_pwm);
-
-            // channel 6
-            ch6_pwm = PWM_Map_From_Dmx(*(limit_output + CH6_VAL_OFFSET));
-            PWM_Update_CH6(ch6_pwm);
-        }
-        else
-        {
-            // channel 4
-            ch4_pwm = MA16_U16Circular (
-                &st_sp4,
-                PWM_Map_From_Dmx(*(limit_output + CH4_VAL_OFFSET))
-                );
-            PWM_Update_CH4(ch4_pwm);
-
-            // channel 5
-            ch5_pwm = MA16_U16Circular (
-                &st_sp5,
-                PWM_Map_From_Dmx(*(limit_output + CH5_VAL_OFFSET))
-                );
-            PWM_Update_CH5(ch5_pwm);
-
-            // channel 6
-            ch6_pwm = MA16_U16Circular (
-                &st_sp6,
-                PWM_Map_From_Dmx(*(limit_output + CH6_VAL_OFFSET))
-                );
-            PWM_Update_CH6(ch6_pwm);
-        }
-
-        filters_sm = FILTERS_BKP_CHANNELS;
-        break;
-        
-    default:
-        filters_sm = FILTERS_BKP_CHANNELS;
-        break;
-    }
-
-#ifdef USE_CTRL_FAN_FOR_INT_FILTERS_UPDATE
-    if (CTRL_FAN)
-        CTRL_FAN_OFF;
-    else
-        CTRL_FAN_ON;
-#endif
-#ifdef USE_CTRL_FAN_FOR_TIMED_INT
-    CTRL_FAN_OFF;
-#endif
-}
-
-
-void CheckFiltersAndOffsets_NoTimed (volatile unsigned char * ch_dmx_val, unsigned char which_channel)
-{
-    switch (which_channel)
-    {
-    case CH1_VAL_OFFSET:
-        // channel 1
-        ch1_pwm = MA16_U16Circular (
-            &st_sp1,
-            PWM_Map_From_Dmx(*(ch_dmx_val + CH1_VAL_OFFSET))
-            );
-        PWM_Update_CH1(ch1_pwm);
-        break;
-
-    case CH2_VAL_OFFSET:        
-        // channel 2
-        ch2_pwm = MA16_U16Circular (
-            &st_sp2,
-            PWM_Map_From_Dmx(*(ch_dmx_val + CH2_VAL_OFFSET))
-            );
-        PWM_Update_CH2(ch2_pwm);
-        break;
-
-    case CH3_VAL_OFFSET:
-        // channel 3
-        ch3_pwm = MA16_U16Circular (
-            &st_sp3,
-            PWM_Map_From_Dmx(*(ch_dmx_val + CH3_VAL_OFFSET))
-            );
-        PWM_Update_CH3(ch3_pwm);
-        break;
-
-    case CH4_VAL_OFFSET:
-        // channel 4
-        ch4_pwm = MA16_U16Circular (
-            &st_sp4,
-            PWM_Map_From_Dmx(*(ch_dmx_val + CH4_VAL_OFFSET))
-            );
-        PWM_Update_CH4(ch4_pwm);
-        break;
-
-    case CH5_VAL_OFFSET:
-        // channel 5
-        ch5_pwm = MA16_U16Circular (
-            &st_sp5,
-            PWM_Map_From_Dmx(*(ch_dmx_val + CH5_VAL_OFFSET))
-            );
-        PWM_Update_CH5(ch5_pwm);
-        break;
-
-    case CH6_VAL_OFFSET:
-        // channel 6
-        ch6_pwm = MA16_U16Circular (
-            &st_sp6,
-            PWM_Map_From_Dmx(*(ch_dmx_val + CH6_VAL_OFFSET))
-            );
-        PWM_Update_CH6(ch6_pwm);
-        break;
-    }
-
-#ifdef USE_CTRL_FAN_FOR_INT_FILTERS_UPDATE
-    if (CTRL_FAN)
-        CTRL_FAN_OFF;
-    else
-        CTRL_FAN_ON;
-#endif
-}
-
-
-void UpdateFiltersTest_Reset (void)
-{
-#ifdef USE_FILTER_LENGHT_16
-    MA16_U16Circular_Reset(&st_sp1);
-    MA16_U16Circular_Reset(&st_sp2);
-    MA16_U16Circular_Reset(&st_sp3);
-    MA16_U16Circular_Reset(&st_sp4);
-    MA16_U16Circular_Reset(&st_sp5);
-    MA16_U16Circular_Reset(&st_sp6);
-#endif
-#ifdef USE_PWM_WITH_DELTA
-    last_ch1_pwm = 0;
-    last_ch2_pwm = 0;
-    last_ch3_pwm = 0;
-    last_ch4_pwm = 0;
-    last_ch5_pwm = 0;
-    last_ch6_pwm = 0;
-#endif
 }
 
 

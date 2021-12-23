@@ -20,8 +20,6 @@
 
 //---- Features Configuration ----------------
 #define WITH_BIDIRECTIONAL
-// #define USE_FILTER_LENGHT_8
-#define USE_FILTER_LENGHT_16
 
 //--- Check the temp sensor ---//
 #define USE_OVERTEMP_PROT
@@ -29,10 +27,6 @@
 //--- Check the voltage sensor ---//
 #define USE_VOLTAGE_PROT
 
-
-//--- How to control the PWM generation, select only one ---//
-#define USE_PWM_DIRECT    //mapea lo que llega en el dmx al PWM directo
-// #define USE_PWM_WITH_DELTA    //mapea la corriente pero la busca punto a punto
 
 //--- Filters checked by int on DMX ---//
 #define CHECK_FILTERS_BY_INT
@@ -49,10 +43,12 @@
 #define DMX_UPDATE_TIMER    5    //si pongo esto en 2 se ven saltos en el blanco incluso con delta-single-step
 
 // --- PWM Frequency --- //
-// #define USE_FREQ_48KHZ
-// #define USE_FREQ_24KHZ
-#define USE_FREQ_16KHZ
-// #define USE_FREQ_4_8KHZ
+// #define USE_FREQ_16KHZ    //48MHz / 3000pts
+// #define USE_FREQ_12KHZ    //48MHz / 4000pts
+// #define USE_FREQ_8KHZ    //24MHz / 2000pts
+// #define USE_FREQ_6KHZ    //24MHz / 4000pts
+#define USE_FREQ_4KHZ    //16MHz / 4000pts
+// #define USE_FREQ_4_8KHZ    //4.8MHz / 1000pts
 
 // --- Usart2 Modes --- //
 #define USART2_DEBUG_MODE
@@ -63,13 +59,6 @@
 #define WHITE_AS_IN_RGB		//el blanco lo forma con los 3 colores
 //#define WHITE_AS_WHITE	//el blanco tiene leds blancos individuales
 
-
-// --- Sanity checks --- //
-#if ((!defined USE_PWM_DIRECT) \
-     && (!defined USE_PWM_WITH_DELTA))
-
-#error "Must select what type of PWM generation to use"
-#endif
 
 //---- End of Features Configuration ----------
 
