@@ -32,7 +32,7 @@
 #define CHECK_FILTERS_BY_INT
 
 //--- Uses of CTRL_FAN Ouput as FAN or signaling ---//
-// #define USE_CTRL_FAN_FOR_TEMP_CTRL
+#define USE_CTRL_FAN_FOR_TEMP_CTRL
 // #define USE_CTRL_FAN_FOR_INT_FILTERS_UPDATE
 // #define USE_CTRL_FAN_FOR_TIMED_INT    //show the speed as resolves the int filters SM
 // #define USE_CTRL_FAN_FOR_DISPLAY_SM_UPDATE_ON_INIT
