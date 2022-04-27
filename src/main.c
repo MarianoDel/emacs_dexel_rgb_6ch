@@ -39,7 +39,7 @@
 
 // hardware tests functions
 #include "test_functions.h"
-
+#include "temperatures.h"    // for defines on lm335 and ntc
 
 
 #include "flash_program.h"
@@ -139,7 +139,7 @@ unsigned char need_to_save = 0;
 extern void EXTI4_15_IRQHandler(void);
 void TimingDelay_Decrement(void);
 void SysTickError (void);
-unsigned char CheckTempReconnect (unsigned short, unsigned short);
+unsigned char CheckTempGreater (unsigned short temp_sample, unsigned short temp_prot);
 sw_actions_t CheckActions (void);
 void DisconnectByVoltage (void);
 
@@ -449,7 +449,7 @@ int main(void)
             if (CheckSET() > SW_MIN)
                 main_state = MAIN_ENTERING_MAIN_MENU;
             
-            UpdateEncoder();            
+            UpdateEncoder();
 
             
 #ifdef USART2_DEBUG_MODE
@@ -666,7 +666,7 @@ int main(void)
             break;
 
         case MAIN_IN_OVERTEMP_B:
-            if (CheckTempReconnect (Temp_Channel, mem_conf.temp_prot))
+            if (CheckTempGreater (TEMP_RECONNECT, Temp_Channel))
             {
                 //reconnect
                 main_state = MAIN_HARDWARE_INIT;
@@ -855,7 +855,7 @@ int main(void)
             if ((main_state != MAIN_IN_OVERTEMP) &&
                 (main_state != MAIN_IN_OVERTEMP_B))
             {
-                if (Temp_Channel > mem_conf.temp_prot)
+                if (CheckTempGreater (Temp_Channel, mem_conf.temp_prot))
                 {
                     //stop LEDs outputs
                     DisconnectByVoltage();
@@ -863,15 +863,39 @@ int main(void)
                     main_state = MAIN_IN_OVERTEMP;
                 }
 #ifdef USE_CTRL_FAN_FOR_TEMP_CTRL
-                else if (Temp_Channel > TEMP_IN_35)
+                else if (CheckTempGreater (Temp_Channel, TEMP_IN_35))
                     CTRL_FAN_ON;
-                else if (Temp_Channel < TEMP_IN_30)
+                else if (CheckTempGreater (TEMP_IN_30, Temp_Channel))
                     CTRL_FAN_OFF;
-#endif
+#endif    // USE_CTRL_FAN_FOR_TEMP_CTRL
             }
-#endif    //USE_OVERTEMP_PROT
+#ifdef USE_NTC_DETECTION
+            // check for ntc and stop
+            if (Temp_Channel > NTC_DISCONNECTED)
+            {
+                //stop LEDs outputs
+                DisconnectByVoltage();
+                CTRL_FAN_ON;
+            
+                SCREEN_ShowText2(
+                    "         ",
+                    " No NTC  ",
+                    "Connected",
+                    "         "
+                    );
+
+                do {
+                    display_update_int_state_machine();                    
+                } while (Temp_Channel > NTC_DISCONNECTED);
+
+                //reconnect
+                main_state = MAIN_HARDWARE_INIT;
+            }
+#endif    // USE_NTC_DETECTION
+            
+#endif    // USE_OVERTEMP_PROT
         }
-#endif
+#endif    // USE_VOLTAGE_PROT or USE_OVERTEMP_PROT
         
 
         //grabado de memoria luego de configuracion
@@ -983,21 +1007,21 @@ void SysTickError (void)
     }
 }
 
-unsigned char CheckTempReconnect (unsigned short temp_sample, unsigned short temp_prot)
+
+unsigned char CheckTempGreater (unsigned short temp_sample, unsigned short temp_prot)
 {
-    unsigned char reconnect = 0;
-    // unsigned int calc = 0;
+    unsigned char is_greater = 0;
 
-    // calc = temp_prot * 8;
-    // calc = calc / 10;
-
-    // if (temp_sample < calc)
-    //     reconnet = 1;
-
-    if (temp_sample < TEMP_RECONNECT)
-        reconnect = 1;
+#ifdef TEMP_SENSOR_LM335
+    if (temp_sample > temp_prot)
+        is_greater = 1;
+#endif
+#ifdef TEMP_SENSOR_NTC1K
+    if (temp_sample < temp_prot)    // see it in voltage
+        is_greater = 1;
+#endif
     
-    return reconnect;
+    return is_greater;
 }
 
 

@@ -388,15 +388,25 @@ void TempMenu_Options(unsigned char enable, unsigned char selection, char * s)
 
 unsigned char TempMenu_TempToDegrees (unsigned short temp)
 {
+#if (defined TEMP_SENSOR_LM335)
     if (temp < TEMP_IN_MIN)
         return TEMP_DEG_MIN;
 
     if (temp > TEMP_IN_MAX)
         return TEMP_DEG_MAX;
+#elif (defined TEMP_SENSOR_NTC1K)
+    if (temp > TEMP_IN_MIN)
+        return TEMP_DEG_MIN;
+
+    if (temp < TEMP_IN_MAX)
+        return TEMP_DEG_MAX;
+#else
+#error "No sensor selected on temperatures.h"
+#endif
     
-    unsigned int calc = 0;
-    unsigned short dx = TEMP_IN_MAX - TEMP_IN_MIN;
-    unsigned short dy = TEMP_DEG_MAX - TEMP_DEG_MIN;
+    int calc = 0;
+    short dx = TEMP_IN_MAX - TEMP_IN_MIN;
+    short dy = TEMP_DEG_MAX - TEMP_DEG_MIN;
 
     calc = temp * dy;
     calc = calc / dx;
@@ -416,9 +426,9 @@ unsigned short TempMenu_DegreesToTemp (unsigned char deg)
     if (deg > TEMP_DEG_MAX)
         return TEMP_IN_MAX;
     
-    unsigned int calc = 0;
-    unsigned short dx = TEMP_DEG_MAX - TEMP_DEG_MIN;
-    unsigned short dy = TEMP_IN_MAX - TEMP_IN_MIN;
+    int calc = 0;
+    short dx = TEMP_DEG_MAX - TEMP_DEG_MIN;
+    short dy = TEMP_IN_MAX - TEMP_IN_MIN;
 
     calc = deg * dy;
     calc = calc / dx;

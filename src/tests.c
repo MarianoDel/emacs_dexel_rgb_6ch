@@ -87,28 +87,36 @@ int main(int argc, char *argv[])
     // Test_Limits_Mapping_Fixed (255);
     // Test_Limits_Mapping ();
 
+    // for TEMP_SENSOR_LM335
     // Test_Temp_Mapping_Fixed(3434);    //50 deg
     // Test_Temp_Mapping_Fixed(3591);    //65 deg
     // Test_Temp_Mapping_Fixed(3642);    //70 deg
     // Test_Temp_Mapping_Fixed(3795);    //85 deg        
     // Test_Temp_Mapping();
 
-    double time_spent = 0.0;
-    clock_t begin = clock();
+    // for TEMP_SENSOR_NTC1K
+    Test_Temp_Mapping_Fixed(940);    //50 deg
+    Test_Temp_Mapping_Fixed(624);    //65 deg
+    // Test_Temp_Mapping_Fixed(475);    //70 deg
+    // Test_Temp_Mapping_Fixed(46);    //85 deg        
+    // Test_Temp_Mapping();
+    
+    // double time_spent = 0.0;
+    // clock_t begin = clock();
  
-    // do some stuff here
-    Test_Individual_Limits_Shift (127);
-    clock_t end = clock();
-    // calculate elapsed time by finding difference (end - begin) and
-    // dividing the difference by CLOCKS_PER_SEC to convert to seconds
-    time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
-    printf("Time elpased is %f seconds\n", time_spent);
+    // // do some stuff here
+    // Test_Individual_Limits_Shift (127);
+    // clock_t end = clock();
+    // // calculate elapsed time by finding difference (end - begin) and
+    // // dividing the difference by CLOCKS_PER_SEC to convert to seconds
+    // time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
+    // printf("Time elpased is %f seconds\n", time_spent);
 
-    begin = clock();
-    Test_Individual_Limits_Divider (127);
-    end = clock();
-    time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
-    printf("Time elpased is %f seconds\n", time_spent);    
+    // begin = clock();
+    // Test_Individual_Limits_Divider (127);
+    // end = clock();
+    // time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
+    // printf("Time elpased is %f seconds\n", time_spent);    
 }
 
 
@@ -319,10 +327,11 @@ unsigned char TempMenu_TempToDegrees (unsigned short temp)
     if (temp > TEMP_IN_MAX)
         return TEMP_DEG_MAX;
     
-    unsigned int calc = 0;
-    unsigned short dx = TEMP_IN_MAX - TEMP_IN_MIN;
-    unsigned short dy = TEMP_DEG_MAX - TEMP_DEG_MIN;
+    int calc = 0;
+    short dx = TEMP_IN_MAX - TEMP_IN_MIN;
+    short dy = TEMP_DEG_MAX - TEMP_DEG_MIN;
 
+    printf("dx: %d dy: %d\n", dx, dy);
     calc = temp * dy;
     calc = calc / dx;
 
@@ -341,9 +350,9 @@ unsigned short TempMenu_DegreesToTemp (unsigned char deg)
     if (deg > TEMP_DEG_MAX)
         return TEMP_IN_MAX;
     
-    unsigned int calc = 0;
-    unsigned short dx = TEMP_DEG_MAX - TEMP_DEG_MIN;
-    unsigned short dy = TEMP_IN_MAX - TEMP_IN_MIN;
+    int calc = 0;
+    short dx = TEMP_DEG_MAX - TEMP_DEG_MIN;
+    short dy = TEMP_IN_MAX - TEMP_IN_MIN;
 
     calc = deg * dy;
     calc = calc / dx;

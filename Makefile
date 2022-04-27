@@ -396,6 +396,22 @@ tests_comm_coverage:
 	gcov comm.c -m
 
 
+tests_temp_functions:
+	# first module objects to test and coverage
+	gcc -c --coverage src/temp_menu.c -I. $(INCDIR)
+	gcc -c src/options_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	# second auxiliary helper modules
+	gcc -c src/tests_ok.c -I $(INCDIR)
+	# compile the test and link with modules
+	gcc --coverage src/tests_temp_functions.c temp_menu.o tests_ok.o options_menu.o display_utils.o ssd1306_gfx.o
+	# test execution
+	./a.out
+	# process coverage
+	gcov temp_menu.c -m
+
+
 tests_comm_profiling:
 	# first module objects to test and profiling
 	gcc -c -pg src/comm.c -I. $(INCDIR)

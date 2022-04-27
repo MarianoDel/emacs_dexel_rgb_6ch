@@ -24,9 +24,11 @@
 //--- Check the temp sensor ---//
 #define USE_OVERTEMP_PROT
 
+//--- if applies check for ntc connection ---//
+#define USE_NTC_DETECTION
+
 //--- Check the voltage sensor ---//
 #define USE_VOLTAGE_PROT
-
 
 //--- Filters checked by int on DMX ---//
 #define CHECK_FILTERS_BY_INT
@@ -75,7 +77,36 @@
 
 //-- End Of Defines For Configuration ---------------
 
-#ifdef HARDWARE_VERSION_2_2
+//-- Sanity Checks ----------------------------------
+#if (!defined HARDWARE_VERSION_2_3) && \
+    (!defined HARDWARE_VERSION_2_2)
+#error "Not HARD version selected on version.h"
+#endif
+
+#if (!defined TEMP_SENSOR_LM335) && \
+    (!defined TEMP_SENSOR_NTC1K)
+#error "Not Temp Sensor selected on temperatures.h"
+#endif
+
+#if (defined HARDWARE_VERSION_2_3) && \
+    (!defined TEMP_SENSOR_NTC1K)
+#error "Hardware 2.3 with not ntc on temperatures.h"
+#endif
+
+#if (defined HARDWARE_VERSION_2_2) && \
+    (!defined TEMP_SENSOR_LM335)
+#error "Hardware 2.2 with not lm335 on temperatures.h"
+#endif
+
+#if (defined USE_NTC_DETECTION) && \
+    (!defined HARDWARE_VERSION_2_3)
+#error "ntc only on hard 2.3 or newer"
+#endif
+
+//-- End of Sanity Checks ---------------------------
+
+#if (defined HARDWARE_VERSION_2_3) || \
+    (defined HARDWARE_VERSION_2_2)
 // GPIOC pin13
 // GPIOC pin14
 // GPIOC pin15    NC
@@ -182,7 +213,7 @@
 #define TEST_PIN2_OFF    CTRL_FAN_OFF
 #endif
 
-#endif    //HARDWARE_VERSION_2_2
+#endif    // HARDWARE_VERSION_2_3 or HARDWARE_VERSION_2_2
 
 #ifdef HARDWARE_VERSION_2_0
 //GPIOC pin13
