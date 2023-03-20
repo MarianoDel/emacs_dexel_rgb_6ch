@@ -135,6 +135,18 @@ void TF_Control_Fan (void)
 }
 
 
+void TF_Encoder_Sw (void)
+{
+    while (1)
+    {
+        if (ENC_SW)
+            CTRL_FAN_ON;
+        else
+            CTRL_FAN_OFF;
+    }
+}
+
+
 extern void display_update_int_state_machine (void);
 void TF_Oled_Screen (void)
 {

@@ -13,6 +13,7 @@
 #include "dmx_menu.h"
 #include "colors_functions.h"
 #include "flash_program.h"
+#include "parameters.h"
 
 #include <stdio.h>
 #include <string.h>

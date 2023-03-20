@@ -139,15 +139,27 @@ void UpdateEncoder (void)
         //have a new clock edge
         if (enc_dt_cntr > ENCODER_COUNTER_THRESHOLD)
         {
+#ifdef USE_ENCODER_DIRECT
             //CW
             if (encoder_cw < 1)
                 encoder_cw++;
-        }
-        else
-        {
+#else
             //CCW
             if (encoder_ccw < 1)
                 encoder_ccw++;
+#endif
+        }
+        else
+        {
+#ifdef USE_ENCODER_DIRECT
+            //CCW
+            if (encoder_ccw < 1)
+                encoder_ccw++;
+#else
+            //CW
+            if (encoder_cw < 1)
+                encoder_cw++;
+#endif
         }
     }
 

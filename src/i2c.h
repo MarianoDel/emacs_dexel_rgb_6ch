@@ -12,6 +12,7 @@
 // Config Defines --------------------------------------------------------------
 // #define I2C_USE_I2C1
 #define I2C_USE_I2C2
+
 #define I2C_ADDRESS_OWN    0x01
 #define I2C_ADDRESS_SLV    0x3C    //para 32?
 // #define I2C_ADDRESS_SLV    0x3D    //para 64?

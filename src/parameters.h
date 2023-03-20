@@ -61,18 +61,18 @@ typedef struct parameters {
     unsigned char dmx_channel_quantity;	
 
     //-- Hardware Config ----   //7
+    unsigned char dummy1;        //8 align to 8
     unsigned short max_power;
 
-    //-- For Fixed colors settings ----   //9
-    unsigned char fixed_channels [6];    //15
+    //-- For Fixed colors settings ----   //10
+    unsigned char fixed_channels [6];    //16
 
-    //-- For Max Current Channels settings ----   //15
-    unsigned char max_current_channels [6];    //21
+    //-- For Max Current Channels settings ----   //16
+    unsigned char max_current_channels [6];    //22
     
     //-- For Temperature Protection ----    
-    unsigned short temp_prot;        //23
+    unsigned short temp_prot;        //24
     
-    unsigned char dummy1;
     // unsigned char dummy2;          
     // unsigned char dummy3;       
 

@@ -12,6 +12,7 @@
 #include "dmx1_mode.h"
 #include "dmx_menu.h"
 #include "flash_program.h"
+#include "parameters.h"
 
 #include <stdio.h>
 #include <string.h>

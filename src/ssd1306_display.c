@@ -12,9 +12,7 @@
 // Includes --------------------------------------------------------------------
 #include "ssd1306_display.h"
 #include "i2c.h"
-
 #include "hard.h"
-#include "stm32f0xx.h"
 
 
 #include <stdlib.h>
@@ -59,10 +57,14 @@
 // static uint32 display_write_buf( uint8_t* buf, uint16_t size );
 #if defined I2C_USE_I2C1
 #define display_write_buf(X,Y)    I2C1_SendMultiByte((X), I2C_ADDRESS_SLV, (Y))
+#define display_write_buf_int(X,Y)    I2C1_SendMultiByte_Int(I2C_ADDRESS_SLV, (X), (Y))
+#define display_wait_end()    while (!I2C1_CheckEnded_Int())
+#define display_check_end()    I2C1_CheckEnded_Int()
 #elif defined I2C_USE_I2C2
 #define display_write_buf(X,Y)    I2C2_SendMultiByte((X), I2C_ADDRESS_SLV, (Y))
 #define display_write_buf_int(X,Y)    I2C2_Int_SendMultiByte((X), I2C_ADDRESS_SLV, (Y))
 #define display_wait_end()    while (!I2C2_Int_CheckEnded())
+#define display_check_end()    I2C2_Int_CheckEnded()
 #else
 #error "Select what I2C to use on i2c.h"
 #endif
@@ -330,7 +332,7 @@ void display_update_int_state_machine (void)
         break;
 
     case DISPLAY_UPDATE_SET_PAGE_CMD_0_END:
-        if (I2C2_Int_CheckEnded())
+        if (display_check_end())
             d_update_st++;
 
         break;
@@ -345,7 +347,7 @@ void display_update_int_state_machine (void)
         break;
 
     case DISPLAY_UPDATE_SET_PAGE_CMD_1_END:
-        if (I2C2_Int_CheckEnded())
+        if (display_check_end())
             d_update_st++;
 
         break;
@@ -360,7 +362,7 @@ void display_update_int_state_machine (void)
         break;
 
     case DISPLAY_UPDATE_SET_PAGE_CMD_2_END:
-        if (I2C2_Int_CheckEnded())
+        if (display_check_end())
             d_update_st++;
 
         break;
@@ -373,7 +375,7 @@ void display_update_int_state_machine (void)
         break;
 
     case DISPLAY_UPDATE_SEND_PAGE_END:
-        if (I2C2_Int_CheckEnded())
+        if (display_check_end())        
         {
             if (d_update_page < 7)
             {

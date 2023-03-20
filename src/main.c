@@ -74,8 +74,6 @@ unsigned char menu_selected = 0;
 unsigned char menu_need_display_update = 0;
 unsigned char menu_selection_show = 0;
 volatile unsigned short menu_menu_timer = 0;
-
-
 options_menu_st mem_options;
 
 
@@ -143,7 +141,11 @@ unsigned char CheckTempGreater (unsigned short temp_sample, unsigned short temp_
 sw_actions_t CheckActions (void);
 void DisconnectByVoltage (void);
 
-
+#ifdef USART2_DMX_TEST_CH1_CH2
+unsigned char last_dmx_ch1 = 0;
+unsigned char last_dmx_ch2 = 0;
+char buff_dmx_test [20];
+#endif
 // Module Functions ------------------------------------------------------------
 int main(void)
 {
@@ -163,6 +165,9 @@ int main(void)
 
     // Peripherals Activation
     USART2Config();
+#ifdef USART2_DMX_TEST_CH1_CH2
+    Usart2Send("Test for DMX on ch1 & ch2\n");
+#endif
 
     TIM_1_Init();
     TIM_3_Init();
@@ -437,6 +442,20 @@ int main(void)
 
 #else
                 CheckFiltersAndOffsets (ch_values);
+#endif
+#ifdef USART2_DMX_TEST_CH1_CH2
+                if ((ch_values[0] != last_dmx_ch1) ||
+                    (ch_values[1] != last_dmx_ch2))
+                {
+                    last_dmx_ch1 = ch_values[0];
+                    last_dmx_ch2 = ch_values[1];
+
+                    sprintf(buff_dmx_test, "ch1 %03d ch2 %03d sum %03d\n",
+                            last_dmx_ch1,
+                            last_dmx_ch2,
+                            last_dmx_ch1 + last_dmx_ch2);
+                    Usart2Send(buff_dmx_test);
+                }
 #endif
             }
 
