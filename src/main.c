@@ -144,6 +144,8 @@ void DisconnectByVoltage (void);
 #ifdef USART2_DMX_TEST_CH1_CH2
 unsigned char last_dmx_ch1 = 0;
 unsigned char last_dmx_ch2 = 0;
+unsigned char last_dmx_ch3 = 0;
+unsigned char conf_dmx = 0;
 char buff_dmx_test [20];
 #endif
 // Module Functions ------------------------------------------------------------
@@ -447,16 +449,58 @@ int main(void)
                 if ((ch_values[0] != last_dmx_ch1) ||
                     (ch_values[1] != last_dmx_ch2))
                 {
+                    unsigned short calc = 0;
+                    unsigned char bright = 0;
+                    unsigned char temp0 = 0;
+                    unsigned char temp1 = 0;
+                    
                     last_dmx_ch1 = ch_values[0];
                     last_dmx_ch2 = ch_values[1];
 
+                    // backup and bright temp calcs
+                    // ch0 the bright ch1 the temp
+                    bright = last_dmx_ch1;
+                    temp0 = 255 - last_dmx_ch2;
+                    temp1 = 255 - temp0;
+        
+                    calc = temp0 * bright;
+                    calc >>= 8;    // to 255
+                    temp0 = (unsigned char) calc;
+        
+                    calc = temp1 * bright;
+                    calc >>= 8;    // to 255
+                    temp1 = (unsigned char) calc;
+
                     sprintf(buff_dmx_test, "ch1 %03d ch2 %03d sum %03d\n",
-                            last_dmx_ch1,
-                            last_dmx_ch2,
-                            last_dmx_ch1 + last_dmx_ch2);
+                            temp0,
+                            temp1,
+                            temp0 + temp1);
                     Usart2Send(buff_dmx_test);
                 }
-#endif
+
+                // conf 4 8 amps
+                if (ch_values[2] != last_dmx_ch3)
+                {
+                    last_dmx_ch3 = ch_values[2];
+                    if (last_dmx_ch3 > 127)
+                    {
+                        if (conf_dmx != 8)
+                        {
+                            conf_dmx = 8;
+                            Usart2Send("current config 8\n");
+                        }
+                    }
+                    else
+                    {
+                        if (conf_dmx != 4)
+                        {
+                            conf_dmx = 4;
+                            Usart2Send("current config 4\n");
+                        }
+                    }
+                }
+                
+#endif    // USART2_DMX_TEST_CH1_CH2
             }
 
             if (resp == resp_need_to_save)
@@ -844,7 +888,9 @@ int main(void)
         display_update_int_state_machine();
 
         // colors commands update from comms
+#ifndef USART2_DMX_TEST_CH1_CH2
         UpdateCommunications();
+#endif
 
         
 #if (defined USE_VOLTAGE_PROT) || (defined USE_OVERTEMP_PROT)

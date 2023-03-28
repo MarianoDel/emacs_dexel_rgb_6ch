@@ -73,10 +73,11 @@
 //-- Configuration for some Analog things ------
 //---- Voltage Sensor
 #define MIN_PWR_SUPPLY    VOLTS_20
-#define MAX_PWR_SUPPLY    VOLTS_50
+#define MAX_PWR_SUPPLY    VOLTS_60
 
 #define VOLTS_20    730
 #define VOLTS_50    1825
+#define VOLTS_60    2190
 //---- LM335 measurement Temperatures (8.2mV/C in this circuit)
 #include "temperatures.h"
 
