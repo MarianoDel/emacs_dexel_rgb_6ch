@@ -124,7 +124,7 @@ volatile unsigned short timer_standby = 0;
 volatile unsigned short wait_ms_var = 0;
 volatile unsigned short need_to_save_timer = 0;
 #if (defined USE_OVERTEMP_PROT) || (defined USE_VOLTAGE_PROT)
-volatile unsigned char protections_sample_timer = 0;
+volatile unsigned short protections_sample_timer = 5000;
 #endif
 // -- for the timeouts in the modes ----
 void (* ptFTT ) (void) = NULL;
@@ -893,7 +893,9 @@ int main(void)
 #endif
 
         
-#if (defined USE_VOLTAGE_PROT) || (defined USE_OVERTEMP_PROT)
+#if (defined USE_VOLTAGE_PROT) || \
+    (defined USE_OVERTEMP_PROT) || \
+    (defined USE_NTC_DETECTION)
         if (!protections_sample_timer)
         {
             protections_sample_timer = 10;    //samples time are 10ms
@@ -914,9 +916,12 @@ int main(void)
                     main_state = MAIN_IN_UNDERVOLTAGE;
                 }
             }
-#endif
+#endif    // USE_VOLTAGE_PROT
             
 #ifdef USE_OVERTEMP_PROT
+            // if ((main_state > MAIN_GET_CONF) &&
+            //     (main_state != MAIN_IN_OVERTEMP) &&
+            //     (main_state != MAIN_IN_OVERTEMP_B))
             if ((main_state != MAIN_IN_OVERTEMP) &&
                 (main_state != MAIN_IN_OVERTEMP_B))
             {
@@ -933,7 +938,9 @@ int main(void)
                 else if (CheckTempGreater (TEMP_IN_30, Temp_Channel))
                     CTRL_FAN_OFF;
 #endif    // USE_CTRL_FAN_FOR_TEMP_CTRL
-            }
+            }            
+#endif    // USE_OVERTEMP_PROT
+
 #ifdef USE_NTC_DETECTION
             // check for ntc and stop
             if (Temp_Channel > NTC_DISCONNECTED)
@@ -958,9 +965,8 @@ int main(void)
             }
 #endif    // USE_NTC_DETECTION
             
-#endif    // USE_OVERTEMP_PROT
         }
-#endif    // USE_VOLTAGE_PROT or USE_OVERTEMP_PROT
+#endif    // USE_VOLTAGE_PROT or USE_OVERTEMP_PROT or USE_NTC_DETECTION
         
 
         //grabado de memoria luego de configuracion
@@ -1011,7 +1017,9 @@ void TimingDelay_Decrement(void)
     if (need_to_save_timer)
         need_to_save_timer--;
 
-#if (defined USE_VOLTAGE_PROT) || (defined USE_OVERTEMP_PROT)
+#if (defined USE_VOLTAGE_PROT) || \
+    (defined USE_OVERTEMP_PROT) || \
+    (defined USE_NTC_DETECTION)
     if (protections_sample_timer)
         protections_sample_timer--;
 #endif

@@ -20,7 +20,8 @@
 // #define HARDWARE_VERSION_1_0    //2018 prototypes 4 units
 
 
-#define SOFTWARE_VERSION_1_2    // temp meas with ntc 1k
+#define SOFTWARE_VERSION_1_3    // wait 5 secs for the first temp sample 19-04-2023
+// #define SOFTWARE_VERSION_1_2    // temp meas with ntc 1k
 // #define SOFTWARE_VERSION_1_1    //changes on pwm frequency 4KHz -> 8KHz 12-2021
 // #define SOFTWARE_VERSION_1_0    //original version delivered 02-2021
 
@@ -44,6 +45,10 @@
 #endif
 
 //--- Software Welcome Code ------------------//
+#ifdef SOFTWARE_VERSION_1_3
+#define SOFT "Software Version: 1.3\n"
+#define SOFT_VER "1.3"
+#endif
 #ifdef SOFTWARE_VERSION_1_2
 #define SOFT "Software Version: 1.2\n"
 #define SOFT_VER "1.2"

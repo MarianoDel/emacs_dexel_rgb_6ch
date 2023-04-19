@@ -55,11 +55,11 @@
 // --- Usart2 Modes --- //
 // #define USART2_DEBUG_MODE
 // #define USART2_WIFI_MODE
-#define USART2_DMX_TEST_CH1_CH2
+// #define USART2_DMX_TEST_CH1_CH2
 
 // --- Encoder Motion Direction --- //
-// #define USE_ENCODER_DIRECT    //dt one on rising clk is CW (clockwise)
-#define USE_ENCODER_INVERT    //dt one on rising clk is CCW (counter-clockwise)
+#define USE_ENCODER_DIRECT    //dt one on rising clk is CW (clockwise)
+// #define USE_ENCODER_INVERT    //dt one on rising clk is CCW (counter-clockwise)
 
 
 
