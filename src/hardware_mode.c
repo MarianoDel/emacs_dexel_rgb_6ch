@@ -14,6 +14,7 @@
 #include "limits_menu.h"
 #include "channels_menu.h"
 #include "temp_menu.h"
+#include "encoder_menu.h"
 #include "version_menu.h"
 #include "options_menu.h"
 
@@ -29,6 +30,7 @@ typedef enum {
     HARDWARE_MODE_LIMIT,
     HARDWARE_MODE_CHANNELS,
     HARDWARE_MODE_TEMP,
+    HARDWARE_MODE_ENCODER,    
     HARDWARE_MODE_VERSION
     
 } hardware_mode_state_e;
@@ -73,9 +75,10 @@ resp_t HardwareMode (parameters_typedef * mem, sw_actions_t actions)
         mem_options.argv[1] = "CURRENT LIMIT";
         mem_options.argv[2] = "CHANNELS SELECTION";
         mem_options.argv[3] = "TEMP CONFIG";
-        mem_options.argv[4] = "VERSION";
-        mem_options.argv[5] = "EXIT";        
-        mem_options.options_qtty = 6;
+        mem_options.argv[4] = "ENCODER DIRECTION";
+        mem_options.argv[5] = "VERSION";
+        mem_options.argv[6] = "EXIT";        
+        mem_options.options_qtty = 7;
         mem_options.argv[7] = "        Hardware Mode";
         OptionsMenuReset();
 
@@ -116,12 +119,18 @@ resp_t HardwareMode (parameters_typedef * mem, sw_actions_t actions)
                 break;
 
             case 4:
-                hardware_mode_state = HARDWARE_MODE_VERSION;
-                ptFHardMenuTT = &VersionMenu_UpdateTimer;                
+                hardware_mode_state = HARDWARE_MODE_ENCODER;
+                ptFHardMenuTT = &EncoderMenu_UpdateTimer;                
                 VersionMenuReset();
                 break;
 
             case 5:
+                hardware_mode_state = HARDWARE_MODE_VERSION;
+                ptFHardMenuTT = &VersionMenu_UpdateTimer;
+                VersionMenuReset();
+                break;
+                
+            case 6:
                 hardware_mode_state = HARDWARE_MODE_INIT;
                 ptFHardMenuTT = NULL;
                 resp = resp_finish;
@@ -176,6 +185,16 @@ resp_t HardwareMode (parameters_typedef * mem, sw_actions_t actions)
         }
         break;
 
+    case HARDWARE_MODE_ENCODER:
+        resp = EncoderMenu(mem, actions);
+
+        if (resp == resp_finish)
+        {
+            hardware_mode_state = HARDWARE_MODE_INIT;
+            resp = resp_continue;
+        }
+        break;
+        
     case HARDWARE_MODE_VERSION:
         resp = VersionMenu(mem, actions);
 

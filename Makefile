@@ -274,14 +274,6 @@ tests_master_slave_menu:
 	gcc src/tests_master_slave_menu.c master_slave_menu.o options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
 	./a.out
 
-tests_master_menu:
-	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
-	gcc -c src/master_slave_menu.c -I. $(INCDIR)
-	gcc -c src/options_menu.c -I. $(INCDIR)
-	gcc -c src/display_utils.c -I. $(INCDIR)
-	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
-	gcc src/tests_master_slave_menu.c master_slave_menu.o options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
-	./a.out
 
 tests_slave_menu:
 	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
@@ -292,50 +284,6 @@ tests_slave_menu:
 	gcc src/tests_slave_menu.c slave_menu.o options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
 	./a.out
 
-tests_current_menu:
-	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
-	gcc -c src/current_menu.c -I. $(INCDIR)
-	gcc -c src/options_menu.c -I. $(INCDIR)
-	gcc -c src/display_utils.c -I. $(INCDIR)
-	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
-	gcc src/tests_current_menu.c current_menu.o options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
-	./a.out
-
-tests_limits_menu:
-	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
-	gcc -c src/limits_menu.c -I. $(INCDIR)
-	gcc -c src/options_menu.c -I. $(INCDIR)
-	gcc -c src/display_utils.c -I. $(INCDIR)
-	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
-	gcc src/tests_limits_menu.c limits_menu.o options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
-	./a.out
-
-tests_channels_menu:
-	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
-	gcc -c src/channels_menu.c -I. $(INCDIR)
-	gcc -c src/options_menu.c -I. $(INCDIR)
-	gcc -c src/display_utils.c -I. $(INCDIR)
-	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
-	gcc src/tests_channels_menu.c channels_menu.o options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
-	./a.out
-
-tests_temp_menu:
-	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
-	gcc -c src/temp_menu.c -I. $(INCDIR)
-	gcc -c src/options_menu.c -I. $(INCDIR)
-	gcc -c src/display_utils.c -I. $(INCDIR)
-	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
-	gcc src/tests_temp_menu.c temp_menu.o options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
-	./a.out
-
-tests_version_menu:
-	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
-	gcc -c src/version_menu.c -I. $(INCDIR)
-	gcc -c src/options_menu.c -I. $(INCDIR)
-	gcc -c src/display_utils.c -I. $(INCDIR)
-	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
-	gcc src/tests_version_menu.c version_menu.o options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
-	./a.out
 
 tests_limit_simulation:
 	# simulate the limits functions
@@ -444,6 +392,26 @@ tests_main_menu:
 	./tests_gtk
 
 
+tests_master_menu:
+	# first compile common modules (modules to test and dependencies)
+	gcc -c src/master_slave_menu.c -I. $(INCDIR)
+	gcc -c src/options_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	gcc -c src/screen.c -I. $(INCDIR)
+	gcc -c src/ssd1306_display.c -I. $(INCDIR) $(DDEFS)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	# the module that implements application.h functions
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_oled_master_slave_menu.c -o tests_oled_master_slave_menu.o
+	# then the gtk lib modules
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_glade_oled.c -o tests_glade_oled.o
+	# link everything
+	gcc tests_glade_oled.o tests_oled_master_slave_menu.o master_slave_menu.o options_menu.o display_utils.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
+	# run global tags
+	gtags -q
+	# run the simulation
+	./tests_gtk
+
+
 tests_dmx_menu:
 	# first compile common modules (modules to test and dependencies)
 	gcc -c src/dmx_menu.c -I. $(INCDIR)
@@ -498,6 +466,32 @@ tests_fixed_menu:
 	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_glade_oled.c -o tests_glade_oled.o
 	# link everything
 	gcc tests_glade_oled.o tests_oled_fixed_menu.o fixed_menu.o options_menu.o display_utils.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
+	# run global tags
+	gtags -q
+	# run the simulation
+	./tests_gtk
+
+
+tests_hardware_mode:
+	# first compile common modules (modules to test and dependencies)
+	gcc -c src/hardware_mode.c -I. $(INCDIR)
+	gcc -c src/options_menu.c -I. $(INCDIR)
+	gcc -c src/current_menu.c -I. $(INCDIR)
+	gcc -c src/limits_menu.c -I. $(INCDIR)
+	gcc -c src/channels_menu.c -I. $(INCDIR)
+	gcc -c src/temp_menu.c -I. $(INCDIR)
+	gcc -c src/encoder_menu.c -I. $(INCDIR)
+	gcc -c src/version_menu.c -I. $(INCDIR)
+	gcc -c src/display_utils.c -I. $(INCDIR)
+	gcc -c src/screen.c -I. $(INCDIR)
+	gcc -c src/ssd1306_display.c -I. $(INCDIR) $(DDEFS)
+	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	# the module that implements application.h functions
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_oled_hardware_mode.c -o tests_oled_hardware_mode.o
+	# then the gtk lib modules
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_glade_oled.c -o tests_glade_oled.o
+	# link everything
+	gcc tests_glade_oled.o tests_oled_hardware_mode.o hardware_mode.o options_menu.o current_menu.o limits_menu.o channels_menu.o temp_menu.o encoder_menu.o version_menu.o display_utils.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
 	# run global tags
 	gtags -q
 	# run the simulation
