@@ -28,11 +28,8 @@ typedef struct {
 // Module Private Functions ----------------------------------------------------
 void end_program (GtkWidget *, gpointer);
 static void init_surface (void);
-// static void fill_surface (void);
 static void unfill_surface (void);
-
 static void draw_patch (GdkPixbuf * p, int x1, int x2, int y1, int y2, rgb_st *);
-
 static void put_pixel (GdkPixbuf *pixbuf,
                        int x,
                        int y,
@@ -42,13 +39,16 @@ static void put_pixel (GdkPixbuf *pixbuf,
                        guchar alpha);
 
     
-gboolean Print_Callback (gpointer user_data);    //send data for testing pourpose
-
 static void draw_oled_pixel_bright (int row, int col);
 static void draw_oled_pixel_dark (int row, int col);
 
-void sw1_button_function (void);
-void sw2_button_function (void);
+gboolean Print_Callback (gpointer user_data);    //send data for testing pourpose
+
+
+// Button Function to be implemented on app.c ----------------------------------
+void ccw_button_function (void);
+void cw_button_function (void);
+void enter_button_function (void);
 
 
 
@@ -58,8 +58,6 @@ GtkWidget *imag1;
 
 
 //Module Functions -------------------------------------------------------------
-
-
 int main(int argc, char *argv[])
 {
     gtk_init (&argc, &argv);
@@ -68,14 +66,16 @@ int main(int argc, char *argv[])
 
     //widgets from builder
     GtkWidget *win = (GtkWidget *) gtk_builder_get_object (builder, "window1");
-    GtkWidget *btn1 = (GtkWidget *) gtk_builder_get_object (builder, "sw1Button");
-    GtkWidget *btn2 = (GtkWidget *) gtk_builder_get_object (builder, "sw2Button");
-    GtkWidget *btn3 = (GtkWidget *) gtk_builder_get_object (builder, "quitButton");
+    GtkWidget *btn1 = (GtkWidget *) gtk_builder_get_object (builder, "ccwButton");
+    GtkWidget *btn2 = (GtkWidget *) gtk_builder_get_object (builder, "cwButton");
+    GtkWidget *btn3 = (GtkWidget *) gtk_builder_get_object (builder, "enterButton");    
+    GtkWidget *btn4 = (GtkWidget *) gtk_builder_get_object (builder, "quitButton");
     imag1 = (GtkWidget *) gtk_builder_get_object (builder, "image1");
 
-    g_signal_connect(btn1, "clicked", G_CALLBACK(sw1_button_function), NULL);    
-    g_signal_connect(btn2, "clicked", G_CALLBACK(sw2_button_function), NULL);
-    g_signal_connect(btn3, "clicked", G_CALLBACK(end_program), NULL);    
+    g_signal_connect(btn1, "clicked", G_CALLBACK(ccw_button_function), NULL);    
+    g_signal_connect(btn2, "clicked", G_CALLBACK(cw_button_function), NULL);
+    g_signal_connect(btn3, "clicked", G_CALLBACK(enter_button_function), NULL);    
+    g_signal_connect(btn4, "clicked", G_CALLBACK(end_program), NULL);    
 
     gtk_widget_show_all (win);
     init_surface();
@@ -238,13 +238,6 @@ static void draw_oled_pixel_dark (int row, int col)
 }
 
 
-// static void fill_surface (void)
-// {
-//     // fill_with_patches(pix);
-//     fill_with_lcd_patches(pix);    
-//     gtk_image_set_from_pixbuf (GTK_IMAGE(imag1), pix);    
-// }
-
 static void put_pixel (GdkPixbuf *pixbuf,
                        int x,
                        int y,
@@ -354,82 +347,10 @@ unsigned char I2C2_Int_CheckEnded (void)
     return 1;
 }
 
-// Testing Function loop -------------------------------------------------------
-// static GMutex mutex;
 
-
-// extern volatile unsigned short show_select_timer;
-// volatile unsigned short mode_effect_timer = 0;
-// unsigned char mode_state;
-
-// volatile unsigned char dmx_buff_data[3] = { 0 };
-// volatile unsigned char Packet_Detected_Flag = 0;
-// volatile unsigned short DMX_channel_selected = 1;
-// parameters_typedef mem_conf;
-// unsigned char pwm_channels [2] = { 0 };
-
-// sw_actions_t switch_actions = selection_none;
-// int setup_done = 0;
-// gboolean Test_Main_Loop (gpointer user_data)
-// {
-//     resp_t resp = resp_continue;
-
-//     // mem_conf.channels_operation_mode = 1;
-//     resp = ManualMode (pwm_channels, switch_actions);
-
-//     if (resp == resp_need_to_save)
-//     {
-//         printf("memory needs a save!\n");
-//     }
-
-//     //wraper to clean sw
-//     g_mutex_lock (&mutex);
-
-//     if (switch_actions != selection_none)
-//         switch_actions = selection_none;
-    
-//     g_mutex_unlock (&mutex);
-//     // usleep(500);
-        
-//     return TRUE;
-// }
-
-
-// gboolean Test_Timeouts (gpointer user_data)
-// {
-//     //timeout lcd_utils internal
-//     if (show_select_timer)
-//         show_select_timer--;
-
-//     //timeout for dmx_mode or manual_mode
-//     if (mode_effect_timer)
-//         mode_effect_timer--;
-    
-//     return TRUE;
-// }
-
-// //buttons functions
-// void dwn_button_function (void)
-// {
-//     g_mutex_lock (&mutex);
-//     switch_actions = selection_dwn;
-//     g_mutex_unlock (&mutex);
-// }
-
-// void up_button_function (void)
-// {
-//     g_mutex_lock (&mutex);
-//     switch_actions = selection_up;
-//     g_mutex_unlock (&mutex);
-// }
-
-// void set_button_function (void)
-// {
-//     g_mutex_lock (&mutex);
-//     switch_actions = selection_enter;
-//     g_mutex_unlock (&mutex);
-// }
-
+// Buttons Functions -----------------------------------------------------------
+// implemented on app.c
+// -----------------------------------------------------------------------------
 
 
 //--- end of file ---//

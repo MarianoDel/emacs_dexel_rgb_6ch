@@ -27,8 +27,8 @@
             <property name="can_focus">False</property>
             <property name="homogeneous">True</property>
             <child>
-              <object class="GtkButton" id="sw1Button">
-                <property name="label" translatable="yes">SW1</property>
+              <object class="GtkButton" id="ccwButton">
+                <property name="label" translatable="yes">CCW</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -40,8 +40,8 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="sw2Button">
-                <property name="label" translatable="yes">SW2</property>
+              <object class="GtkButton" id="cwButton">
+                <property name="label" translatable="yes">CW</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -50,6 +50,19 @@
                 <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="enterButton">
+                <property name="label" translatable="yes">Enter</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
               </packing>
             </child>
             <child>
@@ -62,7 +75,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">2</property>
+                <property name="position">3</property>
               </packing>
             </child>
           </object>

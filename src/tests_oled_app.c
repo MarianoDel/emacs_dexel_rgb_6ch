@@ -137,19 +137,28 @@ gboolean Test_Timeouts_Loop_1000ms (gpointer user_data)
 }
 
 
-// Module Implemantation of buttons functions
-void sw1_button_function (void)
+// Module Implementation of buttons functions
+void ccw_button_function (void)
 {
-    // g_mutex_lock (&mutex);
-    // switch_actions = selection_dwn;
-    // g_mutex_unlock (&mutex);
+    g_mutex_lock (&mutex);
+    switch_actions = selection_dwn;
+    g_mutex_unlock (&mutex);
 }
 
-void sw2_button_function (void)
+
+void cw_button_function (void)
 {
-    // g_mutex_lock (&mutex);
-    // switch_actions = selection_up;
-    // g_mutex_unlock (&mutex);
+    g_mutex_lock (&mutex);
+    switch_actions = selection_up;
+    g_mutex_unlock (&mutex);
+}
+
+
+void enter_button_function (void)
+{
+    g_mutex_lock (&mutex);
+    switch_actions = selection_enter;
+    g_mutex_unlock (&mutex);
 }
 
 
