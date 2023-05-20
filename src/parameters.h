@@ -61,7 +61,7 @@ typedef struct parameters {
     unsigned char dmx_channel_quantity;	
 
     //-- Hardware Config ----   //7
-    unsigned char dummy1;        //8 align to 8
+    unsigned char encoder_direction;        //8 align to 8
     unsigned short max_power;
 
     //-- For Fixed colors settings ----   //10

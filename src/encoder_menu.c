@@ -85,10 +85,10 @@ resp_t EncoderMenu (parameters_typedef * mem, sw_actions_t actions)
 
         Display_SetLine1("EXIT");
 
-        Display_SetLine3("USED ENCODER");
+        Display_SetLine3("ENCODER ROTATION");
 
-        total_encoder = mem->dmx_channel_quantity;
-        sprintf(s_temp, "TOTAL: %d", total_encoder);
+        total_encoder = mem->encoder_direction;
+        sprintf(s_temp, "CW or CCW: %d", total_encoder);
         Display_SetLine4(s_temp);
 
         Display_SetLine8("        Encoder Menu");        
@@ -177,7 +177,7 @@ resp_t EncoderMenu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case ENCODER_MENU_CHANGING:
-        if (actions == selection_dwn)
+        if (actions == selection_up)
         {
             if (total_encoder)
             {
@@ -193,9 +193,9 @@ resp_t EncoderMenu (parameters_typedef * mem, sw_actions_t actions)
             }
         }
         
-        if (actions == selection_up)
+        if (actions == selection_dwn)
         {
-            if (total_encoder < 6)
+            if (total_encoder < 1)
             {
                 total_encoder += 1;
                 sprintf(s_temp, "%d", total_encoder);
@@ -257,7 +257,7 @@ resp_t EncoderMenu (parameters_typedef * mem, sw_actions_t actions)
         if (actions == do_nothing)
         {
             // push values to memory
-            mem->dmx_channel_quantity = total_encoder;
+            mem->encoder_direction = total_encoder;
             
             encoder_state = ENCODER_MENU_INIT;
             resp = resp_finish;            
@@ -284,7 +284,7 @@ resp_t EncoderMenu (parameters_typedef * mem, sw_actions_t actions)
 #define LINE_HEIGHT    8
 
 #define SRT_X_OP0    0
-#define SRT_X_OP1    (6 * 7)
+#define SRT_X_OP1    (6 * 11)
 // #define SRT_X_OP2    (6 * 5)
 // #define SRT_X_OP3    (6 * 5)
 // #define SRT_X_OP4    (6 * 18)

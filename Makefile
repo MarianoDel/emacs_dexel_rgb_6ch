@@ -117,6 +117,7 @@ SRC += ./src/limits_menu.c
 SRC += ./src/channels_menu.c
 SRC += ./src/temp_menu.c
 SRC += ./src/version_menu.c
+SRC += ./src/encoder_menu.c
 
 SRC += ./src/comm.c
 

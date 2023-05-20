@@ -41,18 +41,20 @@
 #define TEMP_DISCONECT    TEMP_IN_85
 #define TEMP_RECONNECT    TEMP_IN_48
 
-#define TEMP_IN_MIN    TEMP_IN_50
+#define TEMP_IN_MIN    TEMP_IN_35
 #define TEMP_IN_MAX    TEMP_IN_85
 
-#define TEMP_DEG_MIN    50
+#define TEMP_DEG_MIN    35
 #define TEMP_DEG_MAX    85
 
 // #define TEMP_DEG_OFFSET    -89
 #define TEMP_DEG_OFFSET    -95    // meas adjusted
 // #define TEMP_IN_OFFSET    2284
-#define TEMP_IN_OFFSET    1952    // meas adjusted
+// #define TEMP_IN_OFFSET    1952    // meas adjusted
+#define TEMP_IN_OFFSET    2211    // from curves calc
 
 #define NTC_DISCONNECTED    3102
+#define NTC_SHORTED    100
 
 #endif    // TEMP_SENSOR_NTC1K
 

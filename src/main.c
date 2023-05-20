@@ -126,6 +126,8 @@ volatile unsigned short need_to_save_timer = 0;
 #if (defined USE_OVERTEMP_PROT) || (defined USE_VOLTAGE_PROT)
 volatile unsigned short protections_sample_timer = 5000;
 #endif
+ma16_u16_data_obj_t temp_filter;
+
 // -- for the timeouts in the modes ----
 void (* ptFTT ) (void) = NULL;
 
@@ -141,18 +143,12 @@ unsigned char CheckTempGreater (unsigned short temp_sample, unsigned short temp_
 sw_actions_t CheckActions (void);
 void DisconnectByVoltage (void);
 
-#ifdef USART2_DMX_TEST_CH1_CH2
-unsigned char last_dmx_ch1 = 0;
-unsigned char last_dmx_ch2 = 0;
-unsigned char last_dmx_ch3 = 0;
-unsigned char conf_dmx = 0;
-char buff_dmx_test [20];
-#endif
+
 // Module Functions ------------------------------------------------------------
 int main(void)
 {
     char s_to_send [100];
-    main_state_t main_state = MAIN_INIT;
+    main_state_t main_state = MAIN_HARDWARE_INIT;
     resp_t resp = resp_continue;
     sw_actions_t action = do_nothing;
 
@@ -167,9 +163,6 @@ int main(void)
 
     // Peripherals Activation
     USART2Config();
-#ifdef USART2_DMX_TEST_CH1_CH2
-    Usart2Send("Test for DMX on ch1 & ch2\n");
-#endif
 
     TIM_1_Init();
     TIM_3_Init();
@@ -277,17 +270,39 @@ int main(void)
 
         mem_conf.max_power = 1530;
         mem_conf.dmx_channel_quantity = 6;
+#ifdef USE_ENCODER_DIRECT
+        mem_conf.encoder_direction = 0;
+#elif USE_ENCODER_INVERT
+        mem_conf.encoder_direction = 1;
+#else
+#error "Please select default encoder direction on hard.h"
+#endif
     }
+
+    
+    // check NTC connection on init
+    unsigned char check_ntc = 0;
+    unsigned short temp_filtered = 0;
+    MA16_U16Circular_Reset(&temp_filter);
+    for (int i = 0; i < 16; i++)
+    {
+        temp_filtered = MA16_U16Circular(&temp_filter, Temp_Channel);
+        Wait_ms(30);
+    }
+
+    if (temp_filtered < NTC_SHORTED)
+    {
+        CTRL_FAN_ON;
+        check_ntc = 0;
+    }
+    else
+        check_ntc = 1;
+    // check NTC connection on init        
 
     while (1)
     {
         switch (main_state)
         {
-        case MAIN_INIT:
-            // memcpy(&mem_conf, pmem, sizeof(parameters_typedef));
-            main_state++;
-            break;
-
         case MAIN_HARDWARE_INIT:
 
             // hardware reset
@@ -445,62 +460,6 @@ int main(void)
 #else
                 CheckFiltersAndOffsets (ch_values);
 #endif
-#ifdef USART2_DMX_TEST_CH1_CH2
-                if ((ch_values[0] != last_dmx_ch1) ||
-                    (ch_values[1] != last_dmx_ch2))
-                {
-                    unsigned short calc = 0;
-                    unsigned char bright = 0;
-                    unsigned char temp0 = 0;
-                    unsigned char temp1 = 0;
-                    
-                    last_dmx_ch1 = ch_values[0];
-                    last_dmx_ch2 = ch_values[1];
-
-                    // backup and bright temp calcs
-                    // ch0 the bright ch1 the temp
-                    bright = last_dmx_ch1;
-                    temp0 = 255 - last_dmx_ch2;
-                    temp1 = 255 - temp0;
-        
-                    calc = temp0 * bright;
-                    calc >>= 8;    // to 255
-                    temp0 = (unsigned char) calc;
-        
-                    calc = temp1 * bright;
-                    calc >>= 8;    // to 255
-                    temp1 = (unsigned char) calc;
-
-                    sprintf(buff_dmx_test, "ch1 %03d ch2 %03d sum %03d\n",
-                            temp0,
-                            temp1,
-                            temp0 + temp1);
-                    Usart2Send(buff_dmx_test);
-                }
-
-                // conf 4 8 amps
-                if (ch_values[2] != last_dmx_ch3)
-                {
-                    last_dmx_ch3 = ch_values[2];
-                    if (last_dmx_ch3 > 127)
-                    {
-                        if (conf_dmx != 8)
-                        {
-                            conf_dmx = 8;
-                            Usart2Send("current config 8\n");
-                        }
-                    }
-                    else
-                    {
-                        if (conf_dmx != 4)
-                        {
-                            conf_dmx = 4;
-                            Usart2Send("current config 4\n");
-                        }
-                    }
-                }
-                
-#endif    // USART2_DMX_TEST_CH1_CH2
             }
 
             if (resp == resp_need_to_save)
@@ -685,7 +644,6 @@ int main(void)
             
             break;
 
-
         case MAIN_IN_RESET_MODE:
             // Check encoder first
             action = CheckActions();
@@ -712,69 +670,6 @@ int main(void)
             
             break;
             
-        case MAIN_IN_OVERTEMP:
-            SCREEN_ShowText2(
-                "LEDs     ",
-                "Overtemp ",
-                "         ",
-                "         "
-                );
-
-#ifdef USART2_DEBUG_MODE
-            sprintf(s_to_send, "overtemp: %d\n", Temp_Channel);
-            Usart2Send(s_to_send);
-#endif
-
-            main_state = MAIN_IN_OVERTEMP_B;
-            break;
-
-        case MAIN_IN_OVERTEMP_B:
-            if (CheckTempGreater (TEMP_RECONNECT, Temp_Channel))
-            {
-                //reconnect
-                main_state = MAIN_HARDWARE_INIT;
-            }
-            break;
-
-        case MAIN_IN_OVERVOLTAGE:
-            SCREEN_ShowText2(
-                "Power    ",
-                "   Over  ",
-                " Voltage!",
-                "         "
-                );
-
-#ifdef USART2_DEBUG_MODE
-            sprintf(s_to_send, "overvoltage: %d\n", V_Sense_48V);
-            Usart2Send(s_to_send);
-#endif
-            main_state = MAIN_IN_VOLTAGE_PROTECTION;
-            break;
-
-        case MAIN_IN_UNDERVOLTAGE:
-            SCREEN_ShowText2(
-                "Power    ",
-                " is Too  ",
-                "  Low!   ",
-                "         "
-                );
-
-#ifdef USART2_DEBUG_MODE
-            sprintf(s_to_send, "undervoltage: %d\n", V_Sense_48V);
-            Usart2Send(s_to_send);
-#endif
-            main_state = MAIN_IN_VOLTAGE_PROTECTION;
-            break;
-
-        case MAIN_IN_VOLTAGE_PROTECTION:
-            if ((V_Sense_48V < MAX_PWR_SUPPLY) &&
-                (V_Sense_48V > MIN_PWR_SUPPLY))
-            {
-                //reconnect
-                main_state = MAIN_HARDWARE_INIT;
-            }
-            break;
-
         case MAIN_ENTERING_MAIN_MENU:
             //deshabilitar salidas hardware
             DMX_Disable();
@@ -865,8 +760,9 @@ int main(void)
 
             resp = HardwareMode(&mem_conf, action);
 
-            if ((resp == resp_need_to_save) ||
-                (resp == resp_finish))
+            // if ((resp == resp_need_to_save) ||
+            //     (resp == resp_finish))
+            if (resp == resp_finish)
             {
                 //hardware config its saved instantly
                 need_to_save = 1;
@@ -877,7 +773,7 @@ int main(void)
             break;
             
         default:
-            main_state = MAIN_INIT;
+            main_state = MAIN_HARDWARE_INIT;
             break;
         }
 
@@ -888,88 +784,143 @@ int main(void)
         display_update_int_state_machine();
 
         // colors commands update from comms
-#ifndef USART2_DMX_TEST_CH1_CH2
         UpdateCommunications();
-#endif
 
+
+        // if (!protections_sample_timer)
+        // {
+        //     protections_sample_timer = 10;    //samples time are 10ms
         
-#if (defined USE_VOLTAGE_PROT) || \
-    (defined USE_OVERTEMP_PROT) || \
-    (defined USE_NTC_DETECTION)
-        if (!protections_sample_timer)
-        {
-            protections_sample_timer = 10;    //samples time are 10ms
-
-#ifdef USE_VOLTAGE_PROT
-            if ((main_state != MAIN_IN_OVERVOLTAGE) &&
-                (main_state != MAIN_IN_UNDERVOLTAGE) &&
-                (main_state != MAIN_IN_VOLTAGE_PROTECTION))
-            {
-                if (V_Sense_48V > MAX_PWR_SUPPLY)
-                {
-                    DisconnectByVoltage();
-                    main_state = MAIN_IN_OVERVOLTAGE;
-                }
-                else if (V_Sense_48V < MIN_PWR_SUPPLY)
-                {
-                    DisconnectByVoltage();
-                    main_state = MAIN_IN_UNDERVOLTAGE;
-                }
-            }
-#endif    // USE_VOLTAGE_PROT
-            
 #ifdef USE_OVERTEMP_PROT
-            // if ((main_state > MAIN_GET_CONF) &&
-            //     (main_state != MAIN_IN_OVERTEMP) &&
-            //     (main_state != MAIN_IN_OVERTEMP_B))
-            if ((main_state != MAIN_IN_OVERTEMP) &&
-                (main_state != MAIN_IN_OVERTEMP_B))
+        if (check_ntc)    //NTC NOT SHORTED
+        {
+            if ((main_state < MAIN_ENTERING_MAIN_MENU) &&
+                (!protections_sample_timer))
             {
-                if (CheckTempGreater (Temp_Channel, mem_conf.temp_prot))
+                temp_filtered = MA16_U16Circular(&temp_filter, Temp_Channel);
+
+                if (CheckTempGreater (temp_filtered, mem_conf.temp_prot))            
                 {
                     //stop LEDs outputs
                     DisconnectByVoltage();
                     CTRL_FAN_ON;
-                    main_state = MAIN_IN_OVERTEMP;
+
+                    SCREEN_ShowText2(
+                        "LEDs     ",
+                        "Overtemp ",
+                        "         ",
+                        "         "
+                        );
+
+#ifdef USART2_DEBUG_MODE
+                    sprintf(s_to_send, "overtemp: %d\n", temp_filtered);
+                    Usart2Send(s_to_send);
+#endif
+
+                    // go out of here without filter or jumper
+                    unsigned char loop = 1;                    
+                    do {
+                        display_update_int_state_machine();
+                        
+                        if (Temp_Channel < NTC_SHORTED)    //sensor with jumper
+                            loop = 0;
+                        else if (CheckTempGreater (TEMP_RECONNECT, Temp_Channel))
+                            loop = 0;
+                        else
+                            Wait_ms(100);
+                    
+                    } while (loop);
+                    
+//reconnect
+                    main_state = MAIN_HARDWARE_INIT;
                 }
-#ifdef USE_CTRL_FAN_FOR_TEMP_CTRL
-                else if (CheckTempGreater (Temp_Channel, TEMP_IN_35))
-                    CTRL_FAN_ON;
-                else if (CheckTempGreater (TEMP_IN_30, Temp_Channel))
-                    CTRL_FAN_OFF;
-#endif    // USE_CTRL_FAN_FOR_TEMP_CTRL
-            }            
-#endif    // USE_OVERTEMP_PROT
 
 #ifdef USE_NTC_DETECTION
-            // check for ntc and stop
-            if (Temp_Channel > NTC_DISCONNECTED)
-            {
-                //stop LEDs outputs
-                DisconnectByVoltage();
-                CTRL_FAN_ON;
+                // check for ntc and stop
+                if (temp_filtered > NTC_DISCONNECTED)
+                {
+                    //stop LEDs outputs
+                    DisconnectByVoltage();
+                    CTRL_FAN_ON;
             
+                    SCREEN_ShowText2(
+                        "         ",
+                        " No NTC  ",
+                        "Connected",
+                        "         "
+                        );
+
+                    do {
+                        display_update_int_state_machine();                    
+                    } while (Temp_Channel > NTC_DISCONNECTED);
+
+                    //reconnect
+                    main_state = MAIN_HARDWARE_INIT;
+                }
+#endif    // USE_NTC_DETECTION
+            }
+        }    // check_ntc
+#endif    // USE_OVERTEMP_PROT
+
+
+#ifdef USE_VOLTAGE_PROT
+        if ((main_state < MAIN_ENTERING_MAIN_MENU) &&
+            (!protections_sample_timer))
+        {
+            if (V_Sense_48V > MAX_PWR_SUPPLY)
+            {
+                DisconnectByVoltage();
+
                 SCREEN_ShowText2(
-                    "         ",
-                    " No NTC  ",
-                    "Connected",
+                    "Power    ",
+                    "   Over  ",
+                    " Voltage!",
                     "         "
                     );
 
+#ifdef USART2_DEBUG_MODE
+                sprintf(s_to_send, "overvoltage: %d\n", V_Sense_48V);
+                Usart2Send(s_to_send);
+#endif
                 do {
-                    display_update_int_state_machine();                    
-                } while (Temp_Channel > NTC_DISCONNECTED);
+                    display_update_int_state_machine();
+                    Wait_ms(10);
+                } while (V_Sense_48V > MAX_PWR_SUPPLY);
+
+                //reconnect
+                main_state = MAIN_HARDWARE_INIT;
+                
+            }
+            else if (V_Sense_48V < MIN_PWR_SUPPLY)
+            {
+                DisconnectByVoltage();
+
+                SCREEN_ShowText2(
+                    "Power    ",
+                    " is Too  ",
+                    "  Low!   ",
+                    "         "
+                    );
+
+#ifdef USART2_DEBUG_MODE
+                sprintf(s_to_send, "undervoltage: %d\n", V_Sense_48V);
+                Usart2Send(s_to_send);
+#endif
+                do {
+                    display_update_int_state_machine();
+                    Wait_ms(10);
+                } while (V_Sense_48V < MIN_PWR_SUPPLY);
 
                 //reconnect
                 main_state = MAIN_HARDWARE_INIT;
             }
-#endif    // USE_NTC_DETECTION
-            
         }
-#endif    // USE_VOLTAGE_PROT or USE_OVERTEMP_PROT or USE_NTC_DETECTION
-        
+#endif    // USE_VOLTAGE_PROT
 
-        //grabado de memoria luego de configuracion
+        if (!protections_sample_timer)
+            protections_sample_timer = 10;
+        
+        // memory saves after configs
         if ((need_to_save) && (!need_to_save_timer))
         {
             __disable_irq();

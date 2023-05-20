@@ -55,9 +55,9 @@
 // --- Usart2 Modes --- //
 // #define USART2_DEBUG_MODE
 // #define USART2_WIFI_MODE
-// #define USART2_DMX_TEST_CH1_CH2
 
-// --- Encoder Motion Direction --- //
+
+// --- Encoder Motion Direction by default --- //
 #define USE_ENCODER_DIRECT    //dt one on rising clk is CW (clockwise)
 // #define USE_ENCODER_INVERT    //dt one on rising clk is CCW (counter-clockwise)
 
@@ -487,8 +487,7 @@ typedef enum {
 //ESTADOS DEL MAIN
 typedef enum
 {    
-    MAIN_INIT = 0,
-    MAIN_HARDWARE_INIT,
+    MAIN_HARDWARE_INIT = 0,
     MAIN_GET_CONF,
     MAIN_IN_DMX1_MODE,
     MAIN_IN_DMX2_MODE,
@@ -496,11 +495,6 @@ typedef enum
     MAIN_IN_MANUAL_MODE,
     MAIN_IN_RESET_MODE,
     MAIN_IN_WIFI_MODE,    
-    MAIN_IN_OVERTEMP,
-    MAIN_IN_OVERTEMP_B,
-    MAIN_IN_OVERVOLTAGE,
-    MAIN_IN_UNDERVOLTAGE,
-    MAIN_IN_VOLTAGE_PROTECTION,
     MAIN_ENTERING_MAIN_MENU,
     MAIN_ENTERING_MAIN_MENU_WAIT_FREE,    
     MAIN_IN_MAIN_MENU,
