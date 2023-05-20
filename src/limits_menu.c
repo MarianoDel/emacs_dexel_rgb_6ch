@@ -179,7 +179,7 @@ resp_t LimitsMenu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case LIMITS_MENU_CHANGING:
-        if (actions == selection_dwn)
+        if (actions == selection_up)
         {
             if (total_curr)
             {
@@ -195,7 +195,7 @@ resp_t LimitsMenu (parameters_typedef * mem, sw_actions_t actions)
             }
         }
         
-        if (actions == selection_up)
+        if (actions == selection_dwn)
         {
             if (total_curr < 12)
             {

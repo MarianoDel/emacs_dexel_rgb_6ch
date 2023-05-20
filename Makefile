@@ -118,6 +118,7 @@ SRC += ./src/channels_menu.c
 SRC += ./src/temp_menu.c
 SRC += ./src/version_menu.c
 SRC += ./src/encoder_menu.c
+SRC += ./src/temperatures.c
 
 SRC += ./src/comm.c
 
@@ -481,6 +482,7 @@ tests_hardware_mode:
 	gcc -c src/limits_menu.c -I. $(INCDIR)
 	gcc -c src/channels_menu.c -I. $(INCDIR)
 	gcc -c src/temp_menu.c -I. $(INCDIR)
+	gcc -c src/temperatures.c -I. $(INCDIR)
 	gcc -c src/encoder_menu.c -I. $(INCDIR)
 	gcc -c src/version_menu.c -I. $(INCDIR)
 	gcc -c src/display_utils.c -I. $(INCDIR)
@@ -492,7 +494,7 @@ tests_hardware_mode:
 	# then the gtk lib modules
 	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_glade_oled.c -o tests_glade_oled.o
 	# link everything
-	gcc tests_glade_oled.o tests_oled_hardware_mode.o hardware_mode.o options_menu.o current_menu.o limits_menu.o channels_menu.o temp_menu.o encoder_menu.o version_menu.o display_utils.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
+	gcc tests_glade_oled.o tests_oled_hardware_mode.o hardware_mode.o options_menu.o current_menu.o limits_menu.o channels_menu.o temp_menu.o temperatures.o encoder_menu.o version_menu.o display_utils.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
 	# run global tags
 	gtags -q
 	# run the simulation

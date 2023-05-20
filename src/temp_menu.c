@@ -48,16 +48,18 @@ extern unsigned char menu_need_display_update;
 extern unsigned char menu_selection_show;
 extern volatile unsigned short menu_menu_timer;
 
+// -- for current temp --
+#include "adc.h"
+extern volatile unsigned short adc_ch [];
+
 
 // Globals ---------------------------------------------------------------------
-
+volatile unsigned short curr_temp_timer = 500;
 
 
 // Module Private Functions ----------------------------------------------------
 void Temp_Selected_To_Line_Init (unsigned char, unsigned char *, unsigned char *, unsigned char *);
 void TempMenu_Options(unsigned char, unsigned char, char *);
-unsigned char TempMenu_TempToDegrees (unsigned short temp);
-unsigned short TempMenu_DegreesToTemp (unsigned char deg);
 
 
 // Module Funtions -------------------------------------------------------------
@@ -65,6 +67,9 @@ void TempMenu_UpdateTimer (void)
 {
     if (temp_menu_timer)
         temp_menu_timer--;
+
+    if (curr_temp_timer)
+        curr_temp_timer--;
 }
 
 void TempMenuReset (void)
@@ -90,9 +95,13 @@ resp_t TempMenu (parameters_typedef * mem, sw_actions_t actions)
 
         Display_SetLine3("TEMP PROTECTION");
 
-        total_temp = TempMenu_TempToDegrees(mem->temp_prot);
+        total_temp = Temp_TempToDegrees(mem->temp_prot);
         sprintf(s_temp, "TEMP: %2d", total_temp);
         Display_SetLine4(s_temp);
+
+        unsigned char curr_temp = Temp_TempToDegreesExtended(Temp_Channel);
+        sprintf(s_temp, "CURR T: %2dC", curr_temp);
+        Display_SetLine6(s_temp);
 
         Display_SetLine8("       Temp Prot Menu");        
 
@@ -180,7 +189,7 @@ resp_t TempMenu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case TEMP_MENU_CHANGING:
-        if (actions == selection_dwn)
+        if (actions == selection_up)
         {
             if (total_temp > TEMP_DEG_MIN)
             {
@@ -196,7 +205,7 @@ resp_t TempMenu (parameters_typedef * mem, sw_actions_t actions)
             }
         }
         
-        if (actions == selection_up)
+        if (actions == selection_dwn)
         {
             if (total_temp < TEMP_DEG_MAX)
             {
@@ -260,7 +269,7 @@ resp_t TempMenu (parameters_typedef * mem, sw_actions_t actions)
         if (actions == do_nothing)
         {
             // push values to memory
-            mem->temp_prot = TempMenu_DegreesToTemp(total_temp);
+            mem->temp_prot = Temp_DegreesToTemp(total_temp);
             
             temp_state = TEMP_MENU_INIT;
             resp = resp_finish;            
@@ -278,6 +287,17 @@ resp_t TempMenu (parameters_typedef * mem, sw_actions_t actions)
         temp_need_display_update = 0;
     }
 
+
+    if (!curr_temp_timer)
+    {
+        curr_temp_timer = 1000;
+        Display_BlankLine6();
+        unsigned char curr_temp = Temp_TempToDegreesExtended(Temp_Channel);
+        sprintf(s_temp, "CURR T: %2dC", curr_temp);
+        Display_SetLine6(s_temp);
+        temp_need_display_update = 1;
+    }
+    
     return resp;
     
 }
@@ -385,58 +405,5 @@ void TempMenu_Options(unsigned char enable, unsigned char selection, char * s)
     
 }
 
-
-unsigned char TempMenu_TempToDegrees (unsigned short temp)
-{
-#if (defined TEMP_SENSOR_LM335)
-    if (temp < TEMP_IN_MIN)
-        return TEMP_DEG_MIN;
-
-    if (temp > TEMP_IN_MAX)
-        return TEMP_DEG_MAX;
-#elif (defined TEMP_SENSOR_NTC1K)
-    if (temp > TEMP_IN_MIN)
-        return TEMP_DEG_MIN;
-
-    if (temp < TEMP_IN_MAX)
-        return TEMP_DEG_MAX;
-#else
-#error "No sensor selected on temperatures.h"
-#endif
-    
-    int calc = 0;
-    short dx = TEMP_IN_MAX - TEMP_IN_MIN;
-    short dy = TEMP_DEG_MAX - TEMP_DEG_MIN;
-
-    calc = temp * dy;
-    calc = calc / dx;
-
-    calc = calc - TEMP_DEG_OFFSET;
-
-    return (unsigned char) calc;
-    
-}
-
-
-unsigned short TempMenu_DegreesToTemp (unsigned char deg)
-{
-    if (deg < TEMP_DEG_MIN)
-        return TEMP_IN_MIN;
-
-    if (deg > TEMP_DEG_MAX)
-        return TEMP_IN_MAX;
-    
-    int calc = 0;
-    short dx = TEMP_DEG_MAX - TEMP_DEG_MIN;
-    short dy = TEMP_IN_MAX - TEMP_IN_MIN;
-
-    calc = deg * dy;
-    calc = calc / dx;
-
-    calc = calc + TEMP_IN_OFFSET;
-
-    return (unsigned short) calc;
-    
-}
 
 //--- end of file ---//

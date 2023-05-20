@@ -31,6 +31,7 @@ unsigned char menu_need_display_update;
 unsigned char menu_selection_show;
 volatile unsigned short menu_menu_timer;
 
+volatile unsigned short adc_ch [2];
 
 
 // Globals ---------------------------------------------------------------------
@@ -53,6 +54,10 @@ gboolean Test_Main_Loop (gpointer user_data)
         
         HardwareModeReset();
 
+        adc_ch[1] = 980;    //current temp 48C, show 54
+        // adc_ch[1] = 1389;    //current temp 35C, show 36
+        // adc_ch[1] = 214;    //current temp 85C, show 86
+
         setup_done = 1;
     }
 
@@ -67,7 +72,18 @@ gboolean Test_Main_Loop (gpointer user_data)
             switch_actions = do_nothing;
         }        
 
-        display_update_int_state_machine ();        
+        display_update_int_state_machine ();
+
+        //for movements on current temp
+        if (!timer_standby)
+        {
+            // printf("timer standby decrement ch: %d\n", adc_ch[1]);
+            timer_standby = 1000;
+            if (adc_ch[1] > (214 + 20))
+                adc_ch[1] = adc_ch[1] - 20;
+            else
+                adc_ch[1] = 1563;
+        }
     }
 
     //wraper to clean sw

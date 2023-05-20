@@ -177,9 +177,9 @@ resp_t ChannelsMenu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case CHANNELS_MENU_CHANGING:
-        if (actions == selection_dwn)
+        if (actions == selection_up)
         {
-            if (total_channels)
+            if (total_channels > 1)
             {
                 total_channels -= 1;
                 sprintf(s_temp, "%d", total_channels);
@@ -193,7 +193,7 @@ resp_t ChannelsMenu (parameters_typedef * mem, sw_actions_t actions)
             }
         }
         
-        if (actions == selection_up)
+        if (actions == selection_dwn)
         {
             if (total_channels < 6)
             {

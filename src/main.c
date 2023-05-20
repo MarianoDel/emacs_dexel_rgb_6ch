@@ -735,7 +735,6 @@ int main(void)
 
             //Mode Timeout enable
             ptFTT = &HardwareMode_UpdateTimers;
-            
 
             SCREEN_ShowText2(
                 "Entering ",
@@ -786,11 +785,6 @@ int main(void)
         // colors commands update from comms
         UpdateCommunications();
 
-
-        // if (!protections_sample_timer)
-        // {
-        //     protections_sample_timer = 10;    //samples time are 10ms
-        
 #ifdef USE_OVERTEMP_PROT
         if (check_ntc)    //NTC NOT SHORTED
         {
@@ -831,7 +825,7 @@ int main(void)
                     
                     } while (loop);
                     
-//reconnect
+                    //reconnect
                     main_state = MAIN_HARDWARE_INIT;
                 }
 
