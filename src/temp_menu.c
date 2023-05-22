@@ -99,8 +99,8 @@ resp_t TempMenu (parameters_typedef * mem, sw_actions_t actions)
         sprintf(s_temp, "TEMP: %2d", total_temp);
         Display_SetLine4(s_temp);
 
-        unsigned char curr_temp = Temp_TempToDegreesExtended(Temp_Channel);
-        sprintf(s_temp, "CURR T: %2dC", curr_temp);
+        char curr_temp = Temp_TempToDegreesExtended(Temp_Channel);
+        sprintf(s_temp, "CURR T: %dC", curr_temp);
         Display_SetLine6(s_temp);
 
         Display_SetLine8("       Temp Prot Menu");        
@@ -292,8 +292,8 @@ resp_t TempMenu (parameters_typedef * mem, sw_actions_t actions)
     {
         curr_temp_timer = 1000;
         Display_BlankLine6();
-        unsigned char curr_temp = Temp_TempToDegreesExtended(Temp_Channel);
-        sprintf(s_temp, "CURR T: %2dC", curr_temp);
+        char curr_temp = Temp_TempToDegreesExtended(Temp_Channel);
+        sprintf(s_temp, "CURR T: %dC", curr_temp);
         Display_SetLine6(s_temp);
         temp_need_display_update = 1;
     }

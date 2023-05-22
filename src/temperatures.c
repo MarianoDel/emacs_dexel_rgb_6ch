@@ -57,7 +57,7 @@ unsigned char Temp_TempToDegrees (unsigned short temp)
 }
 
 
-unsigned char Temp_TempToDegreesExtended (unsigned short temp)
+char Temp_TempToDegreesExtended (unsigned short temp)
 {
 #if (defined TEMP_SENSOR_LM335)
 
@@ -88,7 +88,7 @@ unsigned char Temp_TempToDegreesExtended (unsigned short temp)
 #error "No sensor selected on temperatures.h"
 #endif
 
-    return (unsigned char) calc;
+    return (char) calc;
 }
 
 

@@ -10,8 +10,9 @@
 // Application Includes needed for this test
 #include "screen.h"
 #include "switches_answers.h"
-#include "hardware_mode.h"
+#include "dmx_menu.h"
 #include "options_menu.h"
+#include "parameters.h"
 
 
 // Module Types Constants and Macros -------------------------------------------
@@ -21,17 +22,9 @@
 
 
 // Globals -- Externals for the tested Module ----------------------------------
-unsigned char mode_state = 0;
+unsigned char menu_state = 0;
 options_menu_st mem_options;
 parameters_typedef mem_conf;
-
-unsigned char menu_state = 0;
-unsigned char menu_selected;
-unsigned char menu_need_display_update;
-unsigned char menu_selection_show;
-volatile unsigned short menu_menu_timer;
-
-volatile unsigned short adc_ch [2];
 
 
 // Globals ---------------------------------------------------------------------
@@ -39,6 +32,7 @@ static GMutex mutex;
 int setup_done = 0;
 unsigned int timer_standby = 0;
 sw_actions_t switch_actions = do_nothing;
+unsigned char ch_val [6] = { 0 };
 
 
 
@@ -46,44 +40,70 @@ sw_actions_t switch_actions = do_nothing;
 gboolean Test_Main_Loop (gpointer user_data)
 {
     resp_t resp = resp_continue;
+    dmx_menu_data_t dmx1_st;
+    
 
     //first screen
     if (setup_done == 0)
     {
         SCREEN_Init();        
         
-        HardwareModeReset();
+        DMXModeMenuReset();
 
-        adc_ch[1] = 980;    //current temp 48C, show 54
-        // adc_ch[1] = 1389;    //current temp 35C, show 36
-        // adc_ch[1] = 214;    //current temp 85C, show 86
+        *(ch_val + 0) = 0;
+        *(ch_val + 1) = 0;
+        *(ch_val + 2) = 0;
+        *(ch_val + 3) = 0;
+        *(ch_val + 4) = 0;
+        *(ch_val + 5) = 0;
 
+        mem_conf.program_type = DMX1_MODE;
+        mem_conf.dmx_first_channel = 1;
+        mem_conf.dmx_channel_quantity = 6;
+        
         setup_done = 1;
     }
 
     if (setup_done == 1)
     {
-        resp = HardwareMode (&mem_conf, switch_actions);
+        dmx1_st.dmx_first_chnl = &mem_conf.dmx_first_channel;
+        dmx1_st.mode = DMX1_MODE;
+        dmx1_st.pchannels = ch_val;
+        dmx1_st.chnls_qtty = mem_conf.dmx_channel_quantity;
+        dmx1_st.show_addres = 1;
+        
+        resp = DMXModeMenu(&dmx1_st);
 
         if (resp == resp_finish)
         {
-            printf("\nended config\n");
+            if (!timer_standby)
+            {
+                timer_standby = 50;
                 
+                unsigned char last_val = *(ch_val + 0);            
+                if (last_val < 255)
+                {
+                    for (int i = 0; i < 6; i++)
+                        *(ch_val + i) = last_val + 1;
+                }
+                else
+                {
+                    for (int i = 0; i < 6; i++)
+                        *(ch_val + i) = 0;
+
+                    if (mem_conf.dmx_first_channel < (511 - mem_conf.dmx_channel_quantity))
+                        mem_conf.dmx_first_channel += 1;
+                    else
+                    {
+                        mem_conf.dmx_first_channel = 1;                        
+                    }
+                }
+            }
+            
             switch_actions = do_nothing;
-        }        
-
-        display_update_int_state_machine ();
-
-        //for movements on current temp
-        if (!timer_standby)
-        {
-            // printf("timer standby decrement ch: %d\n", adc_ch[1]);
-            timer_standby = 1000;
-            if (adc_ch[1] > (214 + 20))
-                adc_ch[1] = adc_ch[1] - 20;
-            else
-                adc_ch[1] = 3000;
         }
+
+        display_update_int_state_machine ();        
     }
 
     //wraper to clean sw
@@ -93,7 +113,9 @@ gboolean Test_Main_Loop (gpointer user_data)
         switch_actions = do_nothing;
     
     g_mutex_unlock (&mutex);
-        
+
+    usleep(1000);
+
     return TRUE;
 }
 
@@ -102,8 +124,9 @@ gboolean Test_Timeouts_Loop_1ms (gpointer user_data)
 {
     if (timer_standby)
         timer_standby--;
-
-    HardwareMode_UpdateTimers ();
+    // //timeout lcd_utils internal
+    // if (show_select_timer)
+    //     show_select_timer--;
 
     return TRUE;
 }

@@ -811,19 +811,9 @@ int main(void)
                     Usart2Send(s_to_send);
 #endif
 
-                    // go out of here without filter or jumper
-                    unsigned char loop = 1;                    
                     do {
                         display_update_int_state_machine();
-                        
-                        if (Temp_Channel < NTC_SHORTED)    //sensor with jumper
-                            loop = 0;
-                        else if (CheckTempGreater (TEMP_RECONNECT, Temp_Channel))
-                            loop = 0;
-                        else
-                            Wait_ms(100);
-                    
-                    } while (loop);
+                    } while (CheckTempGreater (Temp_Channel, TEMP_RECONNECT));
                     
                     //reconnect
                     main_state = MAIN_HARDWARE_INIT;
@@ -878,7 +868,6 @@ int main(void)
 #endif
                 do {
                     display_update_int_state_machine();
-                    Wait_ms(10);
                 } while (V_Sense_48V > MAX_PWR_SUPPLY);
 
                 //reconnect
@@ -902,7 +891,6 @@ int main(void)
 #endif
                 do {
                     display_update_int_state_machine();
-                    Wait_ms(10);
                 } while (V_Sense_48V < MIN_PWR_SUPPLY);
 
                 //reconnect

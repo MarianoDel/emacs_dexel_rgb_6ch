@@ -238,7 +238,7 @@ resp_t FixedMenu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case FIXED_MENU_CHANGING:
-        if (actions == selection_dwn)
+        if (actions == selection_up)
         {
             unsigned char * p_ch = &mem->fixed_channels[fixed_selected - 1];
 
@@ -256,7 +256,7 @@ resp_t FixedMenu (parameters_typedef * mem, sw_actions_t actions)
             }
         }
         
-        if (actions == selection_up)
+        if (actions == selection_dwn)
         {
             unsigned char * p_ch = &mem->fixed_channels[fixed_selected - 1];
 

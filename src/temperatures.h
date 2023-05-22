@@ -93,7 +93,7 @@
 // Module Exported Functions ---------------------------------------------------
 unsigned char Temp_TempToDegrees (unsigned short temp);
 unsigned short Temp_DegreesToTemp (unsigned char deg);
-unsigned char Temp_TempToDegreesExtended (unsigned short temp);
+char Temp_TempToDegreesExtended (unsigned short temp);
 
 
 #endif    /* _TEMPERATURES_H_ */

@@ -240,50 +240,16 @@ clean:
 	rm -f *.o
 	rm -f *.out
 
+
 tests:
 	# simple functions tests, copy functions to test into main
 	gcc src/tests.c 
 	./a.out
 
+
 tests_colors_functions:
 	gcc -c src/colors_functions.c -I. $(INCDIR)
 	gcc src/tests_colors_functions.c colors_functions.o
-	./a.out
-
-
-tests_colors_menu:
-	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
-	gcc -c src/colors_menu.c -I. $(INCDIR)
-	gcc -c src/display_utils.c -I. $(INCDIR)
-	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
-	gcc src/tests_colors_menu.c colors_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
-	./a.out
-
-tests_options_menu:
-	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
-	gcc -c src/options_menu.c -I. $(INCDIR)
-	gcc -c src/display_utils.c -I. $(INCDIR)
-	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
-	gcc src/tests_options_menu.c options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
-	./a.out
-
-tests_master_slave_menu:
-	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
-	gcc -c src/master_slave_menu.c -I. $(INCDIR)
-	gcc -c src/options_menu.c -I. $(INCDIR)
-	gcc -c src/display_utils.c -I. $(INCDIR)
-	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
-	gcc src/tests_master_slave_menu.c master_slave_menu.o options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
-	./a.out
-
-
-tests_slave_menu:
-	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
-	gcc -c src/slave_menu.c -I. $(INCDIR)
-	gcc -c src/options_menu.c -I. $(INCDIR)
-	gcc -c src/display_utils.c -I. $(INCDIR)
-	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
-	gcc src/tests_slave_menu.c slave_menu.o options_menu.o display_utils.o ssd1306_gfx.o -lpthread -lncurses
 	./a.out
 
 
@@ -294,16 +260,9 @@ tests_limit_simulation:
 	./a.out
 	# execute by hand python3 simul_limits.py
 
+
 tests_comm:
 	# first module objects to test
-	gcc -c src/comm.c -I. $(INCDIR)
-	# second auxiliary helper modules
-	gcc -c src/tests_ok.c -I $(INCDIR)
-	gcc src/tests_comm.c comm.o tests_ok.o
-	./a.out
-
-tests_comm_coverage:
-	# first module objects to test and coverage
 	gcc -c --coverage src/comm.c -I. $(INCDIR)
 	# second auxiliary helper modules
 	gcc -c src/tests_ok.c -I $(INCDIR)
@@ -315,20 +274,17 @@ tests_comm_coverage:
 	gcov comm.c -m
 
 
-tests_temp_functions:
+tests_temperatures:
 	# first module objects to test and coverage
-	gcc -c --coverage src/temp_menu.c -I. $(INCDIR)
-	gcc -c src/options_menu.c -I. $(INCDIR)
-	gcc -c src/display_utils.c -I. $(INCDIR)
-	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
+	gcc -c --coverage src/temperatures.c -I. $(INCDIR)
 	# second auxiliary helper modules
 	gcc -c src/tests_ok.c -I $(INCDIR)
 	# compile the test and link with modules
-	gcc --coverage src/tests_temp_functions.c temp_menu.o tests_ok.o options_menu.o display_utils.o ssd1306_gfx.o
+	gcc --coverage src/tests_temperatures.c temperatures.o tests_ok.o
 	# test execution
 	./a.out
 	# process coverage
-	gcov temp_menu.c -m
+	gcov temperatures.c -m
 
 
 tests_comm_profiling:
@@ -423,11 +379,11 @@ tests_dmx_menu:
 	gcc -c src/ssd1306_display.c -I. $(INCDIR) $(DDEFS)
 	gcc -c src/ssd1306_gfx.c -I. $(INCDIR)
 	# the module that implements application.h functions
-	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_oled_app_dmx1_menu.c -o tests_oled_app_dmx1_menu.o
+	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_oled_dmx_menu.c -o tests_oled_dmx_menu.o
 	# then the gtk lib modules
 	gcc -c `pkg-config --cflags gtk+-3.0` src/tests_glade_oled.c -o tests_glade_oled.o
 	# link everything
-	gcc tests_glade_oled.o tests_oled_app_dmx1_menu.o dmx1_menu.o options_menu.o display_utils.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
+	gcc tests_glade_oled.o tests_oled_dmx_menu.o dmx_menu.o options_menu.o display_utils.o screen.o ssd1306_display.o ssd1306_gfx.o `pkg-config --libs gtk+-3.0` -o tests_gtk
 	# run global tags
 	gtags -q
 	# run the simulation
