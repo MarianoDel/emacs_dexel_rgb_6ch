@@ -124,7 +124,8 @@ volatile unsigned short timer_standby = 0;
 volatile unsigned short wait_ms_var = 0;
 volatile unsigned short need_to_save_timer = 0;
 #if (defined USE_OVERTEMP_PROT) || (defined USE_VOLTAGE_PROT)
-volatile unsigned short protections_sample_timer = 5000;
+// volatile unsigned short protections_sample_timer = 5000;
+volatile unsigned short protections_sample_timer = 0;
 #endif
 ma16_u16_data_obj_t temp_filter;
 
@@ -818,6 +819,15 @@ int main(void)
                     //reconnect
                     main_state = MAIN_HARDWARE_INIT;
                 }
+                else if (CheckTempGreater (temp_filtered, TEMP_IN_35))
+                {
+                    CTRL_FAN_ON;
+                }
+                else if (CheckTempGreater (TEMP_IN_30, temp_filtered))
+                {
+                    CTRL_FAN_OFF;
+                }
+                
 
 #ifdef USE_NTC_DETECTION
                 // check for ntc and stop
