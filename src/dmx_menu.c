@@ -213,45 +213,64 @@ resp_t DMXModeMenu_ChangeAddress (dmx_menu_address_data_t * data)
         {
             dmx_address_cntr_out = CNTR_TO_OUT;
             dmx_address_state++;
+            Hard_Enter_Block ();
+            resp = resp_working;
         }
         break;
             
     case CHANGING:
-        
-        if (action == selection_up)
+
+        if ((action == selection_up) ||
+            (action == selection_up_fast))
         {
-            if (*address < (512 - channels))
+            if (action == selection_up_fast)
             {
-                *address += 1;
-                *address_show = 1;
-                
-                //force the display change
-                resp = resp_change;
-
-                
-                *timer_address = TT_SHOW_ADDRESS;
-                dmx_address_cntr_out = CNTR_TO_OUT;
+                if (*address < (512 - channels - 10))
+                    *address += 10;
+                else
+                    *address = 512 - channels;
             }
-        }
+            else
+            {
+                if (*address < (512 - channels))
+                    *address += 1;
+            }
+
+            *address_show = 1;                
+            *timer_address = TT_SHOW_ADDRESS;
+            dmx_address_cntr_out = CNTR_TO_OUT;
+
+            //force lcd update
+            resp = resp_change;
+        }            
         
-        if (action == selection_dwn)
+        if ((action == selection_dwn) ||
+            (action == selection_dwn_fast))
         {
-            if (*address > 1)
+            if (action == selection_dwn_fast)
             {
-                *address -= 1;
-                *address_show = 1;
-                
-                //force the display change
-                resp = resp_change;
-
-
-                *timer_address = TT_SHOW_ADDRESS;
-                dmx_address_cntr_out = CNTR_TO_OUT;                
+                if (*address > 11)
+                    *address -= 10;
+                else
+                    *address = 1;
             }
+            else
+            {
+                if (*address > 1)
+                    *address -= 1;
+            }
+
+            *address_show = 1;
+            *timer_address = TT_SHOW_ADDRESS;
+            dmx_address_cntr_out = CNTR_TO_OUT;
+                
+            //force lcd update
+            resp = resp_change;
         }
 
-        if (action == selection_enter)
-            dmx_address_state++;
+        // go out only with timer
+        // if (action == selection_enter)
+        //     dmx_address_state++;
 
         if (!*timer_address)
         {
@@ -281,6 +300,7 @@ resp_t DMXModeMenu_ChangeAddress (dmx_menu_address_data_t * data)
         resp = resp_need_to_save;
         *address_show = 1;
         dmx_address_state = DO_NOTHING;
+        Hard_Enter_UnBlock ();
         break;
         
     default:

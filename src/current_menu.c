@@ -235,7 +235,7 @@ resp_t CurrentMenu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case CURRENT_MENU_CHANGING:
-        if (actions == selection_up)
+        if (actions == selection_dwn)
         {
             unsigned char * p_ch = &v_curr[current_selected - 1];
 
@@ -254,7 +254,7 @@ resp_t CurrentMenu (parameters_typedef * mem, sw_actions_t actions)
             }
         }
         
-        if (actions == selection_dwn)
+        if (actions == selection_up)
         {
             unsigned char * p_ch = &v_curr[current_selected - 1];
 

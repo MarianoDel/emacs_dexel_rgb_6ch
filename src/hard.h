@@ -58,9 +58,17 @@
 
 
 // --- Encoder Motion Direction by default --- //
-#define USE_ENCODER_DIRECT    //dt one on rising clk is CW (clockwise)
-// #define USE_ENCODER_INVERT    //dt one on rising clk is CCW (counter-clockwise)
+// #define USE_ENCODER_DIRECT    //dt one on rising clk is CW (clockwise)
+#define USE_ENCODER_INVERT    //dt one on rising clk is CCW (counter-clockwise)
 
+
+
+// --- Default Current Configs ---//
+// #define DEFAULT_CHANNEL_CURRENT    154    // default in 1.3amps
+#define DEFAULT_CHANNEL_CURRENT    255    // for default in 2amps
+
+// #define DEFAULT_TOTAL_CURRENT    510    // for default in 4amps
+#define DEFAULT_TOTAL_CURRENT    1530    // for default in 12amps
 
 
 //------ Configuration for Firmware-Channels -----
@@ -85,7 +93,8 @@
 //-- End Of Defines For Configuration ---------------
 
 //-- Sanity Checks ----------------------------------
-#if (!defined HARDWARE_VERSION_2_3) && \
+#if (!defined HARDWARE_VERSION_2_4) && \
+    (!defined HARDWARE_VERSION_2_3) && \
     (!defined HARDWARE_VERSION_2_2)
 #error "Not HARD version selected on version.h"
 #endif
@@ -95,9 +104,10 @@
 #error "Not Temp Sensor selected on temperatures.h"
 #endif
 
-#if (defined HARDWARE_VERSION_2_3) && \
+#if ((defined HARDWARE_VERSION_2_4) || \
+     (defined HARDWARE_VERSION_2_3)) && \
     (!defined TEMP_SENSOR_NTC1K)
-#error "Hardware 2.3 with not ntc on temperatures.h"
+#error "Hardware 2.4 or 2.3 with not ntc on temperatures.h"
 #endif
 
 #if (defined HARDWARE_VERSION_2_2) && \
@@ -106,13 +116,15 @@
 #endif
 
 #if (defined USE_NTC_DETECTION) && \
-    (!defined HARDWARE_VERSION_2_3)
+    ((!defined HARDWARE_VERSION_2_4) && \
+     (!defined HARDWARE_VERSION_2_3))
 #error "ntc only on hard 2.3 or newer"
 #endif
 
 //-- End of Sanity Checks ---------------------------
 
-#if (defined HARDWARE_VERSION_2_3) || \
+#if (defined HARDWARE_VERSION_2_4) || \
+    (defined HARDWARE_VERSION_2_3) || \
     (defined HARDWARE_VERSION_2_2)
 // GPIOC pin13
 // GPIOC pin14
@@ -528,6 +540,11 @@ unsigned char CheckCCW (void);
 unsigned char CheckCW (void);
 void UpdateSwitches (void);
 void UpdateEncoder (void);
+void Hard_Enter_Block (void);
+void Hard_Enter_UnBlock (void);
+unsigned char Hard_Enter_Is_Block (void);
+
+
 
 #ifdef HARDWARE_VERSION_2_0
 #define SW_BACK()    CheckS1()

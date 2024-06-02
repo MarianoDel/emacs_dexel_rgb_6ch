@@ -203,6 +203,24 @@ unsigned char CheckCW (void)
     return a;
 }
 
+
+unsigned char enter_block = 0;
+void Hard_Enter_Block (void)
+{
+    enter_block = 1;
+}
+
+
+void Hard_Enter_UnBlock (void)
+{
+    enter_block = 0;
+}
+
+
+unsigned char Hard_Enter_Is_Block (void)
+{
+    return enter_block;
+}
 // End of Encoder Routines -----------------------------------------------------
 
 

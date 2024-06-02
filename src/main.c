@@ -267,13 +267,15 @@ int main(void)
         mem_conf.temp_prot = TEMP_IN_70;    //70 degrees
 
         for (unsigned char i = 0; i < 6; i++)
-            mem_conf.max_current_channels[i] = 255;
+        {
+            mem_conf.max_current_channels[i] = DEFAULT_CHANNEL_CURRENT;    // channel current default
+        }
 
-        mem_conf.max_power = 1530;
+        mem_conf.max_power = DEFAULT_TOTAL_CURRENT;    // max total current default
         mem_conf.dmx_channel_quantity = 6;
-#ifdef USE_ENCODER_DIRECT
+#if (defined USE_ENCODER_DIRECT)
         mem_conf.encoder_direction = 0;
-#elif USE_ENCODER_INVERT
+#elif (defined USE_ENCODER_INVERT)
         mem_conf.encoder_direction = 1;
 #else
 #error "Please select default encoder direction on hard.h"

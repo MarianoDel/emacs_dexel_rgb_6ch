@@ -189,7 +189,7 @@ resp_t TempMenu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case TEMP_MENU_CHANGING:
-        if (actions == selection_up)
+        if (actions == selection_dwn)
         {
             if (total_temp > TEMP_DEG_MIN)
             {
@@ -205,7 +205,7 @@ resp_t TempMenu (parameters_typedef * mem, sw_actions_t actions)
             }
         }
         
-        if (actions == selection_dwn)
+        if (actions == selection_up)
         {
             if (total_temp < TEMP_DEG_MAX)
             {

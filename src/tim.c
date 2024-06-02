@@ -123,7 +123,8 @@ void TIM_1_Init (void)
     TIM1->CCMR2 = 0x0000;
     TIM1->CCMR1 |= TIM_CCMR1_OC1PE | TIM_CCMR1_OC2PE;
 
-#if (defined HARDWARE_VERSION_2_3) || \
+#if (defined HARDWARE_VERSION_2_4) || \
+    (defined HARDWARE_VERSION_2_3) || \
     (defined HARDWARE_VERSION_2_2)
     TIM1->CCER |= TIM_CCER_CC2E | TIM_CCER_CC1E;	//CH2 y CH1 enable on pin
 #endif
@@ -185,8 +186,9 @@ void TIM_3_Init (void)
     TIM3->CCMR1 |= TIM_CCMR1_OC1PE | TIM_CCMR1_OC2PE;
     TIM3->CCMR2 |= TIM_CCMR2_OC3PE | TIM_CCMR2_OC4PE;
 
-#if (defined HARDWARE_VERSION_2_3) || \
-    (defined HARDWARE_VERSION_2_2)
+#if (defined HARDWARE_VERSION_2_4) || \
+    (defined HARDWARE_VERSION_2_3) || \
+    (defined HARDWARE_VERSION_2_2)    
     //CH4 CH3 CH2 y CH1 enable on pin
     TIM3->CCER |= TIM_CCER_CC4E | TIM_CCER_CC3E | TIM_CCER_CC2E | TIM_CCER_CC1E;
 #endif

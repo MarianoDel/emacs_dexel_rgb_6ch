@@ -235,11 +235,12 @@ clean:
 	rm -f $(FULL_PRJ).bin
 	rm -f $(SRC:.c=.lst)
 	rm -f $(SRC:.c=.su)
-#   rm $(ASRC:.s=.s.bak)
 	rm -f $(ASRC:.s=.lst)
 	rm -f *.o
 	rm -f *.out
-
+	rm -f *.gcov
+	rm -f *.gcda
+	rm -f *.gcno
 
 tests:
 	# simple functions tests, copy functions to test into main

@@ -55,8 +55,9 @@ void GPIO_Config (void)
     //10: Pull-down
     //11: Reserved
 
-#if (defined HARDWARE_VERSION_2_3) || \
-    (defined HARDWARE_VERSION_2_2)
+#if (defined HARDWARE_VERSION_2_4) || \
+    (defined HARDWARE_VERSION_2_3) || \
+    (defined HARDWARE_VERSION_2_2)    
 #ifdef GPIOA_ENABLE
     //--- GPIO A ---//
     if (!GPIOA_CLK)
@@ -167,7 +168,7 @@ void GPIO_Config (void)
     GPIOF->PUPDR = temp;
 
 #endif
-#endif    // HARDWARE_VERSION_2_3 or HARDWARE_VERSION_2_2
+#endif    // HARDWARE_VERSION_2_4 or HARDWARE_VERSION_2_3 or HARDWARE_VERSION_2_2
 
 #ifdef HARDWARE_VERSION_2_0
 #ifdef GPIOA_ENABLE

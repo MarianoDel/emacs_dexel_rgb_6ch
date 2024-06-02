@@ -121,7 +121,7 @@ resp_t HardwareMode (parameters_typedef * mem, sw_actions_t actions)
             case 4:
                 hardware_mode_state = HARDWARE_MODE_ENCODER;
                 ptFHardMenuTT = &EncoderMenu_UpdateTimer;                
-                VersionMenuReset();
+                EncoderMenuReset();
                 break;
 
             case 5:

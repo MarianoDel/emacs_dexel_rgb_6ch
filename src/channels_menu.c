@@ -177,7 +177,7 @@ resp_t ChannelsMenu (parameters_typedef * mem, sw_actions_t actions)
         break;
 
     case CHANNELS_MENU_CHANGING:
-        if (actions == selection_up)
+        if (actions == selection_dwn)
         {
             if (total_channels > 1)
             {
@@ -193,7 +193,7 @@ resp_t ChannelsMenu (parameters_typedef * mem, sw_actions_t actions)
             }
         }
         
-        if (actions == selection_dwn)
+        if (actions == selection_up)
         {
             if (total_channels < 6)
             {
@@ -277,6 +277,40 @@ resp_t ChannelsMenu (parameters_typedef * mem, sw_actions_t actions)
 
     return resp;
     
+}
+
+
+resp_t ChannelsMenuFixed (void)
+{
+    resp_t resp = resp_continue;
+
+    switch (channels_state)
+    {
+    case CHANNELS_MENU_INIT:
+        Display_StartLines ();
+        Display_ClearLines();
+
+        Display_SetLine1("ALWAYS 5 CHANNELS");
+
+        Display_SetLine3("   IN CCT MODE");
+
+        Display_SetLine8("        Channels Menu");        
+
+        display_update();
+        channels_menu_timer = 1000;
+        channels_state++;
+        break;
+
+    case CHANNELS_MENU_CHECK_OPTIONS:
+        if (!channels_menu_timer)
+        {
+            channels_state = CHANNELS_MENU_INIT;
+            resp = resp_finish;
+        }
+        break;
+    }
+
+    return resp;
 }
 
 

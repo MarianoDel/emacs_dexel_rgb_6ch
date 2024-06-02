@@ -23,6 +23,7 @@ void ChannelsMenu_UpdateTimer (void);
 void ChannelsMenuReset (void);
 resp_t ChannelsMenu (parameters_typedef *, sw_actions_t);
 
+resp_t ChannelsMenuFixed (void);
 
 #endif    /* _CHANNELS_MENU_H_ */
 

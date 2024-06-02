@@ -18,7 +18,9 @@ typedef enum {
     selection_up,
     selection_dwn,
     selection_enter,
-    selection_back
+    selection_back,
+    selection_up_fast,
+    selection_dwn_fast
 
 } sw_actions_t;
 
