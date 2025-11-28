@@ -13,6 +13,7 @@
 #include "display_utils.h"
 #include "parameters.h"
 #include "ssd1306_gfx.h"
+#include "hard.h"
 
 #include <stdio.h>
 #include <string.h>

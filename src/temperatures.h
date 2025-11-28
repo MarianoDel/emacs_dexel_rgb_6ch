@@ -55,7 +55,7 @@
 
 #define NTC_DISCONNECTED    3102
 #define NTC_SHORTED    100
-
+#define TEMP_PROBE_SHORTED    NTC_SHORTED
 #endif    // TEMP_SENSOR_NTC1K
 
 
@@ -87,6 +87,8 @@
 #define TEMP_DEG_OFFSET    282
 #define TEMP_IN_OFFSET    2919
 
+#define LM335_SHORTED    200
+#define TEMP_PROBE_SHORTED    LM335_SHORTED
 #endif    // TEMP_SENSOR_LM335
 
 

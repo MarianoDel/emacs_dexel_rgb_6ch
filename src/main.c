@@ -282,8 +282,7 @@ int main(void)
 #endif
     }
 
-    
-    // check NTC connection on init
+    // check NTC or LM335 connection on init
     unsigned char check_ntc = 0;
     unsigned short temp_filtered = 0;
     MA16_U16Circular_Reset(&temp_filter);
@@ -293,14 +292,14 @@ int main(void)
         Wait_ms(30);
     }
 
-    if (temp_filtered < NTC_SHORTED)
+    if (temp_filtered < TEMP_PROBE_SHORTED)
     {
         CTRL_FAN_ON;
         check_ntc = 0;
     }
     else
         check_ntc = 1;
-    // check NTC connection on init        
+    // end of check NTC or LM335 connection on init
 
     while (1)
     {
